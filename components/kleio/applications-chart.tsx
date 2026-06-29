@@ -16,7 +16,7 @@ function FilterChip({ label }: { label: string }) {
   return (
     <button
       type="button"
-      className="flex items-center gap-1.5 whitespace-nowrap rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-accent/50"
+      className="flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-accent/50"
     >
       {label}
       <ChevronDown className="size-3.5 text-muted-foreground" />
@@ -47,18 +47,18 @@ function CustomTooltip({
 
 export function ApplicationsChart() {
   return (
-    <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
+    <div className="rounded-2xl border border-border bg-card p-5 shadow-sm kleio-card-shadow">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="font-serif text-lg font-semibold text-foreground">
           Applications Over Time
         </h2>
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex items-center gap-2">
           <FilterChip label="All Programs" />
           <FilterChip label="Last 6 months" />
         </div>
       </div>
 
-      <div className="mt-5 h-64 w-full">
+      <div className="mt-4 h-56 w-full 2xl:h-64">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart
             data={applicationsOverTime}
@@ -86,8 +86,8 @@ export function ApplicationsChart() {
               tickLine={false}
               axisLine={false}
               tick={{ fontSize: 12, fill: "var(--color-muted-foreground)" }}
-              domain={[0, 600]}
-              ticks={[0, 150, 300, 450, 600]}
+              domain={[0, "dataMax + 3"]}
+              allowDecimals={false}
             />
             <Tooltip
               content={<CustomTooltip />}

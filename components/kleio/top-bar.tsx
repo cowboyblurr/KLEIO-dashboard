@@ -1,11 +1,13 @@
 "use client"
 
+import Link from "next/link"
 import { Bell, Bookmark, ChevronDown, Plus, SlidersHorizontal, Search } from "lucide-react"
+import { analytics } from "@/lib/kleio-data"
 
 export function TopBar() {
   return (
-    <header className="sticky top-0 z-20 flex flex-wrap items-center gap-3 border-b border-border bg-background/80 px-4 py-3.5 backdrop-blur-md sm:px-6">
-      <div className="relative min-w-[14rem] flex-1 basis-72 lg:max-w-2xl">
+    <header className="sticky top-0 z-20 flex min-h-16 items-center gap-3 border-b border-border bg-background/85 px-5 py-3 backdrop-blur-xl xl:px-7">
+      <div className="relative flex-1 max-w-3xl">
         <Search className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
         <input
           type="search"
@@ -18,49 +20,49 @@ export function TopBar() {
         </kbd>
       </div>
 
-      <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
-        <button
-          type="button"
+      <div className="ml-auto flex shrink-0 items-center gap-2">
+        <Link
+          href="/submissions"
           className="flex h-10 items-center gap-2 rounded-xl border border-border bg-card px-3.5 text-sm font-medium text-foreground shadow-sm transition-colors hover:bg-accent/50"
         >
           <SlidersHorizontal className="size-4 text-muted-foreground" />
-          <span className="hidden sm:inline">Filters</span>
-        </button>
+          Filter Submissions
+        </Link>
 
-        <button
-          type="button"
-          aria-label="Bookmarks"
+        <Link
+          href="/shortlist"
+          aria-label="Open shortlist"
           className="grid size-10 place-items-center rounded-xl border border-border bg-card text-muted-foreground shadow-sm transition-colors hover:bg-accent/50 hover:text-foreground"
         >
           <Bookmark className="size-4" />
-        </button>
+        </Link>
 
-        <button
-          type="button"
+        <Link
+          href="/messages"
           aria-label="Notifications"
           className="relative grid size-10 place-items-center rounded-xl border border-border bg-card text-muted-foreground shadow-sm transition-colors hover:bg-accent/50 hover:text-foreground"
         >
           <Bell className="size-4" />
           <span className="absolute -right-1 -top-1 grid size-5 place-items-center rounded-full bg-primary text-[0.65rem] font-semibold text-primary-foreground ring-2 ring-background">
-            6
+            {analytics.needsAttentionCount}
           </span>
-        </button>
+        </Link>
 
         <div className="ml-1 flex items-center overflow-hidden rounded-xl shadow-sm">
-          <button
-            type="button"
+          <Link
+            href="/programs/new"
             className="flex h-10 items-center gap-2 bg-primary px-4 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
           >
             <Plus className="size-4" />
-            <span className="hidden sm:inline">New Submission</span>
-          </button>
-          <button
-            type="button"
-            aria-label="More submission options"
+            Create Open Call
+          </Link>
+          <Link
+            href="/programs"
+            aria-label="More program options"
             className="grid h-10 w-9 place-items-center border-l border-primary-foreground/20 bg-primary text-primary-foreground transition-colors hover:bg-primary/90"
           >
             <ChevronDown className="size-4" />
-          </button>
+          </Link>
         </div>
       </div>
     </header>

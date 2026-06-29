@@ -1,33 +1,25 @@
 "use client"
 
-import Image from "next/image"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { ChevronDown, ChevronsUpDown } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { navSections } from "@/lib/kleio-nav"
+import { collaborators, institution } from "@/lib/kleio-data"
 import { InitialAvatar } from "@/components/kleio/initial-avatar"
 
 export function Sidebar() {
   const pathname = usePathname()
-  const currentPath = pathname === "/" ? pathname : pathname.replace(/\/$/, "")
+  const programDirector = collaborators.find((person) => person.role === "Program Director") ?? collaborators[0]
 
   return (
-    <aside className="flex h-screen w-64 shrink-0 flex-col border-r border-border bg-sidebar">
+    <aside className="flex h-dvh w-full shrink-0 flex-col border-r border-border bg-sidebar">
       <div className="flex items-center justify-between px-6 pt-6 pb-5">
         <Link
           href="/"
-          className="relative block h-12 w-36 overflow-hidden rounded-sm bg-white"
-          aria-label="KLEIO home"
+          className="font-serif text-2xl font-semibold tracking-[0.28em] text-foreground"
         >
-          <Image
-            src="/kleio-logo-white.png"
-            alt="KLEIO"
-            fill
-            sizes="144px"
-            className="object-contain object-center"
-            priority
-          />
+          KLEIO
         </Link>
         <button
           type="button"
@@ -46,7 +38,7 @@ export function Sidebar() {
             </p>
             <ul className="space-y-0.5">
               {section.items.map((item) => {
-                const active = currentPath === item.href
+                const active = pathname === item.href
                 const Icon = item.icon
                 return (
                   <li key={item.href}>
@@ -93,13 +85,13 @@ export function Sidebar() {
           type="button"
           className="flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left transition-colors hover:bg-accent/60"
         >
-          <InitialAvatar name="Olivia Carter" className="size-9 text-xs" />
+          <InitialAvatar name={programDirector.name} className="size-9 text-xs" />
           <span className="min-w-0 flex-1">
             <span className="block truncate text-sm font-medium text-foreground">
-              Olivia Carter
+              {programDirector.name}
             </span>
             <span className="block truncate text-xs text-muted-foreground">
-              Program Director
+              {programDirector.role}
             </span>
           </span>
           <ChevronsUpDown className="size-4 text-muted-foreground" />
@@ -110,14 +102,14 @@ export function Sidebar() {
           className="mt-1 flex w-full items-center gap-3 rounded-lg border border-border bg-card px-2 py-2 text-left transition-colors hover:bg-accent/40"
         >
           <span className="grid size-9 shrink-0 place-items-center rounded-md bg-primary text-[0.6rem] font-bold tracking-wide text-primary-foreground">
-            ISCP
+            {institution.initials}
           </span>
           <span className="min-w-0 flex-1">
             <span className="block truncate text-sm font-medium text-foreground">
-              International Studio Program
+              {institution.name}
             </span>
             <span className="block truncate text-xs text-muted-foreground">
-              Brooklyn, NY, USA
+              {institution.location}
             </span>
           </span>
           <ChevronsUpDown className="size-4 text-muted-foreground" />

@@ -13,6 +13,7 @@ import {
   Settings,
   type LucideIcon,
 } from "lucide-react"
+import { analytics } from "@/lib/kleio-data"
 
 export type NavItem = {
   label: string
@@ -37,15 +38,15 @@ export const navSections: NavSection[] = [
       { label: "Programs", href: "/programs", icon: FolderOpen },
       { label: "Submissions", href: "/submissions", icon: FileStack },
       { label: "Artists", href: "/artists", icon: Users },
-      { label: "Review Queue", href: "/review-queue", icon: ListChecks, badge: 23 },
-      { label: "Shortlist", href: "/shortlist", icon: Bookmark, badge: 128 },
+      { label: "Review Queue", href: "/review-queue", icon: ListChecks, badge: analytics.priorityQueueCount },
+      { label: "Shortlist", href: "/shortlist", icon: Bookmark, badge: analytics.shortlistedCount },
     ],
   },
   {
     heading: "Collaborate",
     items: [
       { label: "Committee", href: "/committee", icon: Vote },
-      { label: "Messages", href: "/messages", icon: MessageSquare, badge: 8 },
+      { label: "Messages", href: "/messages", icon: MessageSquare, badge: analytics.needsAttentionCount },
     ],
   },
   {

@@ -11,16 +11,11 @@ import {
   SlidersHorizontal,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import type { Submission } from "@/lib/kleio-data"
+import { analytics, reviewQueueTabs, type Submission } from "@/lib/kleio-data"
 import { InitialAvatar } from "@/components/kleio/initial-avatar"
 import { PriorityPill, StatusPill } from "@/components/kleio/pills"
 
-const tabs = [
-  { id: "priority", label: "Priority Review Queue", count: 23 },
-  { id: "attention", label: "Needs Attention", count: 14 },
-  { id: "deadlines", label: "Upcoming Deadlines", count: 12 },
-]
-
+const tabs = reviewQueueTabs
 const filterChips = ["All Programs", "All Reviewers", "All Priorities", "All Statuses"]
 
 function CompletenessBar({ value }: { value: number }) {
@@ -57,36 +52,34 @@ export function ReviewQueue({
   const [activeTab, setActiveTab] = useState("priority")
 
   return (
-    <section className="min-w-0 rounded-2xl border border-border bg-card shadow-sm">
-      <div className="overflow-x-auto border-b border-border px-5">
-        <div className="flex min-w-max items-center gap-6">
-          {tabs.map((tab) => {
-            const active = tab.id === activeTab
-            return (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => setActiveTab(tab.id)}
+    <section className="rounded-2xl border border-border bg-card shadow-sm kleio-card-shadow">
+      <div className="flex flex-wrap items-center gap-x-6 gap-y-1 border-b border-border px-5">
+        {tabs.map((tab) => {
+          const active = tab.id === activeTab
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setActiveTab(tab.id)}
+              className={cn(
+                "flex items-center gap-2 whitespace-nowrap border-b-2 py-4 text-sm font-medium transition-colors",
+                active
+                  ? "border-primary text-foreground"
+                  : "border-transparent text-muted-foreground hover:text-foreground",
+              )}
+            >
+              {tab.label}
+              <span
                 className={cn(
-                  "flex shrink-0 items-center gap-2 whitespace-nowrap border-b-2 py-4 text-sm font-medium transition-colors",
-                  active
-                    ? "border-primary text-foreground"
-                    : "border-transparent text-muted-foreground hover:text-foreground",
+                  "rounded-full px-1.5 py-0.5 text-[0.65rem] font-semibold tabular-nums",
+                  active ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground",
                 )}
               >
-                {tab.label}
-                <span
-                  className={cn(
-                    "rounded-full px-1.5 py-0.5 text-[0.65rem] font-semibold tabular-nums",
-                    active ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground",
-                  )}
-                >
-                  {tab.count}
-                </span>
-              </button>
-            )
-          })}
-        </div>
+                {tab.count}
+              </span>
+            </button>
+          )
+        })}
       </div>
 
       <div className="flex flex-wrap items-center gap-2 px-5 py-4">
@@ -103,7 +96,7 @@ export function ReviewQueue({
           <button
             key={chip}
             type="button"
-            className="flex h-9 items-center gap-1.5 whitespace-nowrap rounded-lg border border-border bg-background px-3 text-xs font-medium text-foreground transition-colors hover:bg-accent/50"
+            className="flex h-9 items-center gap-1.5 rounded-lg border border-border bg-background px-3 text-xs font-medium text-foreground transition-colors hover:bg-accent/50"
           >
             {chip}
             <ChevronDown className="size-3.5 text-muted-foreground" />
@@ -111,7 +104,7 @@ export function ReviewQueue({
         ))}
         <button
           type="button"
-          className="flex h-9 items-center gap-1.5 whitespace-nowrap rounded-lg border border-border bg-background px-3 text-xs font-medium text-foreground transition-colors hover:bg-accent/50"
+          className="flex h-9 items-center gap-1.5 rounded-lg border border-border bg-background px-3 text-xs font-medium text-foreground transition-colors hover:bg-accent/50"
         >
           <SlidersHorizontal className="size-3.5 text-muted-foreground" />
           Saved Filters
@@ -126,20 +119,20 @@ export function ReviewQueue({
       </div>
 
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[880px] table-fixed border-collapse text-sm">
+        <table className="w-full min-w-[860px] border-collapse text-sm">
           <thead>
             <tr className="border-y border-border text-left text-xs font-medium uppercase tracking-wide text-muted-foreground">
               <th className="w-10 px-5 py-3">
                 <input type="checkbox" aria-label="Select all" className="accent-primary" />
               </th>
-              <th className="w-[170px] px-3 py-3 font-medium">Artist</th>
-              <th className="w-[150px] px-3 py-3 font-medium">Project Title</th>
-              <th className="w-[180px] px-3 py-3 font-medium">Program</th>
-              <th className="w-[140px] px-3 py-3 font-medium">Completeness</th>
-              <th className="w-[150px] px-3 py-3 font-medium">Assigned Reviewer</th>
-              <th className="w-[120px] px-3 py-3 font-medium">Submitted</th>
-              <th className="w-[120px] px-3 py-3 font-medium">Status</th>
-              <th className="w-[100px] px-3 py-3 font-medium">Priority</th>
+              <th className="px-3 py-3 font-medium">Artist</th>
+              <th className="px-3 py-3 font-medium">Project Title</th>
+              <th className="px-3 py-3 font-medium">Program</th>
+              <th className="px-3 py-3 font-medium">Completeness</th>
+              <th className="px-3 py-3 font-medium">Assigned Reviewer</th>
+              <th className="px-3 py-3 font-medium">Submitted</th>
+              <th className="px-3 py-3 font-medium">Status</th>
+              <th className="px-3 py-3 font-medium">Priority</th>
               <th className="w-10 px-3 py-3" />
             </tr>
           </thead>
@@ -173,20 +166,18 @@ export function ReviewQueue({
                       </div>
                     </div>
                   </td>
-                  <td className="px-3 py-3 text-foreground">
-                    <p className="truncate">{s.projectTitle}</p>
-                  </td>
+                  <td className="px-3 py-3 text-foreground">{s.projectTitle}</td>
                   <td className="px-3 py-3">
-                    <p className="truncate text-foreground">{s.program}</p>
-                    <p className="truncate text-xs text-muted-foreground">{s.programCycle}</p>
+                    <p className="text-foreground">{s.program}</p>
+                    <p className="text-xs text-muted-foreground">{s.programCycle}</p>
                   </td>
                   <td className="px-3 py-3">
                     <CompletenessBar value={s.completeness} />
                   </td>
                   <td className="px-3 py-3">
-                    <div className="flex min-w-0 items-center gap-2">
+                    <div className="flex items-center gap-2">
                       <InitialAvatar name={s.reviewer} className="size-6 text-[0.6rem]" />
-                      <span className="truncate text-foreground">{s.reviewer}</span>
+                      <span className="text-foreground">{s.reviewer}</span>
                     </div>
                   </td>
                   <td className="px-3 py-3 text-muted-foreground">{s.submitted}</td>
@@ -212,8 +203,8 @@ export function ReviewQueue({
         </table>
       </div>
 
-      <div className="flex items-center justify-between px-5 py-4">
-        <p className="text-xs text-muted-foreground">Showing 1–5 of 23</p>
+      <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-4">
+        <p className="text-xs text-muted-foreground">Showing 1–{submissions.length} of {analytics.priorityQueueCount}</p>
         <div className="flex items-center gap-1">
           <button
             type="button"

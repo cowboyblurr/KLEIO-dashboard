@@ -11,6 +11,8 @@ import {
   Plus,
   Bookmark,
   X,
+  Vote,
+  AlertCircle,
 } from "lucide-react"
 import type { Submission } from "@/lib/kleio-data"
 import { InitialAvatar } from "@/components/kleio/initial-avatar"
@@ -39,6 +41,26 @@ function CompletionRing({ value }: { value: number }) {
   )
 }
 
+function getPrimaryAction(submission: Submission) {
+  if (submission.status === "Pending Info" || submission.status === "Incomplete") {
+    return { label: "Request Missing Materials", icon: Mail }
+  }
+  if (submission.status === "Pending Vote") {
+    return { label: "View Committee Vote", icon: Vote }
+  }
+  if (submission.status === "Shortlisted" || submission.status === "Interview") {
+    return { label: "Open Decision Room", icon: Bookmark }
+  }
+  return { label: "Move to Shortlist", icon: Bookmark }
+}
+
+function getScenarioLabel(submission: Submission) {
+  if (submission.scenario === "deadline-triage") return "Scenario · Deadline triage"
+  if (submission.scenario === "reviewer-bottleneck") return "Scenario · Reviewer bottleneck"
+  if (submission.scenario === "strong-shortlist") return "Scenario · Strong shortlist candidate"
+  return "Submission context"
+}
+
 export function SubmissionDrawer({
   submission,
   onPrev,
@@ -50,8 +72,11 @@ export function SubmissionDrawer({
   onNext: () => void
   onClose: () => void
 }) {
+  const primaryAction = getPrimaryAction(submission)
+  const PrimaryIcon = primaryAction.icon
+
   return (
-    <aside className="flex max-h-[min(42rem,calc(100vh-5rem))] w-full shrink-0 flex-col border-t border-border bg-card xl:h-full xl:max-h-none xl:w-[24rem] xl:border-l xl:border-t-0">
+    <aside className="flex h-full w-[21.5rem] shrink-0 flex-col border-l border-border bg-card/95 backdrop-blur-sm xl:w-[22.5rem] 2xl:w-[24rem]">
       <div className="flex items-center justify-between border-b border-border px-5 py-4">
         <h2 className="text-sm font-semibold text-foreground">Selected Submission</h2>
         <div className="flex items-center gap-1">
@@ -83,8 +108,13 @@ export function SubmissionDrawer({
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto">
-        <div className="p-5">
-          <div className="relative aspect-[4/3] w-full overflow-hidden rounded-xl border border-border bg-muted">
+        <div className="p-4 xl:p-5">
+          <div className="mb-3 rounded-xl border border-primary/15 bg-primary/5 px-3 py-2 text-xs text-muted-foreground">
+            <span className="font-semibold text-primary">{getScenarioLabel(submission)}</span>
+            {submission.decisionStage && <span> · {submission.decisionStage}</span>}
+          </div>
+
+          <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl border border-border bg-muted shadow-sm">
             <Image
               src={submission.image || "/placeholder.svg"}
               alt={`${submission.projectTitle} by ${submission.artist}`}
@@ -94,45 +124,69 @@ export function SubmissionDrawer({
             />
           </div>
 
-          <div className="mt-4 flex min-w-0 items-start gap-2">
-            <h3 className="min-w-0 font-serif text-xl font-semibold text-foreground">
-              {submission.artist}
-            </h3>
+          <div className="mt-4 flex items-start gap-2">
+            <h3 className="font-serif text-xl font-semibold text-foreground">{submission.artist}</h3>
             <BadgeCheck className="mt-1 size-4 shrink-0 text-primary" />
           </div>
-          <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-            {submission.location} &middot; {submission.discipline} &middot;{" "}
-            {submission.medium}
+          <p className="mt-1 text-sm text-muted-foreground">
+            {submission.location} &middot; {submission.discipline} &middot; {submission.medium}
           </p>
 
-          <div className="mt-4 flex flex-wrap items-center gap-3 rounded-xl border border-border bg-accent/40 p-3">
+          <div className="mt-4 flex items-center gap-3 rounded-2xl border border-border bg-accent/40 p-3">
             <CompletionRing value={submission.completeness} />
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium text-foreground">
-                {submission.program}
-              </p>
+              <p className="truncate text-sm font-medium text-foreground">{submission.program}</p>
               <p className="text-xs text-muted-foreground">{submission.programCycle}</p>
             </div>
-            <span className="shrink-0 text-xs font-semibold text-primary tabular-nums">
+            <span className="text-xs font-semibold text-primary tabular-nums">
               {submission.completeness}% Complete
             </span>
           </div>
 
+          {submission.missingMaterials?.length ? (
+            <Section title="Missing Materials" action="Prepare request">
+              <div className="rounded-xl border border-[oklch(0.88_0.08_70)] bg-[oklch(0.98_0.035_80)] p-3">
+                <div className="flex items-start gap-2">
+                  <AlertCircle className="mt-0.5 size-4 shrink-0 text-[oklch(0.62_0.16_65)]" />
+                  <ul className="space-y-1 text-sm text-foreground">
+                    {submission.missingMaterials.map((item) => (
+                      <li key={item}>• {item}</li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            </Section>
+          ) : null}
+
+          {submission.reviewerProgress && (
+            <Section title="Reviewer Progress">
+              <div className="rounded-xl border border-border bg-background p-3">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="font-medium text-foreground">Reviews completed</span>
+                  <span className="font-semibold text-primary">
+                    {submission.reviewerProgress.completed}/{submission.reviewerProgress.total}
+                  </span>
+                </div>
+                <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted">
+                  <div
+                    className="h-full rounded-full bg-primary"
+                    style={{ width: `${(submission.reviewerProgress.completed / submission.reviewerProgress.total) * 100}%` }}
+                  />
+                </div>
+              </div>
+            </Section>
+          )}
+
           <Section title="Artist Statement" action="View full">
-            <p className="text-sm leading-relaxed text-muted-foreground">
-              {submission.statement}
-            </p>
+            <p className="text-sm leading-relaxed text-muted-foreground">{submission.statement}</p>
           </Section>
 
           <Section title="Internal Notes" action="Add note">
             <div className="rounded-xl border border-[oklch(0.9_0.05_85)] bg-[oklch(0.98_0.03_85)] p-3">
-              <p className="text-sm leading-relaxed text-foreground">
-                {submission.internalNote.body}
-              </p>
+              <p className="text-sm leading-relaxed text-foreground">{submission.internalNote.body}</p>
               <div className="mt-3 flex items-center justify-between">
                 <p className="text-xs text-muted-foreground">
-                  {submission.internalNote.author} &middot;{" "}
-                  {submission.internalNote.date}
+                  {submission.internalNote.author} &middot; {submission.internalNote.date}
                 </p>
                 <MoreHorizontal className="size-4 text-muted-foreground" />
               </div>
@@ -143,14 +197,9 @@ export function SubmissionDrawer({
             <ul className="space-y-3">
               {submission.activity.map((entry) => (
                 <li key={entry.id} className="flex items-center gap-3">
-                  <InitialAvatar
-                    name={entry.actor === "System" ? "ISCP" : entry.actor}
-                    className="size-7 text-[0.6rem]"
-                  />
+                  <InitialAvatar name={entry.actor === "System" ? "KLEIO" : entry.actor} className="size-7 text-[0.6rem]" />
                   <p className="flex-1 text-sm text-foreground">
-                    {entry.actor !== "System" && (
-                      <span className="font-medium">{entry.actor} </span>
-                    )}
+                    {entry.actor !== "System" && <span className="font-medium">{entry.actor} </span>}
                     <span className="text-muted-foreground">{entry.action}</span>
                   </p>
                   <span className="text-xs text-muted-foreground">{entry.date}</span>
@@ -161,14 +210,14 @@ export function SubmissionDrawer({
         </div>
       </div>
 
-      <div className="border-t border-border p-4">
+      <div className="border-t border-border bg-card/95 p-4">
         <div className="flex items-center gap-2">
           <button
             type="button"
-            className="flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-primary px-3 py-2 text-center text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
+            className="flex h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-primary text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
           >
-            <Bookmark className="size-4" />
-            Move to Shortlist
+            <PrimaryIcon className="size-4" />
+            {primaryAction.label}
           </button>
           <button
             type="button"
@@ -180,10 +229,10 @@ export function SubmissionDrawer({
         </div>
         <button
           type="button"
-          className="mt-2 flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-border bg-card px-3 py-2 text-center text-sm font-medium text-foreground transition-colors hover:bg-accent/50"
+          className="mt-2 flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-border bg-card text-sm font-medium text-foreground transition-colors hover:bg-accent/50"
         >
           <Mail className="size-4 text-muted-foreground" />
-          Request Additional Information
+          {submission.status === "Pending Vote" ? "Message Pending Reviewer" : "Request Additional Information"}
         </button>
       </div>
     </aside>
