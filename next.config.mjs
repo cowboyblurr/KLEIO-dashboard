@@ -1,18 +1,16 @@
-import { dirname } from 'node:path'
-import { fileURLToPath } from 'node:url'
-
-const __dirname = dirname(fileURLToPath(import.meta.url))
-
 /** @type {import('next').NextConfig} */
+const isGithubPages = process.env.GITHUB_ACTIONS === "true"
+
 const nextConfig = {
-  turbopack: {
-    root: __dirname,
+  output: "export",
+  trailingSlash: true,
+  basePath: isGithubPages ? "/KLEIO-dashboard" : "",
+  assetPrefix: isGithubPages ? "/KLEIO-dashboard/" : "",
+  images: {
+    unoptimized: true,
   },
   typescript: {
     ignoreBuildErrors: true,
-  },
-  images: {
-    unoptimized: true,
   },
 }
 
