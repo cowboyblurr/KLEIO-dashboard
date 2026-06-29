@@ -4,8 +4,8 @@ import { Bell, Bookmark, ChevronDown, Plus, SlidersHorizontal, Search } from "lu
 
 export function TopBar() {
   return (
-    <header className="sticky top-0 z-20 flex items-center gap-4 border-b border-border bg-background/80 px-6 py-3.5 backdrop-blur-md">
-      <div className="relative flex-1 max-w-2xl">
+    <header className="sticky top-0 z-20 flex flex-wrap items-center gap-3 border-b border-border bg-background/80 px-4 py-3.5 backdrop-blur-md sm:px-6">
+      <div className="relative min-w-[14rem] flex-1 basis-72 lg:max-w-2xl">
         <Search className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
         <input
           type="search"
@@ -18,13 +18,13 @@ export function TopBar() {
         </kbd>
       </div>
 
-      <div className="ml-auto flex items-center gap-2">
+      <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
         <button
           type="button"
           className="flex h-10 items-center gap-2 rounded-xl border border-border bg-card px-3.5 text-sm font-medium text-foreground shadow-sm transition-colors hover:bg-accent/50"
         >
           <SlidersHorizontal className="size-4 text-muted-foreground" />
-          Filters
+          <span className="hidden sm:inline">Filters</span>
         </button>
 
         <button
@@ -52,7 +52,7 @@ export function TopBar() {
             className="flex h-10 items-center gap-2 bg-primary px-4 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
           >
             <Plus className="size-4" />
-            New Submission
+            <span className="hidden sm:inline">New Submission</span>
           </button>
           <button
             type="button"

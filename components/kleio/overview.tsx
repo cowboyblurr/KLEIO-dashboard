@@ -29,11 +29,11 @@ export function Overview() {
   }
 
   return (
-    <div className="flex h-full min-h-0">
-      <main className="min-w-0 flex-1 overflow-y-auto px-6 py-7 lg:px-8">
-        <div className="mx-auto max-w-5xl">
+    <div className="flex h-full min-h-0 flex-col xl:flex-row">
+      <main className="min-w-0 flex-1 overflow-y-auto px-4 py-6 sm:px-6 lg:px-8 lg:py-7">
+        <div className="mx-auto max-w-6xl">
           <header className="mb-6">
-            <h1 className="text-pretty font-serif text-3xl font-semibold tracking-tight text-foreground">
+            <h1 className="text-pretty font-serif text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
               Good morning, Olivia.
             </h1>
             <p className="mt-1.5 text-sm text-muted-foreground">

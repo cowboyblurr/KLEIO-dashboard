@@ -51,7 +51,7 @@ export function SubmissionDrawer({
   onClose: () => void
 }) {
   return (
-    <aside className="flex h-full w-[24rem] shrink-0 flex-col border-l border-border bg-card">
+    <aside className="flex max-h-[min(42rem,calc(100vh-5rem))] w-full shrink-0 flex-col border-t border-border bg-card xl:h-full xl:max-h-none xl:w-[24rem] xl:border-l xl:border-t-0">
       <div className="flex items-center justify-between border-b border-border px-5 py-4">
         <h2 className="text-sm font-semibold text-foreground">Selected Submission</h2>
         <div className="flex items-center gap-1">
@@ -94,18 +94,18 @@ export function SubmissionDrawer({
             />
           </div>
 
-          <div className="mt-4 flex items-start gap-2">
-            <h3 className="font-serif text-xl font-semibold text-foreground">
+          <div className="mt-4 flex min-w-0 items-start gap-2">
+            <h3 className="min-w-0 font-serif text-xl font-semibold text-foreground">
               {submission.artist}
             </h3>
             <BadgeCheck className="mt-1 size-4 shrink-0 text-primary" />
           </div>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
             {submission.location} &middot; {submission.discipline} &middot;{" "}
             {submission.medium}
           </p>
 
-          <div className="mt-4 flex items-center gap-3 rounded-xl border border-border bg-accent/40 p-3">
+          <div className="mt-4 flex flex-wrap items-center gap-3 rounded-xl border border-border bg-accent/40 p-3">
             <CompletionRing value={submission.completeness} />
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-medium text-foreground">
@@ -113,7 +113,7 @@ export function SubmissionDrawer({
               </p>
               <p className="text-xs text-muted-foreground">{submission.programCycle}</p>
             </div>
-            <span className="text-xs font-semibold text-primary tabular-nums">
+            <span className="shrink-0 text-xs font-semibold text-primary tabular-nums">
               {submission.completeness}% Complete
             </span>
           </div>
@@ -165,7 +165,7 @@ export function SubmissionDrawer({
         <div className="flex items-center gap-2">
           <button
             type="button"
-            className="flex h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-primary text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
+            className="flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-primary px-3 py-2 text-center text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
           >
             <Bookmark className="size-4" />
             Move to Shortlist
@@ -180,7 +180,7 @@ export function SubmissionDrawer({
         </div>
         <button
           type="button"
-          className="mt-2 flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-border bg-card text-sm font-medium text-foreground transition-colors hover:bg-accent/50"
+          className="mt-2 flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-border bg-card px-3 py-2 text-center text-sm font-medium text-foreground transition-colors hover:bg-accent/50"
         >
           <Mail className="size-4 text-muted-foreground" />
           Request Additional Information

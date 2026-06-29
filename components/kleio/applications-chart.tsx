@@ -16,7 +16,7 @@ function FilterChip({ label }: { label: string }) {
   return (
     <button
       type="button"
-      className="flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-accent/50"
+      className="flex items-center gap-1.5 whitespace-nowrap rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-accent/50"
     >
       {label}
       <ChevronDown className="size-3.5 text-muted-foreground" />
@@ -52,7 +52,7 @@ export function ApplicationsChart() {
         <h2 className="font-serif text-lg font-semibold text-foreground">
           Applications Over Time
         </h2>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <FilterChip label="All Programs" />
           <FilterChip label="Last 6 months" />
         </div>

@@ -39,7 +39,7 @@ export function StatusBreakdown() {
           </div>
         </div>
 
-        <ul className="flex-1 space-y-2.5">
+        <ul className="min-w-0 flex-1 space-y-2.5">
           {statusBreakdown.map((entry) => (
             <li key={entry.label} className="flex items-center gap-3 text-sm">
               <span
@@ -47,7 +47,7 @@ export function StatusBreakdown() {
                 style={{ backgroundColor: entry.color }}
                 aria-hidden
               />
-              <span className="flex-1 text-foreground">{entry.label}</span>
+              <span className="min-w-0 flex-1 truncate text-foreground">{entry.label}</span>
               <span className="w-12 text-right text-muted-foreground tabular-nums">
                 {entry.pct}
               </span>

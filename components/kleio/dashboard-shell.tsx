@@ -4,7 +4,7 @@ import { TopBar } from "@/components/kleio/top-bar"
 
 export function DashboardShell({ children }: { children: ReactNode }) {
   return (
-    <div className="flex h-screen overflow-hidden bg-background text-foreground">
+    <div className="flex min-h-screen overflow-x-hidden bg-background text-foreground lg:h-screen lg:overflow-hidden">
       <Sidebar />
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <TopBar />

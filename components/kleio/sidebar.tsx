@@ -10,6 +10,7 @@ import { InitialAvatar } from "@/components/kleio/initial-avatar"
 
 export function Sidebar() {
   const pathname = usePathname()
+  const currentPath = pathname === "/" ? pathname : pathname.replace(/\/$/, "")
 
   return (
     <aside className="flex h-screen w-64 shrink-0 flex-col border-r border-border bg-sidebar">
@@ -45,7 +46,7 @@ export function Sidebar() {
             </p>
             <ul className="space-y-0.5">
               {section.items.map((item) => {
-                const active = pathname === item.href
+                const active = currentPath === item.href
                 const Icon = item.icon
                 return (
                   <li key={item.href}>
