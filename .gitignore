@@ -1,5 +1,6 @@
 node_modules
 .pnpm-store
+.corepack
 .next
 out
 dist
