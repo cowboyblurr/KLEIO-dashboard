@@ -1,8 +1,10 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import Image from "next/image"
 import {
   BadgeCheck,
+  CheckCircle2,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
@@ -61,6 +63,25 @@ function getScenarioLabel(submission: Submission) {
   return "Submission context"
 }
 
+function getActionConfirmation(label: string, submission: Submission) {
+  switch (label) {
+    case "Move to Shortlist":
+      return `${submission.artist} moved to the shortlist.`
+    case "Request Missing Materials":
+      return `Material request drafted for ${submission.artist}.`
+    case "View Committee Vote":
+      return `Opened committee vote status for ${submission.artist}.`
+    case "Open Decision Room":
+      return `Decision room opened for ${submission.artist}.`
+    case "Message Pending Reviewer":
+      return "Reminder drafted for the pending committee reviewer."
+    case "Request Additional Information":
+      return `Information request drafted for ${submission.artist}.`
+    default:
+      return `Action recorded for ${submission.artist}.`
+  }
+}
+
 export function SubmissionDrawer({
   submission,
   onPrev,
@@ -74,6 +95,13 @@ export function SubmissionDrawer({
 }) {
   const primaryAction = getPrimaryAction(submission)
   const PrimaryIcon = primaryAction.icon
+  const secondaryLabel =
+    submission.status === "Pending Vote" ? "Message Pending Reviewer" : "Request Additional Information"
+  const [confirmation, setConfirmation] = useState<string | null>(null)
+
+  useEffect(() => {
+    setConfirmation(null)
+  }, [submission.id])
 
   return (
     <aside className="flex h-full w-[21.5rem] shrink-0 flex-col border-l border-border bg-card/95 backdrop-blur-sm xl:w-[22.5rem] 2xl:w-[24rem]">
@@ -211,9 +239,21 @@ export function SubmissionDrawer({
       </div>
 
       <div className="border-t border-border bg-card/95 p-4">
+        {confirmation && (
+          <div
+            role="status"
+            className="mb-3 flex items-start gap-2 rounded-xl border border-[oklch(0.85_0.07_150)] bg-[oklch(0.96_0.04_150)] px-3 py-2 text-xs leading-relaxed text-[oklch(0.4_0.12_150)]"
+          >
+            <CheckCircle2 className="mt-0.5 size-4 shrink-0" />
+            <span>
+              {confirmation} <span className="opacity-70">(demo only — no data leaves this session.)</span>
+            </span>
+          </div>
+        )}
         <div className="flex items-center gap-2">
           <button
             type="button"
+            onClick={() => setConfirmation(getActionConfirmation(primaryAction.label, submission))}
             className="flex h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-primary text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
           >
             <PrimaryIcon className="size-4" />
@@ -229,10 +269,11 @@ export function SubmissionDrawer({
         </div>
         <button
           type="button"
+          onClick={() => setConfirmation(getActionConfirmation(secondaryLabel, submission))}
           className="mt-2 flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-border bg-card text-sm font-medium text-foreground transition-colors hover:bg-accent/50"
         >
           <Mail className="size-4 text-muted-foreground" />
-          {submission.status === "Pending Vote" ? "Message Pending Reviewer" : "Request Additional Information"}
+          {secondaryLabel}
         </button>
       </div>
     </aside>

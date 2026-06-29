@@ -1,5 +1,6 @@
 "use client"
 
+import Image from "next/image"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { ChevronDown, ChevronsUpDown } from "lucide-react"
@@ -13,13 +14,21 @@ export function Sidebar() {
   const programDirector = collaborators.find((person) => person.role === "Program Director") ?? collaborators[0]
 
   return (
-    <aside className="flex h-dvh w-full shrink-0 flex-col border-r border-border bg-sidebar">
+    <aside className="flex h-full w-64 shrink-0 flex-col border-r border-border bg-sidebar">
       <div className="flex items-center justify-between px-6 pt-6 pb-5">
         <Link
           href="/"
-          className="font-serif text-2xl font-semibold tracking-[0.28em] text-foreground"
+          aria-label="KLEIO home"
+          className="inline-flex items-center rounded-md bg-white px-2.5 py-1.5 shadow-sm ring-1 ring-border"
         >
-          KLEIO
+          <Image
+            src="/kleio-wordmark.png"
+            alt="KLEIO"
+            width={1024}
+            height={189}
+            priority
+            className="h-6 w-auto"
+          />
         </Link>
         <button
           type="button"

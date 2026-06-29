@@ -126,6 +126,30 @@ export type ActivityLogEntry = {
   type: "submission" | "review" | "program" | "message" | "decision"
 }
 
+export type MessageAuthor = "Program Team" | "Applicant" | "Reviewer" | "Committee" | "System"
+
+export type MessageEntry = {
+  id: string
+  author: string
+  role: MessageAuthor
+  body: string
+  date: string
+}
+
+export type MessageThread = {
+  id: string
+  submissionId: string
+  subject: string
+  counterpart: string
+  counterpartRole: MessageAuthor
+  channel: "Applicant" | "Reviewer" | "Committee"
+  scenario?: "deadline-triage" | "reviewer-bottleneck" | "strong-shortlist"
+  unread: boolean
+  updatedAt: string
+  preview: string
+  messages: MessageEntry[]
+}
+
 export const demoToday = new Date("2026-06-29T12:00:00Z")
 
 export const institution: Institution = {
@@ -720,6 +744,133 @@ export const activityLog: ActivityLogEntry[] = [
   { id: "log-5", date: "Jun 26, 2026", actor: "System", action: "sent deadline reminder", target: "KLEIO Arthouse Residency", type: "message" },
 ]
 
+export const messageThreads: MessageThread[] = [
+  {
+    id: "thread-mei-lin",
+    submissionId: "mei-lin-zhang",
+    subject: "Missing materials before the July 3 deadline",
+    counterpart: "Mei Lin Zhang",
+    counterpartRole: "Applicant",
+    channel: "Applicant",
+    scenario: "deadline-triage",
+    unread: true,
+    updatedAt: "Jun 29, 2026",
+    preview: "We still need your updated CV, installation dimensions, and one reference contact.",
+    messages: [
+      {
+        id: "thread-mei-lin-1",
+        author: "Avery Thomas",
+        role: "Program Team",
+        body: "Hi Mei Lin — your application for the KLEIO Arthouse Residency looks promising, but three required items are still missing: an updated CV, installation dimensions, and a reference contact. Could you send these before the July 3 deadline so we can move you into review?",
+        date: "Jun 29, 2026",
+      },
+      {
+        id: "thread-mei-lin-2",
+        author: "System",
+        role: "System",
+        body: "Completeness check marked this submission at 82%. Outstanding: Updated CV, Installation dimensions, Reference contact.",
+        date: "Jun 26, 2026",
+      },
+    ],
+  },
+  {
+    id: "thread-sofia",
+    submissionId: "sofia-karim",
+    subject: "Committee vote still pending",
+    counterpart: "Camille Hart",
+    counterpartRole: "Reviewer",
+    channel: "Committee",
+    scenario: "reviewer-bottleneck",
+    unread: true,
+    updatedAt: "Jun 29, 2026",
+    preview: "Two of three reviews are in. Your vote is the last one blocking a decision.",
+    messages: [
+      {
+        id: "thread-sofia-1",
+        author: "Mara Voss",
+        role: "Program Team",
+        body: "Hi Camille — The Second Horizon has two completed reviews and strong scores. Your vote is the last one we need before the committee can advance it. Are you able to submit by end of week?",
+        date: "Jun 29, 2026",
+      },
+      {
+        id: "thread-sofia-2",
+        author: "Sophia Lee",
+        role: "Reviewer",
+        body: "For context, I scored this a 91 — clear finalist for me.",
+        date: "Jun 25, 2026",
+      },
+    ],
+  },
+  {
+    id: "thread-amina",
+    submissionId: "amina-el-badri",
+    subject: "Shortlist recommendation — Echoes of Memory",
+    counterpart: "Sophia Lee",
+    counterpartRole: "Reviewer",
+    channel: "Reviewer",
+    scenario: "strong-shortlist",
+    unread: false,
+    updatedAt: "Jun 28, 2026",
+    preview: "This is the clearest shortlist candidate in the current queue.",
+    messages: [
+      {
+        id: "thread-amina-1",
+        author: "Sophia Lee",
+        role: "Reviewer",
+        body: "Review complete — exceptional material sensitivity and a clear fit for the residency. Recommending we move Amina to the shortlist.",
+        date: "Jun 28, 2026",
+      },
+      {
+        id: "thread-amina-2",
+        author: "Marcus Chen",
+        role: "Reviewer",
+        body: "Agreed. This is the strongest application I've seen this cycle.",
+        date: "Jun 27, 2026",
+      },
+    ],
+  },
+  {
+    id: "thread-daniel",
+    submissionId: "daniel-osei",
+    subject: "Budget clarification before final decision",
+    counterpart: "Daniel Osei",
+    counterpartRole: "Applicant",
+    channel: "Applicant",
+    unread: false,
+    updatedAt: "Jun 28, 2026",
+    preview: "Could you confirm material and fabrication costs for the coastal assemblage?",
+    messages: [
+      {
+        id: "thread-daniel-1",
+        author: "Marcus Chen",
+        role: "Reviewer",
+        body: "Hi Daniel — you've been shortlisted. Before the final decision, could you confirm the material and fabrication costs in your budget outline?",
+        date: "Jun 28, 2026",
+      },
+    ],
+  },
+  {
+    id: "thread-iris",
+    submissionId: "iris-okafor",
+    subject: "Application not yet review-ready",
+    counterpart: "Iris Okafor",
+    counterpartRole: "Applicant",
+    channel: "Applicant",
+    unread: true,
+    updatedAt: "Jun 29, 2026",
+    preview: "A few items are still needed before we can send Signal House to reviewers.",
+    messages: [
+      {
+        id: "thread-iris-1",
+        author: "Avery Thomas",
+        role: "Program Team",
+        body: "Hi Iris — the concept fits the Emerging Image & Archive Fellowship well, but the application is at 64% complete. We still need a portfolio video link, project timeline, reference letter, and budget outline.",
+        date: "Jun 29, 2026",
+      },
+    ],
+  },
+]
+
 const statusOrder: SubmissionStatus[] = [
   "In Review",
   "Shortlisted",
@@ -781,6 +932,7 @@ const needsAttentionCount = allSubmissions.filter(
   (submission) => submission.status === "Pending Info" || submission.status === "Incomplete" || submission.completeness < 85,
 ).length
 const priorityQueueCount = submissions.length
+const unreadMessageCount = messageThreads.filter((thread) => thread.unread).length
 
 export const analytics = {
   totalApplications,
@@ -793,6 +945,7 @@ export const analytics = {
   deadlinesThisWeekCount,
   needsAttentionCount,
   priorityQueueCount,
+  unreadMessageCount,
   activePrograms: programs.filter((program) => program.status === "Open" || program.status === "In Review").length,
   reviewerCompletionRate: `${Math.round((collaborators.reduce((sum, person) => sum + person.reviewsCompleted, 0) / Math.max(collaborators.reduce((sum, person) => sum + person.reviewsAssigned, 0), 1)) * 100)}%`,
 }

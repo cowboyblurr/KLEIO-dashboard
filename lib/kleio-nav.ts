@@ -46,7 +46,7 @@ export const navSections: NavSection[] = [
     heading: "Collaborate",
     items: [
       { label: "Committee", href: "/committee", icon: Vote },
-      { label: "Messages", href: "/messages", icon: MessageSquare, badge: analytics.needsAttentionCount },
+      { label: "Messages", href: "/messages", icon: MessageSquare, badge: analytics.unreadMessageCount },
     ],
   },
   {
