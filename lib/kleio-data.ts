@@ -93,6 +93,21 @@ export type ArtistDocumentMaterial = {
   fileSize?: string
 }
 
+export type AvailabilityPreference = {
+  label: string
+  status: "Available" | "Actively Applying" | "Limited" | "Closed"
+}
+
+export type ArtistInsights = {
+  bestFitOpportunities: string[]
+  strongestMediums: string
+  nextRecommended: {
+    title: string
+    institution: string
+    deadline: string
+  }
+}
+
 export type Artist = {
   id: string
   name: string
@@ -116,6 +131,8 @@ export type Artist = {
   website?: string
   instagram?: string
   contactEmail?: string
+  availability?: AvailabilityPreference[]
+  insights?: ArtistInsights
 }
 
 export type Submission = {
@@ -381,6 +398,12 @@ export const collaborators: Collaborator[] = [
   },
 ]
 
+export const DEMO_ARTIST_ID = "amina-el-badri"
+
+export function getArtistById(id: string) {
+  return artists.find((a) => a.id === id)
+}
+
 export const artists: Artist[] = [
   {
     id: "amina-el-badri",
@@ -390,8 +413,8 @@ export const artists: Artist[] = [
     medium: "Installation",
     bio: "Amina builds immersive environments from fabric, sound, archival fragments, and light. Her practice moves between material culture and personal archive, creating spaces where collective memory becomes tangible. Born in Cairo, she trained at the Cairo Faculty of Fine Arts before completing a residency at Darat al Funun, Amman.",
     statement:
-      "My work investigates the way personal and collective memories are preserved, distorted, and remembered across generations. Through material, light, and archival traces, I build immersive environments that ask viewers to sit with what lingers after a moment has passed.",
-    tags: ["Memory", "Installation", "Archive", "Material Practice", "Atmospheric", "Conceptual"],
+      "My work explores the relationship between memory, space, and visibility through minimal forms and subtle light. I build immersive environments that ask viewers to sit with what lingers after a moment has passed.",
+    tags: ["Abstract", "Installation", "Minimal", "Conceptual", "Atmospheric"],
     portfolioImage: "/artwork/echoes-of-memory.png",
     cvStatus: "Complete",
     documentStatus: "Complete",
@@ -399,9 +422,9 @@ export const artists: Artist[] = [
     passportCompleteness: 95,
     works: [
       { id: "echoes-of-memory", title: "Echoes of Memory", year: "2024", medium: "Installation", dimensions: "300 × 400 × 380 cm", image: "/artwork/echoes-of-memory.png" },
-      { id: "suspended-archive", title: "Suspended Archive", year: "2023", medium: "Site-responsive installation, fabric, archival material", dimensions: "Variable dimensions", image: "/placeholder.svg" },
-      { id: "light-that-remains", title: "The Light That Remains", year: "2022", medium: "Multi-channel video, fabric, sound", dimensions: "200 × 300 cm", image: "/placeholder.svg" },
-      { id: "between-forms", title: "Between Forms", year: "2021", medium: "Archival materials, found objects, sound", dimensions: "Variable", image: "/placeholder.svg" },
+      { id: "between-breaths", title: "Between Breaths", year: "2023", medium: "Fabric, light, sound", dimensions: "Variable dimensions", image: "/placeholder.svg" },
+      { id: "thresholds", title: "Thresholds", year: "2023", medium: "Site-responsive installation", dimensions: "200 × 300 cm", image: "/placeholder.svg" },
+      { id: "liminal-field", title: "Liminal Field", year: "2022", medium: "Archival materials, fabric", dimensions: "Variable", image: "/placeholder.svg" },
     ],
     exhibitions: [
       { title: "Darat al Funun Artist Residency", venue: "Darat al Funun", location: "Amman, Jordan", year: "2024", type: "Residency", badge: "Residency" },
@@ -414,15 +437,28 @@ export const artists: Artist[] = [
       { label: "Artist CV", status: "Demo", fileName: "amina-el-badri-cv-2026.pdf", fileSize: "1.2 MB" },
       { label: "Artist Statement", status: "Demo", fileName: "amina-el-badri-statement.pdf", fileSize: "0.6 MB" },
       { label: "Portfolio PDF", status: "Demo", fileName: "amina-el-badri-portfolio.pdf", fileSize: "24 MB" },
-      { label: "Project Proposal", status: "Demo", fileName: "echoes-of-memory-proposal.pdf", fileSize: "8 MB" },
-      { label: "Budget Outline", status: "Available" },
-      { label: "References", status: "Available" },
+      { label: "Project Deck", status: "Demo", fileName: "echoes-of-memory-deck.pdf", fileSize: "8 MB" },
     ],
-    methods: ["Installation", "Archival Practice", "Material Sculpture", "Sound", "Fabric"],
-    themes: ["Memory", "Archive", "Light", "Trace", "Collective History", "Site-responsive"],
+    methods: ["Light", "Fabric", "Steel", "Glass", "Installation"],
+    themes: ["Memory", "Perception", "Presence", "Space"],
     website: "aminaelbadri.com",
     instagram: "@amina.albadri",
     contactEmail: "amina@aminaelbadri.com",
+    availability: [
+      { label: "Open to Residencies", status: "Available" },
+      { label: "Open to Exhibitions", status: "Available" },
+      { label: "Open Calls", status: "Actively Applying" },
+      { label: "Commissions", status: "Available" },
+    ],
+    insights: {
+      bestFitOpportunities: ["Installation residencies", "Archive-based fellowships", "Material practice grants"],
+      strongestMediums: "Installation, fabric, and light-based work with archival research depth.",
+      nextRecommended: {
+        title: "KLEIO Arthouse Residency 2026",
+        institution: "KLEIO Arthouse",
+        deadline: "Aug 14, 2026",
+      },
+    },
   },
   {
     id: "mei-lin-zhang",
