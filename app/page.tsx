@@ -1,10 +1,5 @@
-import { DashboardShell } from "@/components/kleio/dashboard-shell"
-import { Overview } from "@/components/kleio/overview"
+import { LandingPage } from "@/components/kleio/landing-page"
 
 export default function Page() {
-  return (
-    <DashboardShell>
-      <Overview />
-    </DashboardShell>
-  )
+  return <LandingPage />
 }

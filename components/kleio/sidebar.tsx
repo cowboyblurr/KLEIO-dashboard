@@ -1,6 +1,5 @@
 "use client"
 
-import Image from "next/image"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { ChevronDown, ChevronsUpDown } from "lucide-react"
@@ -8,7 +7,7 @@ import { cn } from "@/lib/utils"
 import { navSections } from "@/lib/kleio-nav"
 import { collaborators, institution } from "@/lib/kleio-data"
 import { InitialAvatar } from "@/components/kleio/initial-avatar"
-import { assetPath } from "@/lib/asset-path"
+import { KleioWordmarkLink } from "@/components/kleio/kleio-wordmark-link"
 
 export function Sidebar() {
   const pathname = usePathname()
@@ -17,20 +16,7 @@ export function Sidebar() {
   return (
     <aside className="flex h-full w-64 shrink-0 flex-col border-r border-border bg-sidebar">
       <div className="flex items-center justify-between px-6 pt-6 pb-5">
-        <Link
-          href="/"
-          aria-label="KLEIO home"
-          className="inline-flex items-center rounded-md bg-white px-2.5 py-1.5 shadow-sm ring-1 ring-border"
-        >
-          <Image
-            src={assetPath("/kleio-wordmark.png")}
-            alt="KLEIO"
-            width={1024}
-            height={189}
-            priority
-            className="h-6 w-auto"
-          />
-        </Link>
+        <KleioWordmarkLink className="rounded-md bg-white px-2.5 py-1.5 shadow-sm ring-1 ring-border" />
         <button
           type="button"
           className="grid size-7 place-items-center rounded-md border border-border text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"

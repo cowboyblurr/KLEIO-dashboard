@@ -1,10 +1,12 @@
 "use client"
 
 import Link from "next/link"
-import { Bell, Bookmark, ChevronDown, Plus, SlidersHorizontal, Search } from "lucide-react"
+import { Bell, Bookmark, ChevronDown, LogOut, Plus, SlidersHorizontal, Search } from "lucide-react"
 import { analytics } from "@/lib/kleio-analytics"
+import { useDemoSignOut } from "@/components/kleio/auth-gate"
 
 export function TopBar() {
+  const signOut = useDemoSignOut()
   return (
     <header className="sticky top-0 z-20 flex min-h-16 items-center gap-3 border-b border-border bg-background/85 px-5 py-3 backdrop-blur-xl xl:px-7">
       <div className="relative flex-1 max-w-3xl">
@@ -22,7 +24,7 @@ export function TopBar() {
 
       <div className="ml-auto flex shrink-0 items-center gap-2">
         <Link
-          href="/submissions"
+          href="/submissions/"
           className="flex h-10 items-center gap-2 rounded-xl border border-border bg-card px-3.5 text-sm font-medium text-foreground shadow-sm transition-colors hover:bg-accent/50"
         >
           <SlidersHorizontal className="size-4 text-muted-foreground" />
@@ -30,7 +32,7 @@ export function TopBar() {
         </Link>
 
         <Link
-          href="/shortlist"
+          href="/shortlist/"
           aria-label="Open shortlist"
           className="grid size-10 place-items-center rounded-xl border border-border bg-card text-muted-foreground shadow-sm transition-colors hover:bg-accent/50 hover:text-foreground"
         >
@@ -38,7 +40,7 @@ export function TopBar() {
         </Link>
 
         <Link
-          href="/messages"
+          href="/messages/"
           aria-label="Notifications"
           className="relative grid size-10 place-items-center rounded-xl border border-border bg-card text-muted-foreground shadow-sm transition-colors hover:bg-accent/50 hover:text-foreground"
         >
@@ -50,20 +52,29 @@ export function TopBar() {
 
         <div className="ml-1 flex items-center overflow-hidden rounded-xl shadow-sm">
           <Link
-            href="/programs/new"
+            href="/programs/new/"
             className="flex h-10 items-center gap-2 bg-primary px-4 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
           >
             <Plus className="size-4" />
             Create Open Call
           </Link>
           <Link
-            href="/programs"
+            href="/programs/"
             aria-label="More program options"
             className="grid h-10 w-9 place-items-center border-l border-primary-foreground/20 bg-primary text-primary-foreground transition-colors hover:bg-primary/90"
           >
             <ChevronDown className="size-4" />
           </Link>
         </div>
+
+        <button
+          type="button"
+          onClick={signOut}
+          className="ml-1 flex h-10 items-center gap-1.5 rounded-xl border border-border bg-card px-3 text-xs font-medium text-muted-foreground shadow-sm transition-colors hover:bg-accent/50 hover:text-foreground"
+        >
+          <LogOut className="size-3.5" />
+          Sign out
+        </button>
       </div>
     </header>
   )

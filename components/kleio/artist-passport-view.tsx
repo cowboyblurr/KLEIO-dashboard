@@ -13,6 +13,7 @@ import {
   Star,
 } from "lucide-react"
 import { artists, allSubmissions, programs, institution } from "@/lib/kleio-data"
+import { artistProfileHref } from "@/lib/kleio-demo-auth"
 import type { Submission } from "@/lib/kleio-data"
 import { getSubmissionReviewerProgress } from "@/lib/kleio-analytics"
 import { InitialAvatar } from "@/components/kleio/initial-avatar"
@@ -217,9 +218,9 @@ export function ArtistPassportView({ artistId }: { artistId: string }) {
       <main className="flex h-full items-center justify-center">
         <div className="text-center">
           <p className="font-serif text-xl text-foreground">Artist not found</p>
-          <Link href="/artists/" className="mt-3 inline-flex items-center gap-1 text-sm text-primary hover:text-primary/80">
+          <Link href="/review-queue/" className="mt-3 inline-flex items-center gap-1 text-sm text-primary hover:text-primary/80">
             <ArrowLeft className="size-4" />
-            Back to Artists
+            Back to Review Queue
           </Link>
         </div>
       </main>
@@ -229,15 +230,34 @@ export function ArtistPassportView({ artistId }: { artistId: string }) {
   return (
     <main className="h-full overflow-y-auto bg-background">
       <div className="mx-auto max-w-[1400px] px-5 py-6 xl:px-8 xl:py-7">
-        <div className="mb-5 flex items-center justify-between">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Link href="/review-queue/" className="transition-colors hover:text-foreground">Review Queue</Link>
-            <ChevronRight className="size-3.5" />
-            <span className="font-medium text-foreground">{artist.name}</span>
+        <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center gap-3">
+            <Link
+              href="/review-queue/"
+              className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+            >
+              <ArrowLeft className="size-4" />
+              Back to Review Queue
+            </Link>
+            <span className="text-muted-foreground/40">·</span>
+            <Link
+              href="/dashboard/"
+              className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+            >
+              Dashboard overview
+            </Link>
           </div>
           <span className="rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium text-muted-foreground">
             {institution.demoLabel}
           </span>
+        </div>
+
+        <div className="mb-5 flex items-center gap-2 text-sm text-muted-foreground">
+          <Link href="/review-queue/" className="transition-colors hover:text-foreground">Review Queue</Link>
+          <ChevronRight className="size-3.5" />
+          <Link href={artistProfileHref(artist.id)} className="font-medium text-foreground">
+            {artist.name}
+          </Link>
         </div>
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_22rem] lg:items-start">

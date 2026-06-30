@@ -168,3 +168,13 @@
     @apply font-sans;
   }
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .kleio-transparent-center-video {
+    display: none;
+  }
+}
+
+.kleio-login-input::placeholder {
+  color: #a19a91;
+}

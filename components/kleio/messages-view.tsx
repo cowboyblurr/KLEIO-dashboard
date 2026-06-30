@@ -1,10 +1,12 @@
 "use client"
 
 import { useState } from "react"
+import Link from "next/link"
 import { Mail, Send } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { institution, messageThreads } from "@/lib/kleio-data"
 import { analytics, getDemoMessageForThread, isSubmissionMessagePending } from "@/lib/kleio-analytics"
+import { artistProfileHref } from "@/lib/kleio-demo-auth"
 import { InitialAvatar } from "@/components/kleio/initial-avatar"
 
 const channelStyles: Record<string, string> = {
@@ -63,9 +65,19 @@ export function MessagesView() {
                     <InitialAvatar name={thread.counterpart} className="size-9 text-xs" />
                     <span className="min-w-0 flex-1">
                       <span className="flex items-center justify-between gap-2">
-                        <span className="truncate text-sm font-medium text-foreground">
-                          {thread.counterpart}
-                        </span>
+                        {thread.channel === "Applicant" ? (
+                          <Link
+                            href={artistProfileHref(thread.submissionId)}
+                            onClick={(e) => e.stopPropagation()}
+                            className="truncate text-sm font-medium text-foreground hover:text-primary"
+                          >
+                            {thread.counterpart}
+                          </Link>
+                        ) : (
+                          <span className="truncate text-sm font-medium text-foreground">
+                            {thread.counterpart}
+                          </span>
+                        )}
                         {isSubmissionMessagePending(thread.submissionId) && (
                           <span className="size-2 shrink-0 rounded-full bg-primary" aria-label="Pending message" />
                         )}
@@ -93,7 +105,18 @@ export function MessagesView() {
                   {selected.subject}
                 </h2>
                 <p className="mt-0.5 text-xs text-muted-foreground">
-                  with {selected.counterpart} · {selected.counterpartRole}
+                  with{" "}
+                  {selected.channel === "Applicant" ? (
+                    <Link
+                      href={artistProfileHref(selected.submissionId)}
+                      className="font-medium text-foreground hover:text-primary"
+                    >
+                      {selected.counterpart}
+                    </Link>
+                  ) : (
+                    selected.counterpart
+                  )}{" "}
+                  · {selected.counterpartRole}
                 </p>
               </div>
               <span

@@ -1,6 +1,5 @@
 "use client"
 
-import Image from "next/image"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
@@ -15,16 +14,24 @@ import {
 import { cn } from "@/lib/utils"
 import { DEMO_ARTIST_ID, getArtistById } from "@/lib/kleio-data"
 import { InitialAvatar } from "@/components/kleio/initial-avatar"
-import { assetPath } from "@/lib/asset-path"
+import { KleioWordmarkLink } from "@/components/kleio/kleio-wordmark-link"
 
-const navItems = [
-  { href: "/artist-dashboard/", label: "Overview", icon: LayoutDashboard },
+type NavItem = {
+  href?: string
+  label: string
+  icon: typeof LayoutDashboard
+  activeMatch?: string
+  comingSoon?: boolean
+}
+
+const navItems: NavItem[] = [
+  { href: "/artist-dashboard/", label: "Overview", icon: LayoutDashboard, activeMatch: "/artist-dashboard" },
   { href: "/artist-dashboard/", label: "Creative Passport", icon: Sparkles, activeMatch: "/artist-dashboard" },
-  { href: "/artist-dashboard/", label: "Portfolio", icon: FolderOpen },
-  { href: "/artist-dashboard/", label: "Opportunities", icon: Briefcase },
-  { href: "/artist-dashboard/", label: "Applications", icon: FileText },
-  { href: "/messages/", label: "Messages", icon: MessageSquare, badge: 1 },
-  { href: "/artist-dashboard/", label: "Settings", icon: Settings },
+  { label: "Portfolio", icon: FolderOpen, comingSoon: true },
+  { label: "Opportunities", icon: Briefcase, comingSoon: true },
+  { label: "Applications", icon: FileText, comingSoon: true },
+  { label: "Messages", icon: MessageSquare, comingSoon: true },
+  { label: "Settings", icon: Settings, comingSoon: true },
 ]
 
 export function ArtistSidebar() {
@@ -34,20 +41,7 @@ export function ArtistSidebar() {
   return (
     <aside className="flex h-full w-64 shrink-0 flex-col border-r border-border bg-sidebar">
       <div className="flex items-center justify-between px-6 pt-6 pb-5">
-        <Link
-          href="/artist-dashboard/"
-          aria-label="KLEIO artist home"
-          className="inline-flex items-center rounded-md bg-white px-2.5 py-1.5 shadow-sm ring-1 ring-border"
-        >
-          <Image
-            src={assetPath("/kleio-wordmark.png")}
-            alt="KLEIO"
-            width={1024}
-            height={189}
-            priority
-            className="h-6 w-auto"
-          />
-        </Link>
+        <KleioWordmarkLink className="rounded-md bg-white px-2.5 py-1.5 shadow-sm ring-1 ring-border" />
       </div>
 
       <nav className="flex-1 overflow-y-auto px-3 pb-4">
@@ -56,12 +50,29 @@ export function ArtistSidebar() {
         </p>
         <ul className="space-y-0.5">
           {navItems.map((item) => {
-            const active = item.activeMatch ? pathname.startsWith(item.activeMatch) : pathname === item.href
+            const active = item.href
+              ? item.activeMatch
+                ? pathname.startsWith(item.activeMatch)
+                : pathname === item.href
+              : false
             const Icon = item.icon
+
+            if (item.comingSoon) {
+              return (
+                <li key={item.label}>
+                  <span className="group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground/60">
+                    <Icon className="size-4 shrink-0 text-muted-foreground/50" />
+                    <span className="flex-1">{item.label}</span>
+                    <span className="text-[0.6rem] font-medium text-muted-foreground">Coming soon</span>
+                  </span>
+                </li>
+              )
+            }
+
             return (
               <li key={item.label}>
                 <Link
-                  href={item.href}
+                  href={item.href!}
                   aria-current={active ? "page" : undefined}
                   className={cn(
                     "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
@@ -72,11 +83,6 @@ export function ArtistSidebar() {
                 >
                   <Icon className={cn("size-4 shrink-0", active ? "text-primary" : "text-muted-foreground")} />
                   <span className="flex-1">{item.label}</span>
-                  {item.badge != null && (
-                    <span className="rounded-full bg-primary/15 px-1.5 py-0.5 text-[0.65rem] font-semibold text-primary">
-                      {item.badge}
-                    </span>
-                  )}
                 </Link>
               </li>
             )
@@ -93,6 +99,12 @@ export function ArtistSidebar() {
               <p className="truncate text-xs text-muted-foreground">Creative Passport</p>
             </div>
           </div>
+          <Link
+            href="/"
+            className="mt-3 block text-center text-[0.68rem] font-medium text-muted-foreground transition-colors hover:text-foreground"
+          >
+            Public home
+          </Link>
         </div>
       )}
     </aside>

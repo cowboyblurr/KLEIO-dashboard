@@ -1,12 +1,14 @@
 "use client"
 
 import { useState } from "react"
+import Link from "next/link"
 import {
   analytics,
   getLatestSubmissionNote,
   getShortlistGroups,
   getSubmissionReviewerProgress,
 } from "@/lib/kleio-analytics"
+import { artistProfileHref } from "@/lib/kleio-demo-auth"
 import { DemoPageShell, DemoStatRow } from "@/components/kleio/demo-page-shell"
 import { StatusPill } from "@/components/kleio/pills"
 
@@ -63,7 +65,12 @@ export function ShortlistPageView() {
                     <li key={submission.id} className="px-5 py-4">
                       <div className="flex flex-wrap items-start justify-between gap-3">
                         <div>
-                          <p className="font-medium text-foreground">{submission.artist}</p>
+                          <Link
+                            href={artistProfileHref(submission.artistId)}
+                            className="font-medium text-foreground transition-colors hover:text-primary"
+                          >
+                            {submission.artist}
+                          </Link>
                           <p className="text-sm text-muted-foreground">
                             {submission.projectTitle} · {submission.program}
                           </p>

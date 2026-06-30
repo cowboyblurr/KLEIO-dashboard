@@ -3,8 +3,11 @@
 import { DEMO_ARTIST_ID, getArtistById } from "@/lib/kleio-data"
 import { ArtistPassportHero, ArtistPassportSections } from "@/components/kleio/artist-passport-body"
 import { ArtistInsightsPanel } from "@/components/kleio/artist-insights-panel"
+import { useDemoSignOut } from "@/components/kleio/auth-gate"
+import { LogOut } from "lucide-react"
 
 export function ArtistDashboardView() {
+  const signOut = useDemoSignOut()
   const artist = getArtistById(DEMO_ARTIST_ID)
 
   if (!artist) {
@@ -25,9 +28,19 @@ export function ArtistDashboardView() {
               Your reusable artist profile for applications, portfolios, and opportunities.
             </p>
           </div>
-          <span className="rounded-full border border-border bg-background px-3 py-1.5 text-xs font-medium text-muted-foreground">
-            Demo environment · Synthetic data
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="rounded-full border border-border bg-background px-3 py-1.5 text-xs font-medium text-muted-foreground">
+              Demo environment · Synthetic data
+            </span>
+            <button
+              type="button"
+              onClick={signOut}
+              className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground"
+            >
+              <LogOut className="size-3.5" />
+              Sign out
+            </button>
+          </div>
         </div>
       </div>
 

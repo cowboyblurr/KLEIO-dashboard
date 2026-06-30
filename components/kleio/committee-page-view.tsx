@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { analytics, getReviewerProgress, getSubmissionReviewerProgress } from "@/lib/kleio-analytics"
 import { allSubmissions } from "@/lib/kleio-data"
+import { artistProfileHref } from "@/lib/kleio-demo-auth"
 import { DemoPageShell, DemoStatRow } from "@/components/kleio/demo-page-shell"
 import { InitialAvatar } from "@/components/kleio/initial-avatar"
 
@@ -28,7 +29,11 @@ export function CommitteePageView() {
             Scenario · Reviewer bottleneck
           </p>
           <p className="mt-2 font-medium text-foreground">
-            {sofiaScenario.artist} — {sofiaScenario.projectTitle}
+            <Link href={artistProfileHref(sofiaScenario.artistId)} className="hover:text-primary transition-colors">
+              {sofiaScenario.artist}
+            </Link>
+            {" — "}
+            {sofiaScenario.projectTitle}
           </p>
           <p className="mt-1 text-sm text-muted-foreground">
             Two reviews complete. One committee vote is still pending before this finalist can advance.
@@ -53,7 +58,12 @@ export function CommitteePageView() {
               const progress = getSubmissionReviewerProgress(submission.id)
               return (
                 <li key={submission.id} className="px-5 py-4">
-                  <p className="font-medium text-foreground">{submission.artist}</p>
+                  <Link
+                    href={artistProfileHref(submission.artistId)}
+                    className="font-medium text-foreground transition-colors hover:text-primary"
+                  >
+                    {submission.artist}
+                  </Link>
                   <p className="text-sm text-muted-foreground">{submission.projectTitle}</p>
                   <p className="mt-2 text-xs text-muted-foreground">
                     Reviews completed {progress.completed}/{progress.total}

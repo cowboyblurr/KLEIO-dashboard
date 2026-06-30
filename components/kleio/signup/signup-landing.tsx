@@ -1,18 +1,25 @@
 import Image from "next/image"
 import Link from "next/link"
 import { Building2, Palette } from "lucide-react"
-import { assetPath } from "@/lib/asset-path"
+import { KleioWordmarkLink } from "@/components/kleio/kleio-wordmark-link"
 
 export function SignupLanding() {
   return (
     <div className="flex min-h-screen flex-col bg-[oklch(0.985_0.005_287)]">
       <header className="border-b border-border bg-white/80 px-5 py-6 backdrop-blur-sm">
         <div className="mx-auto flex max-w-4xl justify-center">
-          <Image src={assetPath("/kleio-wordmark.png")} alt="KLEIO" width={1024} height={189} priority className="h-8 w-auto" />
+          <KleioWordmarkLink imageClassName="h-8 w-auto" priority />
         </div>
       </header>
 
       <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col items-center justify-center px-5 py-12">
+        <Link
+          href="/"
+          className="mb-8 self-start text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+        >
+          ← Back to KLEIO
+        </Link>
+
         <div className="mb-10 text-center">
           <h1 className="font-serif text-4xl font-semibold tracking-tight text-foreground">Welcome to KLEIO</h1>
           <p className="mt-3 max-w-lg text-base text-muted-foreground">

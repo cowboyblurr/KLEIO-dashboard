@@ -1,15 +1,17 @@
 "use client"
 
-import Image from "next/image"
 import Link from "next/link"
 import { ChevronDown, ChevronRight } from "lucide-react"
 import { assetPath } from "@/lib/asset-path"
+import { LandingLoginCard } from "@/components/kleio/landing-login-card"
+import { ExploreArthouseLink } from "@/components/kleio/smart-home-link"
+import { KleioWordmarkLink } from "@/components/kleio/kleio-wordmark-link"
 
 // ─── tiny icon components ────────────────────────────────────────────────────
 
 function ArtistIcon() {
   return (
-    <svg width="22" height="22" viewBox="0 0 28 28" fill="none" aria-hidden>
+    <svg width="16" height="16" viewBox="0 0 28 28" fill="none" aria-hidden>
       <circle cx="14" cy="9" r="4" stroke="currentColor" strokeWidth="1.4" />
       <path d="M6 24c0-4.418 3.582-8 8-8s8 3.582 8 8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
     </svg>
@@ -18,7 +20,7 @@ function ArtistIcon() {
 
 function InstitutionIcon() {
   return (
-    <svg width="22" height="22" viewBox="0 0 28 28" fill="none" aria-hidden>
+    <svg width="16" height="16" viewBox="0 0 28 28" fill="none" aria-hidden>
       <path d="M4 24h20M14 4l10 6H4L14 4Z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
       <rect x="7" y="10" width="3" height="10" rx="0.5" stroke="currentColor" strokeWidth="1.4" />
       <rect x="12.5" y="10" width="3" height="10" rx="0.5" stroke="currentColor" strokeWidth="1.4" />
@@ -27,80 +29,82 @@ function InstitutionIcon() {
   )
 }
 
-const navLinkStyle = { color: "#7a7368", letterSpacing: "0.04em" } as const
-const inkColor = "#1e1b17"
-const mutedColor = "#9a9186"
-const borderCol = "oklch(0.88 0.01 290)"
+const navLinkStyle = { color: "#6F6882", letterSpacing: "0.04em" } as const
+
+const inkColor = "#292631"
+const mutedColor = "#7F7890"
+
+const cardBg = "#FFFFFF"
+
+const lavenderLine = "#D8D0F2"
+const lavenderSoftLine = "#E7E1F7"
+const lavenderMist = "#F7F4FF"
+const lavenderAccent = "#A997E8"
+const lavenderDeep = "#5B4B8A"
+
+const cardShadow = "0 18px 48px rgba(82, 64, 130, 0.08)"
 
 // ─── main page ───────────────────────────────────────────────────────────────
 
 export function LandingPage() {
   return (
-    <main className="relative min-h-screen overflow-hidden bg-[#f8f5ef]">
-      {/* ── fixed-ratio artboard stage (matches reference 1672×941) ──────── */}
-      <section className="absolute left-1/2 top-0 aspect-[1672/941] h-screen max-h-screen -translate-x-1/2 overflow-hidden">
-        {/* background fills the stage exactly — no crop, no zoom */}
-        <Image
-          src={assetPath("/landing/kleio-glass-gallery-bg.png")}
-          alt=""
-          fill
-          priority
-          sizes="100vw"
-          aria-hidden
-          className="absolute inset-0 h-full w-full object-fill"
-        />
-        <div className="absolute inset-0 bg-white/10" aria-hidden />
+    <main className="relative h-dvh min-h-[680px] w-full overflow-hidden bg-white text-[#292631]">
+      {/* ── header ──────────────────────────────────────────────────────── */}
+      <header className="absolute left-0 top-0 z-30 h-[96px] w-full">
+        <div className="relative mx-auto h-full w-full max-w-[1280px] px-8 max-md:px-5">
+          <nav className="absolute left-8 top-1/2 flex -translate-y-1/2 items-center gap-8 max-md:left-5 max-md:gap-4">
+            {["About", "Manifesto", "Journal"].map((label) => (
+              <a key={label} href="#" className="text-[0.78rem] font-medium tracking-wide hover:opacity-70" style={navLinkStyle}>
+                {label}
+              </a>
+            ))}
+          </nav>
 
-        {/* ── top navigation ──────────────────────────────────────────── */}
-        <nav className="absolute left-[12%] top-[4.4%] flex items-center gap-7">
-          {["About", "Manifesto", "Journal"].map((label) => (
-            <a key={label} href="#" className="text-[0.78rem] font-medium tracking-wide hover:opacity-70" style={navLinkStyle}>
-              {label}
-            </a>
-          ))}
-        </nav>
-
-        <div className="absolute left-1/2 top-[2.4%] -translate-x-1/2">
-          <Link href="/" aria-label="KLEIO home">
-            <Image
-              src={assetPath("/kleio-wordmark.png")}
-              alt="KLEIO"
-              width={1024}
-              height={189}
+          <div className="absolute left-1/2 top-[62px] -translate-x-1/2 -translate-y-1/2">
+            <KleioWordmarkLink
+              imageClassName="h-[clamp(2rem,2.75vw,3rem)] w-auto"
+              imageStyle={{ filter: "brightness(0) saturate(100%) invert(16%) sepia(5%) saturate(800%) hue-rotate(220deg)" }}
               priority
-              className="h-[clamp(2rem,3vw,3.25rem)] w-auto"
-              style={{ filter: "brightness(0) saturate(100%) invert(16%) sepia(5%) saturate(800%) hue-rotate(220deg)" }}
             />
-          </Link>
+          </div>
+
+          <nav className="absolute right-8 top-1/2 flex -translate-y-1/2 items-center gap-7 max-md:right-5 max-md:gap-4">
+            <ExploreArthouseLink className="text-[0.78rem] font-medium tracking-wide hover:opacity-70 max-md:hidden" style={navLinkStyle}>
+              Explore Arthouse
+            </ExploreArthouseLink>
+            <button type="button" className="flex items-center gap-1 text-[0.78rem] font-medium tracking-wide" style={navLinkStyle}>
+              EN <ChevronDown className="size-3" />
+            </button>
+          </nav>
         </div>
+      </header>
 
-        <nav className="absolute right-[12%] top-[4.4%] flex items-center gap-6">
-          <Link href="/" className="text-[0.78rem] font-medium tracking-wide hover:opacity-70" style={navLinkStyle}>
-            Explore Arthouse
-          </Link>
-          <button type="button" className="flex items-center gap-1 text-[0.78rem] font-medium tracking-wide" style={navLinkStyle}>
-            EN <ChevronDown className="size-3" />
-          </button>
-        </nav>
-
-        {/* ── hero headline ───────────────────────────────────────────── */}
-        <div className="absolute left-1/2 top-[11.8%] w-[660px] max-w-[90%] -translate-x-1/2 text-center">
-          <h1 className="font-serif leading-[1.15] tracking-tight" style={{ color: inkColor, fontSize: "clamp(1.6rem, 2.2vw, 2.25rem)" }}>
+      {/* ── viewport grid stage ─────────────────────────────────────────── */}
+      <section
+        className="absolute inset-x-0 top-[104px] z-10 grid h-[558px] px-8 max-md:px-5"
+        style={{
+          gridTemplateRows: "112px 190px 220px 36px",
+        }}
+      >
+        {/* Row 1 — hero */}
+        <div className="flex h-full flex-col items-center justify-start text-center">
+          <h1
+            className="font-serif tracking-tight"
+            style={{ color: inkColor, fontSize: "clamp(1.45rem, 1.95vw, 2.05rem)", lineHeight: 0.98 }}
+          >
             Where artistic vision
             <br />
             <em style={{ fontStyle: "italic", fontWeight: 400 }}>meets institutional memory.</em>
           </h1>
-        </div>
 
-        {/* ── subtitle ────────────────────────────────────────────────── */}
-        <div className="absolute left-1/2 top-[22.5%] w-[480px] max-w-[88%] -translate-x-1/2 text-center">
           <p
+            className="mx-auto mt-2.5 max-w-[520px]"
             style={{
-              color: "#7a7368",
-              fontSize: "0.66rem",
-              letterSpacing: "0.18em",
+              color: mutedColor,
+              fontSize: "clamp(0.5rem, 0.62vw, 0.6rem)",
+              letterSpacing: "0.20em",
               textTransform: "uppercase",
-              lineHeight: 1.8,
+              lineHeight: 1.42,
             }}
           >
             KLEIO Arthouse is an intelligent ecosystem
@@ -111,132 +115,116 @@ export function LandingPage() {
           </p>
         </div>
 
-        {/* ── login + join cards row (lower center, over plinth) ───────── */}
-        <div className="absolute left-1/2 top-[70.3%] grid w-[900px] max-w-[94%] -translate-x-1/2 -translate-y-1/2 grid-cols-[1fr_40px_1fr] items-center gap-0 max-lg:grid-cols-1 max-lg:gap-4">
-          {/* Login card */}
-          <div
-            className="rounded-md p-7 shadow-xl"
-            style={{ backgroundColor: "rgba(255, 253, 250, 0.97)", border: `1px solid ${borderCol}`, backdropFilter: "blur(12px)" }}
+        {/* Row 2 — video */}
+        <div className="flex h-full items-center justify-center">
+          <video
+            className="kleio-transparent-center-video h-auto max-h-[185px] w-[clamp(300px,26vw,430px)] object-contain"
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="metadata"
+            aria-hidden
           >
-            <h2 className="font-serif text-lg font-semibold" style={{ color: inkColor, letterSpacing: "-0.01em" }}>
-              Welcome back
-            </h2>
-            <p className="mt-1 text-xs" style={{ color: mutedColor }}>
-              Log in to your account
-            </p>
+            <source src={assetPath("/landing/kleio-transparent-center-video.mp4")} type="video/mp4" />
+          </video>
+        </div>
 
-            <div className="mt-4 space-y-2.5">
-              <input
-                type="email"
-                placeholder="Email address"
-                className="h-9 w-full rounded-sm border bg-transparent px-3 outline-none"
-                style={{ borderColor: borderCol, color: inkColor, fontSize: "0.82rem" }}
-              />
-              <input
-                type="password"
-                placeholder="Password"
-                className="h-9 w-full rounded-sm border bg-transparent px-3 outline-none"
-                style={{ borderColor: borderCol, color: inkColor, fontSize: "0.82rem" }}
-              />
-            </div>
-
-            <div className="mt-2.5 flex items-center justify-between gap-3">
-              <a href="#" className="text-[0.72rem]" style={{ color: mutedColor }}>
-                Forgot password?
-              </a>
-              <Link
-                href="/"
-                className="flex h-9 items-center justify-center gap-1.5 rounded-sm px-5 font-medium transition-opacity hover:opacity-90"
-                style={{ backgroundColor: "oklch(0.93 0.04 290)", color: "oklch(0.38 0.12 287)", fontSize: "0.82rem", letterSpacing: "0.02em" }}
-              >
-                Login
-                <ChevronRight className="size-3.5" />
-              </Link>
-            </div>
-          </div>
+        {/* Row 3 — login + join cards */}
+        <div className="mx-auto grid h-full w-full max-w-[980px] grid-cols-[minmax(0,1fr)_26px_minmax(0,1fr)] items-stretch gap-4">
+          <LandingLoginCard />
 
           {/* "or" divider */}
-          <div className="flex items-center justify-center max-lg:hidden">
-            <div className="flex flex-col items-center gap-2">
-              <div className="h-9 w-px" style={{ backgroundColor: borderCol }} />
-              <span className="font-serif text-xs italic" style={{ color: "#b0a898", letterSpacing: "0.04em" }}>
+          <div className="flex items-center justify-center">
+            <div className="flex flex-col items-center justify-center">
+              <div className="h-6 w-px" style={{ backgroundColor: lavenderLine }} />
+              <span className="my-1.5 font-serif text-[0.8rem] italic" style={{ color: mutedColor }}>
                 or
               </span>
-              <div className="h-9 w-px" style={{ backgroundColor: borderCol }} />
+              <div className="h-6 w-px" style={{ backgroundColor: lavenderLine }} />
             </div>
           </div>
 
           {/* Join card */}
           <div
-            className="rounded-md p-7 shadow-xl"
-            style={{ backgroundColor: "rgba(255, 253, 250, 0.97)", border: `1px solid ${borderCol}`, backdropFilter: "blur(12px)" }}
+            className="flex h-full flex-col rounded-[1.1rem] p-3.5"
+            style={{
+              backgroundColor: cardBg,
+              border: `1px solid ${lavenderSoftLine}`,
+              boxShadow: cardShadow,
+            }}
           >
-            <h2 className="font-serif text-lg font-semibold" style={{ color: inkColor, letterSpacing: "-0.01em" }}>
+            <h2 className="font-serif text-[0.95rem] font-semibold" style={{ color: inkColor, letterSpacing: "-0.01em" }}>
               Join KLEIO Arthouse
             </h2>
-            <p className="mt-1 text-xs" style={{ color: mutedColor }}>
+            <p className="mt-0.5 text-[0.68rem]" style={{ color: mutedColor }}>
               Create your account
             </p>
 
-            <div className="mt-4 grid grid-cols-2 gap-3">
+            <div className="mt-2.5 grid grid-cols-2 gap-2.5">
               <Link
                 href="/signup/artist/"
-                className="group flex flex-col gap-2 rounded-sm border px-3 py-3 transition-all hover:border-[oklch(0.72_0.1_287)] hover:bg-[oklch(0.97_0.02_290)]"
-                style={{ borderColor: borderCol }}
+                className="group flex h-[70px] flex-col justify-between rounded-[0.85rem] border p-2.5 transition-colors hover:border-[#A997E8] hover:bg-[#F7F4FF]"
+                style={{ borderColor: lavenderLine, backgroundColor: "#FFFFFF" }}
               >
-                <span className="grid size-8 place-items-center rounded-sm" style={{ backgroundColor: "oklch(0.94_0.03_290)", color: "oklch(0.45_0.14_287)" }}>
+                <span className="grid size-6 place-items-center rounded-md" style={{ backgroundColor: lavenderMist, color: lavenderDeep }}>
                   <ArtistIcon />
                 </span>
                 <span>
-                  <span className="block text-[0.7rem]" style={{ color: mutedColor }}>
+                  <span className="block text-[0.62rem]" style={{ color: mutedColor }}>
                     I am an
                   </span>
-                  <span className="flex items-center justify-between font-serif text-sm font-semibold" style={{ color: inkColor }}>
+                  <span className="flex items-center justify-between font-serif text-[0.78rem] font-semibold" style={{ color: inkColor }}>
                     Artist
-                    <ChevronRight className="size-3.5 transition-transform group-hover:translate-x-0.5" style={{ color: mutedColor }} />
+                    <ChevronRight className="size-3 transition-transform group-hover:translate-x-0.5" style={{ color: lavenderAccent }} />
                   </span>
                 </span>
               </Link>
 
               <Link
                 href="/signup/institution/"
-                className="group flex flex-col gap-2 rounded-sm border px-3 py-3 transition-all hover:border-[oklch(0.72_0.1_287)] hover:bg-[oklch(0.97_0.02_290)]"
-                style={{ borderColor: borderCol }}
+                className="group flex h-[70px] flex-col justify-between rounded-[0.85rem] border p-2.5 transition-colors hover:border-[#A997E8] hover:bg-[#F7F4FF]"
+                style={{ borderColor: lavenderLine, backgroundColor: "#FFFFFF" }}
               >
-                <span className="grid size-8 place-items-center rounded-sm" style={{ backgroundColor: "oklch(0.94_0.03_290)", color: "oklch(0.45_0.14_287)" }}>
+                <span className="grid size-6 place-items-center rounded-md" style={{ backgroundColor: lavenderMist, color: lavenderDeep }}>
                   <InstitutionIcon />
                 </span>
                 <span>
-                  <span className="block text-[0.7rem]" style={{ color: mutedColor }}>
+                  <span className="block text-[0.62rem]" style={{ color: mutedColor }}>
                     I represent an
                   </span>
-                  <span className="flex items-center justify-between font-serif text-sm font-semibold" style={{ color: inkColor }}>
+                  <span className="flex items-center justify-between font-serif text-[0.78rem] font-semibold" style={{ color: inkColor }}>
                     Institution
-                    <ChevronRight className="size-3.5 transition-transform group-hover:translate-x-0.5" style={{ color: mutedColor }} />
+                    <ChevronRight className="size-3 transition-transform group-hover:translate-x-0.5" style={{ color: lavenderAccent }} />
                   </span>
                 </span>
               </Link>
             </div>
+            <p className="mt-2 text-center text-[0.6rem] italic" style={{ color: mutedColor }}>
+              Optional Import Assist available during setup.
+            </p>
           </div>
         </div>
 
-        {/* ── quote ───────────────────────────────────────────────────── */}
-        <div className="absolute left-1/2 top-[91.8%] w-[360px] max-w-[90%] -translate-x-1/2 text-center">
-          <p className="font-serif italic leading-relaxed" style={{ color: mutedColor, fontSize: "0.8rem", letterSpacing: "0.01em" }}>
-            &ldquo;To archive is not to forget.
-            <br />
-            It is to shape what will be remembered.&rdquo;
-          </p>
-          <div className="mx-auto mt-2 h-0.5 w-8 rounded-full" style={{ backgroundColor: "oklch(0.75 0.10 290)" }} />
-        </div>
-
-        {/* ── footer / copyright ──────────────────────────────────────── */}
-        <div className="absolute bottom-[3.5%] left-[6%]">
-          <p className="text-[0.68rem] tracking-widest" style={{ color: "#b0a898", letterSpacing: "0.12em" }}>
-            © 2026 KLEIO ARTHOUSE
-          </p>
+        {/* Row 4 — quote */}
+        <div
+          className="flex h-full flex-col items-center justify-center text-center font-serif text-[10px] italic leading-tight"
+          style={{ color: mutedColor }}
+        >
+          &ldquo;To archive is not to forget.
+          <br />
+          It is to shape what will be remembered.&rdquo;
+          <div className="mx-auto mt-1 h-[2px] w-9 rounded-full" style={{ backgroundColor: lavenderAccent }} />
         </div>
       </section>
+
+      {/* ── footer / copyright ──────────────────────────────────────────── */}
+      <footer
+        className="pointer-events-none absolute bottom-2 left-5 z-30 text-[8px] tracking-[0.15em] max-md:left-1/2 max-md:-translate-x-1/2"
+        style={{ color: "#B2A9C9" }}
+      >
+        © 2026 KLEIO ARTHOUSE
+      </footer>
     </main>
   )
 }
