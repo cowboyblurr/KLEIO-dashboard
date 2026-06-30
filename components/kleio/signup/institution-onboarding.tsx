@@ -5,6 +5,7 @@ import Link from "next/link"
 import { CheckCircle2, ChevronLeft, ChevronRight } from "lucide-react"
 import { institution } from "@/lib/kleio-data"
 import { SignupShell } from "@/components/kleio/signup/signup-shell"
+import { ImportAssistWidget } from "@/components/kleio/import-assist-widget"
 import { cn } from "@/lib/utils"
 
 const steps = [
@@ -121,6 +122,10 @@ export function InstitutionOnboarding() {
             </div>
           </div>
         )}
+      </div>
+
+      <div className="mt-6">
+        <ImportAssistWidget userType="institution" subjectId="kleio-arthouse" />
       </div>
 
       <div className="mt-6 flex items-center justify-between">
