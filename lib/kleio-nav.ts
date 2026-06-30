@@ -30,6 +30,7 @@ export type NavSection = {
 export const navSections: NavSection[] = [
   {
     heading: "Overview",
+    // Institution workspace entry — not the public homepage (`/`).
     items: [{ label: "Overview", href: "/dashboard/", icon: LayoutGrid }],
   },
   {

@@ -103,7 +103,7 @@ export function ArtistSidebar() {
             href="/"
             className="mt-3 block text-center text-[0.68rem] font-medium text-muted-foreground transition-colors hover:text-foreground"
           >
-            Public home
+            KLEIO homepage
           </Link>
         </div>
       )}

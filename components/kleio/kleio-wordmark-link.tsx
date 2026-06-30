@@ -1,9 +1,10 @@
 "use client"
 
 import Image from "next/image"
+import Link from "next/link"
 import { assetPath } from "@/lib/asset-path"
 import { cn } from "@/lib/utils"
-import { SmartHomeLink } from "@/components/kleio/smart-home-link"
+import { getPublicHomeHref } from "@/lib/kleio-demo-auth"
 
 export function KleioWordmarkLink({
   className,
@@ -17,8 +18,9 @@ export function KleioWordmarkLink({
   imageStyle?: React.CSSProperties
 }) {
   return (
-    <SmartHomeLink
-      aria-label="KLEIO home"
+    <Link
+      href={getPublicHomeHref()}
+      aria-label="KLEIO homepage"
       className={cn("inline-flex items-center", className)}
     >
       <Image
@@ -30,6 +32,6 @@ export function KleioWordmarkLink({
         className={imageClassName}
         style={imageStyle}
       />
-    </SmartHomeLink>
+    </Link>
   )
 }

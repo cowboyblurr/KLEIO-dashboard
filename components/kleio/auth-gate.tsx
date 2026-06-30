@@ -1,16 +1,17 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import {
   clearDemoSession,
   getDashboardForRole,
   getDemoSession,
+  getPublicHomeHref,
   loginDemoUser,
   type KleioDemoSession,
 } from "@/lib/kleio-demo-auth"
 import { KleioWordmarkLink } from "@/components/kleio/kleio-wordmark-link"
-import { SmartHomeLink } from "@/components/kleio/smart-home-link"
 
 type AuthGateProps = {
   requiredRole?: "artist" | "institution"
@@ -107,11 +108,12 @@ function AuthWall({
               >
                 {requiredRole === "institution" ? "Switch to Institution Demo" : "Switch to Artist Demo"}
               </button>
-              <SmartHomeLink
+              <Link
+                href={getPublicHomeHref()}
                 className="inline-flex h-10 w-full items-center justify-center rounded-xl px-4 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
               >
                 Return to KLEIO
-              </SmartHomeLink>
+              </Link>
             </div>
           </>
         ) : (
@@ -127,11 +129,12 @@ function AuthWall({
                 compact
               />
             </div>
-            <SmartHomeLink
+            <Link
+              href={getPublicHomeHref()}
               className="mt-4 inline-flex h-10 w-full items-center justify-center rounded-xl border border-border bg-background text-sm font-medium text-foreground transition-colors hover:bg-accent/50"
             >
               Return to KLEIO
-            </SmartHomeLink>
+            </Link>
           </>
         )}
       </div>

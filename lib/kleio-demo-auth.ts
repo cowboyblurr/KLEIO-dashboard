@@ -8,6 +8,20 @@ export type KleioDemoSession = {
 
 const STORAGE_KEY = "kleio-demo-session"
 
+/**
+ * KLEIO route architecture (demo):
+ *
+ * Public:
+ *   `/` — marketing homepage / landing page
+ *   `/landing/` — legacy duplicate of `/` for old links
+ *   `/signup/*` — signup flows
+ *
+ * Private workspaces (client-side demo auth):
+ *   `/dashboard/` — institution overview
+ *   `/artist-dashboard/` — artist overview
+ *   `/programs/`, `/review-queue/`, etc. — institution workspace pages
+ */
+
 const DEMO_CREDENTIALS = {
   institution: {
     email: "institution@kleio.demo",
@@ -93,18 +107,24 @@ export function getDashboardForRole(role: "artist" | "institution"): string {
   return role === "artist" ? "/artist-dashboard/" : "/dashboard/"
 }
 
-export function getHomeHrefForSession(): string {
-  const session = getDemoSession()
-  if (!session) return "/"
-  if (session.role === "institution") return "/dashboard/"
-  if (session.role === "artist") return "/artist-dashboard/"
+/** Public marketing homepage — not a workspace route. */
+export function getPublicHomeHref(): string {
   return "/"
 }
 
+/** Wordmark and “Return to KLEIO” always go to the public homepage. */
+export function getHomeHrefForSession(): string {
+  return getPublicHomeHref()
+}
+
+/**
+ * “Explore Arthouse” — workspace for signed-in users only.
+ * Anonymous visitors stay on the public homepage.
+ */
 export function getExploreArthouseHref(): string {
   const session = getDemoSession()
-  if (session?.role === "artist") return "/artist-dashboard/"
-  return "/dashboard/"
+  if (!session) return getPublicHomeHref()
+  return getDashboardForRole(session.role)
 }
 
 export function artistProfileHref(artistId: string): string {
