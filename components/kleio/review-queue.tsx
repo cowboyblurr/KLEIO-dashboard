@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
+import Link from "next/link"
 import {
   ChevronDown,
   ChevronLeft,
@@ -186,9 +187,22 @@ export function ReviewQueue({
                   </td>
                   <td className="px-3 py-3">
                     <div className="flex items-center gap-3">
-                      <InitialAvatar name={s.artist} className="size-9 text-xs" />
+                      <Link
+                        href={`/artists/${s.artistId}/`}
+                        onClick={(e) => e.stopPropagation()}
+                        aria-label={`View ${s.artist}'s full profile`}
+                        className="shrink-0"
+                      >
+                        <InitialAvatar name={s.artist} className="size-9 text-xs transition-opacity hover:opacity-75" />
+                      </Link>
                       <div className="min-w-0">
-                        <p className="truncate font-medium text-foreground">{s.artist}</p>
+                        <Link
+                          href={`/artists/${s.artistId}/`}
+                          onClick={(e) => e.stopPropagation()}
+                          className="truncate block font-medium text-foreground hover:text-primary transition-colors"
+                        >
+                          {s.artist}
+                        </Link>
                         <p className="truncate text-xs text-muted-foreground">
                           {s.location}
                         </p>

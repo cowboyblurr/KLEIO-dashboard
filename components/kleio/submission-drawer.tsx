@@ -163,9 +163,23 @@ export function SubmissionDrawer({
             />
           </div>
 
-          <div className="mt-4 flex items-start gap-2">
-            <h3 className="font-serif text-xl font-semibold text-foreground">{submission.artist}</h3>
-            <BadgeCheck className="mt-1 size-4 shrink-0 text-primary" />
+          <div className="mt-4 flex items-start justify-between gap-2">
+            <div className="flex items-start gap-2 min-w-0">
+              <Link
+                href={`/artists/${submission.artistId}/`}
+                className="font-serif text-xl font-semibold text-foreground hover:text-primary transition-colors"
+              >
+                {submission.artist}
+              </Link>
+              <BadgeCheck className="mt-1 size-4 shrink-0 text-primary" />
+            </div>
+            <Link
+              href={`/artists/${submission.artistId}/`}
+              className="shrink-0 flex items-center gap-1 rounded-lg border border-border/70 bg-background px-2 py-1 text-[0.7rem] font-medium text-muted-foreground transition-colors hover:text-primary hover:border-primary/40"
+            >
+              Full profile
+              <span aria-hidden>→</span>
+            </Link>
           </div>
           <p className="mt-1 text-sm text-muted-foreground">
             {submission.location} &middot; {submission.discipline} &middot; {submission.medium}

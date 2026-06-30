@@ -68,6 +68,31 @@ export type Collaborator = {
   lastActive: string
 }
 
+export type ArtistWork = {
+  id: string
+  title: string
+  year: string
+  medium: string
+  dimensions?: string
+  image: string
+}
+
+export type ExhibitionEntry = {
+  title: string
+  venue: string
+  location: string
+  year: string
+  type: "Solo Exhibition" | "Group Exhibition" | "Residency" | "Fellowship" | "Grant" | "Open Call"
+  badge?: "Residency" | "Grant" | "Open Call" | "Fellowship"
+}
+
+export type ArtistDocumentMaterial = {
+  label: string
+  status: "Available" | "Missing" | "Demo"
+  fileName?: string
+  fileSize?: string
+}
+
 export type Artist = {
   id: string
   name: string
@@ -82,6 +107,15 @@ export type Artist = {
   documentStatus: "Complete" | "Incomplete" | "Pending"
   referencesStatus: "Complete" | "Incomplete" | "Pending"
   passportCompleteness: number
+  // Extended profile fields (populated for demo artists)
+  works?: ArtistWork[]
+  exhibitions?: ExhibitionEntry[]
+  materials?: ArtistDocumentMaterial[]
+  methods?: string[]
+  themes?: string[]
+  website?: string
+  instagram?: string
+  contactEmail?: string
 }
 
 export type Submission = {
@@ -354,15 +388,41 @@ export const artists: Artist[] = [
     location: "Cairo, Egypt",
     discipline: "Visual Artist",
     medium: "Installation",
-    bio: "Amina builds immersive environments from fabric, sound, archival fragments, and light.",
+    bio: "Amina builds immersive environments from fabric, sound, archival fragments, and light. Her practice moves between material culture and personal archive, creating spaces where collective memory becomes tangible. Born in Cairo, she trained at the Cairo Faculty of Fine Arts before completing a residency at Darat al Funun, Amman.",
     statement:
-      "My work investigates the way personal and collective memories are preserved, distorted, and remembered across generations.",
-    tags: ["memory", "installation", "archive", "material practice"],
+      "My work investigates the way personal and collective memories are preserved, distorted, and remembered across generations. Through material, light, and archival traces, I build immersive environments that ask viewers to sit with what lingers after a moment has passed.",
+    tags: ["Memory", "Installation", "Archive", "Material Practice", "Atmospheric", "Conceptual"],
     portfolioImage: "/artwork/echoes-of-memory.png",
     cvStatus: "Complete",
     documentStatus: "Complete",
     referencesStatus: "Pending",
     passportCompleteness: 95,
+    works: [
+      { id: "echoes-of-memory", title: "Echoes of Memory", year: "2024", medium: "Installation", dimensions: "300 × 400 × 380 cm", image: "/artwork/echoes-of-memory.png" },
+      { id: "suspended-archive", title: "Suspended Archive", year: "2023", medium: "Site-responsive installation, fabric, archival material", dimensions: "Variable dimensions", image: "/placeholder.svg" },
+      { id: "light-that-remains", title: "The Light That Remains", year: "2022", medium: "Multi-channel video, fabric, sound", dimensions: "200 × 300 cm", image: "/placeholder.svg" },
+      { id: "between-forms", title: "Between Forms", year: "2021", medium: "Archival materials, found objects, sound", dimensions: "Variable", image: "/placeholder.svg" },
+    ],
+    exhibitions: [
+      { title: "Darat al Funun Artist Residency", venue: "Darat al Funun", location: "Amman, Jordan", year: "2024", type: "Residency", badge: "Residency" },
+      { title: "Collective Memory", venue: "Cairo Contemporary Art Centre", location: "Cairo, Egypt", year: "2023", type: "Group Exhibition" },
+      { title: "Sharjah Art Foundation Fellowship", venue: "Sharjah Art Foundation", location: "Sharjah, UAE", year: "2023", type: "Fellowship", badge: "Fellowship" },
+      { title: "Material Witness", venue: "Kunsthalle Wien", location: "Vienna, Austria", year: "2022", type: "Group Exhibition" },
+      { title: "Archive & Trace", venue: "Goethe Institut Cairo", location: "Cairo, Egypt", year: "2022", type: "Solo Exhibition" },
+    ],
+    materials: [
+      { label: "Artist CV", status: "Demo", fileName: "amina-el-badri-cv-2026.pdf", fileSize: "1.2 MB" },
+      { label: "Artist Statement", status: "Demo", fileName: "amina-el-badri-statement.pdf", fileSize: "0.6 MB" },
+      { label: "Portfolio PDF", status: "Demo", fileName: "amina-el-badri-portfolio.pdf", fileSize: "24 MB" },
+      { label: "Project Proposal", status: "Demo", fileName: "echoes-of-memory-proposal.pdf", fileSize: "8 MB" },
+      { label: "Budget Outline", status: "Available" },
+      { label: "References", status: "Available" },
+    ],
+    methods: ["Installation", "Archival Practice", "Material Sculpture", "Sound", "Fabric"],
+    themes: ["Memory", "Archive", "Light", "Trace", "Collective History", "Site-responsive"],
+    website: "aminaelbadri.com",
+    instagram: "@amina.albadri",
+    contactEmail: "amina@aminaelbadri.com",
   },
   {
     id: "mei-lin-zhang",
@@ -370,15 +430,37 @@ export const artists: Artist[] = [
     location: "Shanghai, China",
     discipline: "Visual Artist",
     medium: "Works on Paper",
-    bio: "Mei Lin works with ink, suspended paper, and gestural notation to explore disappearance and trace.",
+    bio: "Mei Lin works with ink, suspended paper, and gestural notation to explore disappearance and trace. Her practice centres on the moment between action and absence — recording what the hand leaves behind when it withdraws. She studied at the China Academy of Art, Hangzhou.",
     statement:
-      "Trace examines the fleeting instant between gesture and disappearance through ink on suspended paper.",
-    tags: ["drawing", "paper", "gesture", "deadline triage"],
+      "Trace examines the fleeting instant between gesture and disappearance. Working with ink on suspended paper, I record the residue of movement, allowing each mark to hover between presence and erasure. The work asks: what does it mean to leave a mark knowing it will fade?",
+    tags: ["Drawing", "Paper", "Gesture", "Ink", "Notation", "Time"],
     portfolioImage: "/artwork/trace.png",
     cvStatus: "Incomplete",
     documentStatus: "Incomplete",
     referencesStatus: "Incomplete",
     passportCompleteness: 82,
+    works: [
+      { id: "trace", title: "瞬間 / Trace", year: "2024", medium: "Ink on suspended paper", dimensions: "250 × 350 cm", image: "/artwork/trace.png" },
+      { id: "disappearance-3", title: "Disappearance Study No. 3", year: "2023", medium: "Ink on paper", dimensions: "80 × 120 cm", image: "/placeholder.svg" },
+      { id: "notation", title: "Notation", year: "2023", medium: "Ink, graphite on paper", dimensions: "150 × 200 cm", image: "/placeholder.svg" },
+    ],
+    exhibitions: [
+      { title: "New Voices Open Studio", venue: "Power Station of Art", location: "Shanghai, China", year: "2023", type: "Open Call", badge: "Open Call" },
+      { title: "Temporal Marks", venue: "Gallery Vacancy", location: "Shanghai, China", year: "2022", type: "Solo Exhibition" },
+      { title: "Ink, Time, Suspension", venue: "Kyoto Art Center", location: "Kyoto, Japan", year: "2022", type: "Group Exhibition" },
+    ],
+    materials: [
+      { label: "Artist CV", status: "Missing" },
+      { label: "Artist Statement", status: "Demo", fileName: "mei-lin-zhang-statement.pdf", fileSize: "0.4 MB" },
+      { label: "Portfolio PDF", status: "Demo", fileName: "mei-lin-zhang-portfolio.pdf", fileSize: "18 MB" },
+      { label: "Installation Dimensions", status: "Missing" },
+      { label: "References", status: "Missing" },
+    ],
+    methods: ["Drawing", "Notation", "Ink", "Paper", "Gestural Practice"],
+    themes: ["Disappearance", "Gesture", "Trace", "Time", "Suspension", "Mark-making"],
+    website: "meilz.art",
+    instagram: "@meil.zhang",
+    contactEmail: "meilin@meilz.art",
   },
   {
     id: "sofia-karim",
@@ -386,15 +468,41 @@ export const artists: Artist[] = [
     location: "Paris, France",
     discipline: "Visual Artist",
     medium: "Painting",
-    bio: "Sofia paints luminous thresholds between landscape, memory, and architectural atmosphere.",
+    bio: "Sofia paints luminous thresholds between landscape, memory, and architectural atmosphere. Her large-scale canvases dissolve familiar horizons into soft, uncertain zones of colour and light. Born in Marseille, she studied at the École nationale supérieure des Beaux-Arts de Paris and completed a residency at Cité Internationale des Arts.",
     statement:
-      "The Second Horizon is a series of luminous landscapes that dissolve the line between land and sky.",
-    tags: ["painting", "committee vote", "finalist", "landscape"],
+      "The Second Horizon is a series of luminous landscapes that dissolve the line between land and sky. I am interested in thresholds — the soft, uncertain zones where one state becomes another. These paintings do not depict place; they depict the moment of transition.",
+    tags: ["Painting", "Landscape", "Light", "Colour Field", "Atmospheric", "Oil"],
     portfolioImage: "/artwork/second-horizon.png",
     cvStatus: "Complete",
     documentStatus: "Complete",
     referencesStatus: "Complete",
     passportCompleteness: 100,
+    works: [
+      { id: "second-horizon", title: "The Second Horizon", year: "2024", medium: "Oil on canvas", dimensions: "180 × 240 cm", image: "/artwork/second-horizon.png" },
+      { id: "threshold-light", title: "Threshold Light", year: "2023", medium: "Oil on linen", dimensions: "120 × 160 cm", image: "/placeholder.svg" },
+      { id: "margin", title: "Margin", year: "2022", medium: "Oil, dry pigment on canvas", dimensions: "200 × 140 cm", image: "/placeholder.svg" },
+      { id: "aperture", title: "Aperture", year: "2021", medium: "Oil, mixed media", dimensions: "90 × 90 cm", image: "/placeholder.svg" },
+    ],
+    exhibitions: [
+      { title: "FRAC Île-de-France Acquisition 2024", venue: "FRAC Île-de-France", location: "Paris, France", year: "2024", type: "Group Exhibition" },
+      { title: "Cité Internationale des Arts Residency", venue: "Cité Internationale des Arts", location: "Paris, France", year: "2023", type: "Residency", badge: "Residency" },
+      { title: "Luminous Fields", venue: "Palais de Tokyo (off-site)", location: "Paris, France", year: "2023", type: "Group Exhibition" },
+      { title: "Second Horizon", venue: "Galerie Bacqueville", location: "Paris, France", year: "2022", type: "Solo Exhibition" },
+      { title: "CNAp Grant for Emerging Artists", venue: "Centre National des Arts Plastiques", location: "France", year: "2022", type: "Grant", badge: "Grant" },
+    ],
+    materials: [
+      { label: "Artist CV", status: "Demo", fileName: "sofia-karim-cv-2026.pdf", fileSize: "0.9 MB" },
+      { label: "Artist Statement", status: "Demo", fileName: "sofia-karim-statement.pdf", fileSize: "0.5 MB" },
+      { label: "Portfolio PDF", status: "Demo", fileName: "sofia-karim-portfolio.pdf", fileSize: "22 MB" },
+      { label: "Research Summary", status: "Demo", fileName: "sofia-karim-research.pdf", fileSize: "3 MB" },
+      { label: "Timeline", status: "Available" },
+      { label: "References", status: "Demo", fileName: "sofia-karim-references.pdf", fileSize: "0.3 MB" },
+    ],
+    methods: ["Oil Painting", "Colour Field", "Landscape", "Large Format", "Site Research"],
+    themes: ["Threshold", "Light", "Landscape", "Atmosphere", "Horizon", "Dissolution"],
+    website: "sofiakarim.fr",
+    instagram: "@sofia_karim",
+    contactEmail: "studio@sofiakarim.fr",
   },
   {
     id: "julian-reyes",
