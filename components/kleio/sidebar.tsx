@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils"
 import { navSections } from "@/lib/kleio-nav"
 import { collaborators, institution } from "@/lib/kleio-data"
 import { InitialAvatar } from "@/components/kleio/initial-avatar"
+import { assetPath } from "@/lib/asset-path"
 
 export function Sidebar() {
   const pathname = usePathname()
@@ -22,7 +23,7 @@ export function Sidebar() {
           className="inline-flex items-center rounded-md bg-white px-2.5 py-1.5 shadow-sm ring-1 ring-border"
         >
           <Image
-            src="/kleio-wordmark.png"
+            src={assetPath("/kleio-wordmark.png")}
             alt="KLEIO"
             width={1024}
             height={189}

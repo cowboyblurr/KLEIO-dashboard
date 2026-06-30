@@ -36,6 +36,8 @@ jobs:
         run: pnpm install --no-frozen-lockfile
 
       - name: Build static site
+        env:
+          NEXT_PUBLIC_BASE_PATH: /KLEIO-dashboard
         run: pnpm run build
 
       - name: Add nojekyll file

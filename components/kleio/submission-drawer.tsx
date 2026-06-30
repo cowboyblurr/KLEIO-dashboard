@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import Image from "next/image"
+import Link from "next/link"
 import {
   BadgeCheck,
   CheckCircle2,
@@ -17,6 +18,12 @@ import {
   AlertCircle,
 } from "lucide-react"
 import type { Submission } from "@/lib/kleio-data"
+import {
+  getLatestSubmissionNote,
+  getSubmissionActivity,
+  getSubmissionReviewerProgress,
+} from "@/lib/kleio-analytics"
+import { assetPath } from "@/lib/asset-path"
 import { InitialAvatar } from "@/components/kleio/initial-avatar"
 
 function CompletionRing({ value }: { value: number }) {
@@ -43,15 +50,15 @@ function CompletionRing({ value }: { value: number }) {
   )
 }
 
-function getPrimaryAction(submission: Submission) {
+function getPrimaryAction(submission: Submission): { label: string; icon: typeof Mail; href?: string } {
   if (submission.status === "Pending Info" || submission.status === "Incomplete") {
     return { label: "Request Missing Materials", icon: Mail }
   }
   if (submission.status === "Pending Vote") {
-    return { label: "View Committee Vote", icon: Vote }
+    return { label: "View Committee Vote", icon: Vote, href: "/committee/" }
   }
   if (submission.status === "Shortlisted" || submission.status === "Interview") {
-    return { label: "Open Decision Room", icon: Bookmark }
+    return { label: "Open Decision Room", icon: Bookmark, href: "/shortlist/" }
   }
   return { label: "Move to Shortlist", icon: Bookmark }
 }
@@ -97,7 +104,11 @@ export function SubmissionDrawer({
   const PrimaryIcon = primaryAction.icon
   const secondaryLabel =
     submission.status === "Pending Vote" ? "Message Pending Reviewer" : "Request Additional Information"
+  const secondaryHref = submission.status === "Pending Vote" ? "/messages/" : undefined
   const [confirmation, setConfirmation] = useState<string | null>(null)
+  const reviewerProgress = getSubmissionReviewerProgress(submission.id)
+  const latestNote = getLatestSubmissionNote(submission.id)
+  const activity = getSubmissionActivity(submission.id)
 
   useEffect(() => {
     setConfirmation(null)
@@ -144,7 +155,7 @@ export function SubmissionDrawer({
 
           <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl border border-border bg-muted shadow-sm">
             <Image
-              src={submission.image || "/placeholder.svg"}
+              src={assetPath(submission.image || "/placeholder.svg")}
               alt={`${submission.projectTitle} by ${submission.artist}`}
               fill
               sizes="384px"
@@ -186,21 +197,36 @@ export function SubmissionDrawer({
             </Section>
           ) : null}
 
-          {submission.reviewerProgress && (
+          {reviewerProgress.total > 0 && (
             <Section title="Reviewer Progress">
               <div className="rounded-xl border border-border bg-background p-3">
                 <div className="flex items-center justify-between text-sm">
                   <span className="font-medium text-foreground">Reviews completed</span>
                   <span className="font-semibold text-primary">
-                    {submission.reviewerProgress.completed}/{submission.reviewerProgress.total}
+                    {reviewerProgress.completed}/{reviewerProgress.total}
                   </span>
                 </div>
                 <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted">
                   <div
                     className="h-full rounded-full bg-primary"
-                    style={{ width: `${(submission.reviewerProgress.completed / submission.reviewerProgress.total) * 100}%` }}
+                    style={{
+                      width: `${reviewerProgress.total ? (reviewerProgress.completed / reviewerProgress.total) * 100 : 0}%`,
+                    }}
                   />
                 </div>
+                <ul className="mt-3 space-y-2 border-t border-border/70 pt-3">
+                  {reviewerProgress.reviews.map((review) => (
+                    <li key={review.reviewerId} className="text-xs">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-medium text-foreground">{review.reviewerName}</span>
+                        <span className="text-muted-foreground">{review.status}</span>
+                      </div>
+                      {review.recommendation ? (
+                        <p className="mt-0.5 text-muted-foreground">{review.recommendation}</p>
+                      ) : null}
+                    </li>
+                  ))}
+                </ul>
               </div>
             </Section>
           )}
@@ -209,21 +235,23 @@ export function SubmissionDrawer({
             <p className="text-sm leading-relaxed text-muted-foreground">{submission.statement}</p>
           </Section>
 
-          <Section title="Internal Notes" action="Add note">
-            <div className="rounded-xl border border-[oklch(0.9_0.05_85)] bg-[oklch(0.98_0.03_85)] p-3">
-              <p className="text-sm leading-relaxed text-foreground">{submission.internalNote.body}</p>
-              <div className="mt-3 flex items-center justify-between">
-                <p className="text-xs text-muted-foreground">
-                  {submission.internalNote.author} &middot; {submission.internalNote.date}
-                </p>
-                <MoreHorizontal className="size-4 text-muted-foreground" />
+          {latestNote ? (
+            <Section title="Internal Notes" action="Add note">
+              <div className="rounded-xl border border-[oklch(0.9_0.05_85)] bg-[oklch(0.98_0.03_85)] p-3">
+                <p className="text-sm leading-relaxed text-foreground">{latestNote.body}</p>
+                <div className="mt-3 flex items-center justify-between">
+                  <p className="text-xs text-muted-foreground">
+                    {latestNote.author} &middot; {latestNote.date}
+                  </p>
+                  <MoreHorizontal className="size-4 text-muted-foreground" />
+                </div>
               </div>
-            </div>
-          </Section>
+            </Section>
+          ) : null}
 
           <Section title="Reviewer Activity" action="View all">
             <ul className="space-y-3">
-              {submission.activity.map((entry) => (
+              {activity.map((entry) => (
                 <li key={entry.id} className="flex items-center gap-3">
                   <InitialAvatar name={entry.actor === "System" ? "KLEIO" : entry.actor} className="size-7 text-[0.6rem]" />
                   <p className="flex-1 text-sm text-foreground">
@@ -251,14 +279,24 @@ export function SubmissionDrawer({
           </div>
         )}
         <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setConfirmation(getActionConfirmation(primaryAction.label, submission))}
-            className="flex h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-primary text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
-          >
-            <PrimaryIcon className="size-4" />
-            {primaryAction.label}
-          </button>
+          {primaryAction.href ? (
+            <Link
+              href={primaryAction.href}
+              className="flex h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-primary text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
+            >
+              <PrimaryIcon className="size-4" />
+              {primaryAction.label}
+            </Link>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setConfirmation(getActionConfirmation(primaryAction.label, submission))}
+              className="flex h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-primary text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
+            >
+              <PrimaryIcon className="size-4" />
+              {primaryAction.label}
+            </button>
+          )}
           <button
             type="button"
             aria-label="More actions"
@@ -267,14 +305,24 @@ export function SubmissionDrawer({
             <ChevronDown className="size-4" />
           </button>
         </div>
-        <button
-          type="button"
-          onClick={() => setConfirmation(getActionConfirmation(secondaryLabel, submission))}
-          className="mt-2 flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-border bg-card text-sm font-medium text-foreground transition-colors hover:bg-accent/50"
-        >
-          <Mail className="size-4 text-muted-foreground" />
-          {secondaryLabel}
-        </button>
+        {secondaryHref ? (
+          <Link
+            href={secondaryHref}
+            className="mt-2 flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-border bg-card text-sm font-medium text-foreground transition-colors hover:bg-accent/50"
+          >
+            <Mail className="size-4 text-muted-foreground" />
+            {secondaryLabel}
+          </Link>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setConfirmation(getActionConfirmation(secondaryLabel, submission))}
+            className="mt-2 flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-border bg-card text-sm font-medium text-foreground transition-colors hover:bg-accent/50"
+          >
+            <Mail className="size-4 text-muted-foreground" />
+            {secondaryLabel}
+          </button>
+        )}
       </div>
     </aside>
   )

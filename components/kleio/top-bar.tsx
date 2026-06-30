@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { Bell, Bookmark, ChevronDown, Plus, SlidersHorizontal, Search } from "lucide-react"
-import { analytics } from "@/lib/kleio-data"
+import { analytics } from "@/lib/kleio-analytics"
 
 export function TopBar() {
   return (
@@ -44,7 +44,7 @@ export function TopBar() {
         >
           <Bell className="size-4" />
           <span className="absolute -right-1 -top-1 grid size-5 place-items-center rounded-full bg-primary text-[0.65rem] font-semibold text-primary-foreground ring-2 ring-background">
-            {analytics.needsAttentionCount}
+            {analytics.messageBadgeCount}
           </span>
         </Link>
 

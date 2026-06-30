@@ -1,7 +1,7 @@
 "use client"
 
 import { Cell, Pie, PieChart, ResponsiveContainer } from "recharts"
-import { analytics, statusBreakdown } from "@/lib/kleio-data"
+import { analytics, statusBreakdown } from "@/lib/kleio-analytics"
 
 export function StatusBreakdown() {
   return (

@@ -8,7 +8,7 @@ import {
   Users,
   type LucideIcon,
 } from "lucide-react"
-import { kpis } from "@/lib/kleio-data"
+import { kpis } from "@/lib/kleio-analytics"
 
 const iconMap: Record<string, LucideIcon> = {
   clipboard: ClipboardList,

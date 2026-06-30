@@ -9,6 +9,8 @@ const statusStyles: Record<SubmissionStatus, string> = {
   Interview: "bg-[oklch(0.95_0.04_220)] text-[oklch(0.46_0.12_235)]",
   Withdrawn: "bg-[oklch(0.95_0.04_25)] text-[oklch(0.5_0.16_25)]",
   Incomplete: "bg-muted text-muted-foreground",
+  Accepted: "bg-[oklch(0.95_0.06_150)] text-[oklch(0.45_0.12_150)]",
+  Declined: "bg-[oklch(0.95_0.04_25)] text-[oklch(0.5_0.16_25)]",
 }
 
 const priorityStyles: Record<Priority, string> = {

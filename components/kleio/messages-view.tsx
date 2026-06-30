@@ -4,6 +4,7 @@ import { useState } from "react"
 import { Mail, Send } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { institution, messageThreads } from "@/lib/kleio-data"
+import { analytics, getDemoMessageForThread, isSubmissionMessagePending } from "@/lib/kleio-analytics"
 import { InitialAvatar } from "@/components/kleio/initial-avatar"
 
 const channelStyles: Record<string, string> = {
@@ -36,7 +37,7 @@ export function MessagesView() {
           </p>
         </div>
         <span className="rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium text-muted-foreground">
-          {institution.demoLabel}
+          {institution.demoLabel} · {analytics.pendingMessagesCount} pending
         </span>
       </header>
 
@@ -48,6 +49,7 @@ export function MessagesView() {
           <ul className="min-h-0 flex-1 overflow-y-auto">
             {messageThreads.map((thread) => {
               const active = thread.id === selected?.id
+              const linkedMessage = getDemoMessageForThread(thread.linkedMessageId)
               return (
                 <li key={thread.id}>
                   <button
@@ -64,8 +66,8 @@ export function MessagesView() {
                         <span className="truncate text-sm font-medium text-foreground">
                           {thread.counterpart}
                         </span>
-                        {thread.unread && (
-                          <span className="size-2 shrink-0 rounded-full bg-primary" aria-label="Unread" />
+                        {isSubmissionMessagePending(thread.submissionId) && (
+                          <span className="size-2 shrink-0 rounded-full bg-primary" aria-label="Pending message" />
                         )}
                       </span>
                       <span className="mt-0.5 block truncate text-xs font-medium text-foreground/80">
@@ -73,6 +75,7 @@ export function MessagesView() {
                       </span>
                       <span className="mt-0.5 block truncate text-xs text-muted-foreground">
                         {thread.preview}
+                        {linkedMessage ? ` · ${linkedMessage.status}` : ""}
                       </span>
                     </span>
                   </button>

@@ -10,7 +10,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts"
-import { applicationsOverTime } from "@/lib/kleio-data"
+import { applicationsOverTime } from "@/lib/kleio-analytics"
 
 function FilterChip({ label }: { label: string }) {
   return (

@@ -1,23 +1,8 @@
 import { Sparkles, ArrowRight, AlertCircle, Vote, BookmarkCheck } from "lucide-react"
-import { analytics, demoScenarios } from "@/lib/kleio-data"
+import { kleioAssistInsights } from "@/lib/kleio-analytics"
+import { demoScenarios } from "@/lib/kleio-data"
 
-const insightItems = [
-  {
-    icon: AlertCircle,
-    label: "Deadline triage",
-    body: `${analytics.needsAttentionCount} submissions need attention. Start with the incomplete but promising applicant before the next deadline.`,
-  },
-  {
-    icon: Vote,
-    label: "Committee bottleneck",
-    body: `${analytics.pendingVoteCount} submissions are pending vote. Surface reviewer progress before the next committee check-in.`,
-  },
-  {
-    icon: BookmarkCheck,
-    label: "Shortlist signal",
-    body: `${analytics.shortlistedCount} candidates are already shortlisted. Compare them before adding more finalists.`,
-  },
-]
+const insightIcons = [AlertCircle, Vote, BookmarkCheck]
 
 export function KleioAiInsights() {
   return (
@@ -40,10 +25,10 @@ export function KleioAiInsights() {
       </div>
 
       <div className="mt-3 grid gap-2 xl:grid-cols-3">
-        {insightItems.map((item) => {
-          const Icon = item.icon
+        {kleioAssistInsights.map((item, index) => {
+          const Icon = insightIcons[index] ?? AlertCircle
           return (
-            <div key={item.label} className="rounded-xl border border-border bg-background/70 p-3">
+            <div key={item.id} className="rounded-xl border border-border bg-background/70 p-3">
               <div className="flex items-center gap-2 text-xs font-semibold text-foreground">
                 <Icon className="size-3.5 text-primary" />
                 {item.label}

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import {
   ChevronDown,
   ChevronLeft,
@@ -11,7 +11,8 @@ import {
   SlidersHorizontal,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { analytics, reviewQueueTabs, type Submission } from "@/lib/kleio-data"
+import { analytics, getQueueForTab, reviewQueueTabs } from "@/lib/kleio-analytics"
+import type { Submission } from "@/lib/kleio-data"
 import { InitialAvatar } from "@/components/kleio/initial-avatar"
 import { PriorityPill, StatusPill } from "@/components/kleio/pills"
 
@@ -41,15 +42,43 @@ function CompletenessBar({ value }: { value: number }) {
 }
 
 export function ReviewQueue({
-  submissions,
+  submissions: submissionsProp,
   selectedId,
   onSelect,
+  activeTab: controlledTab,
+  onTabChange,
 }: {
-  submissions: Submission[]
+  submissions?: Submission[]
   selectedId: string
   onSelect: (id: string) => void
+  activeTab?: string
+  onTabChange?: (tabId: string) => void
 }) {
-  const [activeTab, setActiveTab] = useState("priority")
+  const [internalTab, setInternalTab] = useState("priority")
+  const activeTab = controlledTab ?? internalTab
+
+  const visibleSubmissions = useMemo(() => {
+    if (submissionsProp) return submissionsProp
+    return getQueueForTab(activeTab)
+  }, [submissionsProp, activeTab])
+
+  useEffect(() => {
+    if (!visibleSubmissions.some((submission) => submission.id === selectedId) && visibleSubmissions[0]) {
+      onSelect(visibleSubmissions[0].id)
+    }
+  }, [activeTab, visibleSubmissions, selectedId, onSelect])
+
+  function setActiveTab(tabId: string) {
+    if (!controlledTab) setInternalTab(tabId)
+    onTabChange?.(tabId)
+  }
+
+  const tabTotal =
+    activeTab === "attention"
+      ? analytics.needsAttentionCount
+      : activeTab === "deadlines"
+        ? analytics.upcomingDeadlinesCount
+        : analytics.reviewQueueCount
 
   return (
     <section className="rounded-2xl border border-border bg-card shadow-sm kleio-card-shadow">
@@ -137,7 +166,7 @@ export function ReviewQueue({
             </tr>
           </thead>
           <tbody>
-            {submissions.map((s) => {
+            {visibleSubmissions.map((s) => {
               const active = s.id === selectedId
               return (
                 <tr
@@ -204,7 +233,9 @@ export function ReviewQueue({
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-4">
-        <p className="text-xs text-muted-foreground">Showing 1–{submissions.length} of {analytics.priorityQueueCount}</p>
+        <p className="text-xs text-muted-foreground">
+          Showing 1–{visibleSubmissions.length} of {tabTotal}
+        </p>
         <div className="flex items-center gap-1">
           <button
             type="button"

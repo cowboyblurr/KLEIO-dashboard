@@ -6,6 +6,8 @@ export type SubmissionStatus =
   | "Withdrawn"
   | "Incomplete"
   | "Pending Info"
+  | "Accepted"
+  | "Declined"
 
 export type Priority = "High" | "Medium" | "Low"
 export type ProgramStatus = "Draft" | "Open" | "Closed" | "In Review" | "Final Selection" | "Complete"
@@ -27,6 +29,9 @@ export type Institution = {
   type: InstitutionType
   location: string
   demoLabel: string
+  workspaceLabel: string
+  currentCycle: string
+  primaryUser: string
   description: string
   activeWorkspace: string
   previousCycleApplicationCount: number
@@ -51,7 +56,10 @@ export type Collaborator = {
   id: string
   name: string
   role: CollaboratorRole
+  organization: string
   email: string
+  avatarInitials: string
+  permissions: string[]
   inviteStatus: InviteStatus
   assignedProgramIds: string[]
   assignedSubmissionIds: string[]
@@ -67,8 +75,13 @@ export type Artist = {
   discipline: string
   medium: string
   bio: string
-  passportCompleteness: number
+  statement: string
   tags: string[]
+  portfolioImage: string
+  cvStatus: "Complete" | "Incomplete" | "Pending"
+  documentStatus: "Complete" | "Incomplete" | "Pending"
+  referencesStatus: "Complete" | "Incomplete" | "Pending"
+  passportCompleteness: number
 }
 
 export type Submission = {
@@ -107,18 +120,42 @@ export type Submission = {
   activity: ReviewerActivity[]
 }
 
+export type ReviewStatus = "Complete" | "In Progress" | "Pending" | "Completed" | "Not Started" | "Started" | "Requested Info"
+
 export type Review = {
   id: string
   submissionId: string
   reviewerId: string
   score: number | null
-  status: "Not Started" | "Started" | "Completed" | "Requested Info"
+  recommendation?: string
+  status: ReviewStatus
   note: string
+  completedAt?: string
   updatedAt: string
+}
+
+export type Note = {
+  id: string
+  submissionId: string
+  authorId: string
+  note: string
+  createdAt: string
+  visibility: "internal"
+}
+
+export type DemoMessage = {
+  id: string
+  submissionId: string
+  recipientType: "artist" | "reviewer" | "collaborator"
+  recipientId: string
+  type: "request-info" | "reviewer-reminder" | "interview-follow-up" | "internal"
+  status: "drafted" | "sent" | "pending"
+  createdAt: string
 }
 
 export type ActivityLogEntry = {
   id: string
+  submissionId?: string
   date: string
   actor: string
   action: string
@@ -144,13 +181,14 @@ export type MessageThread = {
   counterpartRole: MessageAuthor
   channel: "Applicant" | "Reviewer" | "Committee"
   scenario?: "deadline-triage" | "reviewer-bottleneck" | "strong-shortlist"
+  linkedMessageId?: string
   unread: boolean
   updatedAt: string
   preview: string
   messages: MessageEntry[]
 }
 
-export const demoToday = new Date("2026-06-29T12:00:00Z")
+export const demoToday = new Date("2026-08-10T12:00:00Z")
 
 export const institution: Institution = {
   id: "kleio-arthouse",
@@ -159,57 +197,60 @@ export const institution: Institution = {
   type: "Arthouse",
   location: "Brooklyn, NY, USA",
   demoLabel: "Demo environment · Synthetic data",
+  workspaceLabel: "Demo environment · Synthetic data",
+  currentCycle: "2026 Review Cycle",
+  primaryUser: "Mara Voss",
   description:
     "A fictional contemporary arts institution used to demonstrate KLEIO's submission, review, shortlist, and reporting workflow.",
-  activeWorkspace: "KLEIO Arthouse Residency Program",
+  activeWorkspace: "2026 Review Cycle",
   previousCycleApplicationCount: 29,
 }
 
 export const programs: Program[] = [
   {
     id: "residency-2026",
-    title: "KLEIO Arthouse Residency",
+    title: "KLEIO Arthouse Residency 2026",
     category: "Residency / Open Call",
     status: "Open",
     cycle: "2026",
-    deadline: "2026-07-03",
-    reviewStart: "2026-07-04",
-    decisionDate: "2026-07-21",
+    deadline: "2026-08-14",
+    reviewStart: "2026-08-15",
+    decisionDate: "2026-09-05",
     description:
       "A residency for artists working across installation, image-making, archival practice, sound, performance, and socially engaged research.",
     requiredMaterials: ["Artist bio", "Artist statement", "CV", "Portfolio", "Project proposal", "Budget outline", "References"],
     rubric: ["Conceptual strength", "Material clarity", "Program fit", "Feasibility", "Research depth"],
-    committeeIds: ["mara-voss", "sophia-lee", "marcus-chen", "avery-thomas"],
+    committeeIds: ["mara-voss", "theo-malik", "celeste-rowan", "lina-park"],
   },
   {
     id: "archive-fellowship-2026",
-    title: "Emerging Image & Archive Fellowship",
+    title: "Emerging Image & Archive Fellowship 2026",
     category: "Fellowship / Grant",
     status: "In Review",
     cycle: "2026",
-    deadline: "2026-06-24",
-    reviewStart: "2026-06-25",
-    decisionDate: "2026-07-12",
+    deadline: "2026-08-12",
+    reviewStart: "2026-08-13",
+    decisionDate: "2026-08-28",
     description:
       "A focused fellowship for artists building projects around personal archives, memory, photography, and research-based practice.",
     requiredMaterials: ["Artist statement", "Portfolio", "Research summary", "Timeline", "References"],
     rubric: ["Research clarity", "Archive relevance", "Visual strength", "Feasibility", "Public program potential"],
-    committeeIds: ["mara-voss", "camille-hart", "avery-thomas"],
+    committeeIds: ["mara-voss", "mateo-alvarez", "lina-park"],
   },
   {
     id: "public-forms-2026",
-    title: "Public Forms Exhibition Call",
+    title: "Public Forms Exhibition Call 2026",
     category: "Exhibition / Open Call",
     status: "Open",
     cycle: "2026",
-    deadline: "2026-07-05",
-    reviewStart: "2026-07-06",
-    decisionDate: "2026-07-26",
+    deadline: "2026-08-22",
+    reviewStart: "2026-08-23",
+    decisionDate: "2026-09-10",
     description:
       "An exhibition call for artists working with public space, civic memory, site-responsive sculpture, and experimental forms of display.",
     requiredMaterials: ["Artist bio", "Statement", "Portfolio", "Installation plan", "Technical needs"],
     rubric: ["Public relevance", "Spatial awareness", "Technical feasibility", "Community connection", "Program fit"],
-    committeeIds: ["mara-voss", "sophia-lee", "nina-patel"],
+    committeeIds: ["mara-voss", "theo-malik", "anika-shaw"],
   },
 ]
 
@@ -218,7 +259,10 @@ export const collaborators: Collaborator[] = [
     id: "mara-voss",
     name: "Mara Voss",
     role: "Program Director",
+    organization: "KLEIO Arthouse",
     email: "mara@kleioarthouse.demo",
+    avatarInitials: "MV",
+    permissions: ["manage-programs", "manage-submissions", "committee", "reports"],
     inviteStatus: "Accepted",
     assignedProgramIds: ["residency-2026", "archive-fellowship-2026", "public-forms-2026"],
     assignedSubmissionIds: [],
@@ -227,10 +271,13 @@ export const collaborators: Collaborator[] = [
     lastActive: "Today",
   },
   {
-    id: "sophia-lee",
-    name: "Sophia Lee",
+    id: "theo-malik",
+    name: "Theo Malik",
     role: "Curator",
-    email: "sophia@kleioarthouse.demo",
+    organization: "KLEIO Arthouse",
+    email: "theo@kleioarthouse.demo",
+    avatarInitials: "TM",
+    permissions: ["review", "shortlist", "committee"],
     inviteStatus: "Accepted",
     assignedProgramIds: ["residency-2026", "public-forms-2026"],
     assignedSubmissionIds: ["amina-el-badri", "sofia-karim", "daniel-osei"],
@@ -239,22 +286,13 @@ export const collaborators: Collaborator[] = [
     lastActive: "Today",
   },
   {
-    id: "marcus-chen",
-    name: "Marcus Chen",
-    role: "Guest Juror",
-    email: "marcus@kleioarthouse.demo",
-    inviteStatus: "Accepted",
-    assignedProgramIds: ["residency-2026"],
-    assignedSubmissionIds: ["julian-reyes", "sofia-karim", "daniel-osei"],
-    reviewsAssigned: 8,
-    reviewsCompleted: 5,
-    lastActive: "Yesterday",
-  },
-  {
-    id: "avery-thomas",
-    name: "Avery Thomas",
+    id: "lina-park",
+    name: "Lina Park",
     role: "Grant Administrator",
-    email: "avery@kleioarthouse.demo",
+    organization: "KLEIO Arthouse",
+    email: "lina@kleioarthouse.demo",
+    avatarInitials: "LP",
+    permissions: ["review", "intake", "messages"],
     inviteStatus: "Accepted",
     assignedProgramIds: ["residency-2026", "archive-fellowship-2026"],
     assignedSubmissionIds: ["mei-lin-zhang", "iris-okafor", "hana-park"],
@@ -263,28 +301,49 @@ export const collaborators: Collaborator[] = [
     lastActive: "Today",
   },
   {
-    id: "camille-hart",
-    name: "Camille Hart",
-    role: "Reviewer",
-    email: "camille@kleioarthouse.demo",
-    inviteStatus: "Invited",
-    assignedProgramIds: ["archive-fellowship-2026"],
-    assignedSubmissionIds: [],
-    reviewsAssigned: 5,
-    reviewsCompleted: 0,
-    lastActive: "Invitation sent",
+    id: "celeste-rowan",
+    name: "Celeste Rowan",
+    role: "Guest Juror",
+    organization: "Independent",
+    email: "celeste@kleioarthouse.demo",
+    avatarInitials: "CR",
+    permissions: ["review", "committee"],
+    inviteStatus: "Accepted",
+    assignedProgramIds: ["residency-2026"],
+    assignedSubmissionIds: ["julian-reyes", "sofia-karim", "daniel-osei"],
+    reviewsAssigned: 8,
+    reviewsCompleted: 5,
+    lastActive: "Yesterday",
   },
   {
-    id: "nina-patel",
-    name: "Nina Patel",
-    role: "Viewer",
-    email: "nina@kleioarthouse.demo",
-    inviteStatus: "Pending",
+    id: "mateo-alvarez",
+    name: "Mateo Alvarez",
+    role: "Reviewer",
+    organization: "KLEIO Arthouse",
+    email: "mateo@kleioarthouse.demo",
+    avatarInitials: "MA",
+    permissions: ["review"],
+    inviteStatus: "Accepted",
+    assignedProgramIds: ["archive-fellowship-2026"],
+    assignedSubmissionIds: ["sofia-karim"],
+    reviewsAssigned: 5,
+    reviewsCompleted: 2,
+    lastActive: "Today",
+  },
+  {
+    id: "anika-shaw",
+    name: "Anika Shaw",
+    role: "Reviewer",
+    organization: "KLEIO Arthouse",
+    email: "anika@kleioarthouse.demo",
+    avatarInitials: "AS",
+    permissions: ["review"],
+    inviteStatus: "Accepted",
     assignedProgramIds: ["public-forms-2026"],
-    assignedSubmissionIds: [],
-    reviewsAssigned: 0,
-    reviewsCompleted: 0,
-    lastActive: "Pending invite",
+    assignedSubmissionIds: ["daniel-osei"],
+    reviewsAssigned: 4,
+    reviewsCompleted: 3,
+    lastActive: "Today",
   },
 ]
 
@@ -296,8 +355,14 @@ export const artists: Artist[] = [
     discipline: "Visual Artist",
     medium: "Installation",
     bio: "Amina builds immersive environments from fabric, sound, archival fragments, and light.",
-    passportCompleteness: 95,
+    statement:
+      "My work investigates the way personal and collective memories are preserved, distorted, and remembered across generations.",
     tags: ["memory", "installation", "archive", "material practice"],
+    portfolioImage: "/artwork/echoes-of-memory.png",
+    cvStatus: "Complete",
+    documentStatus: "Complete",
+    referencesStatus: "Pending",
+    passportCompleteness: 95,
   },
   {
     id: "mei-lin-zhang",
@@ -306,8 +371,14 @@ export const artists: Artist[] = [
     discipline: "Visual Artist",
     medium: "Works on Paper",
     bio: "Mei Lin works with ink, suspended paper, and gestural notation to explore disappearance and trace.",
-    passportCompleteness: 82,
+    statement:
+      "Trace examines the fleeting instant between gesture and disappearance through ink on suspended paper.",
     tags: ["drawing", "paper", "gesture", "deadline triage"],
+    portfolioImage: "/artwork/trace.png",
+    cvStatus: "Incomplete",
+    documentStatus: "Incomplete",
+    referencesStatus: "Incomplete",
+    passportCompleteness: 82,
   },
   {
     id: "sofia-karim",
@@ -316,8 +387,14 @@ export const artists: Artist[] = [
     discipline: "Visual Artist",
     medium: "Painting",
     bio: "Sofia paints luminous thresholds between landscape, memory, and architectural atmosphere.",
-    passportCompleteness: 100,
+    statement:
+      "The Second Horizon is a series of luminous landscapes that dissolve the line between land and sky.",
     tags: ["painting", "committee vote", "finalist", "landscape"],
+    portfolioImage: "/artwork/second-horizon.png",
+    cvStatus: "Complete",
+    documentStatus: "Complete",
+    referencesStatus: "Complete",
+    passportCompleteness: 100,
   },
   {
     id: "julian-reyes",
@@ -326,8 +403,13 @@ export const artists: Artist[] = [
     discipline: "Visual Artist",
     medium: "Sculpture",
     bio: "Julian creates sculptural systems that trace water, migration, and civic infrastructure.",
-    passportCompleteness: 100,
+    statement: "Between Currents maps the unseen migrations of water and people.",
     tags: ["sculpture", "migration", "water", "research"],
+    portfolioImage: "/artwork/between-currents.png",
+    cvStatus: "Complete",
+    documentStatus: "Complete",
+    referencesStatus: "Complete",
+    passportCompleteness: 100,
   },
   {
     id: "daniel-osei",
@@ -336,8 +418,13 @@ export const artists: Artist[] = [
     discipline: "Visual Artist",
     medium: "Mixed Media",
     bio: "Daniel gathers material fragments from shifting coastlines into quiet environmental assemblages.",
-    passportCompleteness: 96,
+    statement: "Fragments of the Coast gathers weathered objects from disappearing shorelines.",
     tags: ["mixed media", "coastline", "ecology", "shortlist"],
+    portfolioImage: "/artwork/fragments-of-the-coast.png",
+    cvStatus: "Complete",
+    documentStatus: "Complete",
+    referencesStatus: "Complete",
+    passportCompleteness: 96,
   },
   {
     id: "iris-okafor",
@@ -346,8 +433,13 @@ export const artists: Artist[] = [
     discipline: "Multidisciplinary Artist",
     medium: "Video / Sound",
     bio: "Iris works across moving image, sound, and oral history to build layered civic portraits.",
-    passportCompleteness: 64,
+    statement: "Signal House uses oral history, low-frequency sound, and video fragments.",
     tags: ["video", "sound", "incomplete", "oral history"],
+    portfolioImage: "/placeholder.svg",
+    cvStatus: "Incomplete",
+    documentStatus: "Incomplete",
+    referencesStatus: "Incomplete",
+    passportCompleteness: 64,
   },
 ]
 
@@ -361,11 +453,11 @@ const baseSpotlightSubmissions: Submission[] = [
     discipline: "Visual Artist",
     medium: "Installation",
     projectTitle: "Echoes of Memory",
-    program: "KLEIO Arthouse Residency",
+    program: "KLEIO Arthouse Residency 2026",
     programCycle: "2026",
     completeness: 95,
-    reviewer: "Sophia Lee",
-    reviewerIds: ["sophia-lee", "marcus-chen"],
+    reviewer: "Theo Malik",
+    reviewerIds: ["theo-malik", "celeste-rowan"],
     submitted: "Jun 24, 2026",
     submittedAt: "2026-06-24",
     status: "In Review",
@@ -383,8 +475,8 @@ const baseSpotlightSubmissions: Submission[] = [
       date: "Jun 28, 2026",
     },
     activity: [
-      { id: "a1", actor: "Sophia Lee", action: "completed review", date: "Jun 28, 2026" },
-      { id: "a2", actor: "Marcus Chen", action: "added shortlist recommendation", date: "Jun 27, 2026" },
+      { id: "a1", actor: "Theo Malik", action: "completed review", date: "Jun 28, 2026" },
+      { id: "a2", actor: "Celeste Rowan", action: "added shortlist recommendation", date: "Jun 27, 2026" },
       { id: "a3", actor: "System", action: "Application submitted", date: "Jun 24, 2026" },
     ],
   },
@@ -397,11 +489,11 @@ const baseSpotlightSubmissions: Submission[] = [
     discipline: "Visual Artist",
     medium: "Works on Paper",
     projectTitle: "瞬間 / Trace",
-    program: "KLEIO Arthouse Residency",
+    program: "KLEIO Arthouse Residency 2026",
     programCycle: "2026",
     completeness: 82,
-    reviewer: "Avery Thomas",
-    reviewerIds: ["avery-thomas"],
+    reviewer: "Lina Park",
+    reviewerIds: ["lina-park"],
     submitted: "Jun 26, 2026",
     submittedAt: "2026-06-26",
     status: "Pending Info",
@@ -416,11 +508,11 @@ const baseSpotlightSubmissions: Submission[] = [
       "Trace examines the fleeting instant between gesture and disappearance. Working with ink on suspended paper, I record the residue of movement, allowing each mark to hover between presence and erasure.",
     internalNote: {
       body: "Promising application but missing three required items. Send a single request before the July 3 deadline so the artist is not lost to admin friction.",
-      author: "Avery Thomas",
-      date: "Jun 29, 2026",
+      author: "Lina Park",
+      date: "Aug 9, 2026",
     },
     activity: [
-      { id: "m1", actor: "Avery Thomas", action: "flagged missing materials", date: "Jun 29, 2026" },
+      { id: "m1", actor: "Lina Park", action: "flagged missing materials", date: "Aug 9, 2026" },
       { id: "m2", actor: "System", action: "Completeness check marked 82%", date: "Jun 26, 2026" },
       { id: "m3", actor: "System", action: "Application submitted", date: "Jun 26, 2026" },
     ],
@@ -434,11 +526,11 @@ const baseSpotlightSubmissions: Submission[] = [
     discipline: "Visual Artist",
     medium: "Painting",
     projectTitle: "The Second Horizon",
-    program: "Emerging Image & Archive Fellowship",
+    program: "Emerging Image & Archive Fellowship 2026",
     programCycle: "2026",
     completeness: 100,
-    reviewer: "Sophia Lee",
-    reviewerIds: ["sophia-lee", "marcus-chen", "camille-hart"],
+    reviewer: "Theo Malik",
+    reviewerIds: ["theo-malik", "celeste-rowan", "mateo-alvarez"],
     submitted: "Jun 18, 2026",
     submittedAt: "2026-06-18",
     status: "Pending Vote",
@@ -453,12 +545,12 @@ const baseSpotlightSubmissions: Submission[] = [
     internalNote: {
       body: "Two reviews are complete. Camille has not submitted the final vote. Strong finalist candidate but decision is blocked until committee vote is complete.",
       author: "Mara Voss",
-      date: "Jun 29, 2026",
+      date: "Aug 9, 2026",
     },
     activity: [
-      { id: "s1", actor: "Sophia Lee", action: "completed review", date: "Jun 25, 2026" },
-      { id: "s2", actor: "Marcus Chen", action: "completed review", date: "Jun 26, 2026" },
-      { id: "s3", actor: "Camille Hart", action: "vote pending", date: "Jun 29, 2026" },
+      { id: "s1", actor: "Theo Malik", action: "completed review", date: "Jun 25, 2026" },
+      { id: "s2", actor: "Celeste Rowan", action: "completed review", date: "Jun 26, 2026" },
+      { id: "s3", actor: "Mateo Alvarez", action: "vote pending", date: "Aug 9, 2026" },
     ],
   },
   {
@@ -470,11 +562,11 @@ const baseSpotlightSubmissions: Submission[] = [
     discipline: "Visual Artist",
     medium: "Mixed Media",
     projectTitle: "Fragments of the Coast",
-    program: "Public Forms Exhibition Call",
+    program: "Public Forms Exhibition Call 2026",
     programCycle: "2026",
     completeness: 96,
-    reviewer: "Marcus Chen",
-    reviewerIds: ["marcus-chen", "nina-patel"],
+    reviewer: "Celeste Rowan",
+    reviewerIds: ["celeste-rowan", "anika-shaw"],
     submitted: "Jun 20, 2026",
     submittedAt: "2026-06-20",
     status: "Shortlisted",
@@ -487,12 +579,12 @@ const baseSpotlightSubmissions: Submission[] = [
       "Fragments of the Coast gathers weathered objects from disappearing shorelines into quiet assemblages. The work is a meditation on erosion, memory, and the fragile archives the sea leaves behind.",
     internalNote: {
       body: "Shortlisted for interview. Strong regional research; ask for budget clarification before final decision.",
-      author: "Marcus Chen",
+      author: "Celeste Rowan",
       date: "Jun 28, 2026",
     },
     activity: [
-      { id: "d1", actor: "Marcus Chen", action: "moved to shortlist", date: "Jun 28, 2026" },
-      { id: "d2", actor: "Nina Patel", action: "added public-space note", date: "Jun 27, 2026" },
+      { id: "d1", actor: "Celeste Rowan", action: "moved to shortlist", date: "Jun 28, 2026" },
+      { id: "d2", actor: "Anika Shaw", action: "added public-space note", date: "Jun 27, 2026" },
       { id: "d3", actor: "System", action: "Application submitted", date: "Jun 20, 2026" },
     ],
   },
@@ -505,11 +597,11 @@ const baseSpotlightSubmissions: Submission[] = [
     discipline: "Visual Artist",
     medium: "Sculpture",
     projectTitle: "Between Currents",
-    program: "Public Forms Exhibition Call",
+    program: "Public Forms Exhibition Call 2026",
     programCycle: "2026",
     completeness: 100,
-    reviewer: "Marcus Chen",
-    reviewerIds: ["marcus-chen"],
+    reviewer: "Celeste Rowan",
+    reviewerIds: ["celeste-rowan"],
     submitted: "Jun 22, 2026",
     submittedAt: "2026-06-22",
     status: "In Review",
@@ -522,11 +614,11 @@ const baseSpotlightSubmissions: Submission[] = [
       "Between Currents maps the unseen migrations of water and people. Layered translucent panels refract light into shifting tidal patterns, inviting reflection on movement, displacement, and the porous borders we cross.",
     internalNote: {
       body: "Highly resolved proposal. Strong public-space potential; needs one more reviewer note before advancement.",
-      author: "Marcus Chen",
+      author: "Celeste Rowan",
       date: "Jun 27, 2026",
     },
     activity: [
-      { id: "j1", actor: "Marcus Chen", action: "started review", date: "Jun 25, 2026" },
+      { id: "j1", actor: "Celeste Rowan", action: "started review", date: "Jun 25, 2026" },
       { id: "j2", actor: "System", action: "Application submitted", date: "Jun 22, 2026" },
     ],
   },
@@ -539,11 +631,11 @@ const baseSpotlightSubmissions: Submission[] = [
     discipline: "Multidisciplinary Artist",
     medium: "Video / Sound",
     projectTitle: "Signal House",
-    program: "Emerging Image & Archive Fellowship",
+    program: "Emerging Image & Archive Fellowship 2026",
     programCycle: "2026",
     completeness: 64,
-    reviewer: "Avery Thomas",
-    reviewerIds: ["avery-thomas"],
+    reviewer: "Lina Park",
+    reviewerIds: ["lina-park"],
     submitted: "Jun 23, 2026",
     submittedAt: "2026-06-23",
     status: "Incomplete",
@@ -557,12 +649,12 @@ const baseSpotlightSubmissions: Submission[] = [
       "Signal House uses oral history, low-frequency sound, and video fragments to explore how memory circulates through domestic space and public infrastructure.",
     internalNote: {
       body: "The concept is aligned with the fellowship, but the application is not review-ready. Needs structured follow-up.",
-      author: "Avery Thomas",
-      date: "Jun 29, 2026",
+      author: "Lina Park",
+      date: "Aug 9, 2026",
     },
     activity: [
       { id: "i1", actor: "System", action: "Completeness check marked 64%", date: "Jun 23, 2026" },
-      { id: "i2", actor: "Avery Thomas", action: "queued information request", date: "Jun 29, 2026" },
+      { id: "i2", actor: "Lina Park", action: "queued information request", date: "Aug 9, 2026" },
     ],
   },
 ]
@@ -622,8 +714,8 @@ const statusPattern: SubmissionStatus[] = [
 ]
 
 const programCycle = [programs[0], programs[1], programs[2]]
-const reviewerCycle = ["Sophia Lee", "Marcus Chen", "Avery Thomas", "Camille Hart"]
-const reviewerIdCycle = ["sophia-lee", "marcus-chen", "avery-thomas", "camille-hart"]
+const reviewerCycle = ["Theo Malik", "Celeste Rowan", "Lina Park", "Mateo Alvarez"]
+const reviewerIdCycle = ["theo-malik", "celeste-rowan", "lina-park", "mateo-alvarez"]
 const imageCycle = [
   "/artwork/echoes-of-memory.png",
   "/artwork/between-currents.png",
@@ -717,52 +809,68 @@ const generatedSubmissions: Submission[] = generatedNames.map((item, index) => {
 
 export const allSubmissions: Submission[] = [...baseSpotlightSubmissions, ...generatedSubmissions]
 
-export const submissions: Submission[] = [
-  allSubmissions.find((s) => s.id === "amina-el-badri")!,
-  allSubmissions.find((s) => s.id === "mei-lin-zhang")!,
-  allSubmissions.find((s) => s.id === "sofia-karim")!,
-  allSubmissions.find((s) => s.id === "daniel-osei")!,
-  allSubmissions.find((s) => s.id === "julian-reyes")!,
-  allSubmissions.find((s) => s.id === "iris-okafor")!,
-  ...generatedSubmissions.filter((s) => s.priority === "High" || s.status === "Pending Vote" || s.status === "Pending Info").slice(0, 17),
-]
+/** Full submission list — analytics and KPIs derive from allSubmissions. */
+export const submissions: Submission[] = allSubmissions
 
 export const reviews: Review[] = [
-  { id: "review-amina-sophia", submissionId: "amina-el-badri", reviewerId: "sophia-lee", score: 94, status: "Completed", note: "Exceptional material sensitivity and clear fit for residency.", updatedAt: "2026-06-28" },
-  { id: "review-amina-marcus", submissionId: "amina-el-badri", reviewerId: "marcus-chen", score: 92, status: "Completed", note: "Recommend shortlist.", updatedAt: "2026-06-27" },
-  { id: "review-mei-avery", submissionId: "mei-lin-zhang", reviewerId: "avery-thomas", score: null, status: "Requested Info", note: "Missing CV, dimensions, and reference contact.", updatedAt: "2026-06-29" },
-  { id: "review-sofia-sophia", submissionId: "sofia-karim", reviewerId: "sophia-lee", score: 91, status: "Completed", note: "Strong finalist candidate.", updatedAt: "2026-06-25" },
-  { id: "review-sofia-marcus", submissionId: "sofia-karim", reviewerId: "marcus-chen", score: 89, status: "Completed", note: "Committee vote should advance.", updatedAt: "2026-06-26" },
-  { id: "review-sofia-camille", submissionId: "sofia-karim", reviewerId: "camille-hart", score: null, status: "Not Started", note: "Vote pending.", updatedAt: "2026-06-29" },
+  { id: "review-amina-theo", submissionId: "amina-el-badri", reviewerId: "theo-malik", score: 94, recommendation: "Shortlist", status: "Complete", note: "Exceptional material sensitivity and clear fit for residency.", completedAt: "2026-06-28", updatedAt: "2026-06-28" },
+  { id: "review-amina-celeste", submissionId: "amina-el-badri", reviewerId: "celeste-rowan", score: 92, recommendation: "Shortlist", status: "Complete", note: "Recommend shortlist.", completedAt: "2026-06-27", updatedAt: "2026-06-27" },
+  { id: "review-mei-lina", submissionId: "mei-lin-zhang", reviewerId: "lina-park", score: null, status: "In Progress", note: "Missing CV, dimensions, and reference contact.", updatedAt: "2026-08-09" },
+  { id: "review-sofia-theo", submissionId: "sofia-karim", reviewerId: "theo-malik", score: 91, recommendation: "Advance", status: "Complete", note: "Strong finalist candidate.", completedAt: "2026-06-25", updatedAt: "2026-06-25" },
+  { id: "review-sofia-celeste", submissionId: "sofia-karim", reviewerId: "celeste-rowan", score: 89, recommendation: "Advance", status: "Complete", note: "Committee vote should advance.", completedAt: "2026-06-26", updatedAt: "2026-06-26" },
+  { id: "review-sofia-mateo", submissionId: "sofia-karim", reviewerId: "mateo-alvarez", score: null, status: "Pending", note: "Vote pending.", updatedAt: "2026-08-09" },
+]
+
+export const notes: Note[] = [
+  { id: "note-amina-1", submissionId: "amina-el-badri", authorId: "mara-voss", note: "Strong concept and material sensitivity. Excellent alignment with residency goals. This is the clearest shortlist candidate in the current review queue.", createdAt: "2026-06-28", visibility: "internal" },
+  { id: "note-mei-1", submissionId: "mei-lin-zhang", authorId: "lina-park", note: "Promising application but missing three required items. Send a single request before the August 14 deadline.", createdAt: "2026-08-09", visibility: "internal" },
+  { id: "note-sofia-1", submissionId: "sofia-karim", authorId: "mara-voss", note: "Two reviews are complete. Mateo has not submitted the final vote. Strong finalist candidate but decision is blocked until committee vote is complete.", createdAt: "2026-08-09", visibility: "internal" },
+  { id: "note-daniel-1", submissionId: "daniel-osei", authorId: "celeste-rowan", note: "Shortlisted for interview. Strong regional research; ask for budget clarification before final decision.", createdAt: "2026-06-28", visibility: "internal" },
+  { id: "note-julian-1", submissionId: "julian-reyes", authorId: "celeste-rowan", note: "Highly resolved proposal. Strong public-space potential; needs one more reviewer note before advancement.", createdAt: "2026-06-27", visibility: "internal" },
+  { id: "note-iris-1", submissionId: "iris-okafor", authorId: "lina-park", note: "The concept is aligned with the fellowship, but the application is not review-ready. Needs structured follow-up.", createdAt: "2026-08-09", visibility: "internal" },
+]
+
+export const demoMessages: DemoMessage[] = [
+  { id: "msg-mei-1", submissionId: "mei-lin-zhang", recipientType: "artist", recipientId: "mei-lin-zhang", type: "request-info", status: "drafted", createdAt: "2026-08-09" },
+  { id: "msg-sofia-1", submissionId: "sofia-karim", recipientType: "reviewer", recipientId: "mateo-alvarez", type: "reviewer-reminder", status: "pending", createdAt: "2026-08-09" },
+  { id: "msg-iris-1", submissionId: "iris-okafor", recipientType: "artist", recipientId: "iris-okafor", type: "request-info", status: "drafted", createdAt: "2026-08-08" },
+  { id: "msg-daniel-1", submissionId: "daniel-osei", recipientType: "artist", recipientId: "daniel-osei", type: "interview-follow-up", status: "sent", createdAt: "2026-06-28" },
+  { id: "msg-amina-1", submissionId: "amina-el-badri", recipientType: "reviewer", recipientId: "theo-malik", type: "internal", status: "sent", createdAt: "2026-06-28" },
 ]
 
 export const activityLog: ActivityLogEntry[] = [
-  { id: "log-1", date: "Jun 29, 2026", actor: "Avery Thomas", action: "flagged missing materials", target: "Mei Lin Zhang · Trace", type: "submission" },
-  { id: "log-2", date: "Jun 29, 2026", actor: "Camille Hart", action: "has pending committee vote", target: "Sofia Karim · The Second Horizon", type: "review" },
-  { id: "log-3", date: "Jun 28, 2026", actor: "Sophia Lee", action: "recommended shortlist", target: "Amina El Badri · Echoes of Memory", type: "decision" },
-  { id: "log-4", date: "Jun 28, 2026", actor: "Marcus Chen", action: "moved to shortlist", target: "Daniel Osei · Fragments of the Coast", type: "decision" },
-  { id: "log-5", date: "Jun 26, 2026", actor: "System", action: "sent deadline reminder", target: "KLEIO Arthouse Residency", type: "message" },
+  { id: "log-1", submissionId: "mei-lin-zhang", date: "Aug 9, 2026", actor: "Lina Park", action: "flagged missing materials", target: "Mei Lin Zhang · 瞬間 / Trace", type: "submission" },
+  { id: "log-2", submissionId: "sofia-karim", date: "Aug 9, 2026", actor: "Mateo Alvarez", action: "has pending committee vote", target: "Sofia Karim · The Second Horizon", type: "review" },
+  { id: "log-3", submissionId: "amina-el-badri", date: "Jun 28, 2026", actor: "Theo Malik", action: "recommended shortlist", target: "Amina El Badri · Echoes of Memory", type: "decision" },
+  { id: "log-4", submissionId: "daniel-osei", date: "Jun 28, 2026", actor: "Celeste Rowan", action: "moved to shortlist", target: "Daniel Osei · Fragments of the Coast", type: "decision" },
+  { id: "log-5", date: "Aug 8, 2026", actor: "System", action: "sent deadline reminder", target: "KLEIO Arthouse Residency 2026", type: "message" },
+  { id: "log-6", submissionId: "sofia-karim", date: "Jun 26, 2026", actor: "Celeste Rowan", action: "completed review", target: "Sofia Karim · The Second Horizon", type: "review" },
+  { id: "log-7", submissionId: "sofia-karim", date: "Jun 25, 2026", actor: "Theo Malik", action: "completed review", target: "Sofia Karim · The Second Horizon", type: "review" },
+  { id: "log-8", submissionId: "amina-el-badri", date: "Jun 27, 2026", actor: "Celeste Rowan", action: "added shortlist recommendation", target: "Amina El Badri · Echoes of Memory", type: "decision" },
+  { id: "log-9", submissionId: "mei-lin-zhang", date: "Jun 26, 2026", actor: "System", action: "Application submitted", target: "Mei Lin Zhang · 瞬間 / Trace", type: "submission" },
+  { id: "log-10", submissionId: "iris-okafor", date: "Aug 9, 2026", actor: "Lina Park", action: "queued information request", target: "Iris Okafor · Signal House", type: "submission" },
 ]
 
 export const messageThreads: MessageThread[] = [
   {
     id: "thread-mei-lin",
     submissionId: "mei-lin-zhang",
-    subject: "Missing materials before the July 3 deadline",
+    subject: "Missing materials before the August 14 deadline",
     counterpart: "Mei Lin Zhang",
     counterpartRole: "Applicant",
     channel: "Applicant",
     scenario: "deadline-triage",
     unread: true,
-    updatedAt: "Jun 29, 2026",
+    linkedMessageId: "msg-mei-1",
+    updatedAt: "Aug 9, 2026",
     preview: "We still need your updated CV, installation dimensions, and one reference contact.",
     messages: [
       {
         id: "thread-mei-lin-1",
-        author: "Avery Thomas",
+        author: "Lina Park",
         role: "Program Team",
-        body: "Hi Mei Lin — your application for the KLEIO Arthouse Residency looks promising, but three required items are still missing: an updated CV, installation dimensions, and a reference contact. Could you send these before the July 3 deadline so we can move you into review?",
-        date: "Jun 29, 2026",
+        body: "Hi Mei Lin — your application for the KLEIO Arthouse Residency 2026 looks promising, but three required items are still missing: an updated CV, installation dimensions, and a reference contact. Could you send these before the August 14 deadline so we can move you into review?",
+        date: "Aug 9, 2026",
       },
       {
         id: "thread-mei-lin-2",
@@ -777,24 +885,25 @@ export const messageThreads: MessageThread[] = [
     id: "thread-sofia",
     submissionId: "sofia-karim",
     subject: "Committee vote still pending",
-    counterpart: "Camille Hart",
+    counterpart: "Mateo Alvarez",
     counterpartRole: "Reviewer",
     channel: "Committee",
     scenario: "reviewer-bottleneck",
     unread: true,
-    updatedAt: "Jun 29, 2026",
+    linkedMessageId: "msg-sofia-1",
+    updatedAt: "Aug 9, 2026",
     preview: "Two of three reviews are in. Your vote is the last one blocking a decision.",
     messages: [
       {
         id: "thread-sofia-1",
         author: "Mara Voss",
         role: "Program Team",
-        body: "Hi Camille — The Second Horizon has two completed reviews and strong scores. Your vote is the last one we need before the committee can advance it. Are you able to submit by end of week?",
-        date: "Jun 29, 2026",
+        body: "Hi Mateo — The Second Horizon has two completed reviews and strong scores. Your vote is the last one we need before the committee can advance it. Are you able to submit by end of week?",
+        date: "Aug 9, 2026",
       },
       {
         id: "thread-sofia-2",
-        author: "Sophia Lee",
+        author: "Theo Malik",
         role: "Reviewer",
         body: "For context, I scored this a 91 — clear finalist for me.",
         date: "Jun 25, 2026",
@@ -805,24 +914,25 @@ export const messageThreads: MessageThread[] = [
     id: "thread-amina",
     submissionId: "amina-el-badri",
     subject: "Shortlist recommendation — Echoes of Memory",
-    counterpart: "Sophia Lee",
+    counterpart: "Theo Malik",
     counterpartRole: "Reviewer",
     channel: "Reviewer",
     scenario: "strong-shortlist",
     unread: false,
+    linkedMessageId: "msg-amina-1",
     updatedAt: "Jun 28, 2026",
     preview: "This is the clearest shortlist candidate in the current queue.",
     messages: [
       {
         id: "thread-amina-1",
-        author: "Sophia Lee",
+        author: "Theo Malik",
         role: "Reviewer",
         body: "Review complete — exceptional material sensitivity and a clear fit for the residency. Recommending we move Amina to the shortlist.",
         date: "Jun 28, 2026",
       },
       {
         id: "thread-amina-2",
-        author: "Marcus Chen",
+        author: "Celeste Rowan",
         role: "Reviewer",
         body: "Agreed. This is the strongest application I've seen this cycle.",
         date: "Jun 27, 2026",
@@ -837,12 +947,13 @@ export const messageThreads: MessageThread[] = [
     counterpartRole: "Applicant",
     channel: "Applicant",
     unread: false,
+    linkedMessageId: "msg-daniel-1",
     updatedAt: "Jun 28, 2026",
     preview: "Could you confirm material and fabrication costs for the coastal assemblage?",
     messages: [
       {
         id: "thread-daniel-1",
-        author: "Marcus Chen",
+        author: "Celeste Rowan",
         role: "Reviewer",
         body: "Hi Daniel — you've been shortlisted. Before the final decision, could you confirm the material and fabrication costs in your budget outline?",
         date: "Jun 28, 2026",
@@ -857,170 +968,19 @@ export const messageThreads: MessageThread[] = [
     counterpartRole: "Applicant",
     channel: "Applicant",
     unread: true,
-    updatedAt: "Jun 29, 2026",
+    linkedMessageId: "msg-iris-1",
+    updatedAt: "Aug 9, 2026",
     preview: "A few items are still needed before we can send Signal House to reviewers.",
     messages: [
       {
         id: "thread-iris-1",
-        author: "Avery Thomas",
+        author: "Lina Park",
         role: "Program Team",
         body: "Hi Iris — the concept fits the Emerging Image & Archive Fellowship well, but the application is at 64% complete. We still need a portfolio video link, project timeline, reference letter, and budget outline.",
-        date: "Jun 29, 2026",
+        date: "Aug 9, 2026",
       },
     ],
   },
-]
-
-const statusOrder: SubmissionStatus[] = [
-  "In Review",
-  "Shortlisted",
-  "Interview",
-  "Pending Vote",
-  "Pending Info",
-  "Incomplete",
-  "Withdrawn",
-]
-
-const statusColors: Record<SubmissionStatus, string> = {
-  "In Review": "oklch(0.55 0.2 287)",
-  Shortlisted: "oklch(0.72 0.13 150)",
-  Interview: "oklch(0.66 0.13 235)",
-  "Pending Vote": "oklch(0.74 0.15 60)",
-  "Pending Info": "oklch(0.78 0.13 78)",
-  Incomplete: "oklch(0.86 0.045 290)",
-  Withdrawn: "oklch(0.62 0.2 18)",
-}
-
-function countByStatus(status: SubmissionStatus) {
-  return allSubmissions.filter((submission) => submission.status === status).length
-}
-
-function pct(count: number, total = allSubmissions.length) {
-  if (!total) return "0%"
-  return `${((count / total) * 100).toFixed(1)}%`
-}
-
-function isWithinNextSevenDays(dateString: string) {
-  const date = new Date(`${dateString}T12:00:00Z`)
-  const diffMs = date.getTime() - demoToday.getTime()
-  const diffDays = diffMs / (1000 * 60 * 60 * 24)
-  return diffDays >= 0 && diffDays <= 7
-}
-
-function monthLabel(isoDate: string) {
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    year: "2-digit",
-    timeZone: "UTC",
-  }).format(new Date(`${isoDate}T12:00:00Z`)).replace(" ", " '")
-}
-
-const totalApplications = allSubmissions.length
-const previousApplications = institution.previousCycleApplicationCount
-const totalDelta = Math.round(((totalApplications - previousApplications) / previousApplications) * 100)
-const inReviewCount = countByStatus("In Review")
-const shortlistedCount = countByStatus("Shortlisted")
-const pendingVoteCount = countByStatus("Pending Vote")
-const incompleteCount = allSubmissions.filter(
-  (submission) =>
-    submission.status === "Incomplete" ||
-    submission.status === "Pending Info" ||
-    (submission.missingMaterials?.length ?? 0) > 0,
-).length
-const deadlinesThisWeekCount = programs.filter((program) => isWithinNextSevenDays(program.deadline)).length
-const needsAttentionCount = allSubmissions.filter(
-  (submission) => submission.status === "Pending Info" || submission.status === "Incomplete" || submission.completeness < 85,
-).length
-const priorityQueueCount = submissions.length
-const unreadMessageCount = messageThreads.filter((thread) => thread.unread).length
-
-export const analytics = {
-  totalApplications,
-  previousApplications,
-  totalDelta,
-  inReviewCount,
-  shortlistedCount,
-  pendingVoteCount,
-  incompleteCount,
-  deadlinesThisWeekCount,
-  needsAttentionCount,
-  priorityQueueCount,
-  unreadMessageCount,
-  activePrograms: programs.filter((program) => program.status === "Open" || program.status === "In Review").length,
-  reviewerCompletionRate: `${Math.round((collaborators.reduce((sum, person) => sum + person.reviewsCompleted, 0) / Math.max(collaborators.reduce((sum, person) => sum + person.reviewsAssigned, 0), 1)) * 100)}%`,
-}
-
-export const kpis = [
-  {
-    label: "Total Applications",
-    value: totalApplications.toLocaleString(),
-    delta: `${totalDelta >= 0 ? "+" : ""}${totalDelta}% from previous cycle`,
-    trend: totalDelta >= 0 ? ("up" as const) : ("neutral" as const),
-    icon: "clipboard",
-  },
-  {
-    label: "In Review",
-    value: inReviewCount.toLocaleString(),
-    delta: `${pct(inReviewCount)} of total`,
-    trend: "neutral" as const,
-    icon: "eye",
-  },
-  {
-    label: "Shortlisted",
-    value: shortlistedCount.toLocaleString(),
-    delta: `${pct(shortlistedCount)} of total`,
-    trend: "neutral" as const,
-    icon: "bookmark",
-  },
-  {
-    label: "Pending Committee Vote",
-    value: pendingVoteCount.toLocaleString(),
-    delta: `${pct(pendingVoteCount)} of total`,
-    trend: "neutral" as const,
-    icon: "users",
-  },
-  {
-    label: "Deadlines This Week",
-    value: deadlinesThisWeekCount.toLocaleString(),
-    delta: `${deadlinesThisWeekCount} programs`,
-    trend: "neutral" as const,
-    icon: "calendar",
-  },
-  {
-    label: "Incomplete Applications",
-    value: incompleteCount.toLocaleString(),
-    delta: `${pct(incompleteCount)} of total`,
-    trend: "neutral" as const,
-    icon: "file",
-  },
-]
-
-const months = ["Jan '26", "Feb '26", "Mar '26", "Apr '26", "May '26", "Jun '26"]
-const countsByMonth = allSubmissions.reduce<Record<string, number>>((acc, submission) => {
-  const label = monthLabel(submission.submittedAt)
-  acc[label] = (acc[label] ?? 0) + 1
-  return acc
-}, {})
-
-export const applicationsOverTime = months.map((month) => ({
-  month,
-  applications: countsByMonth[month] ?? 0,
-}))
-
-export const statusBreakdown = statusOrder.map((label) => {
-  const count = countByStatus(label)
-  return {
-    label,
-    pct: pct(count),
-    count,
-    color: statusColors[label],
-  }
-})
-
-export const reviewQueueTabs = [
-  { id: "priority", label: "Priority Review Queue", count: priorityQueueCount },
-  { id: "attention", label: "Needs Attention", count: needsAttentionCount },
-  { id: "deadlines", label: "Upcoming Deadlines", count: deadlinesThisWeekCount },
 ]
 
 export const demoScenarios = [
@@ -1048,4 +1008,25 @@ export const demoScenarios = [
     kleioAction: "Open the Selected Submission drawer and move the artist to Shortlist.",
     outcome: "The committee moves from review to decision without losing context.",
   },
+]
+
+const generatedArtists: Artist[] = generatedNames.map(([name, location, medium]) => ({
+  id: slugify(name),
+  name,
+  location,
+  discipline: "Visual Artist",
+  medium,
+  bio: `${name} is a synthetic demo artist profile for KLEIO Arthouse.`,
+  statement: "",
+  tags: ["demo", "synthetic"],
+  portfolioImage: "/placeholder.svg",
+  cvStatus: "Complete" as const,
+  documentStatus: "Complete" as const,
+  referencesStatus: "Complete" as const,
+  passportCompleteness: 90,
+}))
+
+export const allArtists: Artist[] = [
+  ...artists,
+  ...generatedArtists.filter((candidate) => !artists.some((existing) => existing.id === candidate.id)),
 ]
