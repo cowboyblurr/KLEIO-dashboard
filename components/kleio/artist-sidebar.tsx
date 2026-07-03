@@ -3,13 +3,17 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
+  BarChart3,
   Briefcase,
+  CalendarDays,
+  DollarSign,
   FileText,
   FolderOpen,
   LayoutDashboard,
   MessageSquare,
   Settings,
   Sparkles,
+  UsersRound,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { DEMO_ARTIST_ID, getArtistById } from "@/lib/kleio-data"
@@ -25,12 +29,16 @@ type NavItem = {
 }
 
 const navItems: NavItem[] = [
-  { href: "/artist-dashboard/", label: "Overview", icon: LayoutDashboard, activeMatch: "/artist-dashboard" },
-  { href: "/artist-dashboard/", label: "Creative Passport", icon: Sparkles, activeMatch: "/artist-dashboard" },
+  { href: "/artist-dashboard/", label: "Overview", icon: LayoutDashboard },
+  { label: "Creative Passport", icon: Sparkles, comingSoon: true },
+  { label: "Portfolio", icon: FolderOpen, comingSoon: true },
   { label: "Opportunities", icon: Briefcase, comingSoon: true },
   { label: "Applications", icon: FileText, comingSoon: true },
-  { label: "Materials", icon: FolderOpen, comingSoon: true },
-  { label: "Network", icon: MessageSquare, comingSoon: true },
+  { label: "Collaborators", icon: UsersRound, comingSoon: true },
+  { label: "Calendar", icon: CalendarDays, comingSoon: true },
+  { label: "Messages", icon: MessageSquare, comingSoon: true },
+  { label: "Funding", icon: DollarSign, comingSoon: true },
+  { label: "Insights", icon: BarChart3, comingSoon: true },
   { label: "Settings", icon: Settings, comingSoon: true },
 ]
 
@@ -39,7 +47,7 @@ export function ArtistSidebar() {
   const artist = getArtistById(DEMO_ARTIST_ID)
 
   return (
-    <aside className="flex h-full w-64 shrink-0 flex-col border-r border-border bg-sidebar">
+    <aside className="flex h-full w-[220px] shrink-0 flex-col border-r border-[#E7E1F7] bg-white">
       <div className="flex items-center justify-between px-6 pt-6 pb-5">
         <KleioWordmarkLink href="/" className="rounded-md bg-white px-2.5 py-1.5 shadow-sm ring-1 ring-border" />
       </div>
@@ -53,7 +61,7 @@ export function ArtistSidebar() {
             const active = item.href
               ? item.activeMatch
                 ? pathname.startsWith(item.activeMatch)
-                : pathname === item.href
+                : pathname === item.href || `${pathname}/` === item.href
               : false
             const Icon = item.icon
 
@@ -63,7 +71,6 @@ export function ArtistSidebar() {
                   <span className="group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground/60">
                     <Icon className="size-4 shrink-0 text-muted-foreground/50" />
                     <span className="flex-1">{item.label}</span>
-                    <span className="text-[0.6rem] font-medium text-muted-foreground">Coming soon</span>
                   </span>
                 </li>
               )
@@ -90,23 +97,22 @@ export function ArtistSidebar() {
         </ul>
       </nav>
 
-      {artist && (
-        <div className="border-t border-border p-4">
-          <div className="flex items-center gap-3 rounded-xl border border-border bg-card p-3">
+      <div className="border-t border-[#E7E1F7] p-4">
+        <div className="rounded-2xl border border-[#E7E1F7] bg-[#F7F4FF] p-4">
+          <p className="font-serif text-sm font-semibold text-[#292631]">Focus on your art.</p>
+          <p className="mt-1 text-xs leading-relaxed text-[#7F7890]">KLEIO keeps the admin organized.</p>
+          <div className="mt-3 h-0.5 w-10 rounded-full bg-[#A997E8]" />
+        </div>
+        {artist && (
+          <div className="mt-3 flex items-center gap-3 rounded-xl border border-[#E7E1F7] bg-white p-3">
             <InitialAvatar name={artist.name} className="size-9 text-xs" />
             <div className="min-w-0">
               <p className="truncate text-sm font-medium text-foreground">{artist.name}</p>
-              <p className="truncate text-xs text-muted-foreground">Creative Passport</p>
+              <p className="truncate text-xs text-muted-foreground">{artist.discipline}</p>
             </div>
           </div>
-          <Link
-            href="/"
-            className="mt-3 block text-center text-[0.68rem] font-medium text-muted-foreground transition-colors hover:text-foreground"
-          >
-            Public home
-          </Link>
-        </div>
-      )}
+        )}
+      </div>
     </aside>
   )
 }

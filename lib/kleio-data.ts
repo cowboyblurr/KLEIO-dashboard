@@ -108,6 +108,13 @@ export type ArtistInsights = {
   }
 }
 
+export type ArtistDashboardHero = {
+  title: string
+  subtitle: string
+  visualTheme: "soft-botanical" | "light-installation" | "paper-forms" | "studio-portrait" | "archive-field"
+  accentColor: "lavender" | "blue" | "green" | "peach"
+}
+
 export type Artist = {
   id: string
   name: string
@@ -133,6 +140,68 @@ export type Artist = {
   contactEmail?: string
   availability?: AvailabilityPreference[]
   insights?: ArtistInsights
+  dashboardHero?: ArtistDashboardHero
+}
+
+export type ArtistDashboardApplicationStatus =
+  | "Draft"
+  | "Submitted"
+  | "Under Review"
+  | "Waiting"
+  | "Interview"
+  | "Awarded"
+  | "Declined"
+
+export type ArtistDashboardProfile = {
+  name: string
+  role: string
+  location: string
+  hero: ArtistDashboardHero
+  stats: {
+    activeApplications: number
+    dueSoon: number
+    upcomingDeadlines: number
+    nextDeadline: string
+    pendingDecisions: number
+    overdueDecisions: number
+    potentialFunding: number
+    opportunityCount: number
+  }
+  applications: Array<{
+    program: string
+    status: ArtistDashboardApplicationStatus
+    dueDate: string
+    updated: string
+    note?: string
+  }>
+  timeline: Array<{
+    program: string
+    expected: string
+    status: string
+    tone: "overdue" | "soon" | "steady"
+  }>
+  collaboratorMatches: Array<{
+    name: string
+    location: string
+    tags: string[]
+  }>
+  nextActions: Array<{
+    program: string
+    task: string
+    due: string
+    tone: "due" | "soon" | "follow-up"
+  }>
+  passportCompleteness: Array<{
+    label: string
+    progress: number
+    status: "complete" | "attention"
+  }>
+  quietInsights: string[]
+  fundingReadiness: {
+    estimatedFit: number
+    completeness: number
+    timelineConfidence: number
+  }
 }
 
 export type Submission = {
@@ -459,6 +528,13 @@ export const artists: Artist[] = [
         deadline: "Aug 14, 2026",
       },
     },
+    dashboardHero: {
+      title: "Your Creative Path, Organized.",
+      subtitle:
+        "Stay focused on the work. KLEIO keeps your applications, materials, and opportunities in view.",
+      visualTheme: "light-installation",
+      accentColor: "lavender",
+    },
   },
   {
     id: "mei-lin-zhang",
@@ -497,6 +573,13 @@ export const artists: Artist[] = [
     website: "meilz.art",
     instagram: "@meil.zhang",
     contactEmail: "meilin@meilz.art",
+    dashboardHero: {
+      title: "Your Creative Path, Organized.",
+      subtitle:
+        "Stay focused on the work. KLEIO keeps your applications, materials, and opportunities in view.",
+      visualTheme: "paper-forms",
+      accentColor: "blue",
+    },
   },
   {
     id: "sofia-karim",
@@ -539,6 +622,13 @@ export const artists: Artist[] = [
     website: "sofiakarim.fr",
     instagram: "@sofia_karim",
     contactEmail: "studio@sofiakarim.fr",
+    dashboardHero: {
+      title: "Your Creative Path, Organized.",
+      subtitle:
+        "Stay focused on the work. KLEIO keeps your applications, materials, and opportunities in view.",
+      visualTheme: "archive-field",
+      accentColor: "green",
+    },
   },
   {
     id: "julian-reyes",
@@ -586,6 +676,87 @@ export const artists: Artist[] = [
     passportCompleteness: 64,
   },
 ]
+
+export const artistDashboardProfile: ArtistDashboardProfile = {
+  name: "Amina El Badri",
+  role: "Visual Artist",
+  location: "Cairo, Egypt",
+  hero: {
+    title: "Your Creative Path, Organized.",
+    subtitle:
+      "Stay focused on the work. KLEIO keeps your applications, materials, and opportunities in view.",
+    visualTheme: "light-installation",
+    accentColor: "lavender",
+  },
+  stats: {
+    activeApplications: 6,
+    dueSoon: 2,
+    upcomingDeadlines: 3,
+    nextDeadline: "May 28, 2025",
+    pendingDecisions: 4,
+    overdueDecisions: 1,
+    potentialFunding: 184500,
+    opportunityCount: 6,
+  },
+  applications: [
+    { program: "Lumen Arts Grant", status: "Draft", dueDate: "May 28, 2025", updated: "May 18, 2025" },
+    { program: "Caribbean Futures Fund", status: "Submitted", dueDate: "Jun 2, 2025", updated: "May 15, 2025" },
+    { program: "Citywide Artist Award", status: "Under Review", dueDate: "Jun 6, 2025", updated: "May 12, 2025" },
+    { program: "Harbor Foundation Grant", status: "Waiting", dueDate: "—", updated: "Apr 30, 2025", note: "Overdue" },
+    { program: "Global Perspectives Residency", status: "Interview", dueDate: "May 30, 2025", updated: "May 16, 2025" },
+    { program: "Emerging Voices Prize", status: "Awarded", dueDate: "—", updated: "Apr 20, 2025" },
+    { program: "Northern Light Fellowship", status: "Declined", dueDate: "—", updated: "Apr 5, 2025" },
+  ],
+  timeline: [
+    { program: "Harbor Foundation Grant", expected: "Expected May 10, 2025", status: "17 days overdue", tone: "overdue" },
+    { program: "Global Perspectives Residency", expected: "Expected May 30, 2025", status: "10 days left", tone: "soon" },
+    { program: "Caribbean Futures Fund", expected: "Expected Jun 15, 2025", status: "26 days left", tone: "steady" },
+    { program: "Lumen Arts Grant", expected: "Expected Jun 20, 2025", status: "31 days left", tone: "steady" },
+  ],
+  collaboratorMatches: [
+    {
+      name: "Jamal Pierre",
+      location: "Kingston, Jamaica",
+      tags: ["Sculpture", "Caribbean Diaspora", "Material Culture"],
+    },
+    {
+      name: "Leila Martinez",
+      location: "San Juan, PR",
+      tags: ["Moving Image", "Social Practice", "Research-Based"],
+    },
+    {
+      name: "Nadia Clarke",
+      location: "Toronto, Canada",
+      tags: ["Installation", "Archives", "Community Work"],
+    },
+  ],
+  nextActions: [
+    { program: "Lumen Arts Grant", task: "Upload missing budget", due: "Due May 28", tone: "due" },
+    { program: "Caribbean Futures Fund", task: "Upload work sample", due: "Due Jun 2", tone: "soon" },
+    { program: "Citywide Artist Award", task: "Submit final draft", due: "Due Jun 6", tone: "soon" },
+    { program: "Harbor Foundation Grant", task: "Decision is overdue", due: "Follow up", tone: "follow-up" },
+  ],
+  passportCompleteness: [
+    { label: "Bio", progress: 100, status: "complete" },
+    { label: "Artist Statement", progress: 100, status: "complete" },
+    { label: "CV", progress: 96, status: "complete" },
+    { label: "Work Samples", progress: 92, status: "complete" },
+    { label: "Budget Template", progress: 64, status: "attention" },
+    { label: "References", progress: 88, status: "complete" },
+    { label: "Residency History", progress: 100, status: "complete" },
+    { label: "Support Materials", progress: 68, status: "attention" },
+  ],
+  quietInsights: [
+    "Two open calls match your current materials.",
+    "Your statement is strong, but budget details are still missing.",
+    "Three artists in your spectrum are also applying this month.",
+  ],
+  fundingReadiness: {
+    estimatedFit: 76,
+    completeness: 87,
+    timelineConfidence: 68,
+  },
+}
 
 const baseSpotlightSubmissions: Submission[] = [
   {
