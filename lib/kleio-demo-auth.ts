@@ -1,9 +1,10 @@
 export type KleioDemoSession = {
   isAuthenticated: true
-  role: "artist" | "institution"
+  role: "artist" | "institution" | "collaborator"
   name: string
   email: string
   createdAt: string
+  collaboratorId?: string
 }
 
 const STORAGE_KEY = "kleio-demo-session"
@@ -19,6 +20,7 @@ const STORAGE_KEY = "kleio-demo-session"
  * Private workspaces (client-side demo auth):
  *   `/dashboard/` — institution overview
  *   `/artist-dashboard/` — artist overview
+ *   `/collaborator-dashboard/` — collaborator review seat
  *   `/programs/`, `/review-queue/`, etc. — institution workspace pages
  */
 
@@ -35,6 +37,13 @@ const DEMO_CREDENTIALS = {
     role: "artist" as const,
     name: "Amina El Badri",
   },
+  collaborator: {
+    email: "reviewer@kleio.demo",
+    password: "kleio2026",
+    role: "collaborator" as const,
+    name: "Celeste Rowan",
+    collaboratorId: "celeste-rowan",
+  },
 }
 
 function isBrowser() {
@@ -45,7 +54,10 @@ function parseSession(raw: string | null): KleioDemoSession | null {
   if (!raw) return null
   try {
     const parsed = JSON.parse(raw) as KleioDemoSession
-    if (parsed?.isAuthenticated && (parsed.role === "artist" || parsed.role === "institution")) {
+    if (
+      parsed?.isAuthenticated &&
+      (parsed.role === "artist" || parsed.role === "institution" || parsed.role === "collaborator")
+    ) {
       return parsed
     }
     return null
@@ -69,7 +81,7 @@ export function clearDemoSession(): void {
   window.localStorage.removeItem(STORAGE_KEY)
 }
 
-export function loginDemoUser(role: "artist" | "institution"): KleioDemoSession {
+export function loginDemoUser(role: "artist" | "institution" | "collaborator"): KleioDemoSession {
   const creds = DEMO_CREDENTIALS[role]
   const session: KleioDemoSession = {
     isAuthenticated: true,
@@ -77,6 +89,9 @@ export function loginDemoUser(role: "artist" | "institution"): KleioDemoSession 
     name: creds.name,
     email: creds.email,
     createdAt: new Date().toISOString(),
+    ...(role === "collaborator" && "collaboratorId" in creds
+      ? { collaboratorId: creds.collaboratorId }
+      : {}),
   }
   setDemoSession(session)
   return session
@@ -100,11 +115,20 @@ export function validateDemoCredentials(email: string, password: string): KleioD
     return loginDemoUser("artist")
   }
 
+  if (
+    normalizedEmail === DEMO_CREDENTIALS.collaborator.email &&
+    normalizedPassword === DEMO_CREDENTIALS.collaborator.password
+  ) {
+    return loginDemoUser("collaborator")
+  }
+
   return null
 }
 
-export function getDashboardForRole(role: "artist" | "institution"): string {
-  return role === "artist" ? "/artist-dashboard/" : "/dashboard/"
+export function getDashboardForRole(role: "artist" | "institution" | "collaborator"): string {
+  if (role === "artist") return "/artist-dashboard/"
+  if (role === "collaborator") return "/collaborator-dashboard/"
+  return "/dashboard/"
 }
 
 /** Public marketing homepage (`/`) — not a workspace route. */
@@ -119,6 +143,7 @@ export function getHomeHrefForSession(): string {
   if (!session) return "/"
   if (session.role === "institution") return "/dashboard/"
   if (session.role === "artist") return "/artist-dashboard/"
+  if (session.role === "collaborator") return "/collaborator-dashboard/"
 
   return "/"
 }
@@ -130,6 +155,7 @@ export function getExploreArthouseHref(): string {
   if (!session) return "/dashboard/"
   if (session.role === "institution") return "/dashboard/"
   if (session.role === "artist") return "/artist-dashboard/"
+  if (session.role === "collaborator") return "/collaborator-dashboard/"
 
   return "/dashboard/"
 }
@@ -139,4 +165,4 @@ export function artistProfileHref(artistId: string): string {
 }
 
 export const DEMO_LOGIN_HINT =
-  "Demo access: institution@kleio.demo or artist@kleio.demo · password kleio2026"
+  "Demo access: institution@kleio.demo, artist@kleio.demo, or reviewer@kleio.demo · password kleio2026"

@@ -173,6 +173,10 @@ export type ArtistDashboardProfile = {
     dueDate: string
     updated: string
     note?: string
+    fundingAmount?: number
+    fitScore?: number
+    missingMaterialCount?: number
+    deadlinePressure?: "low" | "medium" | "high"
   }>
   timeline: Array<{
     program: string
@@ -699,19 +703,99 @@ export const artistDashboardProfile: ArtistDashboardProfile = {
     opportunityCount: 6,
   },
   applications: [
-    { program: "Lumen Arts Grant", status: "Draft", dueDate: "May 28, 2025", updated: "May 18, 2025" },
-    { program: "Caribbean Futures Fund", status: "Submitted", dueDate: "Jun 2, 2025", updated: "May 15, 2025" },
-    { program: "Citywide Artist Award", status: "Under Review", dueDate: "Jun 6, 2025", updated: "May 12, 2025" },
-    { program: "Harbor Foundation Grant", status: "Waiting", dueDate: "—", updated: "Apr 30, 2025", note: "Overdue" },
-    { program: "Global Perspectives Residency", status: "Interview", dueDate: "May 30, 2025", updated: "May 16, 2025" },
-    { program: "Emerging Voices Prize", status: "Awarded", dueDate: "—", updated: "Apr 20, 2025" },
-    { program: "Northern Light Fellowship", status: "Declined", dueDate: "—", updated: "Apr 5, 2025" },
+    {
+      program: "Lumen Arts Grant",
+      status: "Draft",
+      dueDate: "2026-08-14",
+      updated: "Aug 9, 2026",
+      fundingAmount: 25000,
+      fitScore: 84,
+      missingMaterialCount: 1,
+      deadlinePressure: "high",
+    },
+    {
+      program: "Caribbean Futures Fund",
+      status: "Submitted",
+      dueDate: "2026-08-20",
+      updated: "Aug 8, 2026",
+      fundingAmount: 18000,
+      fitScore: 88,
+      missingMaterialCount: 0,
+      deadlinePressure: "medium",
+    },
+    {
+      program: "Citywide Artist Award",
+      status: "Under Review",
+      dueDate: "2026-09-06",
+      updated: "Aug 7, 2026",
+      fundingAmount: 12500,
+      fitScore: 81,
+      missingMaterialCount: 2,
+      deadlinePressure: "medium",
+    },
+    {
+      program: "Harbor Foundation Grant",
+      status: "Waiting",
+      dueDate: "—",
+      updated: "Jul 30, 2026",
+      note: "Overdue",
+      fundingAmount: 15000,
+      fitScore: 72,
+      missingMaterialCount: 0,
+      deadlinePressure: "low",
+    },
+    {
+      program: "Global Perspectives Residency",
+      status: "Interview",
+      dueDate: "2026-08-18",
+      updated: "Aug 5, 2026",
+      fundingAmount: 40000,
+      fitScore: 79,
+      missingMaterialCount: 0,
+      deadlinePressure: "high",
+    },
+    {
+      program: "Emerging Voices Prize",
+      status: "Awarded",
+      dueDate: "—",
+      updated: "Jun 20, 2026",
+      fundingAmount: 10000,
+      fitScore: 90,
+    },
+    {
+      program: "Northern Light Fellowship",
+      status: "Declined",
+      dueDate: "—",
+      updated: "May 12, 2026",
+      fundingAmount: 35000,
+      fitScore: 65,
+    },
   ],
   timeline: [
-    { program: "Harbor Foundation Grant", expected: "Expected May 10, 2025", status: "17 days overdue", tone: "overdue" },
-    { program: "Global Perspectives Residency", expected: "Expected May 30, 2025", status: "10 days left", tone: "soon" },
-    { program: "Caribbean Futures Fund", expected: "Expected Jun 15, 2025", status: "26 days left", tone: "steady" },
-    { program: "Lumen Arts Grant", expected: "Expected Jun 20, 2025", status: "31 days left", tone: "steady" },
+    {
+      program: "Harbor Foundation Grant",
+      expected: "Expected Aug 1, 2026",
+      status: "9 days overdue",
+      tone: "overdue",
+    },
+    {
+      program: "Global Perspectives Residency",
+      expected: "Expected Aug 18, 2026",
+      status: "8 days left",
+      tone: "soon",
+    },
+    {
+      program: "Caribbean Futures Fund",
+      expected: "Expected Aug 20, 2026",
+      status: "10 days left",
+      tone: "soon",
+    },
+    {
+      program: "Lumen Arts Grant",
+      expected: "Expected Aug 14, 2026",
+      status: "4 days left",
+      tone: "soon",
+    },
   ],
   collaboratorMatches: [
     {

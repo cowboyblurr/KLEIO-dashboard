@@ -20,6 +20,8 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import type { Artist, ArtistDashboardApplicationStatus, ArtistDashboardProfile } from "@/lib/kleio-data"
+import type { ArtistAnalytics } from "@/lib/kleio-artist-analytics"
+import { formatArtistCurrency } from "@/lib/kleio-artist-analytics"
 import type { kleioSyntheticArtistProfiles } from "@/lib/kleio-profile-data"
 import { assetPath } from "@/lib/asset-path"
 import { InitialAvatar } from "@/components/kleio/initial-avatar"
@@ -214,12 +216,16 @@ function DashboardStat({
   )
 }
 
-function HeroCard({ profile, assetProfile }: { profile: ArtistDashboardProfile; assetProfile?: ArtistAssetProfile }) {
-  const funding = new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-  }).format(profile.stats.potentialFunding)
+function HeroCard({
+  profile,
+  assetProfile,
+  analytics,
+}: {
+  profile: ArtistDashboardProfile
+  assetProfile?: ArtistAssetProfile
+  analytics: ArtistAnalytics
+}) {
+  const funding = formatArtistCurrency(analytics.potentialFunding)
 
   const title = assetProfile?.dashboardHero.title ?? profile.hero.title
   const subtitle = assetProfile?.dashboardHero.subtitle ?? profile.hero.subtitle
@@ -260,10 +266,10 @@ function HeroCard({ profile, assetProfile }: { profile: ArtistDashboardProfile; 
           </div>
         )}
         <div className="mt-7 grid grid-cols-4 divide-x max-md:grid-cols-2 max-md:gap-4 max-md:divide-x-0" style={{ borderColor: lavenderSoftLine }}>
-          <DashboardStat label="Active Applications" value={String(profile.stats.activeApplications)} detail={`${profile.stats.dueSoon} due soon`} icon={FileText} />
-          <DashboardStat label="Upcoming Deadlines" value={String(profile.stats.upcomingDeadlines)} detail={`Next: ${profile.stats.nextDeadline}`} icon={CalendarDays} />
-          <DashboardStat label="Pending Decisions" value={String(profile.stats.pendingDecisions)} detail={`${profile.stats.overdueDecisions} overdue`} icon={Hourglass} />
-          <DashboardStat label="Potential Funding" value={funding} detail={`Across ${profile.stats.opportunityCount} opportunities`} icon={DollarSign} />
+          <DashboardStat label="Active Applications" value={String(analytics.activeApplications)} detail={`${analytics.dueSoon} due soon`} icon={FileText} />
+          <DashboardStat label="Upcoming Deadlines" value={String(analytics.upcomingDeadlines)} detail={`Next: ${analytics.nextDeadline}`} icon={CalendarDays} />
+          <DashboardStat label="Pending Decisions" value={String(analytics.pendingDecisions)} detail={`${analytics.overdueDecisions} overdue`} icon={Hourglass} />
+          <DashboardStat label="Potential Funding" value={funding} detail={`Across ${analytics.opportunityCount} opportunities`} icon={DollarSign} />
         </div>
       </div>
     </section>
@@ -440,7 +446,13 @@ function NextBestActions({ profile }: { profile: ArtistDashboardProfile }) {
   )
 }
 
-function PassportCompleteness({ profile }: { profile: ArtistDashboardProfile }) {
+function PassportCompleteness({
+  profile,
+  analytics,
+}: {
+  profile: ArtistDashboardProfile
+  analytics: ArtistAnalytics
+}) {
   return (
     <Card className="p-4">
       <div className="mb-4 flex items-center justify-between gap-3">
@@ -448,7 +460,7 @@ function PassportCompleteness({ profile }: { profile: ArtistDashboardProfile }) 
           Passport Completeness
         </h2>
         <span className="rounded-full px-2 py-1 text-[0.65rem] font-semibold" style={{ backgroundColor: lavenderMist, color: lavenderDeep }}>
-          87% Complete
+          {analytics.passportCompletenessPct}% Complete
         </span>
       </div>
       <div className="space-y-2.5">
@@ -501,26 +513,32 @@ function QuietInsights({ profile }: { profile: ArtistDashboardProfile }) {
   )
 }
 
-function FundingReadiness({ profile }: { profile: ArtistDashboardProfile }) {
+function FundingReadiness({ analytics }: { analytics: ArtistAnalytics }) {
   const metrics = [
-    { label: "Estimated Fit", value: profile.fundingReadiness.estimatedFit },
-    { label: "Completeness", value: profile.fundingReadiness.completeness },
-    { label: "Timeline Confidence", value: profile.fundingReadiness.timelineConfidence },
+    { label: "Estimated Fit", value: analytics.fundingReadiness.estimatedFit, tone: "lavender" as const },
+    { label: "Completeness", value: analytics.fundingReadiness.completeness, tone: "lavender" as const },
+    { label: "Timeline Confidence", value: analytics.fundingReadiness.timelineConfidence, tone: "amber" as const },
   ]
 
   return (
     <Card className="p-4">
       <CardHeader title="Funding Readiness" />
       <div className="space-y-3">
-        {metrics.map((metric, index) => (
+        {metrics.map((metric) => (
           <div key={metric.label}>
             <div className="mb-1 flex items-center justify-between text-xs">
               <span style={{ color: mutedColor }}>{metric.label}</span>
               <span className="font-semibold tabular-nums" style={{ color: inkColor }}>
-                {metric.value}%
+                {metric.value == null ? "Prepared for scoring" : `${metric.value}%`}
               </span>
             </div>
-            <ProgressBar value={metric.value} tone={index === 2 ? "amber" : "lavender"} />
+            {metric.value != null ? (
+              <ProgressBar value={metric.value} tone={metric.tone} />
+            ) : (
+              <p className="text-[0.68rem]" style={{ color: mutedColor }}>
+                Prepared for scoring
+              </p>
+            )}
           </div>
         ))}
       </div>
@@ -535,16 +553,18 @@ export function ArtistDashboardOverview({
   artist,
   profile,
   assetProfile,
+  analytics,
 }: {
   artist: Artist
   profile: ArtistDashboardProfile
   assetProfile?: ArtistAssetProfile
+  analytics: ArtistAnalytics
 }) {
   return (
     <div className="mx-auto grid w-full max-w-[1540px] grid-cols-[minmax(0,1fr)_330px] gap-5 px-5 py-5 max-2xl:grid-cols-[minmax(0,1fr)_310px] max-xl:grid-cols-1 max-lg:px-4">
       <section className="min-w-0 space-y-4">
         <TopBar artist={artist} portrait={assetProfile?.portrait} />
-        <HeroCard profile={profile} assetProfile={assetProfile} />
+        <HeroCard profile={profile} assetProfile={assetProfile} analytics={analytics} />
         <ApplicationTracker profile={profile} />
         <div className="grid grid-cols-2 gap-4 max-lg:grid-cols-1">
           <DecisionTimeline profile={profile} />
@@ -554,10 +574,10 @@ export function ArtistDashboardOverview({
 
       <aside className="min-w-0 space-y-4">
         <NextBestActions profile={profile} />
-        <PassportCompleteness profile={profile} />
+        <PassportCompleteness profile={profile} analytics={analytics} />
         {assetProfile && <SelectedWorksPreview assetProfile={assetProfile} />}
         <QuietInsights profile={profile} />
-        <FundingReadiness profile={profile} />
+        <FundingReadiness analytics={analytics} />
       </aside>
     </div>
   )

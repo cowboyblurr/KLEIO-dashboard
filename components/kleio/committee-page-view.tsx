@@ -16,6 +16,14 @@ export function CommitteePageView() {
     <DemoPageShell
       title="Committee"
       description="Coordinate reviewers, jurors, and collaborators around the same submission context."
+      actions={
+        <Link
+          href="/collaborator-dashboard/"
+          className="inline-flex h-9 items-center justify-center rounded-xl border border-primary/25 bg-primary/10 px-4 text-sm font-medium text-primary transition-colors hover:bg-primary/15"
+        >
+          Preview Collaborator Review Seat
+        </Link>
+      }
     >
       <div className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-3 xl:max-w-3xl">
         <DemoStatRow label="Pending committee vote" value={analytics.pendingVoteCount} />
@@ -87,8 +95,14 @@ export function CommitteePageView() {
         </section>
 
         <section className="rounded-2xl border border-border bg-card shadow-sm">
-          <div className="border-b border-border px-5 py-4">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-5 py-4">
             <h2 className="font-serif text-lg font-semibold text-foreground">Reviewer progress</h2>
+            <Link
+              href="/collaborator-dashboard/"
+              className="text-xs font-medium text-primary hover:text-primary/80"
+            >
+              Preview Collaborator Review Seat
+            </Link>
           </div>
           <ul className="divide-y divide-border">
             {reviewerProgress.map((reviewer) => (
@@ -104,9 +118,19 @@ export function CommitteePageView() {
                     />
                   </div>
                 </div>
-                <span className="text-sm font-medium text-foreground tabular-nums">
-                  {reviewer.completed}/{reviewer.assigned}
-                </span>
+                <div className="text-right">
+                  <span className="text-sm font-medium text-foreground tabular-nums">
+                    {reviewer.completed}/{reviewer.assigned}
+                  </span>
+                  {reviewer.reviewerId === "celeste-rowan" && (
+                    <Link
+                      href="/collaborator-dashboard/"
+                      className="mt-1 block text-[0.65rem] font-medium text-primary hover:text-primary/80"
+                    >
+                      Preview reviewer seat
+                    </Link>
+                  )}
+                </div>
               </li>
             ))}
           </ul>

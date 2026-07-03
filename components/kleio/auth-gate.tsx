@@ -13,18 +13,22 @@ import {
 } from "@/lib/kleio-demo-auth"
 import { KleioWordmarkLink } from "@/components/kleio/kleio-wordmark-link"
 
+type DemoRole = "artist" | "institution" | "collaborator"
+
 type AuthGateProps = {
-  requiredRole?: "artist" | "institution"
+  requiredRole?: DemoRole
   children: React.ReactNode
 }
 
 function DemoAuthButtons({
   onInstitution,
   onArtist,
+  onCollaborator,
   compact = false,
 }: {
   onInstitution: () => void
   onArtist: () => void
+  onCollaborator: () => void
   compact?: boolean
 }) {
   return (
@@ -43,8 +47,27 @@ function DemoAuthButtons({
       >
         Enter Artist Demo
       </button>
+      <button
+        type="button"
+        onClick={onCollaborator}
+        className="inline-flex h-10 items-center justify-center rounded-xl border border-border bg-background px-4 text-sm font-medium text-foreground transition-colors hover:bg-accent/50"
+      >
+        Enter Collaborator Demo
+      </button>
     </div>
   )
+}
+
+function dashboardLabel(role: DemoRole) {
+  if (role === "artist") return "Artist Dashboard"
+  if (role === "collaborator") return "Collaborator Review Seat"
+  return "Institution Dashboard"
+}
+
+function switchLabel(role: DemoRole) {
+  if (role === "artist") return "Switch to Artist Demo"
+  if (role === "collaborator") return "Switch to Collaborator Demo"
+  return "Switch to Institution Demo"
 }
 
 function AuthWall({
@@ -52,14 +75,14 @@ function AuthWall({
   session,
   onRefresh,
 }: {
-  requiredRole?: "artist" | "institution"
+  requiredRole?: DemoRole
   session: KleioDemoSession | null
   onRefresh: () => void
 }) {
   const router = useRouter()
   const pathname = usePathname()
 
-  function enterDemo(role: "artist" | "institution") {
+  function enterDemo(role: DemoRole) {
     loginDemoUser(role)
     onRefresh()
     if (requiredRole === role && pathname) {
@@ -69,7 +92,7 @@ function AuthWall({
     router.push(getDashboardForRole(role))
   }
 
-  function switchToRole(role: "artist" | "institution") {
+  function switchToRole(role: DemoRole) {
     loginDemoUser(role)
     onRefresh()
     router.push(getDashboardForRole(role))
@@ -82,17 +105,29 @@ function AuthWall({
       ? "Enter the Artist Workspace"
       : requiredRole === "institution"
         ? "Enter the Institution Workspace"
-        : "Sign in to continue"
+        : requiredRole === "collaborator"
+          ? "Enter the Collaborator Review Seat"
+          : "Sign in to continue"
   const loggedOutDescription =
     requiredRole === "artist"
       ? "Use the demo login to explore how an artist manages a Creative Passport, opportunities, and application materials."
       : requiredRole === "institution"
         ? "Use the demo login to explore how an institution manages submissions, reviewers, shortlists, and reports."
-        : "KLEIO workspaces are private. Use the demo login to enter this workspace."
+        : requiredRole === "collaborator"
+          ? "Use the demo login to review assigned submissions, guidelines, messages, and review progress without entering the full institution workspace."
+          : "KLEIO workspaces are private. Use the demo login to enter this workspace."
   const wrongRoleDescription =
     session?.role === "artist"
-      ? "You are currently in the Artist demo. Switch to the Institution demo to view this workspace."
-      : "You are currently in the Institution demo. Switch to the Artist demo to view this workspace."
+      ? requiredRole === "collaborator"
+        ? "You are currently in the Artist demo. Switch to the Collaborator demo to view this review seat."
+        : "You are currently in the Artist demo. Switch to the Institution demo to view this workspace."
+      : session?.role === "collaborator"
+        ? requiredRole === "artist"
+          ? "You are currently in the Collaborator demo. Switch to the Artist demo to view this workspace."
+          : "You are currently in the Collaborator demo. Switch to the Institution demo to view this workspace."
+        : requiredRole === "collaborator"
+          ? "You are currently in the Institution demo. Switch to the Collaborator demo to view this review seat."
+          : "You are currently in the Institution demo. Switch to the Artist demo to view this workspace."
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-[oklch(0.985_0.005_287)] px-5 py-12">
@@ -115,14 +150,14 @@ function AuthWall({
                 onClick={() => router.push(getDashboardForRole(session.role))}
                 className="inline-flex h-10 w-full items-center justify-center rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
               >
-                {session.role === "artist" ? "Go to Artist Dashboard" : "Go to Institution Dashboard"}
+                Go to {dashboardLabel(session.role)}
               </button>
               <button
                 type="button"
                 onClick={() => switchToRole(requiredRole!)}
                 className="inline-flex h-10 w-full items-center justify-center rounded-xl border border-border bg-background px-4 text-sm font-medium text-foreground transition-colors hover:bg-accent/50"
               >
-                {requiredRole === "institution" ? "Switch to Institution Demo" : "Switch to Artist Demo"}
+                {switchLabel(requiredRole!)}
               </button>
               <Link
                 href={getPublicHomeHref()}
@@ -142,6 +177,7 @@ function AuthWall({
               <DemoAuthButtons
                 onInstitution={() => enterDemo("institution")}
                 onArtist={() => enterDemo("artist")}
+                onCollaborator={() => enterDemo("collaborator")}
                 compact
               />
             </div>

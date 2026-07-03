@@ -1,27 +1,51 @@
 "use client"
 
 import Link from "next/link"
-import { useState } from "react"
+import { useMemo, useState } from "react"
+import { artistDashboardProfile } from "@/lib/kleio-data"
+import {
+  artistAnalytics,
+  formatDemoDateDisplay,
+} from "@/lib/kleio-artist-analytics"
 import { inkColor, mutedColor, lavenderSoftLine, cardStyle } from "@/lib/workspace-styles"
 import { WorkspacePageHeader } from "@/components/kleio/workspace-page-header"
 import { SearchFilterBar } from "@/components/kleio/search-filter-bar"
 import { DemoStatusChip } from "@/components/kleio/demo-status-chip"
 import { WorkflowCard } from "@/components/kleio/workflow-card"
 
-const opportunities = [
-  { title: "Lumen Arts Grant", type: "Grant", deadline: "May 28, 2025", fit: 92, readiness: "Strong", missing: 1 },
-  { title: "Caribbean Futures Fund", type: "Grant", deadline: "Jun 2, 2025", fit: 88, readiness: "Ready", missing: 0 },
-  { title: "Citywide Artist Award", type: "Award", deadline: "Jun 6, 2025", fit: 81, readiness: "Draft", missing: 2 },
-  { title: "Global Perspectives Residency", type: "Residency", deadline: "May 30, 2025", fit: 79, readiness: "Interview", missing: 0 },
-  { title: "Northern Light Fellowship", type: "Fellowship", deadline: "Jul 12, 2025", fit: 74, readiness: "Explore", missing: 3 },
-]
+const ACTIVE_STATUSES = new Set(["Draft", "Submitted", "Under Review", "Waiting", "Interview"])
+
+function readinessLabel(status: string, missing: number) {
+  if (missing > 0) return "Needs materials"
+  if (status === "Interview") return "Interview"
+  if (status === "Draft") return "Draft"
+  return "Ready"
+}
 
 export function ArtistOpportunitiesPageView() {
   const [query, setQuery] = useState("")
+  const analytics = artistAnalytics
+
+  const opportunities = useMemo(
+    () =>
+      artistDashboardProfile.applications
+        .filter((app) => ACTIVE_STATUSES.has(app.status))
+        .map((app) => ({
+          title: app.program,
+          type: app.status,
+          deadline: formatDemoDateDisplay(app.dueDate),
+          fit: app.fitScore ?? null,
+          readiness: readinessLabel(app.status, app.missingMaterialCount ?? 0),
+          missing: app.missingMaterialCount ?? 0,
+        })),
+    [],
+  )
 
   const filtered = opportunities.filter((o) =>
     `${o.title} ${o.type}`.toLowerCase().includes(query.toLowerCase()),
   )
+
+  const materialsGap = analytics.materialsTotalCount - analytics.materialsReadyCount
 
   return (
     <main className="h-full overflow-y-auto px-6 py-6">
@@ -53,7 +77,7 @@ export function ArtistOpportunitiesPageView() {
                       <h2 className="font-serif text-base font-semibold" style={{ color: inkColor }}>{opp.title}</h2>
                       <p className="mt-1 text-xs" style={{ color: mutedColor }}>{opp.type} · Deadline {opp.deadline}</p>
                     </div>
-                    <DemoStatusChip label={`${opp.fit}% fit`} tone="info" />
+                    {opp.fit != null && <DemoStatusChip label={`${opp.fit}% fit`} tone="info" />}
                   </div>
                   <div className="mt-3 flex flex-wrap items-center gap-2">
                     <DemoStatusChip label={opp.readiness} tone={opp.missing === 0 ? "success" : "warning"} />
@@ -73,14 +97,18 @@ export function ArtistOpportunitiesPageView() {
           </div>
 
           <div className="space-y-4">
-            <WorkflowCard title="Readiness summary" body="Your passport is 87% complete. Two materials still need review before high-fit applications.">
+            <WorkflowCard
+              title="Readiness summary"
+              body={`Your passport is ${analytics.passportCompletenessPct}% complete.${materialsGap > 0 ? ` ${materialsGap} material${materialsGap > 1 ? "s" : ""} still need review before high-fit applications.` : ""}`}
+            >
               <Link href="/artist-dashboard/passport/" className="text-xs font-medium transition-opacity hover:opacity-75" style={{ color: "#5B4B8A" }}>
                 Review passport →
               </Link>
             </WorkflowCard>
-            <WorkflowCard title="Saved opportunities" body="3 opportunities saved for later review.">
-              <p className="text-xs" style={{ color: mutedColor }}>Northern Light Fellowship · Harbor Foundation Grant · Emerging Voices Prize</p>
-            </WorkflowCard>
+            <WorkflowCard
+              title="Funding outlook"
+              body={`${analytics.opportunityCount} active opportunities tracked with ${analytics.potentialFunding.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 })} in potential funding.`}
+            />
           </div>
         </div>
       </div>

@@ -3,8 +3,9 @@
 import Link from "next/link"
 import { CheckCircle2, ExternalLink, Globe, Lock } from "lucide-react"
 import { assetPath } from "@/lib/asset-path"
+import { artistDashboardProfile } from "@/lib/kleio-data"
+import { artistAnalytics } from "@/lib/kleio-artist-analytics"
 import { getArtistProfileByUsername } from "@/lib/kleio-profile-data"
-import { DEMO_ARTIST_ID } from "@/lib/kleio-data"
 import { DEMO_ARTIST_PUBLIC_PROFILE, inkColor, mutedColor, lavenderSoftLine, lavenderDeep, cardStyle } from "@/lib/workspace-styles"
 import { WorkspacePageHeader } from "@/components/kleio/workspace-page-header"
 import { WorkspaceMetricCard } from "@/components/kleio/workspace-metric-card"
@@ -20,12 +21,11 @@ const materialLabels: Record<string, string> = {
 }
 
 export function ArtistPassportPageView() {
-  const profile = getArtistProfileByUsername(DEMO_ARTIST_ID)
+  const profile = getArtistProfileByUsername("amina-el-badri")
+  const analytics = artistAnalytics
   if (!profile) return null
 
   const materials = Object.entries(profile.materialsReady)
-  const readyCount = materials.filter(([, ready]) => ready).length
-  const completeness = Math.round((readyCount / materials.length) * 100)
 
   return (
     <main className="h-full overflow-y-auto px-6 py-6">
@@ -39,10 +39,10 @@ export function ArtistPassportPageView() {
         />
 
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <WorkspaceMetricCard label="Passport completeness" value={`${completeness}%`} />
-          <WorkspaceMetricCard label="Materials ready" value={`${readyCount} / ${materials.length}`} />
-          <WorkspaceMetricCard label="Public profile" value="Active" helper="Visible to institutions" />
-          <WorkspaceMetricCard label="Reusable answers" value="4" helper="Saved for future applications" />
+          <WorkspaceMetricCard label="Passport completeness" value={`${analytics.passportCompletenessPct}%`} />
+          <WorkspaceMetricCard label="Materials ready" value={`${analytics.materialsReadyCount} / ${analytics.materialsTotalCount}`} />
+          <WorkspaceMetricCard label="Selected works" value={analytics.selectedWorksCount} />
+          <WorkspaceMetricCard label="Active applications" value={analytics.activeApplications} />
         </div>
 
         <div className="grid gap-4 lg:grid-cols-2">
@@ -86,7 +86,7 @@ export function ArtistPassportPageView() {
 
         <div className="grid gap-4 md:grid-cols-2">
           <WorkflowCard title="Profile basics" body="Keep your bio, location, practice language, contact links, and public profile identity current." />
-          <WorkflowCard title="Reusable answers" body="Save responses you can adapt across future applications without rewriting from scratch." />
+          <WorkflowCard title="Reusable answers" body={`${artistDashboardProfile.nextActions.length} application tasks are currently tracked across open programs.`} />
           <WorkflowCard title="Sharing controls" body="Choose what to share publicly, what to keep private, and what to prepare for each opportunity.">
             <div className="flex flex-wrap gap-2">
               <span className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs" style={{ borderColor: lavenderSoftLine, color: inkColor }}>

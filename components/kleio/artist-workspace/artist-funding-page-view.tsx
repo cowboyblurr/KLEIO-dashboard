@@ -1,16 +1,18 @@
 import Link from "next/link"
+import { artistDashboardProfile } from "@/lib/kleio-data"
+import {
+  artistAnalytics,
+  formatArtistCurrency,
+  formatArtistPct,
+  isApplicationTimelineReady,
+} from "@/lib/kleio-artist-analytics"
 import { inkColor, mutedColor, lavenderSoftLine, cardStyle } from "@/lib/workspace-styles"
 import { WorkspacePageHeader } from "@/components/kleio/workspace-page-header"
 import { WorkspaceMetricCard } from "@/components/kleio/workspace-metric-card"
 import { WorkflowCard } from "@/components/kleio/workflow-card"
 import { DemoStatusChip } from "@/components/kleio/demo-status-chip"
 
-const fundingRows = [
-  { program: "Lumen Arts Grant", amount: "$25,000", fit: 92, completeness: 87, timeline: 68 },
-  { program: "Caribbean Futures Fund", amount: "$18,000", fit: 88, completeness: 100, timeline: 74 },
-  { program: "Citywide Artist Award", amount: "$12,500", fit: 81, completeness: 75, timeline: 55 },
-  { program: "Northern Light Fellowship", amount: "$40,000", fit: 74, completeness: 67, timeline: 42 },
-]
+const ACTIVE_STATUSES = new Set(["Draft", "Submitted", "Under Review", "Waiting", "Interview"])
 
 function ProgressBar({ value, tone = "lavender" }: { value: number; tone?: "lavender" | "green" | "amber" }) {
   const colors = { lavender: "#5B4B8A", green: "oklch(0.6 0.13 150)", amber: "oklch(0.7 0.14 70)" }
@@ -22,6 +24,15 @@ function ProgressBar({ value, tone = "lavender" }: { value: number; tone?: "lave
 }
 
 export function ArtistFundingPageView() {
+  const analytics = artistAnalytics
+  const { fundingReadiness } = analytics
+
+  const fundingRows = artistDashboardProfile.applications
+    .filter((app) => ACTIVE_STATUSES.has(app.status))
+    .filter((app) => typeof app.fundingAmount === "number")
+
+  const missingMaterialApps = fundingRows.filter((app) => (app.missingMaterialCount ?? 0) > 0)
+
   return (
     <main className="h-full overflow-y-auto px-6 py-6">
       <div className="mx-auto max-w-[1180px] space-y-5">
@@ -34,10 +45,10 @@ export function ArtistFundingPageView() {
         />
 
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <WorkspaceMetricCard label="Potential funding" value="$184,500" />
-          <WorkspaceMetricCard label="Estimated fit" value="76%" />
-          <WorkspaceMetricCard label="Completeness" value="87%" />
-          <WorkspaceMetricCard label="Timeline confidence" value="68%" />
+          <WorkspaceMetricCard label="Potential funding" value={formatArtistCurrency(analytics.potentialFunding)} />
+          <WorkspaceMetricCard label="Estimated fit" value={formatArtistPct(fundingReadiness.estimatedFit)} />
+          <WorkspaceMetricCard label="Completeness" value={`${fundingReadiness.completeness}%`} />
+          <WorkspaceMetricCard label="Timeline confidence" value={`${fundingReadiness.timelineConfidence}%`} />
         </div>
 
         <section className="overflow-x-auto rounded-2xl border bg-white" style={cardStyle}>
@@ -56,22 +67,37 @@ export function ArtistFundingPageView() {
             </thead>
             <tbody>
               {fundingRows.map((row) => (
-                <tr key={row.program} className="border-b" style={{ borderColor: lavenderSoftLine }}>
-                  <td className="px-5 py-3 font-medium" style={{ color: inkColor }}>{row.program}</td>
-                  <td className="px-3 py-3" style={{ color: inkColor }}>{row.amount}</td>
-                  <td className="px-3 py-3"><div className="w-24"><ProgressBar value={row.fit} /></div></td>
-                  <td className="px-3 py-3"><div className="w-24"><ProgressBar value={row.completeness} tone="green" /></div></td>
-                  <td className="px-3 py-3"><div className="w-24"><ProgressBar value={row.timeline} tone="amber" /></div></td>
-                </tr>
-              ))}
+                  <tr key={row.program} className="border-b" style={{ borderColor: lavenderSoftLine }}>
+                    <td className="px-5 py-3 font-medium" style={{ color: inkColor }}>{row.program}</td>
+                    <td className="px-3 py-3" style={{ color: inkColor }}>{formatArtistCurrency(row.fundingAmount ?? 0)}</td>
+                    <td className="px-3 py-3">
+                      {row.fitScore != null ? (
+                        <div className="w-24"><ProgressBar value={row.fitScore} /></div>
+                      ) : (
+                        <span className="text-xs" style={{ color: mutedColor }}>Prepared for scoring</span>
+                      )}
+                    </td>
+                    <td className="px-3 py-3"><div className="w-24"><ProgressBar value={fundingReadiness.completeness} tone="green" /></div></td>
+                    <td className="px-3 py-3">
+                      <div className="w-24">
+                        <ProgressBar value={isApplicationTimelineReady(row) ? 100 : 0} tone="amber" />
+                      </div>
+                    </td>
+                  </tr>
+                ))}
             </tbody>
           </table>
         </section>
 
-        <WorkflowCard title="Missing-material risk" body="Two high-fit opportunities still depend on materials not yet marked ready in your passport.">
+        <WorkflowCard title="Missing-material risk" body={`${missingMaterialApps.length} active opportunit${missingMaterialApps.length === 1 ? "y depends" : "ies depend"} on materials not yet marked ready in your passport.`}>
           <div className="flex flex-wrap gap-2">
-            <DemoStatusChip label="Budget outline missing" tone="warning" />
-            <DemoStatusChip label="References pending" tone="warning" />
+            {missingMaterialApps.map((app) => (
+              <DemoStatusChip
+                key={app.program}
+                label={`${app.program}: ${app.missingMaterialCount} missing`}
+                tone="warning"
+              />
+            ))}
           </div>
           <Link href="/artist-dashboard/passport/" className="mt-3 inline-block text-xs font-medium transition-opacity hover:opacity-75" style={{ color: "#5B4B8A" }}>
             Review passport materials →

@@ -5,6 +5,7 @@ import Link from "next/link"
 import { Search, BadgeCheck, ExternalLink, ClipboardList } from "lucide-react"
 import { assetPath } from "@/lib/asset-path"
 import { kleioSyntheticArtistProfiles } from "@/lib/kleio-profile-data"
+import { getArtistMaterialReadiness } from "@/lib/kleio-artist-analytics"
 import { ProfileChip } from "@/components/kleio/profile/profile-chip"
 
 const inkColor = "#292631"
@@ -38,11 +39,6 @@ function reviewStatusStyle(status: string) {
   }
 }
 
-function getMaterialsReadiness(materialsReady: (typeof kleioSyntheticArtistProfiles)[number]["materialsReady"]) {
-  const materials = Object.values(materialsReady)
-  const readyCount = materials.filter(Boolean).length
-  return Math.round((readyCount / materials.length) * 100)
-}
 
 function ArtistPortrait({ portrait, displayName }: { portrait: string; displayName: string }) {
   const [failed, setFailed] = useState(false)
@@ -134,7 +130,7 @@ export function ArtistsDirectory() {
 
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {filteredArtists.map((artist) => {
-            const readiness = getMaterialsReadiness(artist.materialsReady)
+            const readiness = getArtistMaterialReadiness(artist.materialsReady)
             const reviewStatus = reviewStatusByUsername[artist.username] ?? "In Review"
 
             return (
@@ -173,13 +169,13 @@ export function ArtistsDirectory() {
                       Materials readiness
                     </span>
                     <span className="text-xs font-semibold tabular-nums" style={{ color: lavenderDeep }}>
-                      {readiness}%
+                      {readiness.pct}%
                     </span>
                   </div>
                   <div className="h-1.5 overflow-hidden rounded-full bg-[#F1ECFB]">
                     <div
                       className="h-full rounded-full bg-[#5B4B8A] transition-all"
-                      style={{ width: `${readiness}%` }}
+                      style={{ width: `${readiness.pct}%` }}
                     />
                   </div>
                 </div>

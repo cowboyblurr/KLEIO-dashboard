@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { DashboardShell } from "@/components/kleio/dashboard-shell"
 import { activityLog } from "@/lib/kleio-data"
+import { getActivityLogCount } from "@/lib/kleio-analytics"
 import { inkColor, mutedColor, lavenderSoftLine, cardStyle } from "@/lib/workspace-styles"
 import { WorkspacePageHeader } from "@/components/kleio/workspace-page-header"
 import { SearchFilterBar } from "@/components/kleio/search-filter-bar"
@@ -38,6 +39,9 @@ export default function Page() {
 
           <section className="rounded-2xl border bg-white p-5" style={cardStyle}>
             <SearchFilterBar placeholder="Search activity, artists, programs..." filterChips={filterChips} />
+            <p className="mt-3 text-sm" style={{ color: mutedColor }}>
+              Showing <span className="font-medium" style={{ color: inkColor }}>{getActivityLogCount()}</span> recorded activities across your institution workspace.
+            </p>
           </section>
 
           <section className="rounded-2xl border bg-white" style={cardStyle}>

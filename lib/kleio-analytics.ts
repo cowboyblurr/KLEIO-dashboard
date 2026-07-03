@@ -526,6 +526,10 @@ export const kleioAssistInsights = [
   },
 ]
 
+export function getActivityLogCount() {
+  return activityLog.length
+}
+
 /** Internal integrity checks — not rendered in UI. */
 export const analyticsIntegrity = {
   statusBreakdownTotal,
