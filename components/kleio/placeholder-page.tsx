@@ -20,7 +20,7 @@ export function PlaceholderPage({
           {description}
         </p>
         <p className="mt-4 inline-flex items-center rounded-full bg-accent px-3 py-1 text-xs font-medium text-accent-foreground">
-          Coming soon
+          Foundation workflow
         </p>
       </div>
     </main>

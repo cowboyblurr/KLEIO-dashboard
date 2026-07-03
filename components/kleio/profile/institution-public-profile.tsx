@@ -73,9 +73,13 @@ export function InstitutionPublicProfile({ profile }: { profile: InstitutionProf
       {/* Hero */}
       <section className="overflow-hidden rounded-[1.5rem] border bg-white" style={cardStyle}>
         <div className="grid gap-6 p-5 lg:grid-cols-[minmax(280px,0.9fr)_minmax(0,1fr)] xl:p-6">
-          <div className="relative aspect-[16/10] overflow-hidden rounded-2xl border" style={{ borderColor: lavenderSoftLine }}>
+          <div className="relative aspect-[16/10] overflow-hidden rounded-2xl border bg-[#F7F4FF]" style={{ borderColor: lavenderSoftLine }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={assetPath(profile.coverImage)} alt={profile.displayName} className="size-full object-cover" />
+            <img
+              src={assetPath(profile.coverImage)}
+              alt={`${profile.displayName} profile image`}
+              className="h-full w-full object-cover object-center"
+            />
           </div>
 
           <div className="min-w-0">

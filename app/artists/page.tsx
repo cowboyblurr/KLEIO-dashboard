@@ -1,13 +1,10 @@
 import { DashboardShell } from "@/components/kleio/dashboard-shell"
-import { PlaceholderPage } from "@/components/kleio/placeholder-page"
+import { ArtistsDirectory } from "@/components/kleio/artists-directory"
 
 export default function Page() {
   return (
     <DashboardShell>
-      <PlaceholderPage
-        title="Artists"
-        description="View artist profiles, submitted materials, review status, and program history in one place."
-      />
+      <ArtistsDirectory />
     </DashboardShell>
   )
 }

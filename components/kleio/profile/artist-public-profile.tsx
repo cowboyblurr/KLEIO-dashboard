@@ -80,14 +80,16 @@ export function ArtistPublicProfile({ profile }: { profile: ArtistProfile }) {
     <div className="mx-auto w-full max-w-[1200px] space-y-6">
       {/* Hero */}
       <section className="overflow-hidden rounded-[1.5rem] border bg-white" style={cardStyle}>
-        <div className="grid gap-6 p-5 lg:grid-cols-[auto_minmax(0,1fr)_minmax(280px,0.85fr)] xl:p-6">
+        <div className="grid gap-6 p-5 lg:grid-cols-[auto_minmax(0,1fr)] xl:p-6">
           <div className="flex justify-center lg:block">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={assetPath(profile.portrait)}
-              alt={profile.displayName}
-              className="size-28 rounded-full border-4 border-[#F1ECFB] object-cover shadow-sm"
-            />
+            <div className="size-28 overflow-hidden rounded-full border-4 border-[#F1ECFB] bg-[#F7F4FF] shadow-sm">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={assetPath(profile.portrait)}
+                alt={profile.displayName}
+                className="h-full w-full object-cover object-center"
+              />
+            </div>
           </div>
 
           <div className="min-w-0">
@@ -116,15 +118,8 @@ export function ArtistPublicProfile({ profile }: { profile: ArtistProfile }) {
             <p className="mt-4 max-w-xl text-sm leading-relaxed" style={{ color: "#4A4458" }}>
               {statementExcerpt}
             </p>
-          </div>
 
-          <div className="min-w-0">
-            <div className="relative aspect-[4/5] overflow-hidden rounded-2xl border" style={{ borderColor: lavenderSoftLine }}>
-              {/* Hero assets are wide composites; frame right so the artwork (not baked-in text) leads. */}
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={assetPath(profile.heroImage)} alt={`${profile.displayName} — featured work`} className="size-full object-cover object-[82%_50%]" />
-            </div>
-            <div className="mt-3 grid gap-2">
+            <div className="mt-5 flex flex-wrap gap-2">
               <button
                 type="button"
                 onClick={() => demoAction("Portfolio preview opened")}
@@ -133,24 +128,22 @@ export function ArtistPublicProfile({ profile }: { profile: ArtistProfile }) {
                 <ExternalLink className="size-3.5" />
                 View Portfolio
               </button>
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => demoAction("Share link copied")}
-                  className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-[#D8D0F2] bg-white px-3 text-xs font-semibold transition-colors hover:bg-[#F7F4FF]"
-                  style={{ color: lavenderDeep }}
-                >
-                  <Share2 className="size-3.5" />
-                  Share Profile
-                </button>
-                <Link
-                  href="/signup/artist/"
-                  className="inline-flex h-10 items-center justify-center rounded-xl border border-[#D8D0F2] bg-white px-3 text-center text-xs font-semibold transition-colors hover:bg-[#F7F4FF]"
-                  style={{ color: lavenderDeep }}
-                >
-                  Create Passport
-                </Link>
-              </div>
+              <button
+                type="button"
+                onClick={() => demoAction("Share link copied")}
+                className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-[#D8D0F2] bg-white px-3 text-xs font-semibold transition-colors hover:bg-[#F7F4FF]"
+                style={{ color: lavenderDeep }}
+              >
+                <Share2 className="size-3.5" />
+                Share Profile
+              </button>
+              <Link
+                href="/signup/artist/"
+                className="inline-flex h-10 items-center justify-center rounded-xl border border-[#D8D0F2] bg-white px-3 text-center text-xs font-semibold transition-colors hover:bg-[#F7F4FF]"
+                style={{ color: lavenderDeep }}
+              >
+                Create Passport
+              </Link>
             </div>
             {confirmation && (
               <div role="status" className="mt-3 flex items-center gap-2 rounded-xl border border-[oklch(0.85_0.07_150)] bg-[oklch(0.96_0.04_150)] px-3 py-2 text-xs text-[oklch(0.4_0.12_150)]">
@@ -158,6 +151,18 @@ export function ArtistPublicProfile({ profile }: { profile: ArtistProfile }) {
                 {confirmation} <span className="opacity-70">(demo only)</span>
               </div>
             )}
+          </div>
+        </div>
+
+        <div className="px-5 pb-5 xl:px-6 xl:pb-6">
+          <div className="relative aspect-[16/9] overflow-hidden rounded-2xl border bg-[#F7F4FF]" style={{ borderColor: lavenderSoftLine }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={assetPath(profile.heroImage)}
+              alt={`${profile.displayName} featured practice image`}
+              className="h-full w-full object-cover object-center"
+            />
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-white/15 via-transparent to-transparent" />
           </div>
         </div>
       </section>
@@ -173,7 +178,11 @@ export function ArtistPublicProfile({ profile }: { profile: ArtistProfile }) {
             <article key={work.title} className="overflow-hidden rounded-2xl border bg-white" style={{ borderColor: lavenderSoftLine }}>
               <div className="relative aspect-[4/3] overflow-hidden bg-[#F7F4FF]">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={assetPath(work.image)} alt={work.title} className="size-full object-cover" />
+                <img
+                  src={assetPath(work.image)}
+                  alt={work.title}
+                  className="h-full w-full object-cover object-center transition-transform duration-500 hover:scale-[1.03]"
+                />
               </div>
               <div className="p-3">
                 <h3 className="text-sm font-semibold" style={{ color: inkColor }}>
