@@ -27,7 +27,7 @@ function ProgressBar({ value, tone = "lavender" }: { value: number; tone?: "lave
 }
 
 export function ArtistFundingPageView() {
-  const { t } = useKleioLocale()
+  const { locale, t } = useKleioLocale()
   const analytics = artistAnalytics
   const { fundingReadiness } = analytics
 
@@ -49,8 +49,8 @@ export function ArtistFundingPageView() {
         />
 
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <WorkspaceMetricCard label={t("artist.workspace.funding.metric.potentialFunding")} value={formatArtistCurrency(analytics.potentialFunding)} />
-          <WorkspaceMetricCard label={t("artist.workspace.funding.metric.estimatedFit")} value={formatArtistPct(fundingReadiness.estimatedFit)} />
+          <WorkspaceMetricCard label={t("artist.workspace.funding.metric.potentialFunding")} value={formatArtistCurrency(analytics.potentialFunding, locale)} />
+          <WorkspaceMetricCard label={t("artist.workspace.funding.metric.estimatedFit")} value={formatArtistPct(fundingReadiness.estimatedFit, locale)} />
           <WorkspaceMetricCard label={t("artist.workspace.funding.metric.completeness")} value={`${fundingReadiness.completeness}%`} />
           <WorkspaceMetricCard label={t("artist.workspace.funding.metric.timelineConfidence")} value={`${fundingReadiness.timelineConfidence}%`} />
         </div>
@@ -75,12 +75,12 @@ export function ArtistFundingPageView() {
               {fundingRows.map((row) => (
                   <tr key={row.program} className="border-b" style={{ borderColor: lavenderSoftLine }}>
                     <td className="px-5 py-3 font-medium" style={{ color: inkColor }}>{row.program}</td>
-                    <td className="px-3 py-3" style={{ color: inkColor }}>{formatArtistCurrency(row.fundingAmount ?? 0)}</td>
+                    <td className="px-3 py-3" style={{ color: inkColor }}>{formatArtistCurrency(row.fundingAmount ?? 0, locale)}</td>
                     <td className="px-3 py-3">
                       {row.fitScore != null ? (
                         <div className="w-24"><ProgressBar value={row.fitScore} /></div>
                       ) : (
-                        <DemoStatusChip label="Prepared for scoring" tone="default" />
+                        <DemoStatusChip label={t("status.preparedForScoring")} tone="default" />
                       )}
                     </td>
                     <td className="px-3 py-3"><div className="w-24"><ProgressBar value={fundingReadiness.completeness} tone="green" /></div></td>

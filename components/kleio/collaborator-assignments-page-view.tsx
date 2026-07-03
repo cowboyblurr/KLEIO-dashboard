@@ -5,6 +5,7 @@ import Link from "next/link"
 import {
   collaboratorAnalytics,
   formatCollaboratorDeadline,
+  formatDaysUntilDeadline,
 } from "@/lib/kleio-collaborator-analytics"
 import { inkColor, mutedColor, lavenderSoftLine, lavenderDeep, cardStyle } from "@/lib/workspace-styles"
 import { WorkspacePageHeader } from "@/components/kleio/workspace-page-header"
@@ -20,16 +21,11 @@ function reviewStatusTone(status: string): "default" | "success" | "warning" | "
 }
 
 export function CollaboratorAssignmentsPageView() {
-  const { t } = useKleioLocale()
+  const { locale, t } = useKleioLocale()
   const analytics = collaboratorAnalytics
   const [query, setQuery] = useState("")
 
-  const formatDaysUntilDeadline = (days: number | null) => {
-    if (days == null) return "—"
-    if (days < 0) return t("collaborator.deadline.overdue", { days: Math.abs(days) })
-    if (days === 0) return t("collaborator.deadline.dueToday")
-    return t("collaborator.deadline.daysLeft", { days })
-  }
+  const formatDaysLocal = (days: number | null) => formatDaysUntilDeadline(days, locale)
 
   const filteredRows = useMemo(() => {
     const normalized = query.trim().toLowerCase()
@@ -99,10 +95,10 @@ export function CollaboratorAssignmentsPageView() {
                     <DemoStatusChip label={row.reviewStatus} tone={reviewStatusTone(row.reviewStatus)} />
                   </td>
                   <td className="px-3 py-3" style={{ color: mutedColor }}>
-                    {formatCollaboratorDeadline(row.programDeadline)}
+                    {formatCollaboratorDeadline(row.programDeadline, locale)}
                   </td>
                   <td className="px-3 py-3" style={{ color: mutedColor }}>
-                    {formatDaysUntilDeadline(row.daysUntilDeadline)}
+                    {formatDaysLocal(row.daysUntilDeadline)}
                   </td>
                   <td className="px-3 py-3">
                     <Link href="/collaborator-dashboard/review-queue/" className="text-xs font-medium" style={{ color: lavenderDeep }}>

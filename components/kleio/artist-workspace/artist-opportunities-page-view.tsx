@@ -7,7 +7,7 @@ import {
   artistAnalytics,
   formatDemoDateDisplay,
 } from "@/lib/kleio-artist-analytics"
-import { formatKleioCurrency } from "@/lib/kleio-i18n"
+import { formatKleioCurrency, translateStatus } from "@/lib/kleio-i18n"
 import { inkColor, mutedColor, cardStyle } from "@/lib/workspace-styles"
 import { WorkspacePageHeader } from "@/components/kleio/workspace-page-header"
 import { SearchFilterBar } from "@/components/kleio/search-filter-bar"
@@ -17,11 +17,11 @@ import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
 
 const ACTIVE_STATUSES = new Set(["Draft", "Submitted", "Under Review", "Waiting", "Interview"])
 
-function readinessLabel(status: string, missing: number) {
-  if (missing > 0) return "Needs materials"
-  if (status === "Interview") return "Interview"
-  if (status === "Draft") return "Draft"
-  return "Ready"
+function readinessLabel(status: string, missing: number, locale: "en" | "es") {
+  if (missing > 0) return translateStatus(locale, "Needs materials")
+  if (status === "Interview") return translateStatus(locale, "Interview")
+  if (status === "Draft") return translateStatus(locale, "Draft")
+  return translateStatus(locale, "Ready")
 }
 
 export function ArtistOpportunitiesPageView() {
@@ -36,12 +36,12 @@ export function ArtistOpportunitiesPageView() {
         .map((app) => ({
           title: app.program,
           type: app.status,
-          deadline: formatDemoDateDisplay(app.dueDate),
+          deadline: formatDemoDateDisplay(app.dueDate, locale),
           fit: app.fitScore ?? null,
-          readiness: readinessLabel(app.status, app.missingMaterialCount ?? 0),
+          readiness: readinessLabel(app.status, app.missingMaterialCount ?? 0, locale),
           missing: app.missingMaterialCount ?? 0,
         })),
-    [],
+    [locale],
   )
 
   const filtered = opportunities.filter((o) =>

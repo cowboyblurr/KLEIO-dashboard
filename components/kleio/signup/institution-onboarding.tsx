@@ -34,7 +34,11 @@ import {
   REVIEW_ROLE_PERMISSION_PRESETS,
   REVIEW_TEAM_ROLES,
   calculateReviewTeamStats,
+  formatReviewAccessScope,
+  formatReviewInviteStatus,
+  formatReviewInviteTiming,
   formatReviewPermission,
+  formatReviewTeamRole,
   getDefaultReviewTeam,
   getReviewTeamIntegrity,
   saveReviewTeamDemoState,
@@ -95,7 +99,7 @@ const emptyForm: InstitutionFormState = {
 
 export function InstitutionOnboarding() {
   const router = useRouter()
-  const { t } = useKleioLocale()
+  const { t, locale } = useKleioLocale()
   const [step, setStep] = useState(0)
   const [form, setForm] = useState<InstitutionFormState>(emptyForm)
   const [fieldOrigins, setFieldOrigins] = useState<Partial<Record<keyof InstitutionFormState, FieldOrigin>>>({})
@@ -438,7 +442,7 @@ export function InstitutionOnboarding() {
                   >
                     {REVIEW_TEAM_ROLES.map((role) => (
                       <option key={role} value={role}>
-                        {role}
+                        {formatReviewTeamRole(role, locale)}
                       </option>
                     ))}
                   </select>
@@ -483,7 +487,7 @@ export function InstitutionOnboarding() {
                   >
                     {REVIEW_ACCESS_SCOPES.map((scope) => (
                       <option key={scope} value={scope}>
-                        {scope}
+                        {formatReviewAccessScope(scope, locale)}
                       </option>
                     ))}
                   </select>
@@ -502,8 +506,10 @@ export function InstitutionOnboarding() {
                     }}
                     className="h-10 w-full rounded-xl border border-border bg-background px-3 text-sm text-foreground"
                   >
-                    <option value="Prepare invite now">Prepare invite now</option>
-                    <option value="Invite after workspace setup">Invite after workspace setup</option>
+                    <option value="Prepare invite now">{formatReviewInviteTiming("Prepare invite now", locale)}</option>
+                    <option value="Invite after workspace setup">
+                      {formatReviewInviteTiming("Invite after workspace setup", locale)}
+                    </option>
                   </select>
                 </label>
               </div>
@@ -544,12 +550,14 @@ export function InstitutionOnboarding() {
                           <p className="font-medium text-foreground">{member.name}</p>
                           <p className="text-sm text-muted-foreground">{member.email}</p>
                           <p className="mt-2 text-xs text-muted-foreground">
-                            {member.role} · {member.assignedProgramTitle}
+                            {formatReviewTeamRole(member.role, locale)} · {member.assignedProgramTitle}
                           </p>
-                          <p className="text-xs text-muted-foreground">{member.accessScope}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {formatReviewAccessScope(member.accessScope, locale)}
+                          </p>
                           <p className="mt-2 text-[0.65rem] font-medium text-primary">
-                            {member.inviteStatus === "Prepared" ? "Prepared invite" : "Deferred invite"} · Limited
-                            review seat
+                            {formatReviewInviteStatus(member.inviteStatus, locale)} ·{" "}
+                            {t("reviewTeam.label.limitedReviewSeat")}
                           </p>
                           <div className="mt-2 flex flex-wrap gap-1.5">
                             {member.permissions.map((permission) => (
@@ -557,7 +565,7 @@ export function InstitutionOnboarding() {
                                 key={permission}
                                 className="rounded-full bg-[#F7F4FF] px-2 py-0.5 text-[0.6rem] font-medium text-[#5B4B8A]"
                               >
-                                {formatReviewPermission(permission)}
+                                {formatReviewPermission(permission, locale)}
                               </span>
                             ))}
                           </div>
@@ -584,19 +592,19 @@ export function InstitutionOnboarding() {
               {t("signup.institution.step.materialsSuggestions")}
             </h2>
             <p className="text-sm text-muted-foreground">
-              {t("signup.artist.materialsSuggestions.description")}
+              {t("signup.institution.materialsSuggestions.description")}
             </p>
 
             {importAssist.connectedIds.length === 0 && !importAssist.draftPrepared ? (
               <div className="rounded-xl border border-border bg-background p-4 text-sm text-muted-foreground">
-                {t("signup.artist.materialsSuggestions.noImport")}
+                {t("signup.institution.materialsSuggestions.noImport")}
               </div>
             ) : (
               <>
                 {importAssist.draftPrepared && (
                   <div className="rounded-xl border border-primary/15 bg-primary/5 p-4">
                     <p className="text-xs font-semibold text-primary">
-                      {t("signup.artist.materialsSuggestions.preparedFields")}
+                      {t("signup.institution.materialsSuggestions.preparedFields")}
                     </p>
                     <p className="mt-1 text-xs text-muted-foreground">{getAssistSummary("institution", SUBJECT_ID)}</p>
                     <ul className="mt-3 space-y-2">
@@ -613,11 +621,11 @@ export function InstitutionOnboarding() {
                           <p className="mt-1 text-xs text-muted-foreground">{item.value}</p>
                           {item.inForm ? (
                             <p className="mt-1 text-[0.65rem] text-[oklch(0.45_0.13_55)]">
-                              {t("signup.artist.materialsSuggestions.suggestionAvailable")}
+                              {t("signup.institution.materialsSuggestions.suggestionAvailable")}
                             </p>
                           ) : (
                             <p className="mt-1 text-[0.65rem] text-primary">
-                              {t("signup.artist.materialsSuggestions.readyToApply")}
+                              {t("signup.institution.materialsSuggestions.readyToApply")}
                             </p>
                           )}
                         </li>
@@ -637,7 +645,7 @@ export function InstitutionOnboarding() {
 
                 <div className="rounded-xl border border-[oklch(0.88_0.08_70)] bg-[oklch(0.98_0.03_80)] p-4">
                   <p className="text-xs font-semibold text-[oklch(0.45_0.14_65)]">
-                    {t("signup.artist.materialsSuggestions.missingChecklist")}
+                    {t("signup.institution.materialsSuggestions.missingChecklist")}
                   </p>
                   <ul className="mt-2 space-y-1">
                     {missingFormFields.length > 0 ? (
@@ -648,12 +656,12 @@ export function InstitutionOnboarding() {
                       ))
                     ) : (
                       <li className="text-xs text-[oklch(0.45_0.14_65)]">
-                        {t("signup.artist.materialsSuggestions.allFieldsEntered")}
+                        {t("signup.institution.materialsSuggestions.allFieldsEntered")}
                       </li>
                     )}
                     {intelligenceMissing.map((item) => (
                       <li key={item} className="text-xs text-[oklch(0.45_0.14_65)]">
-                        · {t("signup.artist.materialsSuggestions.fromConnected", { field: item })}
+                        · {t("signup.institution.materialsSuggestions.fromConnected", { field: item })}
                       </li>
                     ))}
                   </ul>
@@ -764,7 +772,7 @@ export function InstitutionOnboarding() {
                 value={`${reviewTeamStats.limitedReviewSeats}`}
               />
               <SignupReviewRow
-                label="Programs covered"
+                label={t("reviewTeam.label.programsCovered")}
                 value={`${reviewTeamStats.assignedProgramCount}`}
               />
               <SignupReviewRow
@@ -775,7 +783,8 @@ export function InstitutionOnboarding() {
                 <ul className="border-t border-border py-3">
                   {reviewTeam.map((member) => (
                     <li key={member.id} className="py-1.5 text-sm text-foreground">
-                      {member.name} · {member.role} · {member.accessScope}
+                      {member.name} · {formatReviewTeamRole(member.role, locale)} ·{" "}
+                      {formatReviewAccessScope(member.accessScope, locale)}
                     </li>
                   ))}
                 </ul>
@@ -789,14 +798,14 @@ export function InstitutionOnboarding() {
             {importAssist.connectedIds.length > 0 && (
               <div className="rounded-xl border border-primary/15 bg-primary/5 px-4 py-3">
                 <p className="text-xs font-semibold text-primary">
-                  {t("signup.artist.review.heading.imported")}
+                  {t("signup.institution.review.heading.imported")}
                 </p>
                 <p className="mt-1 text-xs text-muted-foreground">
                   {importAssist.connectedIds.length === 1
-                    ? t("signup.artist.review.importedNote", {
+                    ? t("signup.institution.review.importedNote", {
                         count: importAssist.connectedIds.length,
                       })
-                    : t("signup.artist.review.importedNotePlural", {
+                    : t("signup.institution.review.importedNotePlural", {
                         count: importAssist.connectedIds.length,
                       })}
                 </p>
@@ -806,7 +815,7 @@ export function InstitutionOnboarding() {
             {missingFormFields.length > 0 && (
               <div className="rounded-xl border border-[oklch(0.88_0.08_70)] bg-[oklch(0.98_0.03_80)] px-4 py-3">
                 <p className="text-xs font-semibold text-[oklch(0.45_0.14_65)]">
-                  {t("signup.artist.review.stillMissing")}
+                  {t("signup.institution.review.stillMissing")}
                 </p>
                 <ul className="mt-1 space-y-0.5">
                   {missingFormFields.map((item) => (

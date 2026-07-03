@@ -43,6 +43,99 @@ const enMessages: Record<string, string> = {
   "landing.quote.line1": "To archive is not to forget.",
   "landing.quote.line2": "It is to shape what will be remembered.",
   "landing.login.error": "Use the demo credentials or choose a demo role to continue.",
+  "landing.login.demoHint":
+    "Demo access: institution@kleio.demo, artist@kleio.demo, or reviewer@kleio.demo · password kleio2026",
+
+  // ── public.about ─────────────────────────────────────────────────────────
+  "public.about.eyebrow": "About KLEIO",
+  "public.about.hero.title": "A shared workspace for artists and the institutions that review them.",
+  "public.about.hero.subtitle":
+    "KLEIO brings artist materials, open calls, review workflows, committee decisions, and cultural records into one organized environment.",
+  "public.about.artist.heading": "For artists, KLEIO reduces repeated application labor.",
+  "public.about.artist.body":
+    "Artists are often asked to rebuild the same materials across grants, residencies, exhibitions, and open calls: bios, statements, CVs, portfolios, project descriptions, work samples, and links. KLEIO turns those materials into a reusable Creative Passport that can be reviewed, updated, and adapted for future opportunities.",
+  "public.about.institution.heading": "For institutions, KLEIO organizes the full review process.",
+  "public.about.institution.body":
+    "Institutions need more than a form. They need a clear way to manage submissions, missing materials, reviewer assignments, committee notes, shortlists, decisions, and reports. KLEIO gives teams a structured workspace for the entire submission lifecycle.",
+  "public.about.assist.heading": "KLEIO Assist prepares drafts. People make decisions.",
+  "public.about.assist.body":
+    "KLEIO can help prepare draft fields, surface missing materials, and organize next steps. Artists and institutions remain in control of what becomes official, what is shared, and what moves forward.",
+  "public.about.collaborator.note":
+    "Collaborators enter through a limited review seat, not a public profile. They see only assigned submissions, guidelines, messages, and review tasks.",
+  "public.about.card.passport.title": "Creative Passport",
+  "public.about.card.passport.body":
+    "A reusable artist profile for bios, statements, CVs, portfolios, documents, links, and application answers.",
+  "public.about.card.workspace.title": "Institution Workspace",
+  "public.about.card.workspace.body":
+    "A structured review environment for open calls, grants, residencies, committees, shortlists, and reports.",
+  "public.about.card.record.title": "Cultural Record",
+  "public.about.card.record.body":
+    "A cleaner way to preserve review history, applicant context, program decisions, and institutional memory.",
+  "public.about.cta.title": "Start with the path that fits your role.",
+  "public.about.cta.body":
+    "Artists can begin building a Creative Passport. Institutions can explore a review workspace built for submissions and decisions.",
+  "public.about.cta.artist": "Artist Signup",
+  "public.about.cta.institution": "Institution Signup",
+  "public.about.cta.demo": "Explore Demo",
+
+  // ── public.manifesto ─────────────────────────────────────────────────────
+  "public.manifesto.eyebrow": "Manifesto",
+  "public.manifesto.hero.title": "Creative work deserves better infrastructure.",
+  "public.manifesto.hero.subtitle":
+    "KLEIO is built around a simple belief: artists should not have to keep rebuilding their professional identity, and institutions should not have to manage cultural decisions through scattered files, forms, and inboxes.",
+  "public.manifesto.principle.1.heading": "Artists should remain the authors of their own record.",
+  "public.manifesto.principle.1.body":
+    "A platform should help artists prepare, organize, and reuse their materials without flattening their voice. KLEIO supports the work around the work while leaving authorship with the artist.",
+  "public.manifesto.principle.2.heading": "Review should be structured without becoming cold.",
+  "public.manifesto.principle.2.body":
+    "Committees need criteria, context, notes, progress, and accountability. Structure should make the process clearer, not less human.",
+  "public.manifesto.principle.3.heading": "Institutions need memory, not just intake.",
+  "public.manifesto.principle.3.body":
+    "A submission system should not disappear after a deadline. KLEIO treats programs, applicants, reviews, shortlists, and reports as part of a living cultural record.",
+  "public.manifesto.principle.4.heading": "AI should assist. It should not decide.",
+  "public.manifesto.principle.4.body":
+    "KLEIO Assist can prepare drafts, identify gaps, and organize next actions. It does not replace artistic judgment, curatorial context, or institutional responsibility.",
+  "public.manifesto.principle.5.heading": "The administrative layer should not exhaust the creative one.",
+  "public.manifesto.principle.5.body":
+    "Applications, grants, residencies, and open calls are necessary pathways, but they often create repeated labor for artists and fragmented work for institutions. KLEIO is designed to reduce that drag.",
+  "public.manifesto.quote":
+    "KLEIO exists to make the path between creative work and institutional opportunity clearer, more organized, and easier to preserve.",
+  "public.manifesto.cta.title": "Build the record with intention.",
+  "public.manifesto.cta.body":
+    "Explore the demo as an artist, institution, or invited collaborator and see how KLEIO connects materials, review, and memory.",
+  "public.manifesto.cta.explore": "Explore Arthouse",
+  "public.manifesto.cta.artist": "Artist Signup",
+  "public.manifesto.cta.institution": "Institution Signup",
+
+  // ── public.journal ───────────────────────────────────────────────────────
+  "public.journal.eyebrow": "Journal",
+  "public.journal.hero.title": "Field notes on applications, review, and cultural memory.",
+  "public.journal.hero.subtitle":
+    "The KLEIO Journal is a place for short notes on what we are building, what we are learning from artists and institutions, and where the submission process needs better tools.",
+  "public.journal.article.artist.category": "Artist workflow",
+  "public.journal.article.artist.title": "Why artists need reusable application materials",
+  "public.journal.article.artist.body":
+    "Most opportunities ask for familiar pieces: a bio, statement, CV, portfolio, proposal, work samples, and links. KLEIO begins with the idea that artists should not have to rebuild those materials from scratch every time.",
+  "public.journal.article.institution.category": "Institution workflow",
+  "public.journal.article.institution.title": "What institutions need beyond an intake form",
+  "public.journal.article.institution.body":
+    "A form collects submissions. A review workspace helps teams manage eligibility, missing materials, reviewer progress, committee notes, shortlists, decisions, and reports.",
+  "public.journal.article.assist.category": "Product principle",
+  "public.journal.article.assist.title": "KLEIO Assist is a drafting layer, not a decision layer",
+  "public.journal.article.assist.body":
+    "The role of assistive technology in KLEIO is to prepare fields, organize context, and surface gaps. Artists and institutions decide what becomes official.",
+  "public.journal.article.lifecycle.category": "Build note",
+  "public.journal.article.lifecycle.title": "From dashboard to submission lifecycle",
+  "public.journal.article.lifecycle.body":
+    "The current KLEIO demo is moving from a single dashboard into a full journey: homepage, role choice, onboarding, artist passport, institution workspace, review queue, shortlist, and reports.",
+  "public.journal.note":
+    "These early notes are part of the build process. As KLEIO develops, the Journal will document product decisions, artist pain points, institutional workflows, and pilot learnings.",
+  "public.journal.cta.title": "Follow the build. Test the workflow.",
+  "public.journal.cta.body":
+    "KLEIO is being shaped through working demos, institutional conversations, and artist-centered product decisions.",
+  "public.journal.cta.explore": "Explore Demo",
+  "public.journal.cta.artist": "Create Artist Passport",
+  "public.journal.cta.institution": "Create Institution Workspace",
 
   // ── auth ─────────────────────────────────────────────────────────────────
   "auth.artist.heading": "Enter the Artist Workspace",
@@ -208,6 +301,57 @@ const enMessages: Record<string, string> = {
   "signup.institution.review.heading.workspaceSetup": "Workspace setup",
   "signup.institution.review.heading.reviewTeam": "Review team",
   "signup.institution.enterWorkspace": "Enter Institution Workspace",
+  "signup.institution.materialsSuggestions.title": "Materials & suggestions",
+  "signup.institution.materialsSuggestions.description":
+    "Review suggested workspace fields, imported references, and setup gaps. You can skip Import Assist and continue manually.",
+  "signup.institution.materialsSuggestions.noImport":
+    "No import used yet. Use Import Assist above to connect existing program materials, or continue with your manual setup.",
+  "signup.institution.materialsSuggestions.preparedFields": "Suggested workspace fields prepared for review",
+  "signup.institution.materialsSuggestions.suggestionAvailable":
+    "Suggestion available — review before replacing",
+  "signup.institution.materialsSuggestions.readyToApply": "Ready to apply to empty workspace field",
+  "signup.institution.materialsSuggestions.missingChecklist": "Missing setup checklist",
+  "signup.institution.materialsSuggestions.allFieldsEntered": "All workspace fields entered",
+  "signup.institution.materialsSuggestions.fromConnected": "{field} (from connected institution materials)",
+  "signup.institution.review.heading.imported": "Imported / suggested workspace fields",
+  "signup.institution.review.importedNote":
+    "{count} source connected · rejected suggestions excluded",
+  "signup.institution.review.importedNotePlural":
+    "{count} sources connected · rejected suggestions excluded",
+  "signup.institution.review.stillMissing": "Still missing",
+
+  // ── reviewTeam ───────────────────────────────────────────────────────────
+  "reviewTeam.role.reviewer": "Reviewer",
+  "reviewTeam.role.guestJuror": "Guest Juror",
+  "reviewTeam.role.committeeMember": "Committee Member",
+  "reviewTeam.role.curator": "Curator",
+  "reviewTeam.role.grantAdministrator": "Grant Administrator",
+  "reviewTeam.role.viewer": "Viewer",
+  "reviewTeam.access.assignedSubmissionsOnly": "Assigned submissions only",
+  "reviewTeam.access.assignedProgramOnly": "Assigned program only",
+  "reviewTeam.access.guidelinesOnly": "Guidelines only",
+  "reviewTeam.access.committeeContext": "Committee context",
+  "reviewTeam.inviteTiming.prepareNow": "Prepare invite now",
+  "reviewTeam.inviteTiming.afterSetup": "Invite after workspace setup",
+  "reviewTeam.inviteStatus.prepared": "Prepared",
+  "reviewTeam.inviteStatus.deferred": "Deferred",
+  "reviewTeam.inviteStatus.preparedInvite": "Prepared invite",
+  "reviewTeam.inviteStatus.deferredInvite": "Deferred invite",
+  "reviewTeam.permission.viewAssignedSubmissions": "View assigned submissions",
+  "reviewTeam.permission.viewGuidelines": "View guidelines",
+  "reviewTeam.permission.score": "Score",
+  "reviewTeam.permission.leaveNotes": "Leave notes",
+  "reviewTeam.permission.vote": "Vote",
+  "reviewTeam.permission.messageInstitution": "Message institution",
+  "reviewTeam.permission.viewShortlist": "View shortlist",
+  "reviewTeam.label.limitedReviewSeat": "Limited review seat",
+  "reviewTeam.label.programsCovered": "Programs covered",
+
+  // ── analytics ────────────────────────────────────────────────────────────
+  "analytics.deadline.noActive": "No active deadline",
+  "analytics.urgency.thisWeek": "This week",
+  "analytics.urgency.dueSoon": "Due soon",
+  "analytics.urgency.upcoming": "Upcoming",
 
   // ── importAssist ─────────────────────────────────────────────────────────
   "importAssist.title": "KLEIO Import Assist",
@@ -278,6 +422,10 @@ const enMessages: Record<string, string> = {
   "artist.workspace.overview.greeting": "Good morning, {name}.",
   "artist.workspace.overview.description":
     "Stay focused on the work. KLEIO keeps your applications, materials, and opportunities in view.",
+  "artist.workspace.overview.stat.dueSoonDetail": "{count} due soon",
+  "artist.workspace.overview.stat.nextDeadline": "Next: {date}",
+  "artist.workspace.overview.stat.overdueDetail": "{count} overdue",
+  "artist.workspace.overview.stat.opportunitiesDetail": "Across {count} opportunities",
   "artist.workspace.passport.eyebrow": "Creative Passport",
   "artist.workspace.passport.title": "Creative Passport",
   "artist.workspace.passport.description":
@@ -391,6 +539,29 @@ const enMessages: Record<string, string> = {
     "View upcoming deadlines, application milestones, follow-ups, and decision windows.",
   "artist.workspace.calendar.cta.viewApplications": "View Applications",
   "artist.workspace.calendar.cta.exploreOpportunities": "Explore Opportunities",
+  "artist.workspace.calendar.metric.upcomingDeadlines": "Upcoming deadlines",
+  "artist.workspace.calendar.metric.dueSoon": "Due soon",
+  "artist.workspace.calendar.metric.dueSoonHelper": "Within 14 days",
+  "artist.workspace.calendar.metric.overdueSignals": "Overdue signals",
+  "artist.workspace.calendar.monthView": "Month view",
+  "artist.workspace.calendar.nextDeadline": "Next deadline: {date}",
+  "artist.workspace.calendar.upcomingDeadlines": "Upcoming deadlines",
+  "artist.workspace.calendar.decisionWindows.title": "Decision windows",
+  "artist.workspace.calendar.decisionWindows.body":
+    "{count} applications are currently awaiting institutional decisions.",
+  "artist.workspace.calendar.followUpReminders.title": "Follow-up reminders",
+  "artist.workspace.calendar.followUpReminders.body":
+    "{count} overdue signal needs follow-up attention.",
+  "artist.workspace.calendar.followUpReminders.bodyPlural":
+    "{count} overdue signals need follow-up attention.",
+  "artist.workspace.calendar.openMessages": "Open messages →",
+  "artist.workspace.calendar.weekday.sun": "Sun",
+  "artist.workspace.calendar.weekday.mon": "Mon",
+  "artist.workspace.calendar.weekday.tue": "Tue",
+  "artist.workspace.calendar.weekday.wed": "Wed",
+  "artist.workspace.calendar.weekday.thu": "Thu",
+  "artist.workspace.calendar.weekday.fri": "Fri",
+  "artist.workspace.calendar.weekday.sat": "Sat",
   "artist.workspace.messages.eyebrow": "Messaging",
   "artist.workspace.messages.title": "Messages",
   "artist.workspace.messages.description":
@@ -630,6 +801,11 @@ const enMessages: Record<string, string> = {
   "profile.availability": "Availability",
   "profile.publicProfile": "Public Profile",
   "profile.institutionProfile": "Institution Profile",
+  "profile.institution.cta.title": "Create a clearer review environment.",
+  "profile.institution.cta.body":
+    "KLEIO helps institutions manage open calls, submissions, reviewers, shortlists, messages, and reports from one structured workspace.",
+  "profile.institution.cta.createWorkspace": "Create Institution Workspace",
+  "profile.institution.cta.exploreDemo": "Explore Demo",
   "profile.syntheticDemo": "Synthetic demo profile",
   "profile.artistStatement": "Artist Statement",
   "profile.material.bio": "Bio",
@@ -690,6 +866,7 @@ const enMessages: Record<string, string> = {
   "common.locale.en": "EN",
   "common.locale.es": "ES",
   "common.copyright": "© 2026 KLEIO ARTHOUSE",
+  "common.foundationWorkflow": "Foundation workflow",
 
   // ── pluralization helpers ────────────────────────────────────────────────
   "plural.source.one": "{count} source connected",
@@ -735,6 +912,99 @@ const esMessages: Record<string, string> = {
   "landing.quote.line1": "Archivar no es olvidar.",
   "landing.quote.line2": "Es dar forma a lo que será recordado.",
   "landing.login.error": "Usa las credenciales demo o elige un rol demo para continuar.",
+  "landing.login.demoHint":
+    "Acceso demo: institution@kleio.demo, artist@kleio.demo o reviewer@kleio.demo · contraseña kleio2026",
+
+  // ── public.about ─────────────────────────────────────────────────────────
+  "public.about.eyebrow": "Acerca de KLEIO",
+  "public.about.hero.title": "Un espacio compartido para artistas y las instituciones que los revisan.",
+  "public.about.hero.subtitle":
+    "KLEIO reúne materiales de artistas, convocatorias, flujos de revisión, decisiones de comité y registros culturales en un solo entorno organizado.",
+  "public.about.artist.heading": "Para artistas, KLEIO reduce el trabajo repetido de postulación.",
+  "public.about.artist.body":
+    "A menudo se pide a los artistas reconstruir los mismos materiales para becas, residencias, exposiciones y convocatorias: biografías, declaraciones, CV, portafolios, descripciones de proyecto, muestras de obra y enlaces. KLEIO convierte esos materiales en un Pasaporte Creativo reutilizable que puede revisarse, actualizarse y adaptarse a futuras oportunidades.",
+  "public.about.institution.heading": "Para instituciones, KLEIO organiza todo el proceso de revisión.",
+  "public.about.institution.body":
+    "Las instituciones necesitan más que un formulario. Necesitan una forma clara de gestionar postulaciones, materiales faltantes, asignación de revisores, notas de comité, listas cortas, decisiones e informes. KLEIO ofrece a los equipos un espacio estructurado para todo el ciclo de postulación.",
+  "public.about.assist.heading": "KLEIO Assist prepara borradores. Las personas toman decisiones.",
+  "public.about.assist.body":
+    "KLEIO puede ayudar a preparar campos borrador, señalar materiales faltantes y organizar los siguientes pasos. Artistas e instituciones mantienen el control de lo que se vuelve oficial, lo que se comparte y lo que avanza.",
+  "public.about.collaborator.note":
+    "Los colaboradores entran por un espacio de revisión limitado, no por un perfil público. Solo ven postulaciones asignadas, lineamientos, mensajes y tareas de revisión.",
+  "public.about.card.passport.title": "Pasaporte Creativo",
+  "public.about.card.passport.body":
+    "Un perfil reutilizable del artista para biografías, declaraciones, CV, portafolios, documentos, enlaces y respuestas de postulación.",
+  "public.about.card.workspace.title": "Espacio institucional",
+  "public.about.card.workspace.body":
+    "Un entorno de revisión estructurado para convocatorias, becas, residencias, comités, listas cortas e informes.",
+  "public.about.card.record.title": "Registro cultural",
+  "public.about.card.record.body":
+    "Una forma más clara de preservar el historial de revisión, el contexto de postulantes, las decisiones de programa y la memoria institucional.",
+  "public.about.cta.title": "Empieza con el camino que corresponda a tu rol.",
+  "public.about.cta.body":
+    "Los artistas pueden comenzar a construir un Pasaporte Creativo. Las instituciones pueden explorar un espacio de revisión diseñado para postulaciones y decisiones.",
+  "public.about.cta.artist": "Registro de artista",
+  "public.about.cta.institution": "Registro institucional",
+  "public.about.cta.demo": "Explorar demo",
+
+  // ── public.manifesto ─────────────────────────────────────────────────────
+  "public.manifesto.eyebrow": "Manifiesto",
+  "public.manifesto.hero.title": "El trabajo creativo merece mejor infraestructura.",
+  "public.manifesto.hero.subtitle":
+    "KLEIO se construye sobre una creencia simple: los artistas no deberían tener que reconstruir su identidad profesional una y otra vez, y las instituciones no deberían gestionar decisiones culturales con archivos, formularios y bandejas de entrada dispersos.",
+  "public.manifesto.principle.1.heading": "Los artistas deben seguir siendo autores de su propio registro.",
+  "public.manifesto.principle.1.body":
+    "Una plataforma debe ayudar a los artistas a preparar, organizar y reutilizar sus materiales sin aplanar su voz. KLEIO apoya el trabajo alrededor del trabajo y deja la autoría en manos del artista.",
+  "public.manifesto.principle.2.heading": "La revisión debe ser estructurada sin volverse fría.",
+  "public.manifesto.principle.2.body":
+    "Los comités necesitan criterios, contexto, notas, avance y responsabilidad. La estructura debe hacer el proceso más claro, no menos humano.",
+  "public.manifesto.principle.3.heading": "Las instituciones necesitan memoria, no solo recepción.",
+  "public.manifesto.principle.3.body":
+    "Un sistema de postulaciones no debería desaparecer después de una fecha límite. KLEIO trata programas, postulantes, revisiones, listas cortas e informes como parte de un registro cultural vivo.",
+  "public.manifesto.principle.4.heading": "La IA debe asistir. No debe decidir.",
+  "public.manifesto.principle.4.body":
+    "KLEIO Assist puede preparar borradores, identificar vacíos y organizar siguientes acciones. No reemplaza el criterio artístico, el contexto curatorial ni la responsabilidad institucional.",
+  "public.manifesto.principle.5.heading": "La capa administrativa no debería agotar la creativa.",
+  "public.manifesto.principle.5.body":
+    "Las postulaciones, becas, residencias y convocatorias son caminos necesarios, pero a menudo generan trabajo repetido para artistas y trabajo fragmentado para instituciones. KLEIO está diseñado para reducir esa fricción.",
+  "public.manifesto.quote":
+    "KLEIO existe para hacer más claro, organizado y fácil de preservar el camino entre el trabajo creativo y la oportunidad institucional.",
+  "public.manifesto.cta.title": "Construye el registro con intención.",
+  "public.manifesto.cta.body":
+    "Explora el demo como artista, institución o colaborador invitado y ve cómo KLEIO conecta materiales, revisión y memoria.",
+  "public.manifesto.cta.explore": "Explorar Arthouse",
+  "public.manifesto.cta.artist": "Registro de artista",
+  "public.manifesto.cta.institution": "Registro institucional",
+
+  // ── public.journal ───────────────────────────────────────────────────────
+  "public.journal.eyebrow": "Diario",
+  "public.journal.hero.title": "Notas de campo sobre postulaciones, revisión y memoria cultural.",
+  "public.journal.hero.subtitle":
+    "El Diario KLEIO es un espacio para notas breves sobre lo que estamos construyendo, lo que aprendemos de artistas e instituciones, y dónde el proceso de postulación necesita mejores herramientas.",
+  "public.journal.article.artist.category": "Flujo del artista",
+  "public.journal.article.artist.title": "Por qué los artistas necesitan materiales de postulación reutilizables",
+  "public.journal.article.artist.body":
+    "La mayoría de las oportunidades piden piezas familiares: biografía, declaración, CV, portafolio, propuesta, muestras de obra y enlaces. KLEIO parte de la idea de que los artistas no deberían reconstruir esos materiales desde cero cada vez.",
+  "public.journal.article.institution.category": "Flujo institucional",
+  "public.journal.article.institution.title": "Lo que las instituciones necesitan más allá de un formulario de recepción",
+  "public.journal.article.institution.body":
+    "Un formulario recibe postulaciones. Un espacio de revisión ayuda a los equipos a gestionar elegibilidad, materiales faltantes, avance de revisores, notas de comité, listas cortas, decisiones e informes.",
+  "public.journal.article.assist.category": "Principio de producto",
+  "public.journal.article.assist.title": "KLEIO Assist es una capa de borrador, no de decisión",
+  "public.journal.article.assist.body":
+    "El rol de la tecnología asistiva en KLEIO es preparar campos, organizar contexto y señalar vacíos. Artistas e instituciones deciden qué se vuelve oficial.",
+  "public.journal.article.lifecycle.category": "Nota de desarrollo",
+  "public.journal.article.lifecycle.title": "Del panel al ciclo de postulación",
+  "public.journal.article.lifecycle.body":
+    "El demo actual de KLEIO avanza de un solo panel hacia un recorrido completo: inicio, elección de rol, incorporación, pasaporte del artista, espacio institucional, cola de revisión, lista corta e informes.",
+  "public.journal.note":
+    "Estas notas iniciales forman parte del proceso de desarrollo. A medida que KLEIO evoluciona, el Diario documentará decisiones de producto, puntos de dolor de artistas, flujos institucionales y aprendizajes de pilotos.",
+  "public.journal.cta.title": "Sigue el desarrollo. Prueba el flujo.",
+  "public.journal.cta.body":
+    "KLEIO se está formando a través de demos funcionales, conversaciones institucionales y decisiones de producto centradas en el artista.",
+  "public.journal.cta.explore": "Explorar demo",
+  "public.journal.cta.artist": "Crear Pasaporte Creativo",
+  "public.journal.cta.institution": "Crear Espacio institucional",
 
   // ── auth ─────────────────────────────────────────────────────────────────
   "auth.artist.heading": "Entra al Espacio del artista",
@@ -900,6 +1170,57 @@ const esMessages: Record<string, string> = {
   "signup.institution.review.heading.workspaceSetup": "Configuración del espacio",
   "signup.institution.review.heading.reviewTeam": "Equipo de revisión",
   "signup.institution.enterWorkspace": "Entrar al Espacio institucional",
+  "signup.institution.materialsSuggestions.title": "Materiales y sugerencias",
+  "signup.institution.materialsSuggestions.description":
+    "Revisa campos sugeridos del espacio, referencias importadas y pendientes de configuración. Puedes omitir Import Assist y continuar manualmente.",
+  "signup.institution.materialsSuggestions.noImport":
+    "Aún no se ha usado importación. Usa Import Assist arriba para conectar materiales de programa existentes, o continúa con la configuración manual.",
+  "signup.institution.materialsSuggestions.preparedFields": "Campos del espacio preparados para revisión",
+  "signup.institution.materialsSuggestions.suggestionAvailable":
+    "Sugerencia disponible — revisa antes de reemplazar",
+  "signup.institution.materialsSuggestions.readyToApply": "Listo para aplicar a un campo vacío del espacio",
+  "signup.institution.materialsSuggestions.missingChecklist": "Lista de configuración pendiente",
+  "signup.institution.materialsSuggestions.allFieldsEntered": "Todos los campos del espacio están completos",
+  "signup.institution.materialsSuggestions.fromConnected": "{field} (de materiales institucionales conectados)",
+  "signup.institution.review.heading.imported": "Campos del espacio importados / sugeridos",
+  "signup.institution.review.importedNote":
+    "{count} fuente conectada · sugerencias rechazadas excluidas",
+  "signup.institution.review.importedNotePlural":
+    "{count} fuentes conectadas · sugerencias rechazadas excluidas",
+  "signup.institution.review.stillMissing": "Aún falta",
+
+  // ── reviewTeam ───────────────────────────────────────────────────────────
+  "reviewTeam.role.reviewer": "Revisor",
+  "reviewTeam.role.guestJuror": "Jurado invitado",
+  "reviewTeam.role.committeeMember": "Miembro de comité",
+  "reviewTeam.role.curator": "Curador",
+  "reviewTeam.role.grantAdministrator": "Administrador de becas",
+  "reviewTeam.role.viewer": "Observador",
+  "reviewTeam.access.assignedSubmissionsOnly": "Solo postulaciones asignadas",
+  "reviewTeam.access.assignedProgramOnly": "Solo programa asignado",
+  "reviewTeam.access.guidelinesOnly": "Solo lineamientos",
+  "reviewTeam.access.committeeContext": "Contexto de comité",
+  "reviewTeam.inviteTiming.prepareNow": "Preparar invitación ahora",
+  "reviewTeam.inviteTiming.afterSetup": "Invitar después de configurar el espacio",
+  "reviewTeam.inviteStatus.prepared": "Preparada",
+  "reviewTeam.inviteStatus.deferred": "Diferida",
+  "reviewTeam.inviteStatus.preparedInvite": "Invitación preparada",
+  "reviewTeam.inviteStatus.deferredInvite": "Invitación diferida",
+  "reviewTeam.permission.viewAssignedSubmissions": "Ver postulaciones asignadas",
+  "reviewTeam.permission.viewGuidelines": "Ver lineamientos",
+  "reviewTeam.permission.score": "Calificar",
+  "reviewTeam.permission.leaveNotes": "Dejar notas",
+  "reviewTeam.permission.vote": "Votar",
+  "reviewTeam.permission.messageInstitution": "Mensaje a la institución",
+  "reviewTeam.permission.viewShortlist": "Ver lista corta",
+  "reviewTeam.label.limitedReviewSeat": "Espacio de revisión limitado",
+  "reviewTeam.label.programsCovered": "Programas cubiertos",
+
+  // ── analytics ────────────────────────────────────────────────────────────
+  "analytics.deadline.noActive": "Sin fecha límite activa",
+  "analytics.urgency.thisWeek": "Esta semana",
+  "analytics.urgency.dueSoon": "Vence pronto",
+  "analytics.urgency.upcoming": "Próximamente",
 
   // ── importAssist ─────────────────────────────────────────────────────────
   "importAssist.title": "KLEIO Import Assist",
@@ -970,6 +1291,10 @@ const esMessages: Record<string, string> = {
   "artist.workspace.overview.greeting": "Buenos días, {name}.",
   "artist.workspace.overview.description":
     "Concéntrate en el trabajo. KLEIO mantiene a la vista tus postulaciones, materiales y oportunidades.",
+  "artist.workspace.overview.stat.dueSoonDetail": "{count} vencen pronto",
+  "artist.workspace.overview.stat.nextDeadline": "Próxima: {date}",
+  "artist.workspace.overview.stat.overdueDetail": "{count} en retraso",
+  "artist.workspace.overview.stat.opportunitiesDetail": "En {count} oportunidades",
   "artist.workspace.passport.eyebrow": "Pasaporte Creativo",
   "artist.workspace.passport.title": "Pasaporte Creativo",
   "artist.workspace.passport.description":
@@ -1083,6 +1408,29 @@ const esMessages: Record<string, string> = {
     "Consulta fechas límite próximas, hitos de postulación, seguimientos y ventanas de decisión.",
   "artist.workspace.calendar.cta.viewApplications": "Ver postulaciones",
   "artist.workspace.calendar.cta.exploreOpportunities": "Explorar oportunidades",
+  "artist.workspace.calendar.metric.upcomingDeadlines": "Fechas límite próximas",
+  "artist.workspace.calendar.metric.dueSoon": "Vence pronto",
+  "artist.workspace.calendar.metric.dueSoonHelper": "En los próximos 14 días",
+  "artist.workspace.calendar.metric.overdueSignals": "Señales de retraso",
+  "artist.workspace.calendar.monthView": "Vista mensual",
+  "artist.workspace.calendar.nextDeadline": "Próxima fecha límite: {date}",
+  "artist.workspace.calendar.upcomingDeadlines": "Fechas límite próximas",
+  "artist.workspace.calendar.decisionWindows.title": "Ventanas de decisión",
+  "artist.workspace.calendar.decisionWindows.body":
+    "{count} postulaciones están esperando decisiones institucionales.",
+  "artist.workspace.calendar.followUpReminders.title": "Recordatorios de seguimiento",
+  "artist.workspace.calendar.followUpReminders.body":
+    "{count} señal de retraso necesita seguimiento.",
+  "artist.workspace.calendar.followUpReminders.bodyPlural":
+    "{count} señales de retraso necesitan seguimiento.",
+  "artist.workspace.calendar.openMessages": "Abrir mensajes →",
+  "artist.workspace.calendar.weekday.sun": "Dom",
+  "artist.workspace.calendar.weekday.mon": "Lun",
+  "artist.workspace.calendar.weekday.tue": "Mar",
+  "artist.workspace.calendar.weekday.wed": "Mié",
+  "artist.workspace.calendar.weekday.thu": "Jue",
+  "artist.workspace.calendar.weekday.fri": "Vie",
+  "artist.workspace.calendar.weekday.sat": "Sáb",
   "artist.workspace.messages.eyebrow": "Mensajería",
   "artist.workspace.messages.title": "Mensajes",
   "artist.workspace.messages.description":
@@ -1324,6 +1672,11 @@ const esMessages: Record<string, string> = {
   "profile.availability": "Disponibilidad",
   "profile.publicProfile": "Perfil público",
   "profile.institutionProfile": "Perfil institucional",
+  "profile.institution.cta.title": "Crea un entorno de revisión más claro.",
+  "profile.institution.cta.body":
+    "KLEIO ayuda a las instituciones a gestionar convocatorias, postulaciones, revisores, listas cortas, mensajes e informes desde un solo espacio estructurado.",
+  "profile.institution.cta.createWorkspace": "Crear Espacio institucional",
+  "profile.institution.cta.exploreDemo": "Explorar demo",
   "profile.syntheticDemo": "Perfil demo sintético",
   "profile.artistStatement": "Declaración artística",
   "profile.material.bio": "Biografía",
@@ -1384,6 +1737,7 @@ const esMessages: Record<string, string> = {
   "common.locale.en": "EN",
   "common.locale.es": "ES",
   "common.copyright": "© 2026 KLEIO ARTHOUSE",
+  "common.foundationWorkflow": "Flujo base",
 
   // ── pluralization helpers ────────────────────────────────────────────────
   "plural.source.one": "{count} fuente conectada",

@@ -4,6 +4,8 @@ import Link from "next/link"
 import {
   collaboratorAnalytics,
   formatCollaboratorDeadline,
+  formatCollaboratorNextDeadline,
+  formatDaysUntilDeadline,
 } from "@/lib/kleio-collaborator-analytics"
 import { inkColor, mutedColor, lavenderSoftLine, lavenderDeep, cardStyle } from "@/lib/workspace-styles"
 import { WorkspaceMetricCard } from "@/components/kleio/workspace-metric-card"
@@ -22,16 +24,11 @@ function institutionLabel(organization: string) {
 }
 
 export function CollaboratorDashboardView() {
-  const { t } = useKleioLocale()
+  const { locale, t } = useKleioLocale()
   const analytics = collaboratorAnalytics
   const { collaborator } = analytics
 
-  const formatDaysUntilDeadline = (days: number | null) => {
-    if (days == null) return "—"
-    if (days < 0) return t("collaborator.deadline.overdue", { days: Math.abs(days) })
-    if (days === 0) return t("collaborator.deadline.dueToday")
-    return t("collaborator.deadline.daysLeft", { days })
-  }
+  const formatDaysLocal = (days: number | null) => formatDaysUntilDeadline(days, locale)
 
   const pendingCount = analytics.pendingSubmissions.length
   const guidelineCount = analytics.guidelinePrograms.length
@@ -53,7 +50,7 @@ export function CollaboratorDashboardView() {
             <span>·</span>
             <span>{institutionLabel(collaborator.organization)}</span>
             <span>·</span>
-            <span>{t("collaborator.overview.nextDeadline", { date: analytics.nextDeadline })}</span>
+            <span>{t("collaborator.overview.nextDeadline", { date: formatCollaboratorNextDeadline(analytics.nextDeadline, locale) })}</span>
             <span>·</span>
             <span>{t("collaborator.overview.completionRate", { rate: analytics.completionRate })}</span>
           </div>
@@ -84,7 +81,7 @@ export function CollaboratorDashboardView() {
           <WorkspaceMetricCard label={t("collaborator.overview.metric.completed")} value={analytics.completedReviews} />
           <WorkspaceMetricCard label={t("collaborator.overview.metric.pending")} value={analytics.pendingReviews} />
           <WorkspaceMetricCard label={t("collaborator.overview.metric.completionRate")} value={`${analytics.completionRate}%`} />
-          <WorkspaceMetricCard label={t("collaborator.overview.metric.nextDeadline")} value={analytics.nextDeadline} />
+          <WorkspaceMetricCard label={t("collaborator.overview.metric.nextDeadline")} value={formatCollaboratorNextDeadline(analytics.nextDeadline, locale)} />
         </div>
 
         <div className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
@@ -118,7 +115,7 @@ export function CollaboratorDashboardView() {
                       <p className="font-medium" style={{ color: inkColor }}>{row.submission.artist}</p>
                       <p className="text-sm" style={{ color: mutedColor }}>{row.submission.projectTitle}</p>
                       <p className="mt-1 text-xs" style={{ color: mutedColor }}>
-                        {row.programTitle} · {formatDaysUntilDeadline(row.daysUntilDeadline)}
+                        {row.programTitle} · {formatDaysLocal(row.daysUntilDeadline)}
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
@@ -150,7 +147,7 @@ export function CollaboratorDashboardView() {
                   <li key={program.id}>
                     {program.title}
                     <span className="block text-xs">
-                      {t("collaborator.deadline.label", { date: formatCollaboratorDeadline(program.deadline) })}
+                      {t("collaborator.deadline.label", { date: formatCollaboratorDeadline(program.deadline, locale) })}
                     </span>
                   </li>
                 ))}

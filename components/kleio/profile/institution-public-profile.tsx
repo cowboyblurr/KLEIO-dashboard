@@ -1,8 +1,8 @@
 import Link from "next/link"
-import { FileCheck2, Layers3, MapPin, Sparkles, UsersRound } from "lucide-react"
+import { FileCheck2, Layers3, MapPin, UsersRound } from "lucide-react"
 import { assetPath } from "@/lib/asset-path"
 import type { kleioSyntheticInstitutionProfiles } from "@/lib/kleio-profile-data"
-import { ExploreArthouseLink } from "@/components/kleio/smart-home-link"
+import { InstitutionProfileCta } from "@/components/kleio/profile/institution-profile-cta"
 import { InstitutionNativeBadge } from "@/components/kleio/profile/institution-native-badge"
 import { ProfileChip } from "@/components/kleio/profile/profile-chip"
 
@@ -202,30 +202,7 @@ export function InstitutionPublicProfile({ profile }: { profile: InstitutionProf
         ))}
       </div>
 
-      {/* CTA band */}
-      <div className="rounded-2xl border border-[#E7E1F7] bg-[#F7F4FF] p-8 text-center" style={{ boxShadow: cardShadow }}>
-        <div className="mx-auto mb-2 grid size-9 place-items-center rounded-full bg-white" style={{ color: lavenderDeep }}>
-          <Sparkles className="size-4" />
-        </div>
-        <h2 className="font-serif text-2xl font-semibold tracking-tight" style={{ color: inkColor }}>
-          Create a clearer review environment.
-        </h2>
-        <p className="mx-auto mt-3 max-w-2xl text-sm leading-relaxed" style={{ color: mutedColor }}>
-          KLEIO helps institutions manage open calls, submissions, reviewers, shortlists, messages, and reports from one
-          structured workspace.
-        </p>
-        <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
-          <Link
-            href="/signup/institution/"
-            className="inline-flex h-11 items-center justify-center rounded-full bg-primary px-6 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
-          >
-            Create Institution Workspace
-          </Link>
-          <ExploreArthouseLink className="inline-flex h-11 items-center justify-center rounded-full border border-[#D8D0F2] bg-white px-6 text-sm font-semibold text-[#5B4B8A] transition-colors hover:bg-[#F7F4FF]">
-            Explore Demo
-          </ExploreArthouseLink>
-        </div>
-      </div>
+      <InstitutionProfileCta />
     </div>
   )
 }

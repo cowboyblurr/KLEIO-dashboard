@@ -1,3 +1,4 @@
+import "@/lib/kleio-content-integrity"
 import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
 import { Geist, Geist_Mono, Playfair_Display } from 'next/font/google'

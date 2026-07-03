@@ -8,7 +8,7 @@ import { WorkflowCard } from "@/components/kleio/workflow-card"
 import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
 
 export function CollaboratorGuidelinesPageView() {
-  const { t } = useKleioLocale()
+  const { locale, t } = useKleioLocale()
   const analytics = collaboratorAnalytics
 
   return (
@@ -38,7 +38,7 @@ export function CollaboratorGuidelinesPageView() {
                     {program.title}
                   </h2>
                   <p className="mt-1 text-sm" style={{ color: mutedColor }}>
-                    {t("collaborator.deadline.label", { date: formatCollaboratorDeadline(program.deadline) })}
+                    {t("collaborator.deadline.label", { date: formatCollaboratorDeadline(program.deadline, locale) })}
                   </p>
                 </div>
                 <Link href="/collaborator-dashboard/review-queue/" className="text-xs font-medium" style={{ color: lavenderDeep }}>

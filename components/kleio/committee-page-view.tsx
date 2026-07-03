@@ -7,7 +7,10 @@ import { allSubmissions } from "@/lib/kleio-data"
 import { artistProfileHref } from "@/lib/kleio-demo-auth"
 import {
   calculateReviewTeamStats,
+  formatReviewAccessScope,
+  formatReviewInviteStatus,
   formatReviewPermission,
+  formatReviewTeamRole,
   readReviewTeamDemoState,
   type ReviewTeamMember,
 } from "@/lib/kleio-review-team"
@@ -16,7 +19,7 @@ import { InitialAvatar } from "@/components/kleio/initial-avatar"
 import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
 
 export function CommitteePageView() {
-  const { t } = useKleioLocale()
+  const { t, locale } = useKleioLocale()
   const [preparedReviewTeam, setPreparedReviewTeam] = useState<ReviewTeamMember[]>([])
 
   useEffect(() => {
@@ -84,13 +87,12 @@ export function CommitteePageView() {
                   <p className="font-medium text-foreground">{member.name}</p>
                   <p className="text-sm text-muted-foreground">{member.email}</p>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    {member.role} · {member.assignedProgramTitle} · {member.accessScope}
+                    {formatReviewTeamRole(member.role, locale)} · {member.assignedProgramTitle} ·{" "}
+                    {formatReviewAccessScope(member.accessScope, locale)}
                   </p>
                   <p className="mt-1 text-[0.65rem] font-medium text-primary">
-                    {member.inviteStatus === "Prepared"
-                      ? t("institution.workspace.committee.invite.prepared")
-                      : t("institution.workspace.committee.invite.deferred")}{" "}
-                    · {t("institution.workspace.committee.limitedReviewSeat")}
+                    {formatReviewInviteStatus(member.inviteStatus, locale)} ·{" "}
+                    {t("institution.workspace.committee.limitedReviewSeat")}
                   </p>
                   <div className="mt-2 flex flex-wrap gap-1.5">
                     {member.permissions.map((permission) => (
@@ -98,12 +100,14 @@ export function CommitteePageView() {
                         key={permission}
                         className="rounded-full bg-primary/10 px-2 py-0.5 text-[0.6rem] font-medium text-primary"
                       >
-                        {formatReviewPermission(permission)}
+                        {formatReviewPermission(permission, locale)}
                       </span>
                     ))}
                   </div>
                 </div>
-                <span className="text-xs text-muted-foreground">{member.inviteStatus}</span>
+                <span className="text-xs text-muted-foreground">
+                  {formatReviewInviteStatus(member.inviteStatus, locale)}
+                </span>
               </div>
             </li>
           ))}

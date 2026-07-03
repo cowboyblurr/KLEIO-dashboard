@@ -4,7 +4,6 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { ChevronRight } from "lucide-react"
 import {
-  DEMO_LOGIN_HINT,
   getDashboardForRole,
   loginDemoUser,
   validateDemoCredentials,
@@ -87,8 +86,8 @@ export function LandingLoginCard() {
         />
       </div>
 
-      <p className="mt-1.5 truncate text-[0.58rem] leading-tight" style={{ color: "#7F7890" }} title={DEMO_LOGIN_HINT}>
-        {DEMO_LOGIN_HINT}
+      <p className="mt-1.5 truncate text-[0.58rem] leading-tight" style={{ color: "#7F7890" }} title={t("landing.login.demoHint")}>
+        {t("landing.login.demoHint")}
       </p>
 
       {error && (

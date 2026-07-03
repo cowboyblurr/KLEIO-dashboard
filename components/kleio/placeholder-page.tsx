@@ -1,4 +1,7 @@
+"use client"
+
 import { Construction } from "lucide-react"
+import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
 
 export function PlaceholderPage({
   title,
@@ -7,6 +10,8 @@ export function PlaceholderPage({
   title: string
   description: string
 }) {
+  const { t } = useKleioLocale()
+
   return (
     <main className="flex h-full items-center justify-center overflow-y-auto px-6 py-10">
       <div className="max-w-md text-center">
@@ -20,7 +25,7 @@ export function PlaceholderPage({
           {description}
         </p>
         <p className="mt-4 inline-flex items-center rounded-full bg-accent px-3 py-1 text-xs font-medium text-accent-foreground">
-          Foundation workflow
+          {t("common.foundationWorkflow")}
         </p>
       </div>
     </main>

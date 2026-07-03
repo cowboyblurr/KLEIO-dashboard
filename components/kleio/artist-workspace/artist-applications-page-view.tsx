@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { artistDashboardProfile } from "@/lib/kleio-data"
-import { artistAnalytics, formatDemoDateDisplay } from "@/lib/kleio-artist-analytics"
+import { artistAnalytics, formatArtistNextDeadline, formatDemoDateDisplay } from "@/lib/kleio-artist-analytics"
 import { inkColor, mutedColor, lavenderSoftLine, cardStyle } from "@/lib/workspace-styles"
 import { WorkspacePageHeader } from "@/components/kleio/workspace-page-header"
 import { WorkspaceMetricCard } from "@/components/kleio/workspace-metric-card"
@@ -23,7 +23,7 @@ const nextActionByProgram = Object.fromEntries(
 )
 
 export function ArtistApplicationsPageView() {
-  const { t } = useKleioLocale()
+  const { locale, t } = useKleioLocale()
   const analytics = artistAnalytics
   const applications = artistDashboardProfile.applications
 
@@ -60,7 +60,7 @@ export function ArtistApplicationsPageView() {
                 <tr key={app.program} className="border-b" style={{ borderColor: lavenderSoftLine }}>
                   <td className="px-5 py-3 font-medium" style={{ color: inkColor }}>{app.program}</td>
                   <td className="px-3 py-3"><DemoStatusChip label={app.status} tone={statusTone(app.status)} /></td>
-                  <td className="px-3 py-3" style={{ color: mutedColor }}>{formatDemoDateDisplay(app.dueDate)}</td>
+                  <td className="px-3 py-3" style={{ color: mutedColor }}>{formatDemoDateDisplay(app.dueDate, locale)}</td>
                   <td className="px-3 py-3" style={{ color: mutedColor }}>{app.updated}</td>
                   <td className="px-3 py-3" style={{ color: inkColor }}>{nextActionByProgram[app.program] ?? "—"}</td>
                 </tr>
@@ -84,7 +84,7 @@ export function ArtistApplicationsPageView() {
             title={t("artist.workspace.applications.deadlinePressure.title")}
             body={t("artist.workspace.applications.deadlinePressure.body", {
               count: analytics.dueSoon,
-              date: analytics.nextDeadline,
+              date: formatArtistNextDeadline(analytics.nextDeadline, locale),
             })}
           >
             <Link href="/artist-dashboard/calendar/" className="text-xs font-medium transition-opacity hover:opacity-75" style={{ color: "#5B4B8A" }}>

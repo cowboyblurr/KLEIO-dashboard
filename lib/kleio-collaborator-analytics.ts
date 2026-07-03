@@ -13,6 +13,8 @@ import {
   type ReviewStatus,
   type Submission,
 } from "@/lib/kleio-data"
+import type { KleioLocale } from "@/lib/kleio-i18n"
+import { formatMessage } from "@/lib/kleio-i18n"
 
 /** Fixed demo anchor — keep in sync with institution analytics demo date. */
 export const COLLABORATOR_DEMO_DATE = "2026-08-10"
@@ -42,7 +44,7 @@ export type CollaboratorAnalytics = {
   pendingVoteCount: number
   overdueReviews: number
   dueSoonReviews: number
-  nextDeadline: string
+  nextDeadline: string | null
   assignedSubmissions: CollaboratorAssignmentRow[]
   completedSubmissions: CollaboratorAssignmentRow[]
   pendingSubmissions: CollaboratorAssignmentRow[]
@@ -211,13 +213,8 @@ export function getCollaboratorAnalytics(collaboratorId = "celeste-rowan"): Coll
     .sort((a, b) => a.getTime() - b.getTime())[0]
 
   const nextDeadline = nextDeadlineDate
-    ? new Intl.DateTimeFormat("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-        timeZone: "UTC",
-      }).format(nextDeadlineDate)
-    : "No active deadline"
+    ? nextDeadlineDate.toISOString().slice(0, 10)
+    : null
 
   const completedSubmissions = assignmentRows.filter((row) => row.reviewStatus === "Complete")
   const pendingSubmissions = assignmentRows.filter((row) => row.reviewStatus !== "Complete")
@@ -302,10 +299,11 @@ if (process.env.NODE_ENV === "development" && !collaboratorAnalyticsIntegrity.al
   console.warn("KLEIO collaborator analytics integrity check failed", collaboratorAnalyticsIntegrity)
 }
 
-export function formatCollaboratorDeadline(value: string) {
+export function formatCollaboratorDeadline(value: string, locale: KleioLocale) {
   const date = parseDemoDate(value)
   if (!date) return value || "—"
-  return new Intl.DateTimeFormat("en-US", {
+  const intlLocale = locale === "es" ? "es-MX" : "en-US"
+  return new Intl.DateTimeFormat(intlLocale, {
     month: "short",
     day: "numeric",
     year: "numeric",
@@ -313,9 +311,14 @@ export function formatCollaboratorDeadline(value: string) {
   }).format(date)
 }
 
-export function formatDaysUntilDeadline(days: number | null) {
+export function formatCollaboratorNextDeadline(isoDate: string | null, locale: KleioLocale) {
+  if (!isoDate) return formatMessage(locale, "analytics.deadline.noActive")
+  return formatCollaboratorDeadline(isoDate, locale)
+}
+
+export function formatDaysUntilDeadline(days: number | null, locale: KleioLocale) {
   if (days == null) return "—"
-  if (days < 0) return `${Math.abs(days)} days overdue`
-  if (days === 0) return "Due today"
-  return `${days} days left`
+  if (days < 0) return formatMessage(locale, "collaborator.deadline.overdue", { days: Math.abs(days) })
+  if (days === 0) return formatMessage(locale, "collaborator.deadline.dueToday")
+  return formatMessage(locale, "collaborator.deadline.daysLeft", { days })
 }

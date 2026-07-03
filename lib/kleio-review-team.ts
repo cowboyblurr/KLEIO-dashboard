@@ -1,5 +1,7 @@
 import { collaborators, programs } from "@/lib/kleio-data"
 
+import { formatMessage, type KleioLocale } from "@/lib/kleio-i18n"
+
 export type ReviewTeamRole =
   | "Reviewer"
   | "Guest Juror"
@@ -318,6 +320,53 @@ export function readReviewTeamDemoState(): ReviewTeamMember[] {
   }
 }
 
-export function formatReviewPermission(permission: ReviewPermission) {
-  return permission.replace(/-/g, " ")
+export function formatReviewTeamRole(role: ReviewTeamRole, locale: KleioLocale) {
+  const keyMap: Record<ReviewTeamRole, string> = {
+    Reviewer: "reviewTeam.role.reviewer",
+    "Guest Juror": "reviewTeam.role.guestJuror",
+    "Committee Member": "reviewTeam.role.committeeMember",
+    Curator: "reviewTeam.role.curator",
+    "Grant Administrator": "reviewTeam.role.grantAdministrator",
+    Viewer: "reviewTeam.role.viewer",
+  }
+  return formatMessage(locale, keyMap[role])
+}
+
+export function formatReviewAccessScope(scope: ReviewAccessScope, locale: KleioLocale) {
+  const keyMap: Record<ReviewAccessScope, string> = {
+    "Assigned submissions only": "reviewTeam.access.assignedSubmissionsOnly",
+    "Assigned program only": "reviewTeam.access.assignedProgramOnly",
+    "Guidelines only": "reviewTeam.access.guidelinesOnly",
+    "Committee context": "reviewTeam.access.committeeContext",
+  }
+  return formatMessage(locale, keyMap[scope])
+}
+
+export function formatReviewInviteTiming(timing: ReviewInviteTiming, locale: KleioLocale) {
+  const keyMap: Record<ReviewInviteTiming, string> = {
+    "Prepare invite now": "reviewTeam.inviteTiming.prepareNow",
+    "Invite after workspace setup": "reviewTeam.inviteTiming.afterSetup",
+  }
+  return formatMessage(locale, keyMap[timing])
+}
+
+export function formatReviewInviteStatus(status: ReviewInviteStatus, locale: KleioLocale) {
+  const keyMap: Record<ReviewInviteStatus, string> = {
+    Prepared: "reviewTeam.inviteStatus.preparedInvite",
+    Deferred: "reviewTeam.inviteStatus.deferredInvite",
+  }
+  return formatMessage(locale, keyMap[status])
+}
+
+export function formatReviewPermission(permission: ReviewPermission, locale: KleioLocale) {
+  const keyMap: Record<ReviewPermission, string> = {
+    "view-assigned-submissions": "reviewTeam.permission.viewAssignedSubmissions",
+    "view-guidelines": "reviewTeam.permission.viewGuidelines",
+    score: "reviewTeam.permission.score",
+    "leave-notes": "reviewTeam.permission.leaveNotes",
+    vote: "reviewTeam.permission.vote",
+    "message-institution": "reviewTeam.permission.messageInstitution",
+    "view-shortlist": "reviewTeam.permission.viewShortlist",
+  }
+  return formatMessage(locale, keyMap[permission])
 }

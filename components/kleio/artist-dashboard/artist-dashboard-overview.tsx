@@ -21,10 +21,11 @@ import {
 import Link from "next/link"
 import type { Artist, ArtistDashboardApplicationStatus, ArtistDashboardProfile } from "@/lib/kleio-data"
 import type { ArtistAnalytics } from "@/lib/kleio-artist-analytics"
-import { formatArtistCurrency } from "@/lib/kleio-artist-analytics"
+import { formatArtistCurrency, formatArtistNextDeadline, formatArtistPct } from "@/lib/kleio-artist-analytics"
 import type { kleioSyntheticArtistProfiles } from "@/lib/kleio-profile-data"
 import { assetPath } from "@/lib/asset-path"
 import { InitialAvatar } from "@/components/kleio/initial-avatar"
+import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
 import { cn } from "@/lib/utils"
 
 type ArtistAssetProfile = (typeof kleioSyntheticArtistProfiles)[number]
@@ -225,7 +226,8 @@ function HeroCard({
   assetProfile?: ArtistAssetProfile
   analytics: ArtistAnalytics
 }) {
-  const funding = formatArtistCurrency(analytics.potentialFunding)
+  const { locale, t } = useKleioLocale()
+  const funding = formatArtistCurrency(analytics.potentialFunding, locale)
 
   const title = assetProfile?.dashboardHero.title ?? profile.hero.title
   const subtitle = assetProfile?.dashboardHero.subtitle ?? profile.hero.subtitle
@@ -266,10 +268,10 @@ function HeroCard({
           </div>
         )}
         <div className="mt-7 grid grid-cols-4 divide-x max-md:grid-cols-2 max-md:gap-4 max-md:divide-x-0" style={{ borderColor: lavenderSoftLine }}>
-          <DashboardStat label="Active Applications" value={String(analytics.activeApplications)} detail={`${analytics.dueSoon} due soon`} icon={FileText} />
-          <DashboardStat label="Upcoming Deadlines" value={String(analytics.upcomingDeadlines)} detail={`Next: ${analytics.nextDeadline}`} icon={CalendarDays} />
-          <DashboardStat label="Pending Decisions" value={String(analytics.pendingDecisions)} detail={`${analytics.overdueDecisions} overdue`} icon={Hourglass} />
-          <DashboardStat label="Potential Funding" value={funding} detail={`Across ${analytics.opportunityCount} opportunities`} icon={DollarSign} />
+          <DashboardStat label={t("artist.workspace.passport.metric.activeApplications")} value={String(analytics.activeApplications)} detail={t("artist.workspace.overview.stat.dueSoonDetail", { count: analytics.dueSoon })} icon={FileText} />
+          <DashboardStat label={t("artist.workspace.calendar.metric.upcomingDeadlines")} value={String(analytics.upcomingDeadlines)} detail={t("artist.workspace.overview.stat.nextDeadline", { date: formatArtistNextDeadline(analytics.nextDeadline, locale) })} icon={CalendarDays} />
+          <DashboardStat label={t("artist.workspace.applications.metric.pendingDecisions")} value={String(analytics.pendingDecisions)} detail={t("artist.workspace.overview.stat.overdueDetail", { count: analytics.overdueDecisions })} icon={Hourglass} />
+          <DashboardStat label={t("artist.workspace.funding.metric.potentialFunding")} value={funding} detail={t("artist.workspace.overview.stat.opportunitiesDetail", { count: analytics.opportunityCount })} icon={DollarSign} />
         </div>
       </div>
     </section>
@@ -514,37 +516,35 @@ function QuietInsights({ profile }: { profile: ArtistDashboardProfile }) {
 }
 
 function FundingReadiness({ analytics }: { analytics: ArtistAnalytics }) {
+  const { locale, t } = useKleioLocale()
   const metrics = [
-    { label: "Estimated Fit", value: analytics.fundingReadiness.estimatedFit, tone: "lavender" as const },
-    { label: "Completeness", value: analytics.fundingReadiness.completeness, tone: "lavender" as const },
-    { label: "Timeline Confidence", value: analytics.fundingReadiness.timelineConfidence, tone: "amber" as const },
+    { labelKey: "artist.workspace.funding.metric.estimatedFit", value: analytics.fundingReadiness.estimatedFit, tone: "lavender" as const },
+    { labelKey: "artist.workspace.funding.metric.completeness", value: analytics.fundingReadiness.completeness, tone: "lavender" as const },
+    { labelKey: "artist.workspace.funding.metric.timelineConfidence", value: analytics.fundingReadiness.timelineConfidence, tone: "amber" as const },
   ]
 
   return (
     <Card className="p-4">
-      <CardHeader title="Funding Readiness" />
+      <CardHeader title={t("artist.workspace.funding.title")} />
       <div className="space-y-3">
         {metrics.map((metric) => (
-          <div key={metric.label}>
+          <div key={metric.labelKey}>
             <div className="mb-1 flex items-center justify-between text-xs">
-              <span style={{ color: mutedColor }}>{metric.label}</span>
+              <span style={{ color: mutedColor }}>{t(metric.labelKey)}</span>
               <span className="font-semibold tabular-nums" style={{ color: inkColor }}>
-                {metric.value == null ? "Prepared for scoring" : `${metric.value}%`}
+                {formatArtistPct(metric.value, locale)}
               </span>
             </div>
             {metric.value != null ? (
               <ProgressBar value={metric.value} tone={metric.tone} />
             ) : (
               <p className="text-[0.68rem]" style={{ color: mutedColor }}>
-                Prepared for scoring
+                {t("status.preparedForScoring")}
               </p>
             )}
           </div>
         ))}
       </div>
-      <p className="mt-4 text-xs" style={{ color: mutedColor }}>
-        Keep going — you are on track.
-      </p>
     </Card>
   )
 }

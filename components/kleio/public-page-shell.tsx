@@ -1,13 +1,16 @@
+"use client"
+
 import Link from "next/link"
-import { ChevronDown } from "lucide-react"
 import { KleioWordmarkLink } from "@/components/kleio/kleio-wordmark-link"
+import { KleioLocaleToggle } from "@/components/kleio/kleio-locale-toggle"
 import { ExploreArthouseLink } from "@/components/kleio/smart-home-link"
+import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
 import { cn } from "@/lib/utils"
 
-const navLinks = [
-  { label: "About", href: "/about/" },
-  { label: "Manifesto", href: "/manifesto/" },
-  { label: "Journal", href: "/journal/" },
+const navItems = [
+  { key: "nav.about", href: "/about/", active: "about" as const },
+  { key: "nav.manifesto", href: "/manifesto/", active: "manifesto" as const },
+  { key: "nav.journal", href: "/journal/", active: "journal" as const },
 ]
 
 const wordmarkGraphite = {
@@ -26,23 +29,25 @@ export function PublicPageShell({
   active?: "about" | "manifesto" | "journal"
   children: React.ReactNode
 }) {
+  const { t } = useKleioLocale()
+
   return (
     <div className="min-h-screen bg-white text-[#292631]">
       <header className="border-b border-[#E7E1F7]">
         <div className="relative mx-auto flex h-[88px] max-w-[1120px] items-center px-6 max-md:px-5">
           <nav className="flex items-center gap-7 max-md:gap-4">
-            {navLinks.map((item) => {
+            {navItems.map((item) => {
               const isActive = active && item.href === `/${active}/`
               return (
                 <Link
-                  key={item.label}
+                  key={item.key}
                   href={item.href}
                   className={cn(
                     "text-[0.78rem] font-medium tracking-wide transition-opacity hover:opacity-70",
                     isActive ? "text-[#5B4B8A]" : "text-[#6F6882]",
                   )}
                 >
-                  {item.label}
+                  {t(item.key)}
                 </Link>
               )
             })}
@@ -52,13 +57,11 @@ export function PublicPageShell({
             <KleioWordmarkLink href="/" imageClassName="h-[clamp(1.75rem,2.2vw,2.4rem)] w-auto" imageStyle={wordmarkGraphite} priority />
           </div>
 
-          <div className="ml-auto flex items-center gap-6 max-md:gap-4">
+          <div className="ml-auto flex items-center gap-4 max-md:gap-3">
             <ExploreArthouseLink className="text-[0.78rem] font-medium tracking-wide text-[#6F6882] transition-opacity hover:opacity-70 max-md:hidden">
-              Explore Arthouse
+              {t("nav.exploreArthouse")}
             </ExploreArthouseLink>
-            <button type="button" className="flex items-center gap-1 text-[0.78rem] font-medium tracking-wide text-[#6F6882]">
-              EN <ChevronDown className="size-3" />
-            </button>
+            <KleioLocaleToggle />
           </div>
         </div>
       </header>
@@ -66,7 +69,7 @@ export function PublicPageShell({
       <main className="mx-auto max-w-[1120px] px-6 py-16 max-md:px-5 max-md:py-12">{children}</main>
 
       <footer className="border-t border-[#E7E1F7] py-8">
-        <p className="text-center text-[0.7rem] tracking-[0.15em] text-[#B2A9C9]">© 2026 KLEIO ARTHOUSE</p>
+        <p className="text-center text-[0.7rem] tracking-[0.15em] text-[#B2A9C9]">{t("common.copyright")}</p>
       </footer>
     </div>
   )

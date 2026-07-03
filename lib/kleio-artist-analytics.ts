@@ -5,6 +5,8 @@ import {
 } from "@/lib/kleio-data"
 
 import { getArtistProfileByUsername } from "@/lib/kleio-profile-data"
+import type { KleioLocale } from "@/lib/kleio-i18n"
+import { formatMessage } from "@/lib/kleio-i18n"
 
 export const ARTIST_DEMO_DATE = "2026-08-10"
 
@@ -16,7 +18,7 @@ export type ArtistAnalytics = {
   activeApplications: number
   dueSoon: number
   upcomingDeadlines: number
-  nextDeadline: string
+  nextDeadline: string | null
   pendingDecisions: number
   overdueDecisions: number
   potentialFunding: number
@@ -116,28 +118,51 @@ function isPendingDecisionStatus(status: ArtistDashboardApplicationStatus) {
   return PENDING_DECISION_STATUSES.includes(status)
 }
 
-export function formatArtistCurrency(value: number) {
-  return new Intl.NumberFormat("en-US", {
+function toIntlLocale(locale: KleioLocale) {
+  return locale === "es" ? "es-MX" : "en-US"
+}
+
+export function formatArtistCurrency(value: number, locale: KleioLocale) {
+  return new Intl.NumberFormat(toIntlLocale(locale), {
     style: "currency",
     currency: "USD",
     maximumFractionDigits: 0,
   }).format(value)
 }
 
-export function formatArtistPct(value: number | null) {
-  if (value == null) return "Prepared for scoring"
+export function formatArtistPct(value: number | null, locale: KleioLocale) {
+  if (value == null) return formatMessage(locale, "status.preparedForScoring")
   return `${value}%`
 }
 
-export function formatDemoDateDisplay(value?: string | null) {
+export function formatDemoDateDisplay(
+  value: string | null | undefined,
+  locale: KleioLocale,
+) {
   const date = parseDemoDate(value)
   if (!date) return value ?? "—"
-  return new Intl.DateTimeFormat("en-US", {
+  return new Intl.DateTimeFormat(toIntlLocale(locale), {
     month: "short",
     day: "numeric",
     year: "numeric",
     timeZone: "UTC",
   }).format(date)
+}
+
+export function formatArtistNextDeadline(isoDate: string | null, locale: KleioLocale) {
+  if (!isoDate) return formatMessage(locale, "analytics.deadline.noActive")
+  return formatDemoDateDisplay(isoDate, locale)
+}
+
+export type ArtistDeadlineUrgency = "thisWeek" | "dueSoon" | "upcoming"
+
+export function formatArtistDeadlineUrgency(urgency: ArtistDeadlineUrgency, locale: KleioLocale) {
+  const keyMap: Record<ArtistDeadlineUrgency, string> = {
+    thisWeek: "analytics.urgency.thisWeek",
+    dueSoon: "analytics.urgency.dueSoon",
+    upcoming: "analytics.urgency.upcoming",
+  }
+  return formatMessage(locale, keyMap[urgency])
 }
 
 export function getArtistMaterialReadiness(profile: { materialsReady: Record<string, boolean> }) {
@@ -152,9 +177,9 @@ export function getArtistMaterialReadiness(profile: { materialsReady: Record<str
 
 export type ArtistDeadlineEntry = {
   title: string
-  date: string
+  dateIso: string
   type: string
-  urgency: string
+  urgency: ArtistDeadlineUrgency
   days: number
 }
 
@@ -181,11 +206,12 @@ export function getArtistDeadlineEntries(): ArtistDeadlineEntry[] {
       const days = daysFromDemo(application.dueDate)
       if (days == null || days < 0) return null
 
-      const urgency = days <= 7 ? "This week" : days <= 14 ? "Due soon" : "Upcoming"
+      const urgency: ArtistDeadlineUrgency =
+        days <= 7 ? "thisWeek" : days <= 14 ? "dueSoon" : "upcoming"
 
       return {
         title: application.program,
-        date: formatDemoDateDisplay(application.dueDate),
+        dateIso: application.dueDate,
         type: application.status,
         urgency,
         days,
@@ -227,13 +253,8 @@ export function getArtistAnalytics({
     .sort((a, b) => a.getTime() - b.getTime())[0]
 
   const nextDeadline = nextDeadlineDate
-    ? new Intl.DateTimeFormat("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-        timeZone: "UTC",
-      }).format(nextDeadlineDate)
-    : "No active deadline"
+    ? nextDeadlineDate.toISOString().slice(0, 10)
+    : null
 
   const pendingDecisions = applications.filter((application) =>
     isPendingDecisionStatus(application.status),
