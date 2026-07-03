@@ -12,6 +12,7 @@ import {
   type KleioDemoSession,
 } from "@/lib/kleio-demo-auth"
 import { KleioWordmarkLink } from "@/components/kleio/kleio-wordmark-link"
+import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
 
 type DemoRole = "artist" | "institution" | "collaborator"
 
@@ -31,6 +32,8 @@ function DemoAuthButtons({
   onCollaborator: () => void
   compact?: boolean
 }) {
+  const { t } = useKleioLocale()
+
   return (
     <div className={`flex ${compact ? "flex-col" : "flex-wrap"} gap-2`}>
       <button
@@ -38,36 +41,66 @@ function DemoAuthButtons({
         onClick={onInstitution}
         className="inline-flex h-10 items-center justify-center rounded-xl border border-primary/25 bg-primary/10 px-4 text-sm font-medium text-primary transition-colors hover:bg-primary/15"
       >
-        Enter Institution Demo
+        {t("auth.enterInstitutionDemo")}
       </button>
       <button
         type="button"
         onClick={onArtist}
         className="inline-flex h-10 items-center justify-center rounded-xl border border-border bg-background px-4 text-sm font-medium text-foreground transition-colors hover:bg-accent/50"
       >
-        Enter Artist Demo
+        {t("auth.enterArtistDemo")}
       </button>
       <button
         type="button"
         onClick={onCollaborator}
         className="inline-flex h-10 items-center justify-center rounded-xl border border-border bg-background px-4 text-sm font-medium text-foreground transition-colors hover:bg-accent/50"
       >
-        Enter Collaborator Demo
+        {t("auth.enterCollaboratorDemo")}
       </button>
     </div>
   )
 }
 
-function dashboardLabel(role: DemoRole) {
-  if (role === "artist") return "Artist Dashboard"
-  if (role === "collaborator") return "Collaborator Review Seat"
-  return "Institution Dashboard"
+function dashboardLabelKey(role: DemoRole) {
+  if (role === "artist") return "auth.dashboard.artist"
+  if (role === "collaborator") return "auth.dashboard.collaborator"
+  return "auth.dashboard.institution"
 }
 
-function switchLabel(role: DemoRole) {
-  if (role === "artist") return "Switch to Artist Demo"
-  if (role === "collaborator") return "Switch to Collaborator Demo"
-  return "Switch to Institution Demo"
+function switchLabelKey(role: DemoRole) {
+  if (role === "artist") return "auth.switchTo.artist"
+  if (role === "collaborator") return "auth.switchTo.collaborator"
+  return "auth.switchTo.institution"
+}
+
+function wrongRoleDescriptionKey(sessionRole: DemoRole, requiredRole: DemoRole) {
+  if (sessionRole === "artist") {
+    return requiredRole === "collaborator"
+      ? "auth.wrongRole.artistToCollaborator"
+      : "auth.wrongRole.artistToInstitution"
+  }
+  if (sessionRole === "collaborator") {
+    return requiredRole === "artist"
+      ? "auth.wrongRole.collaboratorToArtist"
+      : "auth.wrongRole.collaboratorToInstitution"
+  }
+  return requiredRole === "collaborator"
+    ? "auth.wrongRole.institutionToCollaborator"
+    : "auth.wrongRole.institutionToArtist"
+}
+
+function loggedOutHeadingKey(requiredRole?: DemoRole) {
+  if (requiredRole === "artist") return "auth.artist.heading"
+  if (requiredRole === "institution") return "auth.institution.heading"
+  if (requiredRole === "collaborator") return "auth.collaborator.heading"
+  return "auth.generic.heading"
+}
+
+function loggedOutDescriptionKey(requiredRole?: DemoRole) {
+  if (requiredRole === "artist") return "auth.artist.description"
+  if (requiredRole === "institution") return "auth.institution.description"
+  if (requiredRole === "collaborator") return "auth.collaborator.description"
+  return "auth.generic.description"
 }
 
 function AuthWall({
@@ -81,6 +114,7 @@ function AuthWall({
 }) {
   const router = useRouter()
   const pathname = usePathname()
+  const { t } = useKleioLocale()
 
   function enterDemo(role: DemoRole) {
     loginDemoUser(role)
@@ -100,34 +134,12 @@ function AuthWall({
 
   const wrongRole = session && requiredRole && session.role !== requiredRole
 
-  const loggedOutHeading =
-    requiredRole === "artist"
-      ? "Enter the Artist Workspace"
-      : requiredRole === "institution"
-        ? "Enter the Institution Workspace"
-        : requiredRole === "collaborator"
-          ? "Enter the Collaborator Review Seat"
-          : "Sign in to continue"
-  const loggedOutDescription =
-    requiredRole === "artist"
-      ? "Use the demo login to explore how an artist manages a Creative Passport, opportunities, and application materials."
-      : requiredRole === "institution"
-        ? "Use the demo login to explore how an institution manages submissions, reviewers, shortlists, and reports."
-        : requiredRole === "collaborator"
-          ? "Use the demo login to review assigned submissions, guidelines, messages, and review progress without entering the full institution workspace."
-          : "KLEIO workspaces are private. Use the demo login to enter this workspace."
+  const loggedOutHeading = t(loggedOutHeadingKey(requiredRole))
+  const loggedOutDescription = t(loggedOutDescriptionKey(requiredRole))
   const wrongRoleDescription =
-    session?.role === "artist"
-      ? requiredRole === "collaborator"
-        ? "You are currently in the Artist demo. Switch to the Collaborator demo to view this review seat."
-        : "You are currently in the Artist demo. Switch to the Institution demo to view this workspace."
-      : session?.role === "collaborator"
-        ? requiredRole === "artist"
-          ? "You are currently in the Collaborator demo. Switch to the Artist demo to view this workspace."
-          : "You are currently in the Collaborator demo. Switch to the Institution demo to view this workspace."
-        : requiredRole === "collaborator"
-          ? "You are currently in the Institution demo. Switch to the Collaborator demo to view this review seat."
-          : "You are currently in the Institution demo. Switch to the Artist demo to view this workspace."
+    session && requiredRole
+      ? t(wrongRoleDescriptionKey(session.role, requiredRole))
+      : ""
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-[oklch(0.985_0.005_287)] px-5 py-12">
@@ -139,7 +151,7 @@ function AuthWall({
         {wrongRole ? (
           <>
             <h1 className="text-center font-serif text-2xl font-semibold text-foreground">
-              Switch demo role
+              {t("auth.switchRole")}
             </h1>
             <p className="mt-2 text-center text-sm leading-relaxed text-muted-foreground">
               {wrongRoleDescription}
@@ -150,20 +162,20 @@ function AuthWall({
                 onClick={() => router.push(getDashboardForRole(session.role))}
                 className="inline-flex h-10 w-full items-center justify-center rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
               >
-                Go to {dashboardLabel(session.role)}
+                {t("auth.goToDashboard", { dashboard: t(dashboardLabelKey(session.role)) })}
               </button>
               <button
                 type="button"
                 onClick={() => switchToRole(requiredRole!)}
                 className="inline-flex h-10 w-full items-center justify-center rounded-xl border border-border bg-background px-4 text-sm font-medium text-foreground transition-colors hover:bg-accent/50"
               >
-                {switchLabel(requiredRole!)}
+                {t(switchLabelKey(requiredRole!))}
               </button>
               <Link
                 href={getPublicHomeHref()}
                 className="inline-flex h-10 w-full items-center justify-center rounded-xl px-4 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
               >
-                Return to KLEIO
+                {t("auth.returnToKleio")}
               </Link>
             </div>
           </>
@@ -196,6 +208,7 @@ function AuthWall({
 
 export function AuthGate({ requiredRole, children }: AuthGateProps) {
   const [session, setSession] = useState<KleioDemoSession | null | undefined>(undefined)
+  const { t } = useKleioLocale()
 
   useEffect(() => {
     setSession(getDemoSession())
@@ -204,7 +217,7 @@ export function AuthGate({ requiredRole, children }: AuthGateProps) {
   if (session === undefined) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[oklch(0.985_0.005_287)]">
-        <p className="text-sm text-muted-foreground">Loading workspace…</p>
+        <p className="text-sm text-muted-foreground">{t("auth.loading")}</p>
       </div>
     )
   }

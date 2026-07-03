@@ -1,3 +1,5 @@
+"use client"
+
 import Link from "next/link"
 import { collaboratorAnalytics } from "@/lib/kleio-collaborator-analytics"
 import { inkColor, mutedColor, lavenderSoftLine, lavenderDeep, cardStyle } from "@/lib/workspace-styles"
@@ -5,8 +7,10 @@ import { WorkspacePageHeader } from "@/components/kleio/workspace-page-header"
 import { WorkspaceMetricCard } from "@/components/kleio/workspace-metric-card"
 import { WorkflowCard } from "@/components/kleio/workflow-card"
 import { DemoStatusChip } from "@/components/kleio/demo-status-chip"
+import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
 
 export function CollaboratorMessagesPageView() {
+  const { t } = useKleioLocale()
   const analytics = collaboratorAnalytics
   const threads = analytics.scopedMessageThreads
 
@@ -14,24 +18,24 @@ export function CollaboratorMessagesPageView() {
     <main className="h-full overflow-y-auto px-6 py-6">
       <div className="mx-auto max-w-[1180px] space-y-5">
         <WorkspacePageHeader
-          eyebrow="Assignment messages"
-          title="Messages"
-          description="Focused reviewer and committee threads related to your assignments."
+          eyebrow={t("collaborator.messages.eyebrow")}
+          title={t("collaborator.messages.title")}
+          description={t("collaborator.messages.description")}
         />
 
         <div className="grid gap-4 sm:grid-cols-2">
-          <WorkspaceMetricCard label="Scoped threads" value={analytics.scopedMessageCount} />
-          <WorkspaceMetricCard label="Unread" value={analytics.unreadScopedMessageCount} />
+          <WorkspaceMetricCard label={t("collaborator.messages.metric.scopedThreads")} value={analytics.scopedMessageCount} />
+          <WorkspaceMetricCard label={t("collaborator.messages.metric.unread")} value={analytics.unreadScopedMessageCount} />
         </div>
 
         <div className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
           <section className="rounded-2xl border bg-white" style={cardStyle}>
             <div className="border-b px-5 py-4" style={{ borderColor: lavenderSoftLine }}>
-              <h2 className="font-serif text-lg font-semibold" style={{ color: inkColor }}>Inbox</h2>
+              <h2 className="font-serif text-lg font-semibold" style={{ color: inkColor }}>{t("collaborator.messages.inbox")}</h2>
             </div>
             {threads.length === 0 ? (
               <p className="px-5 py-8 text-sm" style={{ color: mutedColor }}>
-                No collaborator-specific messages in this demo dataset.
+                {t("collaborator.messages.empty")}
               </p>
             ) : (
               <ul className="divide-y" style={{ borderColor: lavenderSoftLine }}>
@@ -45,7 +49,9 @@ export function CollaboratorMessagesPageView() {
                           {thread.channel} · {thread.counterpart} · {thread.updatedAt}
                         </p>
                       </div>
-                      {thread.unread && <DemoStatusChip label="Unread" tone="warning" />}
+                      {thread.unread && (
+                        <DemoStatusChip label={t("collaborator.messages.unread")} tone="warning" translate={false} />
+                      )}
                     </div>
                   </li>
                 ))}
@@ -55,22 +61,32 @@ export function CollaboratorMessagesPageView() {
 
           <div className="space-y-4">
             <WorkflowCard
-              title="Reviewer reminders"
-              body="Assignment-related reminders appear here when the institution or committee needs your input."
+              title={t("collaborator.messages.reminders.title")}
+              body={t("collaborator.messages.reminders.body")}
             />
 
-            <WorkflowCard title="Institution contact" body="KLEIO Arthouse Program Team · program@kleioarthouse.demo">
+            <WorkflowCard title={t("collaborator.messages.contact.title")} body={t("collaborator.messages.contact.body")}>
               <p className="text-xs" style={{ color: mutedColor }}>
-                For deadline extensions, conflict disclosures, or access issues.
+                {t("collaborator.messages.contact.note")}
               </p>
             </WorkflowCard>
 
             <WorkflowCard
-              title="Assignment context"
-              body={`${analytics.assignedReviews} assigned reviews across ${analytics.assignedProgramsCount} program${analytics.assignedProgramsCount === 1 ? "" : "s"}.`}
+              title={t("collaborator.messages.context.title")}
+              body={
+                analytics.assignedProgramsCount === 1
+                  ? t("collaborator.messages.context.bodyOne", {
+                      reviews: analytics.assignedReviews,
+                      programs: analytics.assignedProgramsCount,
+                    })
+                  : t("collaborator.messages.context.bodyOther", {
+                      reviews: analytics.assignedReviews,
+                      programs: analytics.assignedProgramsCount,
+                    })
+              }
             >
               <Link href="/collaborator-dashboard/assignments/" className="text-xs font-medium" style={{ color: lavenderDeep }}>
-                View assignments →
+                {t("collaborator.messages.cta.viewAssignments")}
               </Link>
             </WorkflowCard>
           </div>

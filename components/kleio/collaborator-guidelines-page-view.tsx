@@ -1,25 +1,29 @@
+"use client"
+
 import Link from "next/link"
 import { collaboratorAnalytics, formatCollaboratorDeadline } from "@/lib/kleio-collaborator-analytics"
 import { inkColor, mutedColor, lavenderSoftLine, lavenderDeep, cardStyle } from "@/lib/workspace-styles"
 import { WorkspacePageHeader } from "@/components/kleio/workspace-page-header"
 import { WorkflowCard } from "@/components/kleio/workflow-card"
+import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
 
 export function CollaboratorGuidelinesPageView() {
+  const { t } = useKleioLocale()
   const analytics = collaboratorAnalytics
 
   return (
     <main className="h-full overflow-y-auto px-6 py-6">
       <div className="mx-auto max-w-[1180px] space-y-5">
         <WorkspacePageHeader
-          eyebrow="Review criteria"
-          title="Guidelines"
-          description="Program rubrics and required materials for your assigned review work only."
-          primaryCta={{ label: "Open Review Queue", href: "/collaborator-dashboard/review-queue/" }}
+          eyebrow={t("collaborator.guidelines.eyebrow")}
+          title={t("collaborator.guidelines.title")}
+          description={t("collaborator.guidelines.description")}
+          primaryCta={{ label: t("collaborator.guidelines.cta.openReviewQueue"), href: "/collaborator-dashboard/review-queue/" }}
         />
 
         <WorkflowCard
-          title="Review conduct"
-          body="Review only the materials assigned to you. Use the rubric provided by the institution. Flag conflicts before submitting a recommendation."
+          title={t("collaborator.guidelines.conduct.title")}
+          body={t("collaborator.guidelines.conduct.body")}
         />
 
         <div className="grid gap-4">
@@ -34,17 +38,17 @@ export function CollaboratorGuidelinesPageView() {
                     {program.title}
                   </h2>
                   <p className="mt-1 text-sm" style={{ color: mutedColor }}>
-                    Deadline {formatCollaboratorDeadline(program.deadline)}
+                    {t("collaborator.deadline.label", { date: formatCollaboratorDeadline(program.deadline) })}
                   </p>
                 </div>
                 <Link href="/collaborator-dashboard/review-queue/" className="text-xs font-medium" style={{ color: lavenderDeep }}>
-                  Open assigned reviews →
+                  {t("collaborator.guidelines.cta.openAssignedReviews")}
                 </Link>
               </div>
 
               <div className="mt-5 grid gap-5 md:grid-cols-2">
                 <div>
-                  <h3 className="text-sm font-semibold" style={{ color: inkColor }}>Rubric</h3>
+                  <h3 className="text-sm font-semibold" style={{ color: inkColor }}>{t("collaborator.guidelines.rubric")}</h3>
                   <ul className="mt-2 list-disc space-y-1 pl-5 text-sm" style={{ color: mutedColor }}>
                     {program.rubric.map((criterion) => (
                       <li key={criterion}>{criterion}</li>
@@ -52,7 +56,7 @@ export function CollaboratorGuidelinesPageView() {
                   </ul>
                 </div>
                 <div>
-                  <h3 className="text-sm font-semibold" style={{ color: inkColor }}>Required materials</h3>
+                  <h3 className="text-sm font-semibold" style={{ color: inkColor }}>{t("collaborator.guidelines.requiredMaterials")}</h3>
                   <ul className="mt-2 list-disc space-y-1 pl-5 text-sm" style={{ color: mutedColor }}>
                     {program.requiredMaterials.map((material) => (
                       <li key={material}>{material}</li>
@@ -66,11 +70,10 @@ export function CollaboratorGuidelinesPageView() {
 
         <section className="rounded-2xl border border-[#E7E1F7] bg-[#F7F4FF] p-5">
           <h3 className="font-serif text-base font-semibold" style={{ color: inkColor }}>
-            Conflict of interest reminder
+            {t("collaborator.guidelines.conflict.title")}
           </h3>
           <p className="mt-2 text-sm leading-relaxed" style={{ color: mutedColor }}>
-            If you have a personal, professional, or financial relationship with an applicant, notify the program team
-            before completing your review. Do not score or recommend on assignments where a conflict exists.
+            {t("collaborator.guidelines.conflict.body")}
           </p>
         </section>
       </div>

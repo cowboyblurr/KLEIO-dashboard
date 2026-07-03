@@ -12,8 +12,10 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { collaboratorAnalytics } from "@/lib/kleio-collaborator-analytics"
+import { collaboratorNavLabelKeys } from "@/lib/kleio-nav-i18n"
 import { InitialAvatar } from "@/components/kleio/initial-avatar"
 import { KleioWordmarkLink } from "@/components/kleio/kleio-wordmark-link"
+import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
 
 const navItems = [
   { href: "/collaborator-dashboard/", label: "Overview", icon: LayoutDashboard },
@@ -31,6 +33,7 @@ function institutionLabel(organization: string) {
 export function CollaboratorSidebar() {
   const pathname = usePathname()
   const { collaborator } = collaboratorAnalytics
+  const { t } = useKleioLocale()
 
   return (
     <aside className="flex h-full w-[220px] shrink-0 flex-col border-r border-[#E7E1F7] bg-white">
@@ -40,7 +43,7 @@ export function CollaboratorSidebar() {
 
       <nav className="flex-1 overflow-y-auto px-3 pb-4">
         <p className="px-3 pb-2 text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground/80">
-          Collaborator Review Seat
+          {t("nav.collaborator.workspace")}
         </p>
         <ul className="space-y-0.5">
           {navItems.map((item) => {
@@ -63,7 +66,7 @@ export function CollaboratorSidebar() {
                   )}
                 >
                   <Icon className={cn("size-4 shrink-0", active ? "text-primary" : "text-muted-foreground")} />
-                  <span className="flex-1">{item.label}</span>
+                  <span className="flex-1">{t(collaboratorNavLabelKeys[item.href] ?? item.label)}</span>
                 </Link>
               </li>
             )
@@ -73,9 +76,9 @@ export function CollaboratorSidebar() {
 
       <div className="border-t border-[#E7E1F7] px-4 py-4">
         <div className="rounded-xl border border-[#E7E1F7] bg-[#F7F4FF] p-3">
-          <p className="text-xs font-medium text-[#5B4B8A]">Focused review seat</p>
+          <p className="text-xs font-medium text-[#5B4B8A]">{t("nav.collaborator.focusedSeat.title")}</p>
           <p className="mt-1 text-[0.7rem] leading-relaxed text-muted-foreground">
-            Only assigned review context is visible.
+            {t("nav.collaborator.focusedSeat.body")}
           </p>
         </div>
         <div className="mt-4 flex items-center gap-3">

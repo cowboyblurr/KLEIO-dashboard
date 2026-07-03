@@ -17,6 +17,7 @@ import {
   ImportAssistWidget,
   type ImportAssistState,
 } from "@/components/kleio/import-assist-widget"
+import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
 import {
   applySuggestionsToEmptyFields,
   buildArtistFormSuggestions,
@@ -31,10 +32,10 @@ import { getDashboardForRole, loginDemoUser } from "@/lib/kleio-demo-auth"
 const SUBJECT_ID = "amina-el-badri"
 
 const STEPS = [
-  { label: "Profile basics" },
-  { label: "Practice & materials" },
-  { label: "Materials & suggestions" },
-  { label: "Review" },
+  { stepKey: "signup.artist.step.profileBasics" },
+  { stepKey: "signup.artist.step.practiceMaterials" },
+  { stepKey: "signup.artist.step.materialsSuggestions" },
+  { stepKey: "signup.artist.step.review" },
 ] as const
 
 type ArtistFormState = {
@@ -67,12 +68,17 @@ const emptyForm: ArtistFormState = {
 
 export function ArtistOnboarding() {
   const router = useRouter()
+  const { t } = useKleioLocale()
   const [step, setStep] = useState(0)
   const [form, setForm] = useState<ArtistFormState>(emptyForm)
   const [fieldOrigins, setFieldOrigins] = useState<Partial<Record<keyof ArtistFormState, FieldOrigin>>>({})
   const [importAssist, setImportAssist] = useState<ImportAssistState>(defaultImportAssistState)
 
-  const stepLabel = `Step ${step + 1} of ${STEPS.length} · ${STEPS[step].label}`
+  const stepLabel = t("signup.common.stepLabel", {
+    current: step + 1,
+    total: STEPS.length,
+    label: t(STEPS[step].stepKey),
+  })
   const formAsRecord = form as Record<string, string>
   const missingFormFields = useMemo(() => getArtistMissingFormFields(formAsRecord), [form])
   const intelligenceMissing = useMemo(
@@ -121,8 +127,8 @@ export function ArtistOnboarding() {
 
   return (
     <SignupShell
-      title="Create your Creative Passport"
-      subtitle="Build one reusable profile for grants, residencies, exhibitions, open calls, and portfolio reviews."
+      title={t("signup.artist.title")}
+      subtitle={t("signup.artist.subtitle")}
       stepLabel={stepLabel}
     >
       <SignupProgress currentStep={step} totalSteps={STEPS.length} label={stepLabel} />
@@ -142,38 +148,40 @@ export function ArtistOnboarding() {
       <SignupStepCard>
         {step === 0 && (
           <div className="space-y-4">
-            <h2 className="font-serif text-lg font-semibold text-foreground">Profile basics</h2>
+            <h2 className="font-serif text-lg font-semibold text-foreground">
+              {t("signup.artist.profileBasics.title")}
+            </h2>
             <p className="text-xs text-muted-foreground">
-              Start with the details most applications ask for first. You can refine every field before using it.
+              {t("signup.artist.profileBasics.description")}
             </p>
             <SignupField
-              label="Artist name"
+              label={t("signup.artist.field.artistName")}
               value={form.artistName}
               onChange={(v) => updateField("artistName", v)}
               origin={origin("artistName")}
             />
             <SignupField
-              label="Location"
+              label={t("signup.artist.field.location")}
               value={form.location}
               onChange={(v) => updateField("location", v)}
               origin={origin("location")}
             />
             <SignupField
-              label="Discipline / practice type"
+              label={t("signup.artist.field.discipline")}
               value={form.discipline}
               onChange={(v) => updateField("discipline", v)}
               origin={origin("discipline")}
             />
             <SignupField
-              label="Website or portfolio link"
+              label={t("signup.artist.field.website")}
               value={form.website}
               onChange={(v) => updateField("website", v)}
               type="url"
-              placeholder="https://"
+              placeholder={t("signup.artist.placeholder.website")}
               origin={origin("website")}
             />
             <SignupTextArea
-              label="Short bio"
+              label={t("signup.artist.field.shortBio")}
               value={form.shortBio}
               onChange={(v) => updateField("shortBio", v)}
               rows={3}
@@ -184,48 +192,50 @@ export function ArtistOnboarding() {
 
         {step === 1 && (
           <div className="space-y-4">
-            <h2 className="font-serif text-lg font-semibold text-foreground">Practice &amp; materials</h2>
+            <h2 className="font-serif text-lg font-semibold text-foreground">
+              {t("signup.artist.practiceMaterials.title")}
+            </h2>
             <p className="text-xs text-muted-foreground">
-              Add the language, links, and documents that help reviewers understand your work.
+              {t("signup.artist.practiceMaterials.description")}
             </p>
             <SignupTextArea
-              label="Artist statement"
+              label={t("signup.artist.field.artistStatement")}
               value={form.artistStatement}
               onChange={(v) => updateField("artistStatement", v)}
               origin={origin("artistStatement")}
               draftNote={origin("artistStatement") === "suggested"}
             />
             <SignupField
-              label="Mediums"
+              label={t("signup.artist.field.mediums")}
               value={form.mediums}
               onChange={(v) => updateField("mediums", v)}
               origin={origin("mediums")}
             />
             <SignupField
-              label="Themes / keywords"
+              label={t("signup.artist.field.themes")}
               value={form.themes}
               onChange={(v) => updateField("themes", v)}
               origin={origin("themes")}
             />
             <SignupField
-              label="Portfolio links"
+              label={t("signup.artist.field.portfolioLinks")}
               value={form.portfolioLinks}
               onChange={(v) => updateField("portfolioLinks", v)}
-              placeholder="Separate multiple links with commas"
+              placeholder={t("signup.artist.placeholder.portfolioLinks")}
               origin={origin("portfolioLinks")}
             />
             <SignupField
-              label="CV / document placeholder"
+              label={t("signup.artist.field.documents")}
               value={form.documents}
               onChange={(v) => updateField("documents", v)}
-              placeholder="e.g. CV, artist statement, portfolio PDF"
+              placeholder={t("signup.artist.placeholder.documents")}
               origin={origin("documents")}
             />
             <SignupField
-              label="Featured works placeholder"
+              label={t("signup.artist.field.featuredWorks")}
               value={form.featuredWorks}
               onChange={(v) => updateField("featuredWorks", v)}
-              placeholder="Titles or project names"
+              placeholder={t("signup.artist.placeholder.featuredWorks")}
               origin={origin("featuredWorks")}
             />
           </div>
@@ -233,22 +243,24 @@ export function ArtistOnboarding() {
 
         {step === 2 && (
           <div className="space-y-4">
-            <h2 className="font-serif text-lg font-semibold text-foreground">Materials & suggestions</h2>
+            <h2 className="font-serif text-lg font-semibold text-foreground">
+              {t("signup.artist.materialsSuggestions.title")}
+            </h2>
             <p className="text-sm text-muted-foreground">
-              Review suggested fields, documents, and imported materials. You can skip Import Assist and build your
-              passport manually.
+              {t("signup.artist.materialsSuggestions.description")}
             </p>
 
             {importAssist.connectedIds.length === 0 && !importAssist.draftPrepared ? (
               <div className="rounded-xl border border-border bg-background p-4 text-sm text-muted-foreground">
-                No import used yet. Use Import Assist above to connect materials, or continue to review your manual
-                entries.
+                {t("signup.artist.materialsSuggestions.noImport")}
               </div>
             ) : (
               <>
                 {importAssist.draftPrepared && (
                   <div className="rounded-xl border border-primary/15 bg-primary/5 p-4">
-                    <p className="text-xs font-semibold text-primary">Suggested fields prepared for review</p>
+                    <p className="text-xs font-semibold text-primary">
+                      {t("signup.artist.materialsSuggestions.preparedFields")}
+                    </p>
                     <p className="mt-1 text-xs text-muted-foreground">{getAssistSummary("artist", SUBJECT_ID)}</p>
                     <ul className="mt-3 space-y-2">
                       {preparedSuggestions.map((item) => (
@@ -257,10 +269,12 @@ export function ArtistOnboarding() {
                           <p className="mt-1 text-xs text-muted-foreground">{item.value}</p>
                           {item.inForm ? (
                             <p className="mt-1 text-[0.65rem] text-[oklch(0.45_0.13_55)]">
-                              Suggestion available — review before replacing
+                              {t("signup.artist.materialsSuggestions.suggestionAvailable")}
                             </p>
                           ) : (
-                            <p className="mt-1 text-[0.65rem] text-primary">Ready to apply to empty field</p>
+                            <p className="mt-1 text-[0.65rem] text-primary">
+                              {t("signup.artist.materialsSuggestions.readyToApply")}
+                            </p>
                           )}
                         </li>
                       ))}
@@ -269,7 +283,9 @@ export function ArtistOnboarding() {
                 )}
 
                 <div className="rounded-xl border border-[oklch(0.88_0.08_70)] bg-[oklch(0.98_0.03_80)] p-4">
-                  <p className="text-xs font-semibold text-[oklch(0.45_0.14_65)]">Missing fields checklist</p>
+                  <p className="text-xs font-semibold text-[oklch(0.45_0.14_65)]">
+                    {t("signup.artist.materialsSuggestions.missingChecklist")}
+                  </p>
                   <ul className="mt-2 space-y-1">
                     {missingFormFields.length > 0 ? (
                       missingFormFields.map((item) => (
@@ -278,11 +294,13 @@ export function ArtistOnboarding() {
                         </li>
                       ))
                     ) : (
-                      <li className="text-xs text-[oklch(0.45_0.14_65)]">All profile fields entered</li>
+                      <li className="text-xs text-[oklch(0.45_0.14_65)]">
+                        {t("signup.artist.materialsSuggestions.allFieldsEntered")}
+                      </li>
                     )}
                     {intelligenceMissing.map((item) => (
                       <li key={item} className="text-xs text-[oklch(0.45_0.14_65)]">
-                        · {item} (from connected materials)
+                        · {t("signup.artist.materialsSuggestions.fromConnected", { field: item })}
                       </li>
                     ))}
                   </ul>
@@ -290,7 +308,9 @@ export function ArtistOnboarding() {
 
                 {form.documents && (
                   <div className="rounded-xl border border-border bg-background p-4">
-                    <p className="text-xs font-semibold text-foreground">Document checklist</p>
+                    <p className="text-xs font-semibold text-foreground">
+                      {t("signup.artist.materialsSuggestions.documentChecklist")}
+                    </p>
                     <p className="mt-1 text-sm text-muted-foreground">{form.documents}</p>
                   </div>
                 )}
@@ -303,48 +323,103 @@ export function ArtistOnboarding() {
           <div className="space-y-4">
             <div className="text-center">
               <CheckCircle2 className="mx-auto size-10 text-primary" />
-              <h2 className="mt-3 font-serif text-xl font-semibold text-foreground">Review your passport</h2>
+              <h2 className="mt-3 font-serif text-xl font-semibold text-foreground">
+                {t("signup.artist.review.title")}
+              </h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                Confirm what is ready before entering your artist workspace.
+                {t("signup.artist.review.description")}
               </p>
             </div>
 
             <div className="rounded-xl border border-border bg-background px-4">
               <p className="border-b border-border py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Profile basics
+                {t("signup.artist.review.heading.profileBasics")}
               </p>
-              <SignupReviewRow label="Artist name" value={form.artistName} origin={origin("artistName")} />
-              <SignupReviewRow label="Location" value={form.location} origin={origin("location")} />
-              <SignupReviewRow label="Discipline" value={form.discipline} origin={origin("discipline")} />
-              <SignupReviewRow label="Website" value={form.website} origin={origin("website")} />
-              <SignupReviewRow label="Short bio" value={form.shortBio} origin={origin("shortBio")} />
+              <SignupReviewRow
+                label={t("signup.artist.field.artistName")}
+                value={form.artistName}
+                origin={origin("artistName")}
+              />
+              <SignupReviewRow
+                label={t("signup.artist.field.location")}
+                value={form.location}
+                origin={origin("location")}
+              />
+              <SignupReviewRow
+                label={t("signup.artist.field.discipline")}
+                value={form.discipline}
+                origin={origin("discipline")}
+              />
+              <SignupReviewRow
+                label={t("signup.artist.field.website")}
+                value={form.website}
+                origin={origin("website")}
+              />
+              <SignupReviewRow
+                label={t("signup.artist.field.shortBio")}
+                value={form.shortBio}
+                origin={origin("shortBio")}
+              />
             </div>
 
             <div className="rounded-xl border border-border bg-background px-4">
               <p className="border-b border-border py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Creative Passport
+                {t("signup.artist.review.heading.creativePassport")}
               </p>
-              <SignupReviewRow label="Artist statement" value={form.artistStatement} origin={origin("artistStatement")} />
-              <SignupReviewRow label="Mediums" value={form.mediums} origin={origin("mediums")} />
-              <SignupReviewRow label="Themes" value={form.themes} origin={origin("themes")} />
-              <SignupReviewRow label="Portfolio links" value={form.portfolioLinks} origin={origin("portfolioLinks")} />
-              <SignupReviewRow label="Documents" value={form.documents} origin={origin("documents")} />
-              <SignupReviewRow label="Featured works" value={form.featuredWorks} origin={origin("featuredWorks")} />
+              <SignupReviewRow
+                label={t("signup.artist.field.artistStatement")}
+                value={form.artistStatement}
+                origin={origin("artistStatement")}
+              />
+              <SignupReviewRow
+                label={t("signup.artist.field.mediums")}
+                value={form.mediums}
+                origin={origin("mediums")}
+              />
+              <SignupReviewRow
+                label={t("signup.artist.field.themes")}
+                value={form.themes}
+                origin={origin("themes")}
+              />
+              <SignupReviewRow
+                label={t("signup.artist.field.portfolioLinks")}
+                value={form.portfolioLinks}
+                origin={origin("portfolioLinks")}
+              />
+              <SignupReviewRow
+                label={t("signup.artist.field.documents")}
+                value={form.documents}
+                origin={origin("documents")}
+              />
+              <SignupReviewRow
+                label={t("signup.artist.field.featuredWorks")}
+                value={form.featuredWorks}
+                origin={origin("featuredWorks")}
+              />
             </div>
 
             {importAssist.connectedIds.length > 0 && (
               <div className="rounded-xl border border-primary/15 bg-primary/5 px-4 py-3">
-                <p className="text-xs font-semibold text-primary">Imported / suggested fields</p>
+                <p className="text-xs font-semibold text-primary">
+                  {t("signup.artist.review.heading.imported")}
+                </p>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  {importAssist.connectedIds.length} source
-                  {importAssist.connectedIds.length === 1 ? "" : "s"} connected · rejected suggestions excluded
+                  {importAssist.connectedIds.length === 1
+                    ? t("signup.artist.review.importedNote", {
+                        count: importAssist.connectedIds.length,
+                      })
+                    : t("signup.artist.review.importedNotePlural", {
+                        count: importAssist.connectedIds.length,
+                      })}
                 </p>
               </div>
             )}
 
             {missingFormFields.length > 0 && (
               <div className="rounded-xl border border-[oklch(0.88_0.08_70)] bg-[oklch(0.98_0.03_80)] px-4 py-3">
-                <p className="text-xs font-semibold text-[oklch(0.45_0.14_65)]">Still missing</p>
+                <p className="text-xs font-semibold text-[oklch(0.45_0.14_65)]">
+                  {t("signup.artist.review.stillMissing")}
+                </p>
                 <ul className="mt-1 space-y-0.5">
                   {missingFormFields.map((item) => (
                     <li key={item} className="text-xs text-[oklch(0.45_0.14_65)]">
@@ -364,7 +439,7 @@ export function ArtistOnboarding() {
         onBack={() => setStep((s) => s - 1)}
         onNext={() => setStep((s) => s + 1)}
         onSubmit={handleCreatePassport}
-        submitLabel="Enter Artist Workspace"
+        submitLabel={t("signup.artist.createPassport")}
       />
     </SignupShell>
   )

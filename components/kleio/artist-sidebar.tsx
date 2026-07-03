@@ -17,8 +17,10 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { DEMO_ARTIST_ID, getArtistById } from "@/lib/kleio-data"
+import { artistNavLabelKeys } from "@/lib/kleio-nav-i18n"
 import { InitialAvatar } from "@/components/kleio/initial-avatar"
 import { KleioWordmarkLink } from "@/components/kleio/kleio-wordmark-link"
+import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
 
 type NavItem = {
   href: string
@@ -44,6 +46,7 @@ const navItems: NavItem[] = [
 export function ArtistSidebar() {
   const pathname = usePathname()
   const artist = getArtistById(DEMO_ARTIST_ID)
+  const { t } = useKleioLocale()
 
   return (
     <aside className="flex h-full w-[220px] shrink-0 flex-col border-r border-[#E7E1F7] bg-white">
@@ -53,7 +56,7 @@ export function ArtistSidebar() {
 
       <nav className="flex-1 overflow-y-auto px-3 pb-4">
         <p className="px-3 pb-2 text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground/80">
-          Artist Workspace
+          {t("nav.artist.workspace")}
         </p>
         <ul className="space-y-0.5">
           {navItems.map((item) => {
@@ -75,7 +78,7 @@ export function ArtistSidebar() {
                   )}
                 >
                   <Icon className={cn("size-4 shrink-0", active ? "text-primary" : "text-muted-foreground")} />
-                  <span className="flex-1">{item.label}</span>
+                  <span className="flex-1">{t(artistNavLabelKeys[item.href] ?? item.label)}</span>
                 </Link>
               </li>
             )
@@ -85,8 +88,8 @@ export function ArtistSidebar() {
 
       <div className="border-t border-[#E7E1F7] p-4">
         <div className="rounded-2xl border border-[#E7E1F7] bg-[#F7F4FF] p-4">
-          <p className="font-serif text-sm font-semibold text-[#292631]">Focus on your art.</p>
-          <p className="mt-1 text-xs leading-relaxed text-[#7F7890]">KLEIO keeps the admin organized.</p>
+          <p className="font-serif text-sm font-semibold text-[#292631]">{t("nav.artist.tagline.title")}</p>
+          <p className="mt-1 text-xs leading-relaxed text-[#7F7890]">{t("nav.artist.tagline.body")}</p>
           <div className="mt-3 h-0.5 w-10 rounded-full bg-[#A997E8]" />
         </div>
         {artist && (

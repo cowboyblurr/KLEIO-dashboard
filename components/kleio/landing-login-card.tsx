@@ -9,14 +9,16 @@ import {
   loginDemoUser,
   validateDemoCredentials,
 } from "@/lib/kleio-demo-auth"
+import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
 
 export function LandingLoginCard() {
   const router = useRouter()
+  const { t } = useKleioLocale()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
 
-  function routeForRole(role: "artist" | "institution") {
+  function routeForRole(role: "artist" | "institution" | "collaborator") {
     router.push(getDashboardForRole(role))
   }
 
@@ -24,7 +26,7 @@ export function LandingLoginCard() {
     setError("")
     const session = validateDemoCredentials(email, password)
     if (!session) {
-      setError("Use the demo credentials or choose a demo role to continue.")
+      setError(t("landing.login.error"))
       return
     }
     routeForRole(session.role)
@@ -42,6 +44,12 @@ export function LandingLoginCard() {
     routeForRole("artist")
   }
 
+  function handleCollaboratorDemo() {
+    setError("")
+    loginDemoUser("collaborator")
+    routeForRole("collaborator")
+  }
+
   return (
     <div
       className="flex h-full flex-col overflow-hidden rounded-[1.1rem] p-3.5"
@@ -52,16 +60,16 @@ export function LandingLoginCard() {
       }}
     >
       <h2 className="font-serif text-[0.95rem] font-semibold" style={{ color: "#292631" }}>
-        Enter your KLEIO workspace
+        {t("landing.login.title")}
       </h2>
       <p className="mt-0.5 text-[0.68rem]" style={{ color: "#7F7890" }}>
-        Use the demo login to review the artist or institution flow.
+        {t("landing.login.subtitle")}
       </p>
 
       <div className="mt-2.5 space-y-1.5">
         <input
           type="email"
-          placeholder="Email address"
+          placeholder={t("landing.login.emailPlaceholder")}
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && handleLogin()}
@@ -70,7 +78,7 @@ export function LandingLoginCard() {
         />
         <input
           type="password"
-          placeholder="Password"
+          placeholder={t("landing.login.passwordPlaceholder")}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && handleLogin()}
@@ -91,7 +99,7 @@ export function LandingLoginCard() {
 
       <div className="mt-1.5 flex items-center justify-between gap-3">
         <span className="text-[0.64rem]" style={{ color: "#7F7890" }}>
-          Demo workspace
+          {t("landing.login.demoWorkspace")}
         </span>
         <button
           type="button"
@@ -99,19 +107,19 @@ export function LandingLoginCard() {
           className="flex h-7 items-center justify-center gap-1 rounded-full border px-3.5 text-[0.72rem] transition-colors hover:bg-[#1F1B29]"
           style={{ backgroundColor: "#292631", borderColor: "#292631", color: "#FFFFFF" }}
         >
-          Log in
+          {t("landing.login.logIn")}
           <ChevronRight className="size-3" />
         </button>
       </div>
 
-      <div className="mt-1.5 grid grid-cols-2 gap-2">
+      <div className="mt-1.5 grid grid-cols-1 gap-2 sm:grid-cols-3">
         <button
           type="button"
           onClick={handleInstitutionDemo}
           className="h-7 rounded-full border px-2 text-[0.66rem] transition-colors hover:border-[#A997E8] hover:bg-[#F7F4FF]"
           style={{ backgroundColor: "#FFFFFF", borderColor: "#D8D0F2", color: "#5B4B8A" }}
         >
-          Enter Institution Demo
+          {t("landing.login.enterInstitutionDemo")}
         </button>
         <button
           type="button"
@@ -119,7 +127,15 @@ export function LandingLoginCard() {
           className="h-7 rounded-full border px-2 text-[0.66rem] transition-colors hover:border-[#A997E8] hover:bg-[#F7F4FF]"
           style={{ backgroundColor: "#FFFFFF", borderColor: "#D8D0F2", color: "#5B4B8A" }}
         >
-          Enter Artist Demo
+          {t("landing.login.enterArtistDemo")}
+        </button>
+        <button
+          type="button"
+          onClick={handleCollaboratorDemo}
+          className="h-7 rounded-full border px-2 text-[0.66rem] transition-colors hover:border-[#A997E8] hover:bg-[#F7F4FF]"
+          style={{ backgroundColor: "#FFFFFF", borderColor: "#D8D0F2", color: "#5B4B8A" }}
+        >
+          {t("landing.login.enterCollaboratorDemo")}
         </button>
       </div>
     </div>

@@ -10,6 +10,7 @@ import {
   Sparkles,
   Video,
 } from "lucide-react"
+import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
 import { getConnectorsForUserType, type KleioConnector, type KleioConnectorCategory } from "@/lib/kleio-integrations"
 import {
   getAssistSummary,
@@ -155,6 +156,7 @@ export function ImportAssistWidget({
   onApplySuggestions,
   onSuggestionStatusChange,
 }: ImportAssistWidgetProps) {
+  const { t } = useKleioLocale()
   const resolvedSubjectId = subjectId ?? (userType === "artist" ? "amina-el-badri" : "kleio-arthouse")
   const connectors = getConnectorsForUserType(userType)
   const baseRecord = getIntelligenceRecord(userType, resolvedSubjectId)
@@ -178,12 +180,8 @@ export function ImportAssistWidget({
   const { expanded, connectedIds, draftPrepared, showReviewPanel, fieldStatuses, editNotes } = widgetState
 
   const isArtist = userType === "artist"
-  const assistIntro = isArtist
-    ? "Prepare draft passport fields from materials you already maintain."
-    : "Prepare a draft workspace from materials your team already maintains."
-  const assistApproval = isArtist
-    ? "You review and approve every detail."
-    : "Your team approves what becomes official."
+  const assistIntro = isArtist ? t("importAssist.artist.intro") : t("importAssist.institution.intro")
+  const assistApproval = isArtist ? t("importAssist.artist.approval") : t("importAssist.institution.approval")
 
   const normalizedSuggestions = useMemo(() => {
     return userType === "artist"
@@ -266,13 +264,13 @@ export function ImportAssistWidget({
           </span>
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
-              <h3 className="font-serif text-base font-semibold text-foreground">KLEIO Import Assist</h3>
+              <h3 className="font-serif text-base font-semibold text-foreground">{t("importAssist.title")}</h3>
               <span className="rounded-full bg-muted px-2 py-0.5 text-[0.65rem] font-medium text-muted-foreground">
-                Optional
+                {t("importAssist.optional")}
               </span>
               {connectedCount > 0 && !expanded && (
                 <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[0.65rem] font-medium text-primary">
-                  {connectedCount} connected
+                  {t("importAssist.connected", { count: connectedCount })}
                 </span>
               )}
             </div>
@@ -289,7 +287,7 @@ export function ImportAssistWidget({
           onClick={() => setWidgetState((prev) => ({ ...prev, expanded: !prev.expanded }))}
           className="shrink-0 rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-accent/50"
         >
-          {expanded ? "Hide Import Assist" : "Use Import Assist"}
+          {expanded ? t("importAssist.hide") : t("importAssist.use")}
         </button>
       </div>
 
@@ -309,23 +307,27 @@ export function ImportAssistWidget({
           {connectedCount > 0 && (
             <div className="mt-4 rounded-xl border border-primary/15 bg-primary/5 px-3 py-2.5">
               <p className="text-xs font-medium text-primary">
-                {draftPrepared ? "Suggested fields prepared for review" : "Sources connected"}
+                {draftPrepared ? t("importAssist.preparedForReview") : t("importAssist.sourcesConnected")}
               </p>
               <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-                KLEIO can help organize a first draft from materials you already maintain. You remain the author. Review
-                and edit every suggestion. Apply suggestions to empty fields only.
+                {t("importAssist.organizeDraft")}
               </p>
               <div className="mt-2 flex flex-wrap gap-3 text-[0.68rem] text-muted-foreground">
-                <span>{fields.length} suggested fields</span>
-                <span>{missingFields.length} missing fields</span>
-                <span>{connectedCount} connected sources</span>
+                <span>
+                  {fields.length} {t("importAssist.suggestedFields").toLowerCase()}
+                </span>
+                <span>
+                  {missingFields.length} {t("signup.artist.materialsSuggestions.missingChecklist").toLowerCase()}
+                </span>
+                <span>
+                  {connectedCount} {t("importAssist.sourcesConnected").toLowerCase()}
+                </span>
                 {draftPrepared && <span>{confidenceSummary}</span>}
               </div>
 
               {conflictKeys.length > 0 && (
                 <p className="mt-2 text-[0.68rem] text-[oklch(0.45_0.13_55)]">
-                  {conflictKeys.length} field{conflictKeys.length === 1 ? "" : "s"} already have your text — suggestion
-                  available, review before replacing.
+                  {conflictKeys.length} · {t("signup.artist.materialsSuggestions.suggestionAvailable")}
                 </p>
               )}
 
@@ -336,7 +338,7 @@ export function ImportAssistWidget({
                   onClick={prepareDraftFields}
                   className="rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-accent/50 disabled:opacity-40"
                 >
-                  Prepare draft fields
+                  {t("common.prepareDraft")}
                 </button>
                 {onApplySuggestions && (
                   <button
@@ -345,7 +347,7 @@ export function ImportAssistWidget({
                     onClick={applyToEmptyFields}
                     className="rounded-lg border border-primary/30 bg-primary/10 px-3 py-1.5 text-xs font-medium text-primary transition-colors hover:bg-primary/15 disabled:opacity-40"
                   >
-                    Apply to empty fields
+                    {t("importAssist.readyToApply")}
                   </button>
                 )}
                 <button
@@ -354,19 +356,19 @@ export function ImportAssistWidget({
                   onClick={() => setWidgetState((prev) => ({ ...prev, showReviewPanel: !prev.showReviewPanel }))}
                   className="rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-40"
                 >
-                  Review suggested fields
+                  {t("importAssist.preparedForReview")}
                 </button>
               </div>
             </div>
           )}
 
           {draftPrepared && connectedCount === 0 && (
-            <p className="mt-3 text-xs text-muted-foreground">Connect a source to prepare draft fields.</p>
+            <p className="mt-3 text-xs text-muted-foreground">{t("importAssist.sourcesConnected")}</p>
           )}
 
           {draftPrepared && connectedCount > 0 && !showReviewPanel && (
             <div className="mt-3 rounded-lg border border-border bg-background p-3">
-              <p className="text-xs font-semibold text-foreground">Prepared for review, not final</p>
+              <p className="text-xs font-semibold text-foreground">{t("importAssist.preparedForReview")}</p>
               <p className="mt-1 text-xs text-muted-foreground">{assistSummary}</p>
               <ul className="mt-2 space-y-1">
                 {Object.entries(normalizedSuggestions).slice(0, 6).map(([key, value]) => {
@@ -378,10 +380,12 @@ export function ImportAssistWidget({
                       {value.length > 80 ? "…" : ""}
                       {hasConflict && (
                         <span className="ml-1 text-[oklch(0.45_0.13_55)]">
-                          · Suggestion available — review before replacing
+                          · {t("signup.artist.materialsSuggestions.suggestionAvailable")}
                         </span>
                       )}
-                      {isEmpty && !hasConflict && <span className="ml-1 text-primary">· ready to apply</span>}
+                      {isEmpty && !hasConflict && (
+                        <span className="ml-1 text-primary">· {t("importAssist.readyToApply").toLowerCase()}</span>
+                      )}
                     </li>
                   )
                 })}
@@ -392,10 +396,10 @@ export function ImportAssistWidget({
           {showReviewPanel && canReview && draftPrepared && (
             <div className="mt-4 space-y-3 rounded-xl border border-border bg-card p-4">
               <div>
-                <h4 className="text-sm font-semibold text-foreground">Prepared for review</h4>
+                <h4 className="text-sm font-semibold text-foreground">{t("importAssist.preparedForReview")}</h4>
                 <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{assistSummary}</p>
                 <p className="mt-2 text-[0.68rem] text-muted-foreground">
-                  Source-backed draft · Edit before saving · You approve what becomes official
+                  {t("importAssist.youApproveOfficial")}
                 </p>
               </div>
 
@@ -405,7 +409,7 @@ export function ImportAssistWidget({
                   onClick={applyApprovedFields}
                   className="rounded-lg border border-primary/30 bg-primary/10 px-3 py-1.5 text-xs font-medium text-primary transition-colors hover:bg-primary/15"
                 >
-                  Apply approved to empty fields
+                  {t("importAssist.readyToApply")}
                 </button>
               )}
 
@@ -419,7 +423,7 @@ export function ImportAssistWidget({
                           field.field === "missionSummary" ||
                           field.field === "bio") && (
                           <span className="ml-1.5 text-[0.65rem] font-normal text-muted-foreground">
-                            · Draft suggested
+                            {t("signup.common.draftSuggested")}
                           </span>
                         )}
                       </p>
@@ -436,7 +440,11 @@ export function ImportAssistWidget({
                         {field.confidence}
                       </span>
                       <span className={cn("rounded-full px-2 py-0.5 text-[0.65rem] font-semibold", statusPillClass(field.approvalStatus))}>
-                        {field.approvalStatus === "suggested" ? "Suggested" : field.approvalStatus}
+                        {field.approvalStatus === "suggested"
+                          ? t("signup.common.suggested")
+                          : field.approvalStatus === "edited"
+                            ? t("signup.common.edited")
+                            : field.approvalStatus}
                       </span>
                     </div>
                   </div>
@@ -453,7 +461,7 @@ export function ImportAssistWidget({
                       onClick={() => setFieldStatus(field.field, "edited")}
                       className="rounded-md border border-border px-2.5 py-1 text-[0.68rem] font-medium text-foreground hover:bg-accent/50"
                     >
-                      Edit
+                      {t("common.edit")}
                     </button>
                     <button
                       type="button"
@@ -468,7 +476,9 @@ export function ImportAssistWidget({
 
               {missingFields.length > 0 && (
                 <div className="rounded-lg border border-[oklch(0.88_0.08_70)] bg-[oklch(0.98_0.03_80)] p-3">
-                  <p className="text-xs font-semibold text-[oklch(0.45_0.14_65)]">Missing fields</p>
+                  <p className="text-xs font-semibold text-[oklch(0.45_0.14_65)]">
+                    {t("signup.artist.materialsSuggestions.missingChecklist")}
+                  </p>
                   <ul className="mt-1 space-y-0.5">
                     {missingFields.map((item) => (
                       <li key={item} className="text-xs text-[oklch(0.45_0.14_65)]">
@@ -481,7 +491,7 @@ export function ImportAssistWidget({
 
               {baseRecord?.riskFlags.length ? (
                 <div className="rounded-lg border border-border bg-muted/30 p-3">
-                  <p className="text-xs font-semibold text-foreground">Notes for review</p>
+                  <p className="text-xs font-semibold text-foreground">{t("importAssist.preparedForReview")}</p>
                   <ul className="mt-1 space-y-1">
                     {baseRecord.riskFlags.map((flag) => (
                       <li key={flag.label} className="text-xs text-muted-foreground">
@@ -527,6 +537,7 @@ function ConnectorCard({
   connected: boolean
   onToggle: () => void
 }) {
+  const { t } = useKleioLocale()
   const Icon = categoryIcon(connector.category)
 
   return (
@@ -551,7 +562,7 @@ function ConnectorCard({
       <span className="mt-1.5 block min-w-0">
         <span className="block truncate text-xs font-medium text-foreground">{connector.label}</span>
         <span className="block truncate text-[0.65rem] text-muted-foreground">
-          {connected ? "Connected for demo" : categoryHelper(connector.category)}
+          {connected ? t("importAssist.connected", { count: 1 }) : categoryHelper(connector.category)}
         </span>
       </span>
     </button>

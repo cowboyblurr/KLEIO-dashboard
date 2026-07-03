@@ -1,11 +1,13 @@
 "use client"
 
 import Link from "next/link"
-import { ChevronDown, ChevronRight } from "lucide-react"
+import { ChevronRight } from "lucide-react"
 import { assetPath } from "@/lib/asset-path"
 import { LandingLoginCard } from "@/components/kleio/landing-login-card"
 import { ExploreArthouseLink } from "@/components/kleio/smart-home-link"
 import { KleioWordmarkLink } from "@/components/kleio/kleio-wordmark-link"
+import { KleioLocaleToggle } from "@/components/kleio/kleio-locale-toggle"
+import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
 
 // ─── tiny icon components ────────────────────────────────────────────────────
 
@@ -47,19 +49,23 @@ const cardShadow = "0 18px 48px rgba(82, 64, 130, 0.08)"
 // ─── main page ───────────────────────────────────────────────────────────────
 
 export function LandingPage() {
+  const { t } = useKleioLocale()
+
+  const navLinks = [
+    { key: "nav.about", href: "/about/" },
+    { key: "nav.manifesto", href: "/manifesto/" },
+    { key: "nav.journal", href: "/journal/" },
+  ] as const
+
   return (
     <main className="relative h-dvh min-h-[680px] w-full overflow-hidden bg-white text-[#292631]">
       {/* ── header ──────────────────────────────────────────────────────── */}
       <header className="absolute left-0 top-0 z-30 h-[96px] w-full">
         <div className="relative mx-auto h-full w-full max-w-[1280px] px-8 max-md:px-5">
           <nav className="absolute left-8 top-1/2 flex -translate-y-1/2 items-center gap-8 max-md:left-5 max-md:gap-4">
-            {[
-              { label: "About", href: "/about/" },
-              { label: "Manifesto", href: "/manifesto/" },
-              { label: "Journal", href: "/journal/" },
-            ].map(({ label, href }) => (
-              <Link key={label} href={href} className="text-[0.78rem] font-medium tracking-wide hover:opacity-70" style={navLinkStyle}>
-                {label}
+            {navLinks.map(({ key, href }) => (
+              <Link key={key} href={href} className="text-[0.78rem] font-medium tracking-wide hover:opacity-70" style={navLinkStyle}>
+                {t(key)}
               </Link>
             ))}
           </nav>
@@ -75,11 +81,9 @@ export function LandingPage() {
 
           <nav className="absolute right-8 top-1/2 flex -translate-y-1/2 items-center gap-7 max-md:right-5 max-md:gap-4">
             <ExploreArthouseLink className="text-[0.78rem] font-medium tracking-wide hover:opacity-70 max-md:hidden" style={navLinkStyle}>
-              Explore Arthouse
+              {t("nav.exploreArthouse")}
             </ExploreArthouseLink>
-            <button type="button" className="flex items-center gap-1 text-[0.78rem] font-medium tracking-wide" style={navLinkStyle}>
-              EN <ChevronDown className="size-3" />
-            </button>
+            <KleioLocaleToggle />
           </nav>
         </div>
       </header>
@@ -97,9 +101,9 @@ export function LandingPage() {
             className="font-serif tracking-tight"
             style={{ color: inkColor, fontSize: "clamp(1.45rem, 1.95vw, 2.05rem)", lineHeight: 0.98 }}
           >
-            Where artistic vision
+            {t("landing.hero.line1")}
             <br />
-            <em style={{ fontStyle: "italic", fontWeight: 400 }}>meets institutional memory.</em>
+            <em style={{ fontStyle: "italic", fontWeight: 400 }}>{t("landing.hero.line2Italic")}</em>
           </h1>
 
           <p
@@ -112,11 +116,11 @@ export function LandingPage() {
               lineHeight: 1.42,
             }}
           >
-            A shared workspace for artists and institutions
+            {t("landing.tagline.line1")}
             <br />
-            to manage submissions, reviews, opportunities,
+            {t("landing.tagline.line2")}
             <br />
-            and cultural records with clarity.
+            {t("landing.tagline.line3")}
           </p>
         </div>
 
@@ -144,7 +148,7 @@ export function LandingPage() {
             <div className="flex flex-col items-center justify-center">
               <div className="h-6 w-px" style={{ backgroundColor: lavenderLine }} />
               <span className="my-1.5 font-serif text-[0.8rem] italic" style={{ color: mutedColor }}>
-                or
+                {t("nav.or")}
               </span>
               <div className="h-6 w-px" style={{ backgroundColor: lavenderLine }} />
             </div>
@@ -160,10 +164,10 @@ export function LandingPage() {
             }}
           >
             <h2 className="font-serif text-[0.95rem] font-semibold" style={{ color: inkColor, letterSpacing: "-0.01em" }}>
-              Choose your KLEIO path
+              {t("landing.choosePath.title")}
             </h2>
             <p className="mt-0.5 text-[0.68rem]" style={{ color: mutedColor }}>
-              Start with an artist passport or an institution workspace.
+              {t("landing.choosePath.subtitle")}
             </p>
 
             <div className="mt-2.5 grid grid-cols-2 gap-2.5">
@@ -177,10 +181,10 @@ export function LandingPage() {
                 </span>
                 <span>
                   <span className="block text-[0.62rem]" style={{ color: mutedColor }}>
-                    I am an artist
+                    {t("landing.choosePath.iAmArtist")}
                   </span>
                   <span className="flex items-center justify-between font-serif text-[0.78rem] font-semibold" style={{ color: inkColor }}>
-                    Passport
+                    {t("landing.choosePath.passport")}
                     <ChevronRight className="size-3 transition-transform group-hover:translate-x-0.5" style={{ color: lavenderAccent }} />
                   </span>
                 </span>
@@ -196,17 +200,17 @@ export function LandingPage() {
                 </span>
                 <span>
                   <span className="block text-[0.62rem]" style={{ color: mutedColor }}>
-                    I represent an institution
+                    {t("landing.choosePath.iRepresentInstitution")}
                   </span>
                   <span className="flex items-center justify-between font-serif text-[0.78rem] font-semibold" style={{ color: inkColor }}>
-                    Workspace
+                    {t("landing.choosePath.workspace")}
                     <ChevronRight className="size-3 transition-transform group-hover:translate-x-0.5" style={{ color: lavenderAccent }} />
                   </span>
                 </span>
               </Link>
             </div>
             <p className="mt-2 text-center text-[0.6rem] italic" style={{ color: mutedColor }}>
-              Optional Import Assist can prepare draft fields from materials you already maintain.
+              {t("landing.importAssist.note")}
             </p>
           </div>
         </div>
@@ -216,9 +220,9 @@ export function LandingPage() {
           className="flex h-full flex-col items-center justify-center text-center font-serif text-[10px] italic leading-tight"
           style={{ color: mutedColor }}
         >
-          &ldquo;To archive is not to forget.
+          &ldquo;{t("landing.quote.line1")}
           <br />
-          It is to shape what will be remembered.&rdquo;
+          {t("landing.quote.line2")}&rdquo;
           <div className="mx-auto mt-1 h-[2px] w-9 rounded-full" style={{ backgroundColor: lavenderAccent }} />
         </div>
       </section>

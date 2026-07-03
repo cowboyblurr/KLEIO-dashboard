@@ -1,4 +1,8 @@
+"use client"
+
 import { cn } from "@/lib/utils"
+import { translateStatus } from "@/lib/kleio-i18n"
+import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
 
 const toneStyles: Record<string, string> = {
   default: "bg-[#F1ECFB] text-[#5B4B8A]",
@@ -11,14 +15,19 @@ export function DemoStatusChip({
   label,
   tone = "default",
   className,
+  translate = true,
 }: {
   label: string
   tone?: keyof typeof toneStyles
   className?: string
+  translate?: boolean
 }) {
+  const { locale } = useKleioLocale()
+  const displayLabel = translate ? translateStatus(locale, label) : label
+
   return (
     <span className={cn("inline-flex rounded-full px-2.5 py-1 text-[0.62rem] font-semibold", toneStyles[tone], className)}>
-      {label}
+      {displayLabel}
     </span>
   )
 }

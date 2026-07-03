@@ -16,6 +16,7 @@ import {
 import { assetPath } from "@/lib/asset-path"
 import type { kleioSyntheticArtistProfiles } from "@/lib/kleio-profile-data"
 import { ProfileChip } from "@/components/kleio/profile/profile-chip"
+import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
 
 type ArtistProfile = (typeof kleioSyntheticArtistProfiles)[number]
 
@@ -27,13 +28,13 @@ const cardShadow = "0 18px 48px rgba(82, 64, 130, 0.08)"
 
 const cardStyle = { borderColor: lavenderSoftLine, boxShadow: cardShadow } as const
 
-const materialLabels: Record<string, string> = {
-  bio: "Bio",
-  artistStatement: "Artist Statement",
-  cvResume: "CV / Resume",
-  portfolio: "Portfolio",
-  workSamples: "Work Samples",
-  references: "References",
+const materialLabelKeys: Record<string, string> = {
+  bio: "profile.material.bio",
+  artistStatement: "profile.material.artistStatement",
+  cvResume: "profile.material.cvResume",
+  portfolio: "profile.material.portfolio",
+  workSamples: "profile.material.workSamples",
+  references: "profile.material.references",
 }
 
 const availabilityLabels: Record<string, string> = {
@@ -68,6 +69,7 @@ function SectionHeading({ title, action }: { title: string; action?: string }) {
 
 export function ArtistPublicProfile({ profile }: { profile: ArtistProfile }) {
   const [confirmation, setConfirmation] = useState<string | null>(null)
+  const { t } = useKleioLocale()
 
   function demoAction(message: string) {
     setConfirmation(message)
@@ -100,7 +102,7 @@ export function ArtistPublicProfile({ profile }: { profile: ArtistProfile }) {
               <h1 className="font-serif text-3xl font-semibold tracking-tight" style={{ color: inkColor }}>
                 {profile.displayName}
               </h1>
-              <BadgeCheck className="size-5" style={{ color: lavenderDeep }} aria-label="Creative Passport" />
+              <BadgeCheck className="size-5" style={{ color: lavenderDeep }} aria-label={t("profile.creativePassport")} />
             </div>
             <div className="mt-2 flex flex-wrap items-center gap-2">
               <span className="rounded-full border border-[#D8D0F2] bg-[#F7F4FF] px-2.5 py-1 text-[0.68rem] font-semibold" style={{ color: lavenderDeep }}>
@@ -169,7 +171,7 @@ export function ArtistPublicProfile({ profile }: { profile: ArtistProfile }) {
 
       {/* Selected Works */}
       <Card>
-        <SectionHeading title="Selected Works" action="View all works" />
+        <SectionHeading title={t("profile.selectedWorks")} action={t("common.viewAll")} />
         <p className="mb-4 max-w-2xl text-xs leading-relaxed" style={{ color: mutedColor }}>
           A focused view of works connected to the artist&rsquo;s current practice and application materials.
         </p>
@@ -203,7 +205,7 @@ export function ArtistPublicProfile({ profile }: { profile: ArtistProfile }) {
       {/* Detail grid */}
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>
-          <SectionHeading title="About / Practice" action="Read full statement" />
+          <SectionHeading title={t("profile.aboutPractice")} action={t("profile.artistStatement")} />
           <p className="text-sm leading-relaxed" style={{ color: "#4A4458" }}>
             {profile.shortBio}
           </p>
@@ -213,17 +215,17 @@ export function ArtistPublicProfile({ profile }: { profile: ArtistProfile }) {
         </Card>
 
         <Card>
-          <SectionHeading title="Materials Ready" />
+          <SectionHeading title={t("profile.materialsReady")} />
           <div className="grid gap-2 sm:grid-cols-2">
             {Object.entries(profile.materialsReady).map(([key, ready]) => (
               <div key={key} className="flex items-center justify-between gap-2 rounded-xl border px-3 py-2.5" style={{ borderColor: lavenderSoftLine }}>
                 <span className="text-sm" style={{ color: inkColor }}>
-                  {materialLabels[key] ?? key}
+                  {materialLabelKeys[key] ? t(materialLabelKeys[key]) : key}
                 </span>
                 {ready ? (
                   <span className="inline-flex items-center gap-1 rounded-full bg-[oklch(0.94_0.04_150)] px-2 py-0.5 text-[0.62rem] font-semibold text-[oklch(0.4_0.13_150)]">
                     <CheckCircle2 className="size-3" />
-                    Ready
+                    {t("status.ready")}
                   </span>
                 ) : (
                   <span className="rounded-full bg-[oklch(0.95_0.04_75)] px-2 py-0.5 text-[0.62rem] font-semibold text-[oklch(0.48_0.12_65)]">
@@ -236,7 +238,7 @@ export function ArtistPublicProfile({ profile }: { profile: ArtistProfile }) {
         </Card>
 
         <Card>
-          <SectionHeading title="Themes" />
+          <SectionHeading title={t("profile.themes")} />
           <div className="flex flex-wrap gap-1.5">
             {profile.themes.map((theme) => (
               <ProfileChip key={theme} label={theme} muted />
@@ -245,7 +247,7 @@ export function ArtistPublicProfile({ profile }: { profile: ArtistProfile }) {
         </Card>
 
         <Card>
-          <SectionHeading title="Availability" />
+          <SectionHeading title={t("profile.availability")} />
           <div className="grid gap-2 sm:grid-cols-2">
             {Object.entries(profile.availability).map(([key, value]) => (
               <div key={key} className="flex items-center justify-between gap-2 rounded-xl border px-3 py-2.5" style={{ borderColor: lavenderSoftLine }}>

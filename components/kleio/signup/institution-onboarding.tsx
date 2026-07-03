@@ -17,6 +17,7 @@ import {
   ImportAssistWidget,
   type ImportAssistState,
 } from "@/components/kleio/import-assist-widget"
+import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
 import {
   applySuggestionsToEmptyFields,
   buildInstitutionFormSuggestions,
@@ -53,11 +54,11 @@ const INSTITUTION_DIRECTORY = [
 ]
 
 const STEPS = [
-  { label: "Institution details" },
-  { label: "Workspace setup" },
-  { label: "Review team" },
-  { label: "Materials & suggestions" },
-  { label: "Review" },
+  { stepKey: "signup.institution.step.institutionDetails" },
+  { stepKey: "signup.institution.step.workspaceSetup" },
+  { stepKey: "signup.institution.step.reviewTeam" },
+  { stepKey: "signup.institution.step.materialsSuggestions" },
+  { stepKey: "signup.institution.step.review" },
 ] as const
 
 type InstitutionFormState = {
@@ -94,6 +95,7 @@ const emptyForm: InstitutionFormState = {
 
 export function InstitutionOnboarding() {
   const router = useRouter()
+  const { t } = useKleioLocale()
   const [step, setStep] = useState(0)
   const [form, setForm] = useState<InstitutionFormState>(emptyForm)
   const [fieldOrigins, setFieldOrigins] = useState<Partial<Record<keyof InstitutionFormState, FieldOrigin>>>({})
@@ -119,7 +121,11 @@ export function InstitutionOnboarding() {
     }
   }, [reviewTeamIntegrity])
 
-  const stepLabel = `Step ${step + 1} of ${STEPS.length} · ${STEPS[step].label}`
+  const stepLabel = t("signup.common.stepLabel", {
+    current: step + 1,
+    total: STEPS.length,
+    label: t(STEPS[step].stepKey),
+  })
   const formAsRecord = form as Record<string, string>
   const missingFormFields = useMemo(() => getInstitutionMissingFormFields(formAsRecord), [form])
   const intelligenceMissing = useMemo(
@@ -179,12 +185,12 @@ export function InstitutionOnboarding() {
     const trimmedEmail = draftReviewMember.email.trim()
 
     if (!trimmedName) {
-      setAddMemberError("Enter a collaborator name before adding.")
+      setAddMemberError(t("signup.institution.reviewTeam.error.nameRequired"))
       return
     }
 
     if (!isValidReviewEmail(trimmedEmail)) {
-      setAddMemberError("Enter a valid email address before adding.")
+      setAddMemberError(t("signup.institution.reviewTeam.error.emailInvalid"))
       return
     }
 
@@ -225,8 +231,8 @@ export function InstitutionOnboarding() {
 
   return (
     <SignupShell
-      title="Create your Institution Workspace"
-      subtitle="Set up a structured review environment for open calls, grants, residencies, committees, and reports."
+      title={t("signup.institution.title")}
+      subtitle={t("signup.institution.subtitle")}
       stepLabel={stepLabel}
     >
       <SignupProgress currentStep={step} totalSteps={STEPS.length} label={stepLabel} />
@@ -246,12 +252,14 @@ export function InstitutionOnboarding() {
       <SignupStepCard>
         {step === 0 && (
           <div className="space-y-4">
-            <h2 className="font-serif text-lg font-semibold text-foreground">Institution details</h2>
+            <h2 className="font-serif text-lg font-semibold text-foreground">
+              {t("signup.institution.institutionDetails.title")}
+            </h2>
             <p className="text-xs text-muted-foreground">
-              Start with the public details and internal context reviewers will need.
+              {t("signup.institution.institutionDetails.description")}
             </p>
             <SignupField
-              label="Institution name"
+              label={t("signup.institution.field.institutionName")}
               value={form.institutionName}
               onChange={(v) => updateField("institutionName", v)}
               origin={origin("institutionName")}
@@ -263,27 +271,27 @@ export function InstitutionOnboarding() {
               ))}
             </datalist>
             <SignupField
-              label="Institution type"
+              label={t("signup.institution.field.institutionType")}
               value={form.institutionType}
               onChange={(v) => updateField("institutionType", v)}
               origin={origin("institutionType")}
             />
             <SignupField
-              label="Location"
+              label={t("signup.institution.field.location")}
               value={form.location}
               onChange={(v) => updateField("location", v)}
               origin={origin("location")}
             />
             <SignupField
-              label="Website"
+              label={t("signup.institution.field.website")}
               value={form.website}
               onChange={(v) => updateField("website", v)}
               type="url"
-              placeholder="https://"
+              placeholder={t("signup.artist.placeholder.website")}
               origin={origin("website")}
             />
             <SignupTextArea
-              label="Public description"
+              label={t("signup.institution.field.publicDescription")}
               value={form.publicDescription}
               onChange={(v) => updateField("publicDescription", v)}
               origin={origin("publicDescription")}
@@ -293,49 +301,51 @@ export function InstitutionOnboarding() {
 
         {step === 1 && (
           <div className="space-y-4">
-            <h2 className="font-serif text-lg font-semibold text-foreground">Workspace setup</h2>
+            <h2 className="font-serif text-lg font-semibold text-foreground">
+              {t("signup.institution.workspaceSetup.title")}
+            </h2>
             <p className="text-xs text-muted-foreground">
-              Define the open call, grant, residency, or review process your team wants to manage.
+              {t("signup.institution.workspaceSetup.description")}
             </p>
             <SignupTextArea
-              label="Mission statement"
+              label={t("signup.institution.field.missionStatement")}
               value={form.missionStatement}
               onChange={(v) => updateField("missionStatement", v)}
               origin={origin("missionStatement")}
               draftNote={origin("missionStatement") === "suggested"}
             />
             <SignupField
-              label="Program type"
+              label={t("signup.institution.field.programType")}
               value={form.programType}
               onChange={(v) => updateField("programType", v)}
               origin={origin("programType")}
             />
             <SignupField
-              label="Review process type"
+              label={t("signup.institution.field.reviewProcessType")}
               value={form.reviewProcessType}
               onChange={(v) => updateField("reviewProcessType", v)}
               origin={origin("reviewProcessType")}
             />
             <SignupField
-              label="Application materials required"
+              label={t("signup.institution.field.requiredMaterials")}
               value={form.requiredMaterials}
               onChange={(v) => updateField("requiredMaterials", v)}
               origin={origin("requiredMaterials")}
             />
             <SignupField
-              label="Reviewer roles"
+              label={t("signup.institution.field.reviewerRoles")}
               value={form.reviewerRoles}
               onChange={(v) => updateField("reviewerRoles", v)}
               origin={origin("reviewerRoles")}
             />
             <SignupField
-              label="Committee size"
+              label={t("signup.institution.field.committeeSize")}
               value={form.committeeSize}
               onChange={(v) => updateField("committeeSize", v)}
               origin={origin("committeeSize")}
             />
             <SignupField
-              label="Reporting needs"
+              label={t("signup.institution.field.reportingNeeds")}
               value={form.reportingNeeds}
               onChange={(v) => updateField("reportingNeeds", v)}
               origin={origin("reportingNeeds")}
@@ -346,37 +356,46 @@ export function InstitutionOnboarding() {
         {step === 2 && (
           <div className="space-y-5">
             <div>
-              <h2 className="font-serif text-lg font-semibold text-foreground">Review team</h2>
+              <h2 className="font-serif text-lg font-semibold text-foreground">
+                {t("signup.institution.reviewTeam.title")}
+              </h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                Invite reviewers, jurors, committee members, curators, or advisors into limited review seats. They
-                will only see the programs, submissions, guidelines, and messages assigned to their role.
+                {t("signup.institution.reviewTeam.description")}
               </p>
               <p className="mt-2 text-xs text-muted-foreground">
-                Optional setup · You can skip this and invite collaborators later from Committee.
+                {t("signup.institution.reviewTeam.optionalNote")}
               </p>
             </div>
 
             <div className="grid gap-3 sm:grid-cols-4">
               <div className="rounded-xl border border-border bg-background p-3">
-                <p className="text-xs text-muted-foreground">Prepared collaborators</p>
+                <p className="text-xs text-muted-foreground">
+                  {t("signup.institution.reviewTeam.metric.preparedCollaborators")}
+                </p>
                 <p className="mt-1 font-serif text-2xl font-semibold text-foreground">
                   {reviewTeamStats.totalCollaborators}
                 </p>
               </div>
               <div className="rounded-xl border border-border bg-background p-3">
-                <p className="text-xs text-muted-foreground">Prepared invites</p>
+                <p className="text-xs text-muted-foreground">
+                  {t("signup.institution.reviewTeam.metric.preparedInvites")}
+                </p>
                 <p className="mt-1 font-serif text-2xl font-semibold text-foreground">
                   {reviewTeamStats.preparedInvites}
                 </p>
               </div>
               <div className="rounded-xl border border-border bg-background p-3">
-                <p className="text-xs text-muted-foreground">Limited seats</p>
+                <p className="text-xs text-muted-foreground">
+                  {t("signup.institution.reviewTeam.metric.limitedSeats")}
+                </p>
                 <p className="mt-1 font-serif text-2xl font-semibold text-foreground">
                   {reviewTeamStats.limitedReviewSeats}
                 </p>
               </div>
               <div className="rounded-xl border border-border bg-background p-3">
-                <p className="text-xs text-muted-foreground">Setup completeness</p>
+                <p className="text-xs text-muted-foreground">
+                  {t("signup.institution.reviewTeam.metric.setupCompleteness")}
+                </p>
                 <p className="mt-1 font-serif text-2xl font-semibold text-foreground">
                   {reviewTeamStats.setupCompletenessPct}%
                 </p>
@@ -385,11 +404,11 @@ export function InstitutionOnboarding() {
 
             <div className="rounded-xl border border-border bg-card p-4">
               <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Add collaborator
+                {t("signup.institution.reviewTeam.addCollaborator")}
               </p>
               <div className="mt-3 grid gap-3 sm:grid-cols-2">
                 <SignupField
-                  label="Name"
+                  label={t("signup.institution.reviewTeam.field.name")}
                   value={draftReviewMember.name}
                   onChange={(value) => {
                     setAddMemberError(null)
@@ -397,7 +416,7 @@ export function InstitutionOnboarding() {
                   }}
                 />
                 <SignupField
-                  label="Email"
+                  label={t("signup.institution.reviewTeam.field.email")}
                   value={draftReviewMember.email}
                   onChange={(value) => {
                     setAddMemberError(null)
@@ -406,7 +425,9 @@ export function InstitutionOnboarding() {
                   type="email"
                 />
                 <label className="block text-sm">
-                  <span className="mb-1.5 block text-xs font-medium text-muted-foreground">Role</span>
+                  <span className="mb-1.5 block text-xs font-medium text-muted-foreground">
+                    {t("signup.institution.reviewTeam.field.role")}
+                  </span>
                   <select
                     value={draftReviewMember.role}
                     onChange={(event) => {
@@ -423,7 +444,9 @@ export function InstitutionOnboarding() {
                   </select>
                 </label>
                 <label className="block text-sm">
-                  <span className="mb-1.5 block text-xs font-medium text-muted-foreground">Assigned program</span>
+                  <span className="mb-1.5 block text-xs font-medium text-muted-foreground">
+                    {t("signup.institution.reviewTeam.field.assignedProgram")}
+                  </span>
                   <select
                     value={draftReviewMember.assignedProgramId}
                     onChange={(event) => {
@@ -445,7 +468,9 @@ export function InstitutionOnboarding() {
                   </select>
                 </label>
                 <label className="block text-sm">
-                  <span className="mb-1.5 block text-xs font-medium text-muted-foreground">Access scope</span>
+                  <span className="mb-1.5 block text-xs font-medium text-muted-foreground">
+                    {t("signup.institution.reviewTeam.field.accessScope")}
+                  </span>
                   <select
                     value={draftReviewMember.accessScope}
                     onChange={(event) => {
@@ -464,7 +489,9 @@ export function InstitutionOnboarding() {
                   </select>
                 </label>
                 <label className="block text-sm">
-                  <span className="mb-1.5 block text-xs font-medium text-muted-foreground">Invite timing</span>
+                  <span className="mb-1.5 block text-xs font-medium text-muted-foreground">
+                    {t("signup.institution.reviewTeam.field.inviteTiming")}
+                  </span>
                   <select
                     value={draftReviewMember.inviteTiming}
                     onChange={(event) => {
@@ -489,25 +516,25 @@ export function InstitutionOnboarding() {
                   onClick={handleAddReviewTeamMember}
                   className="inline-flex h-10 items-center justify-center rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
                 >
-                  Add collaborator
+                  {t("signup.institution.reviewTeam.addCollaborator")}
                 </button>
                 <button
                   type="button"
                   onClick={() => setStep((prev) => Math.min(prev + 1, STEPS.length - 1))}
                   className="inline-flex h-10 items-center justify-center rounded-xl border border-border bg-background px-4 text-sm font-medium text-foreground transition-colors hover:bg-accent/50"
                 >
-                  Skip for now
+                  {t("signup.institution.reviewTeam.skip")}
                 </button>
               </div>
               <p className="mt-2 text-[0.65rem] text-muted-foreground">
-                Demo only — prepared invites are stored locally and no emails are sent.
+                {t("signup.institution.reviewTeam.demoNote")}
               </p>
             </div>
 
             {reviewTeam.length > 0 && (
               <div>
                 <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  Prepared review team
+                  {t("signup.institution.reviewTeam.preparedReviewTeam")}
                 </p>
                 <ul className="space-y-3">
                   {reviewTeam.map((member) => (
@@ -540,7 +567,7 @@ export function InstitutionOnboarding() {
                           onClick={() => handleRemoveReviewTeamMember(member.id)}
                           className="text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
                         >
-                          Remove
+                          {t("common.remove")}
                         </button>
                       </div>
                     </li>
@@ -553,22 +580,24 @@ export function InstitutionOnboarding() {
 
         {step === 3 && (
           <div className="space-y-4">
-            <h2 className="font-serif text-lg font-semibold text-foreground">Materials & suggestions</h2>
+            <h2 className="font-serif text-lg font-semibold text-foreground">
+              {t("signup.institution.step.materialsSuggestions")}
+            </h2>
             <p className="text-sm text-muted-foreground">
-              Review suggested workspace fields and imported references. You can skip Import Assist and set up the
-              workspace manually.
+              {t("signup.artist.materialsSuggestions.description")}
             </p>
 
             {importAssist.connectedIds.length === 0 && !importAssist.draftPrepared ? (
               <div className="rounded-xl border border-border bg-background p-4 text-sm text-muted-foreground">
-                No import used yet. Use Import Assist above to connect materials, or continue to review your manual
-                entries.
+                {t("signup.artist.materialsSuggestions.noImport")}
               </div>
             ) : (
               <>
                 {importAssist.draftPrepared && (
                   <div className="rounded-xl border border-primary/15 bg-primary/5 p-4">
-                    <p className="text-xs font-semibold text-primary">Suggested fields prepared for review</p>
+                    <p className="text-xs font-semibold text-primary">
+                      {t("signup.artist.materialsSuggestions.preparedFields")}
+                    </p>
                     <p className="mt-1 text-xs text-muted-foreground">{getAssistSummary("institution", SUBJECT_ID)}</p>
                     <ul className="mt-3 space-y-2">
                       {preparedSuggestions.map((item) => (
@@ -577,17 +606,19 @@ export function InstitutionOnboarding() {
                             {item.key}
                             {(item.key === "missionStatement" || item.key === "publicDescription") && (
                               <span className="ml-1 text-[0.65rem] font-normal text-muted-foreground">
-                                · Draft suggested
+                                {t("signup.common.draftSuggested")}
                               </span>
                             )}
                           </span>
                           <p className="mt-1 text-xs text-muted-foreground">{item.value}</p>
                           {item.inForm ? (
                             <p className="mt-1 text-[0.65rem] text-[oklch(0.45_0.13_55)]">
-                              Suggestion available — review before replacing
+                              {t("signup.artist.materialsSuggestions.suggestionAvailable")}
                             </p>
                           ) : (
-                            <p className="mt-1 text-[0.65rem] text-primary">Ready to apply to empty field</p>
+                            <p className="mt-1 text-[0.65rem] text-primary">
+                              {t("signup.artist.materialsSuggestions.readyToApply")}
+                            </p>
                           )}
                         </li>
                       ))}
@@ -597,13 +628,17 @@ export function InstitutionOnboarding() {
 
                 {form.importStructure && (
                   <div className="rounded-xl border border-border bg-background p-4">
-                    <p className="text-xs font-semibold text-foreground">Past application import structure</p>
+                    <p className="text-xs font-semibold text-foreground">
+                      {t("signup.institution.field.importStructure")}
+                    </p>
                     <p className="mt-1 text-sm text-muted-foreground">{form.importStructure}</p>
                   </div>
                 )}
 
                 <div className="rounded-xl border border-[oklch(0.88_0.08_70)] bg-[oklch(0.98_0.03_80)] p-4">
-                  <p className="text-xs font-semibold text-[oklch(0.45_0.14_65)]">Missing setup checklist</p>
+                  <p className="text-xs font-semibold text-[oklch(0.45_0.14_65)]">
+                    {t("signup.artist.materialsSuggestions.missingChecklist")}
+                  </p>
                   <ul className="mt-2 space-y-1">
                     {missingFormFields.length > 0 ? (
                       missingFormFields.map((item) => (
@@ -612,11 +647,13 @@ export function InstitutionOnboarding() {
                         </li>
                       ))
                     ) : (
-                      <li className="text-xs text-[oklch(0.45_0.14_65)]">All workspace fields entered</li>
+                      <li className="text-xs text-[oklch(0.45_0.14_65)]">
+                        {t("signup.artist.materialsSuggestions.allFieldsEntered")}
+                      </li>
                     )}
                     {intelligenceMissing.map((item) => (
                       <li key={item} className="text-xs text-[oklch(0.45_0.14_65)]">
-                        · {item} (from connected materials)
+                        · {t("signup.artist.materialsSuggestions.fromConnected", { field: item })}
                       </li>
                     ))}
                   </ul>
@@ -630,22 +667,40 @@ export function InstitutionOnboarding() {
           <div className="space-y-4">
             <div className="text-center">
               <CheckCircle2 className="mx-auto size-10 text-primary" />
-              <h2 className="mt-3 font-serif text-xl font-semibold text-foreground">Review your workspace</h2>
+              <h2 className="mt-3 font-serif text-xl font-semibold text-foreground">
+                {t("signup.institution.review.summary")}
+              </h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                Confirm the setup before entering the institution workspace.
+                {t("signup.institution.review.description")}
               </p>
             </div>
 
             <div className="rounded-xl border border-border bg-background px-4">
               <p className="border-b border-border py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Institution details
+                {t("signup.institution.review.heading.institutionDetails")}
               </p>
-              <SignupReviewRow label="Institution name" value={form.institutionName} origin={origin("institutionName")} />
-              <SignupReviewRow label="Institution type" value={form.institutionType} origin={origin("institutionType")} />
-              <SignupReviewRow label="Location" value={form.location} origin={origin("location")} />
-              <SignupReviewRow label="Website" value={form.website} origin={origin("website")} />
               <SignupReviewRow
-                label="Public description"
+                label={t("signup.institution.field.institutionName")}
+                value={form.institutionName}
+                origin={origin("institutionName")}
+              />
+              <SignupReviewRow
+                label={t("signup.institution.field.institutionType")}
+                value={form.institutionType}
+                origin={origin("institutionType")}
+              />
+              <SignupReviewRow
+                label={t("signup.institution.field.location")}
+                value={form.location}
+                origin={origin("location")}
+              />
+              <SignupReviewRow
+                label={t("signup.institution.field.website")}
+                value={form.website}
+                origin={origin("website")}
+              />
+              <SignupReviewRow
+                label={t("signup.institution.field.publicDescription")}
                 value={form.publicDescription}
                 origin={origin("publicDescription")}
               />
@@ -653,40 +708,59 @@ export function InstitutionOnboarding() {
 
             <div className="rounded-xl border border-border bg-background px-4">
               <p className="border-b border-border py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Workspace setup
+                {t("signup.institution.review.heading.workspaceSetup")}
               </p>
               <SignupReviewRow
-                label="Mission statement"
+                label={t("signup.institution.field.missionStatement")}
                 value={form.missionStatement}
                 origin={origin("missionStatement")}
               />
-              <SignupReviewRow label="Program type" value={form.programType} origin={origin("programType")} />
               <SignupReviewRow
-                label="Review process type"
+                label={t("signup.institution.field.programType")}
+                value={form.programType}
+                origin={origin("programType")}
+              />
+              <SignupReviewRow
+                label={t("signup.institution.field.reviewProcessType")}
                 value={form.reviewProcessType}
                 origin={origin("reviewProcessType")}
               />
               <SignupReviewRow
-                label="Application materials"
+                label={t("signup.institution.field.requiredMaterials")}
                 value={form.requiredMaterials}
                 origin={origin("requiredMaterials")}
               />
-              <SignupReviewRow label="Reviewer roles" value={form.reviewerRoles} origin={origin("reviewerRoles")} />
-              <SignupReviewRow label="Committee size" value={form.committeeSize} origin={origin("committeeSize")} />
-              <SignupReviewRow label="Reporting needs" value={form.reportingNeeds} origin={origin("reportingNeeds")} />
+              <SignupReviewRow
+                label={t("signup.institution.field.reviewerRoles")}
+                value={form.reviewerRoles}
+                origin={origin("reviewerRoles")}
+              />
+              <SignupReviewRow
+                label={t("signup.institution.field.committeeSize")}
+                value={form.committeeSize}
+                origin={origin("committeeSize")}
+              />
+              <SignupReviewRow
+                label={t("signup.institution.field.reportingNeeds")}
+                value={form.reportingNeeds}
+                origin={origin("reportingNeeds")}
+              />
             </div>
 
             <div className="rounded-xl border border-border bg-background px-4">
               <p className="border-b border-border py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Review team
+                {t("signup.institution.review.heading.reviewTeam")}
               </p>
               <SignupReviewRow
-                label="Prepared collaborators"
+                label={t("signup.institution.reviewTeam.metric.preparedCollaborators")}
                 value={`${reviewTeamStats.totalCollaborators}`}
               />
-              <SignupReviewRow label="Prepared invites" value={`${reviewTeamStats.preparedInvites}`} />
               <SignupReviewRow
-                label="Limited review seats"
+                label={t("signup.institution.reviewTeam.metric.preparedInvites")}
+                value={`${reviewTeamStats.preparedInvites}`}
+              />
+              <SignupReviewRow
+                label={t("signup.institution.reviewTeam.metric.limitedSeats")}
                 value={`${reviewTeamStats.limitedReviewSeats}`}
               />
               <SignupReviewRow
@@ -694,7 +768,7 @@ export function InstitutionOnboarding() {
                 value={`${reviewTeamStats.assignedProgramCount}`}
               />
               <SignupReviewRow
-                label="Setup completeness"
+                label={t("signup.institution.reviewTeam.metric.setupCompleteness")}
                 value={`${reviewTeamStats.setupCompletenessPct}%`}
               />
               {reviewTeam.length > 0 ? (
@@ -707,24 +781,33 @@ export function InstitutionOnboarding() {
                 </ul>
               ) : (
                 <p className="border-t border-border py-3 text-sm text-muted-foreground">
-                  No collaborators prepared yet. You can invite collaborators later from Committee.
+                  {t("signup.institution.reviewTeam.optionalNote")}
                 </p>
               )}
             </div>
 
             {importAssist.connectedIds.length > 0 && (
               <div className="rounded-xl border border-primary/15 bg-primary/5 px-4 py-3">
-                <p className="text-xs font-semibold text-primary">Imported / suggested fields</p>
+                <p className="text-xs font-semibold text-primary">
+                  {t("signup.artist.review.heading.imported")}
+                </p>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  {importAssist.connectedIds.length} source
-                  {importAssist.connectedIds.length === 1 ? "" : "s"} connected · rejected suggestions excluded
+                  {importAssist.connectedIds.length === 1
+                    ? t("signup.artist.review.importedNote", {
+                        count: importAssist.connectedIds.length,
+                      })
+                    : t("signup.artist.review.importedNotePlural", {
+                        count: importAssist.connectedIds.length,
+                      })}
                 </p>
               </div>
             )}
 
             {missingFormFields.length > 0 && (
               <div className="rounded-xl border border-[oklch(0.88_0.08_70)] bg-[oklch(0.98_0.03_80)] px-4 py-3">
-                <p className="text-xs font-semibold text-[oklch(0.45_0.14_65)]">Still missing</p>
+                <p className="text-xs font-semibold text-[oklch(0.45_0.14_65)]">
+                  {t("signup.artist.review.stillMissing")}
+                </p>
                 <ul className="mt-1 space-y-0.5">
                   {missingFormFields.map((item) => (
                     <li key={item} className="text-xs text-[oklch(0.45_0.14_65)]">
@@ -744,7 +827,7 @@ export function InstitutionOnboarding() {
         onBack={() => setStep((s) => s - 1)}
         onNext={() => setStep((s) => s + 1)}
         onSubmit={handleCreateWorkspace}
-        submitLabel="Enter Institution Workspace"
+        submitLabel={t("signup.institution.enterWorkspace")}
       />
     </SignupShell>
   )

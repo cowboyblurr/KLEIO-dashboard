@@ -5,12 +5,15 @@ import { usePathname } from "next/navigation"
 import { ChevronDown, ChevronsUpDown } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { navSections } from "@/lib/kleio-nav"
+import { institutionNavLabelKeys, institutionSectionKeys } from "@/lib/kleio-nav-i18n"
 import { collaborators, institution } from "@/lib/kleio-data"
 import { InitialAvatar } from "@/components/kleio/initial-avatar"
 import { KleioWordmarkLink } from "@/components/kleio/kleio-wordmark-link"
+import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
 
 export function Sidebar() {
   const pathname = usePathname()
+  const { t } = useKleioLocale()
   const programDirector = collaborators.find((person) => person.role === "Program Director") ?? collaborators[0]
 
   return (
@@ -30,7 +33,7 @@ export function Sidebar() {
         {navSections.map((section) => (
           <div key={section.heading} className="mb-5">
             <p className="px-3 pb-2 text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground/80">
-              {section.heading}
+              {t(institutionSectionKeys[section.heading] ?? section.heading)}
             </p>
             <ul className="space-y-0.5">
               {section.items.map((item) => {
@@ -54,7 +57,7 @@ export function Sidebar() {
                           active ? "text-primary" : "text-muted-foreground",
                         )}
                       />
-                      <span className="flex-1">{item.label}</span>
+                      <span className="flex-1">{t(institutionNavLabelKeys[item.href] ?? item.label)}</span>
                       {item.badge != null && (
                         <span
                           className={cn(

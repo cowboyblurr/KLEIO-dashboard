@@ -1,6 +1,9 @@
+"use client"
+
 import Link from "next/link"
 import { cn } from "@/lib/utils"
 import { KleioWordmarkLink } from "@/components/kleio/kleio-wordmark-link"
+import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
 
 export function SignupShell({
   children,
@@ -13,6 +16,8 @@ export function SignupShell({
   subtitle?: string
   stepLabel?: string
 }) {
+  const { t } = useKleioLocale()
+
   return (
     <div className="min-h-screen bg-[oklch(0.985_0.005_287)]">
       <header className="border-b border-border bg-white/80 backdrop-blur-sm">
@@ -28,7 +33,7 @@ export function SignupShell({
           href="/"
           className="mb-6 inline-flex text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
         >
-          ← Back to KLEIO
+          {t("signup.common.backToKleio")}
         </Link>
 
         {title && (
@@ -104,18 +109,20 @@ export function SignupField({
   origin?: "suggested" | "edited"
   list?: string
 }) {
+  const { t } = useKleioLocale()
+
   return (
     <label className="block">
       <span className="mb-1.5 flex flex-wrap items-center gap-2">
         <span className="text-xs font-medium text-muted-foreground">{label}</span>
         {origin === "suggested" && (
           <span className="rounded-full bg-[oklch(0.93_0.04_287)] px-2 py-0.5 text-[0.6rem] font-medium text-[oklch(0.42_0.14_287)]">
-            Suggested
+            {t("signup.common.suggested")}
           </span>
         )}
         {origin === "edited" && (
           <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[0.6rem] font-medium text-primary">
-            Edited
+            {t("signup.common.edited")}
           </span>
         )}
       </span>
@@ -129,7 +136,7 @@ export function SignupField({
       />
       {origin === "suggested" && (
         <p className="mt-1 text-[0.65rem] text-muted-foreground">
-          Prepared by KLEIO Assist. Review and edit before continuing.
+          {t("signup.common.suggestedNote")}
         </p>
       )}
     </label>
@@ -153,21 +160,23 @@ export function SignupTextArea({
   origin?: "suggested" | "edited"
   draftNote?: boolean
 }) {
+  const { t } = useKleioLocale()
+
   return (
     <label className="block">
       <span className="mb-1.5 flex flex-wrap items-center gap-2">
         <span className="text-xs font-medium text-muted-foreground">{label}</span>
         {draftNote && (
-          <span className="text-[0.6rem] text-muted-foreground">· Draft suggested</span>
+          <span className="text-[0.6rem] text-muted-foreground">{t("signup.common.draftSuggested")}</span>
         )}
         {origin === "suggested" && (
           <span className="rounded-full bg-[oklch(0.93_0.04_287)] px-2 py-0.5 text-[0.6rem] font-medium text-[oklch(0.42_0.14_287)]">
-            Suggested
+            {t("signup.common.suggested")}
           </span>
         )}
         {origin === "edited" && (
           <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[0.6rem] font-medium text-primary">
-            Edited
+            {t("signup.common.edited")}
           </span>
         )}
       </span>
@@ -180,7 +189,7 @@ export function SignupTextArea({
       />
       {origin === "suggested" && (
         <p className="mt-1 text-[0.65rem] text-muted-foreground">
-          Prepared by KLEIO Assist. Review and edit before continuing.
+          {t("signup.common.suggestedNote")}
         </p>
       )}
     </label>
@@ -202,6 +211,7 @@ export function SignupStepControls({
   onSubmit?: () => void
   submitLabel: string
 }) {
+  const { t } = useKleioLocale()
   const isFirst = step === 0
   const isLast = step === totalSteps - 1
 
@@ -213,7 +223,7 @@ export function SignupStepControls({
           onClick={onBack}
           className="inline-flex h-10 items-center justify-center rounded-xl border border-border bg-background px-5 text-sm font-medium text-foreground transition-colors hover:bg-accent/50"
         >
-          Back
+          {t("signup.common.back")}
         </button>
       ) : (
         <span />
@@ -233,7 +243,7 @@ export function SignupStepControls({
           onClick={onNext}
           className="inline-flex h-10 items-center justify-center rounded-xl bg-primary px-6 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
         >
-          Next
+          {t("signup.common.next")}
         </button>
       )}
     </div>
@@ -249,16 +259,17 @@ export function SignupReviewRow({
   value: string
   origin?: "suggested" | "edited"
 }) {
+  const { t } = useKleioLocale()
   if (!value.trim()) return null
   return (
     <div className="border-b border-border py-3 last:border-0">
       <div className="flex flex-wrap items-center gap-2">
         <p className="text-[0.65rem] font-medium uppercase tracking-wide text-muted-foreground">{label}</p>
         {origin === "suggested" && (
-          <span className="text-[0.6rem] text-[oklch(0.42_0.14_287)]">Suggested · editable</span>
+          <span className="text-[0.6rem] text-[oklch(0.42_0.14_287)]">{t("signup.common.suggestedEditable")}</span>
         )}
         {origin === "edited" && (
-          <span className="text-[0.6rem] text-primary">Edited by user</span>
+          <span className="text-[0.6rem] text-primary">{t("signup.common.editedByUser")}</span>
         )}
       </div>
       <p className="mt-1 text-sm leading-relaxed text-foreground">{value}</p>

@@ -5,13 +5,13 @@ import Link from "next/link"
 import {
   collaboratorAnalytics,
   formatCollaboratorDeadline,
-  formatDaysUntilDeadline,
 } from "@/lib/kleio-collaborator-analytics"
 import { inkColor, mutedColor, lavenderSoftLine, lavenderDeep, cardStyle } from "@/lib/workspace-styles"
 import { WorkspacePageHeader } from "@/components/kleio/workspace-page-header"
 import { WorkspaceMetricCard } from "@/components/kleio/workspace-metric-card"
 import { SearchFilterBar } from "@/components/kleio/search-filter-bar"
 import { DemoStatusChip } from "@/components/kleio/demo-status-chip"
+import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
 
 function reviewStatusTone(status: string): "default" | "success" | "warning" | "info" {
   if (status === "Complete") return "success"
@@ -20,8 +20,16 @@ function reviewStatusTone(status: string): "default" | "success" | "warning" | "
 }
 
 export function CollaboratorAssignmentsPageView() {
+  const { t } = useKleioLocale()
   const analytics = collaboratorAnalytics
   const [query, setQuery] = useState("")
+
+  const formatDaysUntilDeadline = (days: number | null) => {
+    if (days == null) return "—"
+    if (days < 0) return t("collaborator.deadline.overdue", { days: Math.abs(days) })
+    if (days === 0) return t("collaborator.deadline.dueToday")
+    return t("collaborator.deadline.daysLeft", { days })
+  }
 
   const filteredRows = useMemo(() => {
     const normalized = query.trim().toLowerCase()
@@ -45,36 +53,36 @@ export function CollaboratorAssignmentsPageView() {
     <main className="h-full overflow-y-auto px-6 py-6">
       <div className="mx-auto max-w-[1180px] space-y-5">
         <WorkspacePageHeader
-          eyebrow="Assigned submissions"
-          title="My Assignments"
-          description="Only submissions assigned to you for review. No global artist directory or institution-wide queue."
-          primaryCta={{ label: "Open Review Queue", href: "/collaborator-dashboard/review-queue/" }}
+          eyebrow={t("collaborator.assignments.eyebrow")}
+          title={t("collaborator.assignments.title")}
+          description={t("collaborator.assignments.description")}
+          primaryCta={{ label: t("collaborator.assignments.cta.openReviewQueue"), href: "/collaborator-dashboard/review-queue/" }}
         />
 
         <div className="grid gap-4 sm:grid-cols-4">
-          <WorkspaceMetricCard label="Assigned" value={analytics.assignedReviews} />
-          <WorkspaceMetricCard label="Pending review" value={analytics.pendingReviews} />
-          <WorkspaceMetricCard label="In progress" value={analytics.inProgressReviews} />
-          <WorkspaceMetricCard label="Completed" value={analytics.completedReviews} />
+          <WorkspaceMetricCard label={t("collaborator.assignments.metric.assigned")} value={analytics.assignedReviews} />
+          <WorkspaceMetricCard label={t("collaborator.assignments.metric.pendingReview")} value={analytics.pendingReviews} />
+          <WorkspaceMetricCard label={t("collaborator.assignments.metric.inProgress")} value={analytics.inProgressReviews} />
+          <WorkspaceMetricCard label={t("collaborator.assignments.metric.completed")} value={analytics.completedReviews} />
         </div>
 
         <SearchFilterBar
           value={query}
           onChange={setQuery}
-          placeholder="Search artist, project, program, or status…"
+          placeholder={t("collaborator.assignments.searchPlaceholder")}
         />
 
         <section className="overflow-x-auto rounded-2xl border bg-white" style={cardStyle}>
           <table className="w-full min-w-[880px] border-collapse text-sm">
             <thead>
               <tr className="border-b text-left text-xs font-medium uppercase tracking-wide" style={{ borderColor: lavenderSoftLine, color: mutedColor }}>
-                <th className="px-5 py-3">Artist</th>
-                <th className="px-3 py-3">Project</th>
-                <th className="px-3 py-3">Program</th>
-                <th className="px-3 py-3">Submission</th>
-                <th className="px-3 py-3">Review</th>
-                <th className="px-3 py-3">Deadline</th>
-                <th className="px-3 py-3">Timing</th>
+                <th className="px-5 py-3">{t("collaborator.assignments.column.artist")}</th>
+                <th className="px-3 py-3">{t("collaborator.assignments.column.project")}</th>
+                <th className="px-3 py-3">{t("collaborator.assignments.column.program")}</th>
+                <th className="px-3 py-3">{t("collaborator.assignments.column.submission")}</th>
+                <th className="px-3 py-3">{t("collaborator.assignments.column.review")}</th>
+                <th className="px-3 py-3">{t("collaborator.assignments.column.deadline")}</th>
+                <th className="px-3 py-3">{t("collaborator.assignments.column.timing")}</th>
                 <th className="px-3 py-3" />
               </tr>
             </thead>
@@ -98,7 +106,7 @@ export function CollaboratorAssignmentsPageView() {
                   </td>
                   <td className="px-3 py-3">
                     <Link href="/collaborator-dashboard/review-queue/" className="text-xs font-medium" style={{ color: lavenderDeep }}>
-                      Open Review
+                      {t("collaborator.assignments.cta.openReview")}
                     </Link>
                   </td>
                 </tr>

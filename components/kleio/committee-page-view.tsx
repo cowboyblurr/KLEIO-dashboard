@@ -13,8 +13,10 @@ import {
 } from "@/lib/kleio-review-team"
 import { DemoPageShell, DemoStatRow } from "@/components/kleio/demo-page-shell"
 import { InitialAvatar } from "@/components/kleio/initial-avatar"
+import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
 
 export function CommitteePageView() {
+  const { t } = useKleioLocale()
   const [preparedReviewTeam, setPreparedReviewTeam] = useState<ReviewTeamMember[]>([])
 
   useEffect(() => {
@@ -30,45 +32,49 @@ export function CommitteePageView() {
   const reviewerProgress = getReviewerProgress()
   const sofiaScenario = pendingVoteSubmissions.find((submission) => submission.id === "sofia-karim")
 
+  const previewCta = t("institution.workspace.committee.cta.previewCollaboratorSeat")
+
   return (
     <DemoPageShell
-      title="Committee"
-      description="Coordinate reviewers, jurors, and collaborators around the same submission context."
+      title={t("institution.workspace.committee.title")}
+      description={t("institution.workspace.committee.description")}
       actions={
         <Link
           href="/collaborator-dashboard/"
           className="inline-flex h-9 items-center justify-center rounded-xl border border-primary/25 bg-primary/10 px-4 text-sm font-medium text-primary transition-colors hover:bg-primary/15"
         >
-          Preview Collaborator Review Seat
+          {previewCta}
         </Link>
       }
     >
       <div className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-3 xl:max-w-3xl">
-        <DemoStatRow label="Pending committee vote" value={analytics.pendingVoteCount} />
-        <DemoStatRow label="Pending reviewer actions" value={analytics.pendingReviewerActionsCount} />
-        <DemoStatRow label="Reviewer completion" value={analytics.reviewerCompletionRate} />
+        <DemoStatRow label={t("institution.workspace.committee.metric.pendingVote")} value={analytics.pendingVoteCount} />
+        <DemoStatRow label={t("institution.workspace.committee.metric.pendingActions")} value={analytics.pendingReviewerActionsCount} />
+        <DemoStatRow label={t("institution.workspace.committee.metric.completion")} value={analytics.reviewerCompletionRate} />
       </div>
 
       <section className="mb-4 rounded-2xl border border-border bg-card shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-5 py-4">
           <div>
-            <h2 className="font-serif text-lg font-semibold text-foreground">Prepared review team</h2>
+            <h2 className="font-serif text-lg font-semibold text-foreground">
+              {t("institution.workspace.committee.preparedReviewTeam")}
+            </h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              Collaborators prepared during institution signup. These are demo invite records for limited review seats.
+              {t("institution.workspace.committee.preparedReviewTeamNote")}
             </p>
           </div>
           <Link
             href="/collaborator-dashboard/"
             className="inline-flex h-9 items-center justify-center rounded-xl border border-primary/25 bg-primary/10 px-4 text-sm font-medium text-primary transition-colors hover:bg-primary/15"
           >
-            Preview Collaborator Review Seat
+            {previewCta}
           </Link>
         </div>
         <div className="grid grid-cols-2 gap-3 border-b border-border p-5 md:grid-cols-4">
-          <DemoStatRow label="Collaborators" value={preparedReviewTeamStats.totalCollaborators} />
-          <DemoStatRow label="Prepared invites" value={preparedReviewTeamStats.preparedInvites} />
-          <DemoStatRow label="Limited seats" value={preparedReviewTeamStats.limitedReviewSeats} />
-          <DemoStatRow label="Programs covered" value={preparedReviewTeamStats.assignedProgramCount} />
+          <DemoStatRow label={t("institution.workspace.committee.metric.collaborators")} value={preparedReviewTeamStats.totalCollaborators} />
+          <DemoStatRow label={t("institution.workspace.committee.metric.preparedInvites")} value={preparedReviewTeamStats.preparedInvites} />
+          <DemoStatRow label={t("institution.workspace.committee.metric.limitedSeats")} value={preparedReviewTeamStats.limitedReviewSeats} />
+          <DemoStatRow label={t("institution.workspace.committee.metric.programsCovered")} value={preparedReviewTeamStats.assignedProgramCount} />
         </div>
         <ul className="divide-y divide-border">
           {preparedReviewTeam.map((member) => (
@@ -81,7 +87,10 @@ export function CommitteePageView() {
                     {member.role} · {member.assignedProgramTitle} · {member.accessScope}
                   </p>
                   <p className="mt-1 text-[0.65rem] font-medium text-primary">
-                    {member.inviteStatus === "Prepared" ? "Prepared invite" : "Deferred invite"} · Limited review seat
+                    {member.inviteStatus === "Prepared"
+                      ? t("institution.workspace.committee.invite.prepared")
+                      : t("institution.workspace.committee.invite.deferred")}{" "}
+                    · {t("institution.workspace.committee.limitedReviewSeat")}
                   </p>
                   <div className="mt-2 flex flex-wrap gap-1.5">
                     {member.permissions.map((permission) => (
@@ -104,7 +113,7 @@ export function CommitteePageView() {
       {sofiaScenario && (
         <section className="mb-4 rounded-2xl border border-primary/15 bg-primary/5 p-4 shadow-sm">
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">
-            Scenario · Reviewer bottleneck
+            {t("institution.workspace.committee.scenario.eyebrow")}
           </p>
           <p className="mt-2 font-medium text-foreground">
             <Link href={artistProfileHref(sofiaScenario.artistId)} className="hover:text-primary transition-colors">
@@ -114,13 +123,16 @@ export function CommitteePageView() {
             {sofiaScenario.projectTitle}
           </p>
           <p className="mt-1 text-sm text-muted-foreground">
-            Two reviews complete. One committee vote is still pending before this finalist can advance.
+            {t("institution.workspace.committee.scenario.body")}
           </p>
           <p className="mt-2 text-xs text-muted-foreground">
-            Reviewer progress{" "}
             {(() => {
               const progress = getSubmissionReviewerProgress(sofiaScenario.id)
-              return `${progress.completed}/${progress.total} complete · ${progress.pending} pending`
+              return t("institution.workspace.committee.reviewerProgress", {
+                completed: progress.completed,
+                total: progress.total,
+                pending: progress.pending,
+              })
             })()}
           </p>
         </section>
@@ -129,7 +141,9 @@ export function CommitteePageView() {
       <div className="grid gap-4 xl:grid-cols-2">
         <section className="rounded-2xl border border-border bg-card shadow-sm">
           <div className="border-b border-border px-5 py-4">
-            <h2 className="font-serif text-lg font-semibold text-foreground">Awaiting vote</h2>
+            <h2 className="font-serif text-lg font-semibold text-foreground">
+              {t("institution.workspace.committee.section.awaitingVote")}
+            </h2>
           </div>
           <ul className="divide-y divide-border">
             {pendingVoteSubmissions.map((submission) => {
@@ -144,8 +158,11 @@ export function CommitteePageView() {
                   </Link>
                   <p className="text-sm text-muted-foreground">{submission.projectTitle}</p>
                   <p className="mt-2 text-xs text-muted-foreground">
-                    Reviews completed {progress.completed}/{progress.total}
-                    {progress.pending > 0 ? ` · ${progress.pending} pending` : ""}
+                    {t("institution.workspace.committee.reviewsCompleted", {
+                      completed: progress.completed,
+                      total: progress.total,
+                    })}
+                    {progress.pending > 0 ? ` · ${t("institution.workspace.committee.reviewsPending", { pending: progress.pending })}` : ""}
                   </p>
                   <ul className="mt-2 space-y-1">
                     {progress.reviews.map((review) => (
@@ -166,12 +183,14 @@ export function CommitteePageView() {
 
         <section className="rounded-2xl border border-border bg-card shadow-sm">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-5 py-4">
-            <h2 className="font-serif text-lg font-semibold text-foreground">Reviewer progress</h2>
+            <h2 className="font-serif text-lg font-semibold text-foreground">
+              {t("institution.workspace.committee.section.reviewerProgress")}
+            </h2>
             <Link
               href="/collaborator-dashboard/"
               className="text-xs font-medium text-primary hover:text-primary/80"
             >
-              Preview Collaborator Review Seat
+              {previewCta}
             </Link>
           </div>
           <ul className="divide-y divide-border">
@@ -197,7 +216,7 @@ export function CommitteePageView() {
                       href="/collaborator-dashboard/"
                       className="mt-1 block text-[0.65rem] font-medium text-primary hover:text-primary/80"
                     >
-                      Preview reviewer seat
+                      {t("institution.workspace.committee.cta.previewReviewerSeat")}
                     </Link>
                   )}
                 </div>
@@ -208,10 +227,11 @@ export function CommitteePageView() {
       </div>
 
       <p className="mt-4 text-xs text-muted-foreground">
-        {analytics.pendingReviewerActionsCount} open review assignment
-        {analytics.pendingReviewerActionsCount === 1 ? "" : "s"} across active programs.{" "}
+        {analytics.pendingReviewerActionsCount === 1
+          ? t("institution.workspace.committee.footer.assignmentsOne", { count: analytics.pendingReviewerActionsCount })
+          : t("institution.workspace.committee.footer.assignmentsOther", { count: analytics.pendingReviewerActionsCount })}{" "}
         <Link href="/messages/" className="font-medium text-primary hover:text-primary/80">
-          Message pending reviewers
+          {t("institution.workspace.committee.cta.messagePendingReviewers")}
         </Link>
       </p>
     </DemoPageShell>

@@ -1,6 +1,7 @@
 import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
 import { Geist, Geist_Mono, Playfair_Display } from 'next/font/google'
+import { KleioLocaleProvider } from '@/components/kleio/kleio-locale-provider'
 import './globals.css'
 
 const geistSans = Geist({ variable: '--font-geist-sans', subsets: ['latin'] })
@@ -57,7 +58,7 @@ export default function RootLayout({
       className={`light ${geistSans.variable} ${geistMono.variable} ${playfair.variable} bg-background`}
     >
       <body className="font-sans antialiased">
-        {children}
+        <KleioLocaleProvider>{children}</KleioLocaleProvider>
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
     </html>
