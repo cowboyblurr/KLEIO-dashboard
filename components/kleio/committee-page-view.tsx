@@ -1,13 +1,31 @@
 "use client"
 
 import Link from "next/link"
+import { useEffect, useMemo, useState } from "react"
 import { analytics, getReviewerProgress, getSubmissionReviewerProgress } from "@/lib/kleio-analytics"
 import { allSubmissions } from "@/lib/kleio-data"
 import { artistProfileHref } from "@/lib/kleio-demo-auth"
+import {
+  calculateReviewTeamStats,
+  formatReviewPermission,
+  readReviewTeamDemoState,
+  type ReviewTeamMember,
+} from "@/lib/kleio-review-team"
 import { DemoPageShell, DemoStatRow } from "@/components/kleio/demo-page-shell"
 import { InitialAvatar } from "@/components/kleio/initial-avatar"
 
 export function CommitteePageView() {
+  const [preparedReviewTeam, setPreparedReviewTeam] = useState<ReviewTeamMember[]>([])
+
+  useEffect(() => {
+    setPreparedReviewTeam(readReviewTeamDemoState())
+  }, [])
+
+  const preparedReviewTeamStats = useMemo(
+    () => calculateReviewTeamStats(preparedReviewTeam),
+    [preparedReviewTeam],
+  )
+
   const pendingVoteSubmissions = allSubmissions.filter((submission) => submission.status === "Pending Vote")
   const reviewerProgress = getReviewerProgress()
   const sofiaScenario = pendingVoteSubmissions.find((submission) => submission.id === "sofia-karim")
@@ -30,6 +48,58 @@ export function CommitteePageView() {
         <DemoStatRow label="Pending reviewer actions" value={analytics.pendingReviewerActionsCount} />
         <DemoStatRow label="Reviewer completion" value={analytics.reviewerCompletionRate} />
       </div>
+
+      <section className="mb-4 rounded-2xl border border-border bg-card shadow-sm">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-5 py-4">
+          <div>
+            <h2 className="font-serif text-lg font-semibold text-foreground">Prepared review team</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Collaborators prepared during institution signup. These are demo invite records for limited review seats.
+            </p>
+          </div>
+          <Link
+            href="/collaborator-dashboard/"
+            className="inline-flex h-9 items-center justify-center rounded-xl border border-primary/25 bg-primary/10 px-4 text-sm font-medium text-primary transition-colors hover:bg-primary/15"
+          >
+            Preview Collaborator Review Seat
+          </Link>
+        </div>
+        <div className="grid grid-cols-2 gap-3 border-b border-border p-5 md:grid-cols-4">
+          <DemoStatRow label="Collaborators" value={preparedReviewTeamStats.totalCollaborators} />
+          <DemoStatRow label="Prepared invites" value={preparedReviewTeamStats.preparedInvites} />
+          <DemoStatRow label="Limited seats" value={preparedReviewTeamStats.limitedReviewSeats} />
+          <DemoStatRow label="Programs covered" value={preparedReviewTeamStats.assignedProgramCount} />
+        </div>
+        <ul className="divide-y divide-border">
+          {preparedReviewTeam.map((member) => (
+            <li key={member.id} className="px-5 py-4">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <p className="font-medium text-foreground">{member.name}</p>
+                  <p className="text-sm text-muted-foreground">{member.email}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {member.role} · {member.assignedProgramTitle} · {member.accessScope}
+                  </p>
+                  <p className="mt-1 text-[0.65rem] font-medium text-primary">
+                    {member.inviteStatus === "Prepared" ? "Prepared invite" : "Deferred invite"} · Limited review seat
+                  </p>
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {member.permissions.map((permission) => (
+                      <span
+                        key={permission}
+                        className="rounded-full bg-primary/10 px-2 py-0.5 text-[0.6rem] font-medium text-primary"
+                      >
+                        {formatReviewPermission(permission)}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+                <span className="text-xs text-muted-foreground">{member.inviteStatus}</span>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </section>
 
       {sofiaScenario && (
         <section className="mb-4 rounded-2xl border border-primary/15 bg-primary/5 p-4 shadow-sm">
