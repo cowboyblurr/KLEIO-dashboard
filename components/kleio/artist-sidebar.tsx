@@ -21,25 +21,24 @@ import { InitialAvatar } from "@/components/kleio/initial-avatar"
 import { KleioWordmarkLink } from "@/components/kleio/kleio-wordmark-link"
 
 type NavItem = {
-  href?: string
+  href: string
   label: string
   icon: typeof LayoutDashboard
   activeMatch?: string
-  comingSoon?: boolean
 }
 
 const navItems: NavItem[] = [
   { href: "/artist-dashboard/", label: "Overview", icon: LayoutDashboard },
-  { label: "Creative Passport", icon: Sparkles, comingSoon: true },
-  { label: "Portfolio", icon: FolderOpen, comingSoon: true },
-  { label: "Opportunities", icon: Briefcase, comingSoon: true },
-  { label: "Applications", icon: FileText, comingSoon: true },
-  { label: "Collaborators", icon: UsersRound, comingSoon: true },
-  { label: "Calendar", icon: CalendarDays, comingSoon: true },
-  { label: "Messages", icon: MessageSquare, comingSoon: true },
-  { label: "Funding", icon: DollarSign, comingSoon: true },
-  { label: "Insights", icon: BarChart3, comingSoon: true },
-  { label: "Settings", icon: Settings, comingSoon: true },
+  { href: "/artist-dashboard/passport/", label: "Creative Passport", icon: Sparkles, activeMatch: "/artist-dashboard/passport" },
+  { href: "/artist-dashboard/portfolio/", label: "Portfolio", icon: FolderOpen, activeMatch: "/artist-dashboard/portfolio" },
+  { href: "/artist-dashboard/opportunities/", label: "Opportunities", icon: Briefcase, activeMatch: "/artist-dashboard/opportunities" },
+  { href: "/artist-dashboard/applications/", label: "Applications", icon: FileText, activeMatch: "/artist-dashboard/applications" },
+  { href: "/artist-dashboard/collaborators/", label: "Collaborators", icon: UsersRound, activeMatch: "/artist-dashboard/collaborators" },
+  { href: "/artist-dashboard/calendar/", label: "Calendar", icon: CalendarDays, activeMatch: "/artist-dashboard/calendar" },
+  { href: "/artist-dashboard/messages/", label: "Messages", icon: MessageSquare, activeMatch: "/artist-dashboard/messages" },
+  { href: "/artist-dashboard/funding/", label: "Funding", icon: DollarSign, activeMatch: "/artist-dashboard/funding" },
+  { href: "/artist-dashboard/insights/", label: "Insights", icon: BarChart3, activeMatch: "/artist-dashboard/insights" },
+  { href: "/artist-dashboard/settings/", label: "Settings", icon: Settings, activeMatch: "/artist-dashboard/settings" },
 ]
 
 export function ArtistSidebar() {
@@ -58,28 +57,15 @@ export function ArtistSidebar() {
         </p>
         <ul className="space-y-0.5">
           {navItems.map((item) => {
-            const active = item.href
-              ? item.activeMatch
-                ? pathname.startsWith(item.activeMatch)
-                : pathname === item.href || `${pathname}/` === item.href
-              : false
+            const active = item.activeMatch
+              ? pathname.startsWith(item.activeMatch)
+              : pathname === item.href || `${pathname}/` === item.href
             const Icon = item.icon
-
-            if (item.comingSoon) {
-              return (
-                <li key={item.label}>
-                  <span className="group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground/60">
-                    <Icon className="size-4 shrink-0 text-muted-foreground/50" />
-                    <span className="flex-1">{item.label}</span>
-                  </span>
-                </li>
-              )
-            }
 
             return (
               <li key={item.label}>
                 <Link
-                  href={item.href!}
+                  href={item.href}
                   aria-current={active ? "page" : undefined}
                   className={cn(
                     "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",

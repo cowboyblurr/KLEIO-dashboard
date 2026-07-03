@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { useState } from "react"
 import {
   analytics,
@@ -39,17 +40,31 @@ export function ReportsPageView() {
             </div>
           ))}
         </div>
-        <button
-          type="button"
-          onClick={() =>
-            setExportConfirmation(
-              `Report export queued for ${analytics.totalApplications} applications across ${programs.length} programs (demo only).`,
-            )
-          }
-          className="inline-flex h-10 shrink-0 items-center rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
-        >
-          Export report
-        </button>
+        <div className="flex shrink-0 flex-wrap gap-2">
+          <Link
+            href="/reports/new/"
+            className="inline-flex h-10 items-center rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+          >
+            Prepare Report
+          </Link>
+          <Link
+            href="/activity-log/"
+            className="inline-flex h-10 items-center rounded-xl border border-border bg-card px-4 text-sm font-semibold text-foreground transition-colors hover:bg-accent/50"
+          >
+            View Activity Log
+          </Link>
+          <button
+            type="button"
+            onClick={() =>
+              setExportConfirmation(
+                `Report export queued for ${analytics.totalApplications} applications across ${programs.length} programs (demo only).`,
+              )
+            }
+            className="inline-flex h-10 items-center rounded-xl border border-border bg-card px-4 text-sm font-semibold text-foreground transition-colors hover:bg-accent/50"
+          >
+            Export report
+          </button>
+        </div>
       </div>
 
       {exportConfirmation && (

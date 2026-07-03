@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { useState } from "react"
 import { getReviewerProgress } from "@/lib/kleio-analytics"
 import { programs, collaborators, institution } from "@/lib/kleio-data"
@@ -116,7 +117,7 @@ export function ProgramsNewPageView() {
           </section>
         </div>
 
-        <div className="mt-4">
+        <div className="mt-4 flex flex-wrap gap-2">
           <button
             type="button"
             onClick={() => setPublished(true)}
@@ -124,6 +125,18 @@ export function ProgramsNewPageView() {
           >
             Publish open call
           </button>
+          <Link
+            href="/programs/"
+            className="inline-flex h-11 items-center rounded-xl border border-border bg-card px-5 text-sm font-semibold text-foreground transition-colors hover:bg-accent/50"
+          >
+            Back to Programs
+          </Link>
+          <Link
+            href="/dashboard/"
+            className="inline-flex h-11 items-center rounded-xl border border-border bg-card px-5 text-sm font-semibold text-foreground transition-colors hover:bg-accent/50"
+          >
+            Institution Overview
+          </Link>
         </div>
       </div>
     </main>

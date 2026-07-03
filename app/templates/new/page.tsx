@@ -1,10 +1,10 @@
 import { DashboardShell } from "@/components/kleio/dashboard-shell"
-import { InstitutionSettingsPageView } from "@/components/kleio/institution-workspace/institution-settings-page-view"
+import { TemplatesNewPageView } from "@/components/kleio/institution-workspace/templates-new-page-view"
 
 export default function Page() {
   return (
     <DashboardShell>
-      <InstitutionSettingsPageView />
+      <TemplatesNewPageView />
     </DashboardShell>
   )
 }

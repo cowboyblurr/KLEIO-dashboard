@@ -27,6 +27,12 @@ export default function Page() {
           >
             Create Open Call
           </Link>
+          <Link
+            href="/review-queue/"
+            className="inline-flex h-10 items-center rounded-xl border border-border bg-card px-4 text-sm font-semibold text-foreground transition-colors hover:bg-accent/50"
+          >
+            Review Queue
+          </Link>
           <span className="inline-flex h-10 items-center rounded-xl border border-border bg-card px-4 text-sm text-muted-foreground">
             {analytics.activePrograms} active programs · {analytics.upcomingDeadlineProgramCount} upcoming deadlines
           </span>
