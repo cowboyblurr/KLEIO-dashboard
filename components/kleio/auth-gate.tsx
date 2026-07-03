@@ -77,21 +77,37 @@ function AuthWall({
 
   const wrongRole = session && requiredRole && session.role !== requiredRole
 
+  const loggedOutHeading =
+    requiredRole === "artist"
+      ? "Enter the Artist Workspace"
+      : requiredRole === "institution"
+        ? "Enter the Institution Workspace"
+        : "Sign in to continue"
+  const loggedOutDescription =
+    requiredRole === "artist"
+      ? "Use the demo login to explore how an artist manages a Creative Passport, opportunities, and application materials."
+      : requiredRole === "institution"
+        ? "Use the demo login to explore how an institution manages submissions, reviewers, shortlists, and reports."
+        : "KLEIO workspaces are private. Use the demo login to enter this workspace."
+  const wrongRoleDescription =
+    session?.role === "artist"
+      ? "You are currently in the Artist demo. Switch to the Institution demo to view this workspace."
+      : "You are currently in the Institution demo. Switch to the Artist demo to view this workspace."
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-[oklch(0.985_0.005_287)] px-5 py-12">
       <div className="w-full max-w-md rounded-2xl border border-border bg-[oklch(0.99_0.005_287)] p-8 shadow-sm">
         <div className="mb-6 flex justify-center">
-          <KleioWordmarkLink imageClassName="h-7 w-auto" priority />
+          <KleioWordmarkLink href="/" imageClassName="h-7 w-auto" priority />
         </div>
 
         {wrongRole ? (
           <>
             <h1 className="text-center font-serif text-2xl font-semibold text-foreground">
-              Different demo role
+              Switch demo role
             </h1>
             <p className="mt-2 text-center text-sm leading-relaxed text-muted-foreground">
-              This workspace belongs to a different demo role. You are signed in as{" "}
-              <span className="font-medium text-foreground">{session.name}</span>.
+              {wrongRoleDescription}
             </p>
             <div className="mt-6 space-y-2">
               <button
@@ -118,9 +134,9 @@ function AuthWall({
           </>
         ) : (
           <>
-            <h1 className="text-center font-serif text-2xl font-semibold text-foreground">Sign in to continue</h1>
+            <h1 className="text-center font-serif text-2xl font-semibold text-foreground">{loggedOutHeading}</h1>
             <p className="mt-2 text-center text-sm leading-relaxed text-muted-foreground">
-              KLEIO workspaces are private. Use the demo login to enter this workspace.
+              {loggedOutDescription}
             </p>
             <div className="mt-6">
               <DemoAuthButtons

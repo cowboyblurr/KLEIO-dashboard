@@ -21,7 +21,7 @@ export function ReportsPageView() {
   return (
     <DemoPageShell
       title="Reports"
-      description="Generate funder-ready analytics on applicant demographics, review throughput, and program outcomes."
+      description="Turn review activity into clear records your team can preserve, export, and revisit."
     >
       <div className="mb-4 flex flex-wrap items-center gap-3">
         <div className="grid flex-1 grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">

@@ -8,7 +8,7 @@ export function SignupLanding() {
     <div className="flex min-h-screen flex-col bg-[oklch(0.985_0.005_287)]">
       <header className="border-b border-border bg-white/80 px-5 py-6 backdrop-blur-sm">
         <div className="mx-auto flex max-w-4xl justify-center">
-          <KleioWordmarkLink imageClassName="h-8 w-auto" priority />
+          <KleioWordmarkLink href="/" imageClassName="h-8 w-auto" priority />
         </div>
       </header>
 

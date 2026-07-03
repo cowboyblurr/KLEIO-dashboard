@@ -16,7 +16,7 @@ export function Sidebar() {
   return (
     <aside className="flex h-full w-64 shrink-0 flex-col border-r border-border bg-sidebar">
       <div className="flex items-center justify-between px-6 pt-6 pb-5">
-        <KleioWordmarkLink className="rounded-md bg-white px-2.5 py-1.5 shadow-sm ring-1 ring-border" />
+        <KleioWordmarkLink href="/" className="rounded-md bg-white px-2.5 py-1.5 shadow-sm ring-1 ring-border" />
         <button
           type="button"
           className="grid size-7 place-items-center rounded-md border border-border text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"

@@ -33,7 +33,7 @@ export function ReviewQueuePageView() {
       <div className="min-w-0 flex-1 overflow-y-auto">
         <DemoPageShell
           title="Review Queue"
-          description="Prioritized evaluation workspace — assign reviewers, score submissions, and keep every decision moving forward."
+          description="Review artist submissions with structure, context, and a clear record of progress."
         >
           <div className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-4 xl:max-w-4xl">
             <DemoStatRow label="Assigned reviews" value={analytics.reviewQueueCount} />

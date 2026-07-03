@@ -17,7 +17,7 @@ export function SignupShell({
     <div className="min-h-screen bg-[oklch(0.985_0.005_287)]">
       <header className="border-b border-border bg-white/80 backdrop-blur-sm">
         <div className="mx-auto flex max-w-3xl items-center justify-between px-5 py-4">
-          <KleioWordmarkLink className="rounded-md bg-white px-2.5 py-1.5 shadow-sm ring-1 ring-border" />
+          <KleioWordmarkLink href="/" className="rounded-md bg-white px-2.5 py-1.5 shadow-sm ring-1 ring-border" />
           {stepLabel && (
             <p className="text-xs font-medium text-muted-foreground">{stepLabel}</p>
           )}

@@ -59,7 +59,7 @@ export function Overview() {
                 Good morning, {getPrimaryUserFirstName()}.
               </h1>
               <p className="mt-1.5 text-sm text-muted-foreground">
-                {institution.name} review health, applicant flow, and committee actions for today.
+                Manage submissions, reviewer progress, missing materials, shortlists, and reports from one organized workspace.
               </p>
             </div>
             <div className="hidden rounded-full border border-border bg-card/80 px-3 py-1.5 text-xs font-medium text-muted-foreground shadow-sm xl:block">

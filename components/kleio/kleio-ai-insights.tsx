@@ -13,10 +13,10 @@ export function KleioAiInsights() {
             <span className="grid size-7 place-items-center rounded-lg bg-primary/10 text-primary">
               <Sparkles className="size-3.5" />
             </span>
-            <h2 className="text-sm font-semibold text-foreground">KLEIO assist</h2>
+            <h2 className="text-sm font-semibold text-foreground">KLEIO Assist</h2>
           </div>
           <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-            Quiet analytic prompts for the program team. AI supports the review flow; it does not make the decision.
+            KLEIO Assist surfaces incomplete materials, review bottlenecks, and next actions. Your team stays in control of every decision.
           </p>
         </div>
         <span className="rounded-full border border-border bg-background px-2 py-1 text-[0.65rem] font-medium text-muted-foreground">

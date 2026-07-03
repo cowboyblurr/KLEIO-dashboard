@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react"
 import {
+  Check,
   FileText,
   Globe,
   Headphones,
@@ -176,6 +177,14 @@ export function ImportAssistWidget({
 
   const { expanded, connectedIds, draftPrepared, showReviewPanel, fieldStatuses, editNotes } = widgetState
 
+  const isArtist = userType === "artist"
+  const assistIntro = isArtist
+    ? "Prepare draft passport fields from materials you already maintain."
+    : "Prepare a draft workspace from materials your team already maintains."
+  const assistApproval = isArtist
+    ? "You review and approve every detail."
+    : "Your team approves what becomes official."
+
   const normalizedSuggestions = useMemo(() => {
     return userType === "artist"
       ? buildArtistFormSuggestions(resolvedSubjectId)
@@ -268,13 +277,10 @@ export function ImportAssistWidget({
               )}
             </div>
             <p className="mt-1 max-w-xl text-xs leading-relaxed text-muted-foreground">
-              Connect materials you already maintain so KLEIO can help prepare a first draft. You review and edit everything.
+              {assistIntro}
             </p>
             <p className="mt-1 text-[0.68rem] text-muted-foreground">
-              Nothing is published without your approval.
-            </p>
-            <p className="mt-1 text-[0.68rem] text-muted-foreground">
-              You can skip Import Assist and continue manually.
+              {assistApproval}
             </p>
           </div>
         </div>
@@ -289,7 +295,7 @@ export function ImportAssistWidget({
 
       {expanded && (
         <>
-          <div className={cn("mt-4 grid gap-3", compact ? "grid-cols-1" : "sm:grid-cols-2")}>
+          <div className="mt-4 grid grid-cols-3 gap-2 max-md:grid-cols-2">
             {connectors.map((connector) => (
               <ConnectorCard
                 key={connector.id}
@@ -493,6 +499,25 @@ export function ImportAssistWidget({
   )
 }
 
+function categoryHelper(category: KleioConnectorCategory) {
+  switch (category) {
+    case "website":
+      return "Public details"
+    case "social":
+      return "Public practice"
+    case "files":
+      return "Documents"
+    case "video":
+      return "Video works"
+    case "audio":
+      return "Audio works"
+    case "submission-system":
+      return "Past records"
+    default:
+      return "Materials"
+  }
+}
+
 function ConnectorCard({
   connector,
   connected,
@@ -505,32 +530,30 @@ function ConnectorCard({
   const Icon = categoryIcon(connector.category)
 
   return (
-    <div className="rounded-xl border border-border bg-card p-3">
-      <div className="flex items-start gap-3">
-        <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
-          <Icon className="size-4" />
+    <button
+      type="button"
+      onClick={onToggle}
+      aria-pressed={connected}
+      title={connector.description}
+      className={cn(
+        "flex min-h-[58px] flex-col justify-between rounded-xl border p-2.5 text-left transition-colors",
+        connected
+          ? "border-primary/40 bg-primary/5"
+          : "border-border bg-card hover:border-primary/40 hover:bg-accent/40",
+      )}
+    >
+      <span className="flex items-center justify-between">
+        <span className="grid size-6 shrink-0 place-items-center rounded-md bg-primary/10 text-primary">
+          <Icon className="size-3.5" />
         </span>
-        <div className="min-w-0 flex-1">
-          <p className="text-sm font-medium text-foreground">{connector.label}</p>
-          <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">{connector.description}</p>
-          <p className="mt-1 text-[0.65rem] text-muted-foreground">{connector.trustNote}</p>
-          {connected && (
-            <p className="mt-2 text-[0.65rem] font-medium text-primary">{connector.demoPreviewText}</p>
-          )}
-        </div>
-      </div>
-      <button
-        type="button"
-        onClick={onToggle}
-        className={cn(
-          "mt-3 w-full rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors",
-          connected
-            ? "border-primary/30 bg-primary/10 text-primary"
-            : "border-border bg-background text-foreground hover:bg-accent/50",
-        )}
-      >
-        {connected ? "Connected for demo" : "Connect"}
-      </button>
-    </div>
+        {connected && <Check className="size-3.5 shrink-0 text-primary" aria-hidden />}
+      </span>
+      <span className="mt-1.5 block min-w-0">
+        <span className="block truncate text-xs font-medium text-foreground">{connector.label}</span>
+        <span className="block truncate text-[0.65rem] text-muted-foreground">
+          {connected ? "Connected for demo" : categoryHelper(connector.category)}
+        </span>
+      </span>
+    </button>
   )
 }

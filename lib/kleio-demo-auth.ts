@@ -107,24 +107,31 @@ export function getDashboardForRole(role: "artist" | "institution"): string {
   return role === "artist" ? "/artist-dashboard/" : "/dashboard/"
 }
 
-/** Public marketing homepage — not a workspace route. */
+/** Public marketing homepage (`/`) — not a workspace route. */
 export function getPublicHomeHref(): string {
   return "/"
 }
 
-/** Wordmark and “Return to KLEIO” always go to the public homepage. */
+/** KLEIO wordmark: public homepage when logged out, workspace overview when signed in. */
 export function getHomeHrefForSession(): string {
-  return getPublicHomeHref()
+  const session = getDemoSession()
+
+  if (!session) return "/"
+  if (session.role === "institution") return "/dashboard/"
+  if (session.role === "artist") return "/artist-dashboard/"
+
+  return "/"
 }
 
-/**
- * “Explore Arthouse” — workspace for signed-in users only.
- * Anonymous visitors stay on the public homepage.
- */
+/** Explore Arthouse: institution workspace entry (AuthGate when logged out). */
 export function getExploreArthouseHref(): string {
   const session = getDemoSession()
-  if (!session) return getPublicHomeHref()
-  return getDashboardForRole(session.role)
+
+  if (!session) return "/dashboard/"
+  if (session.role === "institution") return "/dashboard/"
+  if (session.role === "artist") return "/artist-dashboard/"
+
+  return "/dashboard/"
 }
 
 export function artistProfileHref(artistId: string): string {

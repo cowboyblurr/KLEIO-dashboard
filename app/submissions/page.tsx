@@ -9,7 +9,7 @@ export default function Page() {
     <DashboardShell>
       <DemoPageShell
         title="Submissions"
-        description="Browse every application across your programs with rich filtering, completeness tracking, and bulk actions."
+        description="Search, filter, and compare submissions without losing context across files, forms, or review notes."
       >
         <div className="mb-4 rounded-2xl border border-border bg-card px-5 py-4 shadow-sm">
           <p className="text-sm text-muted-foreground">

@@ -15,7 +15,7 @@ export function CommitteePageView() {
   return (
     <DemoPageShell
       title="Committee"
-      description="Coordinate panel voting, capture deliberation notes, and track consensus through final decisions."
+      description="Coordinate reviewers, jurors, and collaborators around the same submission context."
     >
       <div className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-3 xl:max-w-3xl">
         <DemoStatRow label="Pending committee vote" value={analytics.pendingVoteCount} />

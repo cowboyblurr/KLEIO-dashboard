@@ -5,8 +5,8 @@ export default function Page() {
   return (
     <DashboardShell>
       <PlaceholderPage
-        title="Settings"
-        description="Manage your institution profile, team roles, permissions, and integration preferences."
+        title="Workspace Settings"
+        description="Manage workspace details, demo preferences, team roles, and review defaults."
       />
     </DashboardShell>
   )

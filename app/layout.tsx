@@ -15,9 +15,9 @@ const playfair = Playfair_Display({
 })
 
 export const metadata: Metadata = {
-  title: 'KLEIO — Submission Review',
+  title: 'KLEIO Arthouse',
   description:
-    'KLEIO is an institutional submission review platform for galleries, residencies, grant programs, museums, and foundations.',
+    'A shared workspace for artists and institutions to manage submissions, reviews, opportunities, and cultural records with clarity.',
   generator: 'v0.app',
   icons: {
     icon: [

@@ -20,7 +20,7 @@ export function ShortlistPageView() {
   return (
     <DemoPageShell
       title="Shortlist"
-      description="Curate finalists, compare them side by side, and prepare clean recommendations for committee review."
+      description="Move promising submissions into a focused decision space for final review."
     >
       <div className="mb-4 flex flex-wrap items-center gap-3">
         <div className="grid flex-1 grid-cols-2 gap-3 md:grid-cols-3 xl:max-w-3xl">

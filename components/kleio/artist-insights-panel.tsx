@@ -59,7 +59,7 @@ export function ArtistInsightsPanel({ artist }: { artist: Artist }) {
           )}
 
           <p className="text-[0.65rem] leading-relaxed text-muted-foreground">
-            Suggestions are based on your passport content. KLEIO Assist does not rank artists or make final decisions.
+            KLEIO Assist can prepare drafts and surface missing materials. You decide what gets used.
           </p>
         </div>
       </div>

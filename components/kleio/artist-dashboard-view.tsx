@@ -25,7 +25,7 @@ export function ArtistDashboardView() {
           <div>
             <h1 className="font-serif text-xl font-semibold text-foreground">Creative Passport</h1>
             <p className="mt-0.5 text-sm text-muted-foreground">
-              Your reusable artist profile for applications, portfolios, and opportunities.
+              Your reusable artist profile for applications, grants, residencies, exhibitions, and institutional review.
             </p>
           </div>
           <div className="flex items-center gap-2">

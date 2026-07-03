@@ -6,7 +6,7 @@ export default function Page() {
     <DashboardShell>
       <PlaceholderPage
         title="Templates"
-        description="Design reusable application forms, scoring rubrics, and email templates for consistent program operations."
+        description="Save reusable language, criteria, messages, and review structures for future programs."
       />
     </DashboardShell>
   )

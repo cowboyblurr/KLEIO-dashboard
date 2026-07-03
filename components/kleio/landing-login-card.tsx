@@ -52,10 +52,10 @@ export function LandingLoginCard() {
       }}
     >
       <h2 className="font-serif text-[0.95rem] font-semibold" style={{ color: "#292631" }}>
-        Welcome back
+        Enter your KLEIO workspace
       </h2>
       <p className="mt-0.5 text-[0.68rem]" style={{ color: "#7F7890" }}>
-        Log in to your account
+        Use the demo login to review the artist or institution flow.
       </p>
 
       <div className="mt-2.5 space-y-1.5">
@@ -91,7 +91,7 @@ export function LandingLoginCard() {
 
       <div className="mt-1.5 flex items-center justify-between gap-3">
         <span className="text-[0.64rem]" style={{ color: "#7F7890" }}>
-          Demo login
+          Demo workspace
         </span>
         <button
           type="button"

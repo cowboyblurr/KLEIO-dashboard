@@ -53,15 +53,20 @@ export function LandingPage() {
       <header className="absolute left-0 top-0 z-30 h-[96px] w-full">
         <div className="relative mx-auto h-full w-full max-w-[1280px] px-8 max-md:px-5">
           <nav className="absolute left-8 top-1/2 flex -translate-y-1/2 items-center gap-8 max-md:left-5 max-md:gap-4">
-            {["About", "Manifesto", "Journal"].map((label) => (
-              <a key={label} href="#" className="text-[0.78rem] font-medium tracking-wide hover:opacity-70" style={navLinkStyle}>
+            {[
+              { label: "About", href: "/about/" },
+              { label: "Manifesto", href: "/manifesto/" },
+              { label: "Journal", href: "/journal/" },
+            ].map(({ label, href }) => (
+              <Link key={label} href={href} className="text-[0.78rem] font-medium tracking-wide hover:opacity-70" style={navLinkStyle}>
                 {label}
-              </a>
+              </Link>
             ))}
           </nav>
 
           <div className="absolute left-1/2 top-[62px] -translate-x-1/2 -translate-y-1/2">
             <KleioWordmarkLink
+              href="/"
               imageClassName="h-[clamp(2rem,2.75vw,3rem)] w-auto"
               imageStyle={{ filter: "brightness(0) saturate(100%) invert(16%) sepia(5%) saturate(800%) hue-rotate(220deg)" }}
               priority
@@ -107,11 +112,11 @@ export function LandingPage() {
               lineHeight: 1.42,
             }}
           >
-            KLEIO Arthouse is an intelligent ecosystem
+            A shared workspace for artists and institutions
             <br />
-            for artists and institutions to archive, exhibit,
+            to manage submissions, reviews, opportunities,
             <br />
-            and advance cultural legacies—together.
+            and cultural records with clarity.
           </p>
         </div>
 
@@ -155,10 +160,10 @@ export function LandingPage() {
             }}
           >
             <h2 className="font-serif text-[0.95rem] font-semibold" style={{ color: inkColor, letterSpacing: "-0.01em" }}>
-              Join KLEIO Arthouse
+              Choose your KLEIO path
             </h2>
             <p className="mt-0.5 text-[0.68rem]" style={{ color: mutedColor }}>
-              Create your account
+              Start with an artist passport or an institution workspace.
             </p>
 
             <div className="mt-2.5 grid grid-cols-2 gap-2.5">
@@ -172,10 +177,10 @@ export function LandingPage() {
                 </span>
                 <span>
                   <span className="block text-[0.62rem]" style={{ color: mutedColor }}>
-                    I am an
+                    I am an artist
                   </span>
                   <span className="flex items-center justify-between font-serif text-[0.78rem] font-semibold" style={{ color: inkColor }}>
-                    Artist
+                    Passport
                     <ChevronRight className="size-3 transition-transform group-hover:translate-x-0.5" style={{ color: lavenderAccent }} />
                   </span>
                 </span>
@@ -191,17 +196,17 @@ export function LandingPage() {
                 </span>
                 <span>
                   <span className="block text-[0.62rem]" style={{ color: mutedColor }}>
-                    I represent an
+                    I represent an institution
                   </span>
                   <span className="flex items-center justify-between font-serif text-[0.78rem] font-semibold" style={{ color: inkColor }}>
-                    Institution
+                    Workspace
                     <ChevronRight className="size-3 transition-transform group-hover:translate-x-0.5" style={{ color: lavenderAccent }} />
                   </span>
                 </span>
               </Link>
             </div>
             <p className="mt-2 text-center text-[0.6rem] italic" style={{ color: mutedColor }}>
-              Optional Import Assist available during setup.
+              Optional Import Assist can prepare draft fields from materials you already maintain.
             </p>
           </div>
         </div>

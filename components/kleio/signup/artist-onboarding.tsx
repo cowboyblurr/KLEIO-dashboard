@@ -32,7 +32,7 @@ const SUBJECT_ID = "amina-el-badri"
 
 const STEPS = [
   { label: "Profile basics" },
-  { label: "Creative Passport" },
+  { label: "Practice & materials" },
   { label: "Materials & suggestions" },
   { label: "Review" },
 ] as const
@@ -122,7 +122,7 @@ export function ArtistOnboarding() {
   return (
     <SignupShell
       title="Create your Creative Passport"
-      subtitle="Build a reusable profile for applications, portfolios, and opportunities."
+      subtitle="Build one reusable profile for grants, residencies, exhibitions, open calls, and portfolio reviews."
       stepLabel={stepLabel}
     >
       <SignupProgress currentStep={step} totalSteps={STEPS.length} label={stepLabel} />
@@ -144,7 +144,7 @@ export function ArtistOnboarding() {
           <div className="space-y-4">
             <h2 className="font-serif text-lg font-semibold text-foreground">Profile basics</h2>
             <p className="text-xs text-muted-foreground">
-              You remain the author. Review and edit every suggestion.
+              Start with the details most applications ask for first. You can refine every field before using it.
             </p>
             <SignupField
               label="Artist name"
@@ -184,7 +184,10 @@ export function ArtistOnboarding() {
 
         {step === 1 && (
           <div className="space-y-4">
-            <h2 className="font-serif text-lg font-semibold text-foreground">Creative Passport</h2>
+            <h2 className="font-serif text-lg font-semibold text-foreground">Practice &amp; materials</h2>
+            <p className="text-xs text-muted-foreground">
+              Add the language, links, and documents that help reviewers understand your work.
+            </p>
             <SignupTextArea
               label="Artist statement"
               value={form.artistStatement}
@@ -232,8 +235,8 @@ export function ArtistOnboarding() {
           <div className="space-y-4">
             <h2 className="font-serif text-lg font-semibold text-foreground">Materials & suggestions</h2>
             <p className="text-sm text-muted-foreground">
-              Review suggested fields, documents, and imported materials. You can skip Import Assist and continue
-              manually.
+              Review suggested fields, documents, and imported materials. You can skip Import Assist and build your
+              passport manually.
             </p>
 
             {importAssist.connectedIds.length === 0 && !importAssist.draftPrepared ? (
@@ -300,9 +303,9 @@ export function ArtistOnboarding() {
           <div className="space-y-4">
             <div className="text-center">
               <CheckCircle2 className="mx-auto size-10 text-primary" />
-              <h2 className="mt-3 font-serif text-xl font-semibold text-foreground">Review your Creative Passport</h2>
+              <h2 className="mt-3 font-serif text-xl font-semibold text-foreground">Review your passport</h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                Prepared for review, not final. Edit any field before creating your passport.
+                Confirm what is ready before entering your artist workspace.
               </p>
             </div>
 
@@ -361,7 +364,7 @@ export function ArtistOnboarding() {
         onBack={() => setStep((s) => s - 1)}
         onNext={() => setStep((s) => s + 1)}
         onSubmit={handleCreatePassport}
-        submitLabel="Create Creative Passport"
+        submitLabel="Enter Artist Workspace"
       />
     </SignupShell>
   )

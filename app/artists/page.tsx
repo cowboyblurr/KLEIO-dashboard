@@ -6,7 +6,7 @@ export default function Page() {
     <DashboardShell>
       <PlaceholderPage
         title="Artists"
-        description="A unified directory of applicants and alumni, with portfolios, history, and submission records across every cycle."
+        description="View artist profiles, submitted materials, review status, and program history in one place."
       />
     </DashboardShell>
   )

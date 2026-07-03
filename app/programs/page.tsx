@@ -17,8 +17,8 @@ export default function Page() {
   return (
     <DashboardShell>
       <DemoPageShell
-        title="Programs"
-        description="Create and manage open calls, residencies, and grant cycles — with deadlines, eligibility, and review workflows in one place."
+        title="Programs & Open Calls"
+        description="Create and manage the grants, residencies, exhibitions, and open calls your institution reviews."
       >
         <div className="mb-4 flex flex-wrap gap-2">
           <Link

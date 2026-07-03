@@ -35,7 +35,7 @@ export function MessagesView() {
             Messages
           </h1>
           <p className="mt-1.5 text-sm text-muted-foreground">
-            Applicant, reviewer, and committee conversations for {institution.name}, tied to each submission.
+            Resolve missing information and applicant questions without scattering context across inboxes.
           </p>
         </div>
         <span className="rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium text-muted-foreground">

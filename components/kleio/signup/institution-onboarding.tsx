@@ -133,7 +133,7 @@ export function InstitutionOnboarding() {
   return (
     <SignupShell
       title="Create your Institution Workspace"
-      subtitle="Set up a review environment for open calls, submissions, committees, and reports."
+      subtitle="Set up a structured review environment for open calls, grants, residencies, committees, and reports."
       stepLabel={stepLabel}
     >
       <SignupProgress currentStep={step} totalSteps={STEPS.length} label={stepLabel} />
@@ -154,6 +154,9 @@ export function InstitutionOnboarding() {
         {step === 0 && (
           <div className="space-y-4">
             <h2 className="font-serif text-lg font-semibold text-foreground">Institution details</h2>
+            <p className="text-xs text-muted-foreground">
+              Start with the public details and internal context reviewers will need.
+            </p>
             <SignupField
               label="Institution name"
               value={form.institutionName}
@@ -198,6 +201,9 @@ export function InstitutionOnboarding() {
         {step === 1 && (
           <div className="space-y-4">
             <h2 className="font-serif text-lg font-semibold text-foreground">Workspace setup</h2>
+            <p className="text-xs text-muted-foreground">
+              Define the open call, grant, residency, or review process your team wants to manage.
+            </p>
             <SignupTextArea
               label="Mission statement"
               value={form.missionStatement}
@@ -248,8 +254,8 @@ export function InstitutionOnboarding() {
           <div className="space-y-4">
             <h2 className="font-serif text-lg font-semibold text-foreground">Materials & suggestions</h2>
             <p className="text-sm text-muted-foreground">
-              Review suggested workspace fields and imported references. You can skip Import Assist and continue
-              manually.
+              Review suggested workspace fields and imported references. You can skip Import Assist and set up the
+              workspace manually.
             </p>
 
             {importAssist.connectedIds.length === 0 && !importAssist.draftPrepared ? (
@@ -325,7 +331,7 @@ export function InstitutionOnboarding() {
               <CheckCircle2 className="mx-auto size-10 text-primary" />
               <h2 className="mt-3 font-serif text-xl font-semibold text-foreground">Review your workspace</h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                Prepared for review, not final. Edit any field before creating your workspace.
+                Confirm the setup before entering the institution workspace.
               </p>
             </div>
 
@@ -401,7 +407,7 @@ export function InstitutionOnboarding() {
         onBack={() => setStep((s) => s - 1)}
         onNext={() => setStep((s) => s + 1)}
         onSubmit={handleCreateWorkspace}
-        submitLabel="Create Institution Workspace"
+        submitLabel="Enter Institution Workspace"
       />
     </SignupShell>
   )

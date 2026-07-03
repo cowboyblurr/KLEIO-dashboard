@@ -27,10 +27,10 @@ type NavItem = {
 const navItems: NavItem[] = [
   { href: "/artist-dashboard/", label: "Overview", icon: LayoutDashboard, activeMatch: "/artist-dashboard" },
   { href: "/artist-dashboard/", label: "Creative Passport", icon: Sparkles, activeMatch: "/artist-dashboard" },
-  { label: "Portfolio", icon: FolderOpen, comingSoon: true },
   { label: "Opportunities", icon: Briefcase, comingSoon: true },
   { label: "Applications", icon: FileText, comingSoon: true },
-  { label: "Messages", icon: MessageSquare, comingSoon: true },
+  { label: "Materials", icon: FolderOpen, comingSoon: true },
+  { label: "Network", icon: MessageSquare, comingSoon: true },
   { label: "Settings", icon: Settings, comingSoon: true },
 ]
 
@@ -41,7 +41,7 @@ export function ArtistSidebar() {
   return (
     <aside className="flex h-full w-64 shrink-0 flex-col border-r border-border bg-sidebar">
       <div className="flex items-center justify-between px-6 pt-6 pb-5">
-        <KleioWordmarkLink className="rounded-md bg-white px-2.5 py-1.5 shadow-sm ring-1 ring-border" />
+        <KleioWordmarkLink href="/" className="rounded-md bg-white px-2.5 py-1.5 shadow-sm ring-1 ring-border" />
       </div>
 
       <nav className="flex-1 overflow-y-auto px-3 pb-4">
@@ -103,7 +103,7 @@ export function ArtistSidebar() {
             href="/"
             className="mt-3 block text-center text-[0.68rem] font-medium text-muted-foreground transition-colors hover:text-foreground"
           >
-            KLEIO homepage
+            Public home
           </Link>
         </div>
       )}
