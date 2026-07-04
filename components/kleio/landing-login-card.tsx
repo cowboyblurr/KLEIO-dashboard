@@ -63,7 +63,7 @@ export function LandingLoginCard() {
 
   return (
     <div
-      className="landing-login-card flex h-full min-h-[300px] flex-col rounded-[1.1rem] p-4"
+      className="landing-login-card flex flex-col rounded-[1.1rem] p-3.5"
       style={{
         backgroundColor: "#FFFFFF",
         border: "1px solid #E7E1F7",

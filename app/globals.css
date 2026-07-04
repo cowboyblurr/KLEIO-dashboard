@@ -182,12 +182,12 @@
 /* ── Landing login card — demo workspace buttons ─────────────────────────── */
 
 .landing-login-card .kleio-demo-workspace {
-  margin-top: auto;
-  padding-top: 14px;
+  margin-top: 14px;
+  padding-top: 12px;
   border-top: 1px solid #eee8fb;
   display: flex;
   flex-direction: column;
-  gap: 11px;
+  gap: 10px;
 }
 
 .kleio-demo-workspace-label {
@@ -199,20 +199,20 @@
 .kleio-demo-workspace-actions {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
+  gap: 9px;
   align-items: stretch;
 }
 
 .kleio-demo-workspace-button {
   width: 100%;
   min-width: 0;
-  min-height: 40px;
-  padding: 0 10px;
+  min-height: 38px;
+  padding: 0 9px;
   border-radius: 9999px;
   border: 1px solid #d8d0f2;
   background-color: #ffffff;
   color: #5b4b8a;
-  font-size: 0.62rem;
+  font-size: 0.6rem;
   line-height: 1.15;
   white-space: normal;
   display: inline-flex;
@@ -245,6 +245,30 @@
   opacity: 0.75;
 }
 
+.landing-import-assist-strip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-top: 1px solid #eee8fb;
+  padding-top: 10px;
+}
+
+.landing-import-assist-title {
+  margin: 0;
+  font-size: 0.62rem;
+  font-weight: 600;
+  color: #5b4b8a;
+  line-height: 1.1;
+}
+
+.landing-import-assist-copy {
+  margin: 2px 0 0;
+  font-size: 0.58rem;
+  line-height: 1.35;
+  font-style: italic;
+  color: #7f7890;
+}
+
 .landing-card-grid {
   margin-bottom: clamp(28px, 4vw, 52px);
 }
@@ -274,6 +298,10 @@
     min-height: 44px;
     font-size: 0.7rem;
     white-space: nowrap;
+  }
+
+  .landing-import-assist-strip {
+    align-items: flex-start;
   }
 }
 
