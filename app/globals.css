@@ -181,11 +181,13 @@
 
 /* ── Landing login card — demo workspace buttons ─────────────────────────── */
 
-.kleio-demo-workspace {
-  margin-top: 18px;
+.landing-login-card .kleio-demo-workspace {
+  margin-top: auto;
+  padding-top: 14px;
+  border-top: 1px solid #eee8fb;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 11px;
 }
 
 .kleio-demo-workspace-label {
@@ -197,14 +199,14 @@
 .kleio-demo-workspace-actions {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
+  gap: 10px;
   align-items: stretch;
 }
 
 .kleio-demo-workspace-button {
   width: 100%;
   min-width: 0;
-  min-height: 42px;
+  min-height: 40px;
   padding: 0 10px;
   border-radius: 9999px;
   border: 1px solid #d8d0f2;
@@ -229,7 +231,7 @@
 
 .kleio-demo-workspace-guided {
   align-self: center;
-  margin-top: 2px;
+  margin-top: 0;
   border: none;
   background: transparent;
   font-size: 0.64rem;
@@ -244,16 +246,25 @@
 }
 
 .landing-card-grid {
-  margin-bottom: clamp(20px, 3vw, 36px);
+  margin-bottom: clamp(28px, 4vw, 52px);
 }
 
 .landing-quote {
-  margin-top: clamp(8px, 1.5vw, 16px);
+  margin-top: 0;
   padding-top: 8px;
   padding-bottom: 8px;
 }
 
 @media (max-width: 720px) {
+  .landing-card-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .landing-login-card,
+  .landing-choice-card {
+    min-height: auto;
+  }
+
   .kleio-demo-workspace-actions {
     grid-template-columns: 1fr;
     gap: 10px;

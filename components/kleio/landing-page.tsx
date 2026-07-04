@@ -142,11 +142,11 @@ export function LandingPage() {
         </div>
 
         {/* Row 3 — login + join cards */}
-        <div className="landing-card-grid mx-auto grid w-full max-w-[980px] grid-cols-[minmax(0,1fr)_26px_minmax(0,1fr)] items-start gap-4">
+        <div className="landing-card-grid mx-auto grid w-full max-w-[1040px] grid-cols-[minmax(0,1fr)_32px_minmax(0,1fr)] items-stretch gap-5 max-md:grid-cols-1 max-md:gap-4">
           <LandingLoginCard />
 
           {/* "or" divider */}
-          <div className="flex items-center justify-center">
+          <div className="landing-or-divider flex items-center justify-center max-md:hidden">
             <div className="flex flex-col items-center justify-center">
               <div className="h-6 w-px" style={{ backgroundColor: lavenderLine }} />
               <span className="my-1.5 font-serif text-[0.8rem] italic" style={{ color: mutedColor }}>
@@ -158,21 +158,23 @@ export function LandingPage() {
 
           {/* Join card */}
           <div
-            className="flex flex-col rounded-[1.1rem] p-3.5"
+            className="landing-choice-card flex h-full min-h-[300px] flex-col justify-between rounded-[1.1rem] p-4"
             style={{
               backgroundColor: cardBg,
               border: `1px solid ${lavenderSoftLine}`,
               boxShadow: cardShadow,
             }}
           >
-            <h2 className="font-serif text-[0.95rem] font-semibold" style={{ color: inkColor, letterSpacing: "-0.01em" }}>
-              {t("landing.choosePath.title")}
-            </h2>
-            <p className="mt-0.5 text-[0.68rem]" style={{ color: mutedColor }}>
-              {t("landing.choosePath.subtitle")}
-            </p>
+            <div>
+              <h2 className="font-serif text-[0.95rem] font-semibold" style={{ color: inkColor, letterSpacing: "-0.01em" }}>
+                {t("landing.choosePath.title")}
+              </h2>
+              <p className="mt-0.5 text-[0.68rem]" style={{ color: mutedColor }}>
+                {t("landing.choosePath.subtitle")}
+              </p>
+            </div>
 
-            <div className="mt-2.5 grid grid-cols-2 gap-2.5">
+            <div className="mt-4 grid grid-cols-2 gap-3">
               <Link
                 href="/signup/artist/"
                 className="group flex h-[70px] flex-col justify-between rounded-[0.85rem] border p-2.5 transition-colors hover:border-[#A997E8] hover:bg-[#F7F4FF]"
@@ -211,7 +213,8 @@ export function LandingPage() {
                 </span>
               </Link>
             </div>
-            <p className="mt-2 text-center text-[0.6rem] italic" style={{ color: mutedColor }}>
+
+            <p className="mt-4 text-center text-[0.6rem] italic" style={{ color: mutedColor }}>
               {t("landing.importAssist.note")}
             </p>
           </div>
