@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react"
 import { AuthGate } from "@/components/kleio/auth-gate"
+import { KleioDemoGuide } from "@/components/kleio/kleio-demo-guide"
 import { Sidebar } from "@/components/kleio/sidebar"
 import { TopBar } from "@/components/kleio/top-bar"
 
@@ -15,6 +16,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
           <div className="min-h-0 flex-1 overflow-hidden">{children}</div>
         </div>
       </div>
+      <KleioDemoGuide variant="workspace" />
     </AuthGate>
   )
 }

@@ -8,6 +8,7 @@ import {
   loginDemoUser,
   validateDemoCredentials,
 } from "@/lib/kleio-demo-auth"
+import { persistDemoGuideState } from "@/components/kleio/use-demo-guide"
 import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
 
 export function LandingLoginCard() {
@@ -47,6 +48,17 @@ export function LandingLoginCard() {
     setError("")
     loginDemoUser("collaborator")
     routeForRole("collaborator")
+  }
+
+  function handleStartGuidedDemo() {
+    setError("")
+    persistDemoGuideState({
+      isOpen: true,
+      isMinimized: false,
+      dismissed: false,
+      activeScenarioId: null,
+      activeStepId: null,
+    })
   }
 
   return (
@@ -144,6 +156,15 @@ export function LandingLoginCard() {
           {t("landing.login.enterCollaboratorDemo")}
         </button>
       </div>
+
+      <button
+        type="button"
+        onClick={handleStartGuidedDemo}
+        className="mt-2 w-full text-center text-[0.64rem] font-medium transition-opacity hover:opacity-75"
+        style={{ color: "#7F7890" }}
+      >
+        {t("demoGuide.startGuidedDemo")}
+      </button>
     </div>
   )
 }

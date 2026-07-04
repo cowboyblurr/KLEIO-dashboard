@@ -399,6 +399,73 @@ const enMessages: Record<string, string> = {
     "KLEIO prepared a demo report preview from program outcomes, reviewer activity, and shortlist context.",
   "assist.object.demoOnlyNote": "Demo-only preparation. No real files were exported.",
 
+  // ── demoGuide ──────────────────────────────────────────────────────────────
+  "demoGuide.label": "Guide",
+  "demoGuide.title": "KLEIO Guide",
+  "demoGuide.startGuidedDemo": "Start guided demo",
+  "demoGuide.hide": "Hide",
+  "demoGuide.dismiss": "Dismiss",
+  "demoGuide.openGuide": "Open KLEIO Guide",
+  "demoGuide.next": "Next",
+  "demoGuide.back": "Back",
+  "demoGuide.takeMeThere": "Take me there",
+  "demoGuide.reset": "Reset demo",
+  "demoGuide.chooseScenario": "Choose a demo scenario",
+  "demoGuide.progress": "Step {current} of {total}",
+  "demoGuide.loginHint":
+    "Choose a scenario, then open the Institution, Artist, or Collaborator demo to follow each step. KLEIO guides — you approve what becomes official.",
+  "demoGuide.roleMismatch.institution": "Open the institution demo to continue this step.",
+  "demoGuide.roleMismatch.artist": "Open the artist demo to continue this step.",
+  "demoGuide.roleMismatch.collaborator": "Open the collaborator demo to continue this step.",
+  "demoGuide.scenario.deadlineTriage.title": "Deadline Triage",
+  "demoGuide.scenario.deadlineTriage.summary":
+    "Resolve an incomplete but promising application before the deadline.",
+  "demoGuide.scenario.reviewerBottleneck.title": "Reviewer Bottleneck",
+  "demoGuide.scenario.reviewerBottleneck.summary":
+    "Move a strong applicant forward by resolving a pending reviewer action.",
+  "demoGuide.scenario.strongShortlist.title": "Strong Candidate Shortlist",
+  "demoGuide.scenario.strongShortlist.summary":
+    "Move a high-scoring artist into the shortlist with decision context preserved.",
+  "demoGuide.scenario.artistOpportunityPrep.title": "Artist Opportunity Prep",
+  "demoGuide.scenario.artistOpportunityPrep.summary":
+    "Prepare a reusable opportunity draft from the Creative Passport.",
+  "demoGuide.step.deadlineTriage.1.title": "Open the review queue",
+  "demoGuide.step.deadlineTriage.1.body":
+    "Mei Lin Zhang submitted a strong proposal but three materials are still missing. Open the review queue and inspect the submission drawer.",
+  "demoGuide.step.deadlineTriage.2.title": "Review the drafted request",
+  "demoGuide.step.deadlineTriage.2.body":
+    "KLEIO prepared a request-info message for missing materials. Review the draft before sending — you approve what goes out.",
+  "demoGuide.step.deadlineTriage.3.title": "Check activity context",
+  "demoGuide.step.deadlineTriage.3.body":
+    "Use the activity log to see completeness checks and triage history before the August 14 deadline.",
+  "demoGuide.step.reviewerBottleneck.1.title": "See the committee bottleneck",
+  "demoGuide.step.reviewerBottleneck.1.body":
+    "Sofia Karim has two completed reviews but one pending committee vote. Open the committee view to see who still needs to act.",
+  "demoGuide.step.reviewerBottleneck.2.title": "Switch to collaborator review",
+  "demoGuide.step.reviewerBottleneck.2.body":
+    "Open the collaborator demo to see Mateo Alvarez's pending assignment on Sofia Karim's application.",
+  "demoGuide.step.reviewerBottleneck.3.title": "Confirm vote activity",
+  "demoGuide.step.reviewerBottleneck.3.body":
+    "Return to the activity log to narrate how pending votes surface before shortlist decisions.",
+  "demoGuide.step.strongShortlist.1.title": "Open the priority submission",
+  "demoGuide.step.strongShortlist.1.body":
+    "Amina El Badri has complete materials and strong reviewer scores. Open the dashboard drawer to review context in one place.",
+  "demoGuide.step.strongShortlist.2.title": "Move toward shortlist",
+  "demoGuide.step.strongShortlist.2.body":
+    "Open the shortlist view to see how a high-scoring candidate is organized for committee review. You approve the move.",
+  "demoGuide.step.strongShortlist.3.title": "Prepare report context",
+  "demoGuide.step.strongShortlist.3.body":
+    "Open reports to prepare institutional memory from program outcomes and shortlist context — demo preview only.",
+  "demoGuide.step.artistOpportunityPrep.1.title": "Review opportunity matches",
+  "demoGuide.step.artistOpportunityPrep.1.body":
+    "KLEIO is checking fit, deadlines, and materials readiness. Review matched opportunities in the artist workspace.",
+  "demoGuide.step.artistOpportunityPrep.2.title": "Prepare an application draft",
+  "demoGuide.step.artistOpportunityPrep.2.body":
+    "Open applications to prepare a reusable draft from passport fields. You review and edit before submitting.",
+  "demoGuide.step.artistOpportunityPrep.3.title": "Confirm passport materials",
+  "demoGuide.step.artistOpportunityPrep.3.body":
+    "Open the Creative Passport to confirm bio, statement, and materials are organized for reuse across opportunities.",
+
   // ── nav.artist ───────────────────────────────────────────────────────────
   "nav.artist.workspace": "Artist Workspace",
   "nav.artist.overview": "Overview",
@@ -1444,6 +1511,73 @@ const esMessages: Record<string, string> = {
   "assist.object.reportPrepared.description":
     "KLEIO preparó una vista previa demo del informe a partir de resultados del programa, actividad de revisores y contexto de lista corta.",
   "assist.object.demoOnlyNote": "Preparación solo para demo. No se exportaron archivos reales.",
+
+  // ── demoGuide ──────────────────────────────────────────────────────────────
+  "demoGuide.label": "Guía",
+  "demoGuide.title": "Guía KLEIO",
+  "demoGuide.startGuidedDemo": "Iniciar demo guiada",
+  "demoGuide.hide": "Ocultar",
+  "demoGuide.dismiss": "Descartar",
+  "demoGuide.openGuide": "Abrir Guía KLEIO",
+  "demoGuide.next": "Siguiente",
+  "demoGuide.back": "Atrás",
+  "demoGuide.takeMeThere": "Ir ahí",
+  "demoGuide.reset": "Restablecer demo",
+  "demoGuide.chooseScenario": "Elige un escenario demo",
+  "demoGuide.progress": "Paso {current} de {total}",
+  "demoGuide.loginHint":
+    "Elige un escenario y luego abre el demo Institucional, Artista o Colaborador para seguir cada paso. KLEIO guía — tú apruebas lo que se vuelve oficial.",
+  "demoGuide.roleMismatch.institution": "Abre el demo institucional para continuar este paso.",
+  "demoGuide.roleMismatch.artist": "Abre el demo de artista para continuar este paso.",
+  "demoGuide.roleMismatch.collaborator": "Abre el demo de colaborador para continuar este paso.",
+  "demoGuide.scenario.deadlineTriage.title": "Triaje de fecha límite",
+  "demoGuide.scenario.deadlineTriage.summary":
+    "Resuelve una postulación incompleta pero prometedora antes de la fecha límite.",
+  "demoGuide.scenario.reviewerBottleneck.title": "Cuello de botella de revisión",
+  "demoGuide.scenario.reviewerBottleneck.summary":
+    "Avanza una postulación fuerte resolviendo una acción pendiente del revisor.",
+  "demoGuide.scenario.strongShortlist.title": "Candidatura fuerte a lista corta",
+  "demoGuide.scenario.strongShortlist.summary":
+    "Lleva a una artista con puntaje alto a lista corta conservando el contexto de decisión.",
+  "demoGuide.scenario.artistOpportunityPrep.title": "Preparación de oportunidad artística",
+  "demoGuide.scenario.artistOpportunityPrep.summary":
+    "Prepara un borrador reutilizable de oportunidad desde el Pasaporte Creativo.",
+  "demoGuide.step.deadlineTriage.1.title": "Abre la cola de revisión",
+  "demoGuide.step.deadlineTriage.1.body":
+    "Mei Lin Zhang envió una propuesta fuerte pero faltan tres materiales. Abre la cola de revisión e inspecciona el panel de la postulación.",
+  "demoGuide.step.deadlineTriage.2.title": "Revisa la solicitud preparada",
+  "demoGuide.step.deadlineTriage.2.body":
+    "KLEIO preparó un mensaje de solicitud de información. Revisa el borrador antes de enviar — tú apruebas lo que sale.",
+  "demoGuide.step.deadlineTriage.3.title": "Revisa el contexto de actividad",
+  "demoGuide.step.deadlineTriage.3.body":
+    "Usa el registro de actividad para ver revisiones de completitud e historial de triaje antes del 14 de agosto.",
+  "demoGuide.step.reviewerBottleneck.1.title": "Ve el cuello de botella del comité",
+  "demoGuide.step.reviewerBottleneck.1.body":
+    "Sofia Karim tiene dos revisiones completas pero un voto de comité pendiente. Abre la vista del comité para ver quién debe actuar.",
+  "demoGuide.step.reviewerBottleneck.2.title": "Cambia a revisión de colaborador",
+  "demoGuide.step.reviewerBottleneck.2.body":
+    "Abre el demo de colaborador para ver la asignación pendiente de Mateo Alvarez en la postulación de Sofia Karim.",
+  "demoGuide.step.reviewerBottleneck.3.title": "Confirma la actividad de votos",
+  "demoGuide.step.reviewerBottleneck.3.body":
+    "Vuelve al registro de actividad para narrar cómo los votos pendientes aparecen antes de decisiones de lista corta.",
+  "demoGuide.step.strongShortlist.1.title": "Abre la postulación prioritaria",
+  "demoGuide.step.strongShortlist.1.body":
+    "Amina El Badri tiene materiales completos y puntajes altos. Abre el panel del tablero para revisar el contexto en un solo lugar.",
+  "demoGuide.step.strongShortlist.2.title": "Avanza hacia lista corta",
+  "demoGuide.step.strongShortlist.2.body":
+    "Abre la vista de lista corta para ver cómo se organiza una candidata con puntaje alto. Tú apruebas el movimiento.",
+  "demoGuide.step.strongShortlist.3.title": "Prepara contexto del informe",
+  "demoGuide.step.strongShortlist.3.body":
+    "Abre informes para preparar memoria institucional desde resultados y contexto de lista corta — solo vista previa demo.",
+  "demoGuide.step.artistOpportunityPrep.1.title": "Revisa coincidencias de oportunidades",
+  "demoGuide.step.artistOpportunityPrep.1.body":
+    "KLEIO está revisando afinidad, fechas límite y preparación de materiales. Revisa oportunidades coincidentes en el espacio del artista.",
+  "demoGuide.step.artistOpportunityPrep.2.title": "Prepara un borrador de postulación",
+  "demoGuide.step.artistOpportunityPrep.2.body":
+    "Abre postulaciones para preparar un borrador reutilizable desde campos del pasaporte. Revisas y editas antes de enviar.",
+  "demoGuide.step.artistOpportunityPrep.3.title": "Confirma materiales del pasaporte",
+  "demoGuide.step.artistOpportunityPrep.3.body":
+    "Abre el Pasaporte Creativo para confirmar que biografía, declaración y materiales están organizados para reutilizar.",
 
   // ── nav.artist ───────────────────────────────────────────────────────────
   "nav.artist.workspace": "Espacio del artista",

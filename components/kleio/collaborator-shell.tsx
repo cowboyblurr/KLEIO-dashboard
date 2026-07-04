@@ -3,6 +3,7 @@
 import type { ReactNode } from "react"
 import { AuthGate } from "@/components/kleio/auth-gate"
 import { CollaboratorSidebar } from "@/components/kleio/collaborator-sidebar"
+import { KleioDemoGuide } from "@/components/kleio/kleio-demo-guide"
 
 export function CollaboratorShell({ children }: { children: ReactNode }) {
   return (
@@ -11,6 +12,7 @@ export function CollaboratorShell({ children }: { children: ReactNode }) {
         <CollaboratorSidebar />
         <div className="min-w-0 flex-1 overflow-hidden">{children}</div>
       </div>
+      <KleioDemoGuide variant="workspace" />
     </AuthGate>
   )
 }

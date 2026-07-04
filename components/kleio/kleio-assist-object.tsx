@@ -149,6 +149,40 @@ function AssistObjectStage({
   )
 }
 
+/** Standalone visual — circular stage + video + ring. Same composition as inside KleioAssistObject. */
+export function KleioAssistObjectVisual({
+  size = "sm",
+  mode = "idle",
+  className,
+}: {
+  size?: KleioAssistObjectSize
+  mode?: KleioAssistObjectMode
+  className?: string
+}) {
+  const [videoError, setVideoError] = useState(false)
+  const [reducedMotion, setReducedMotion] = useState(false)
+
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)")
+    const update = () => setReducedMotion(mq.matches)
+    update()
+    mq.addEventListener("change", update)
+    return () => mq.removeEventListener("change", update)
+  }, [])
+
+  return (
+    <div className={className}>
+      <AssistObjectStage
+        size={size}
+        mode={mode}
+        videoError={videoError}
+        reducedMotion={reducedMotion}
+        onVideoError={() => setVideoError(true)}
+      />
+    </div>
+  )
+}
+
 export function KleioAssistObject({
   mode = "idle",
   title,

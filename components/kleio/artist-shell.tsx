@@ -3,6 +3,7 @@
 import type { ReactNode } from "react"
 import { AuthGate } from "@/components/kleio/auth-gate"
 import { ArtistSidebar } from "@/components/kleio/artist-sidebar"
+import { KleioDemoGuide } from "@/components/kleio/kleio-demo-guide"
 
 export function ArtistShell({ children }: { children: ReactNode }) {
   return (
@@ -11,6 +12,7 @@ export function ArtistShell({ children }: { children: ReactNode }) {
         <ArtistSidebar />
         <div className="min-w-0 flex-1 overflow-hidden">{children}</div>
       </div>
+      <KleioDemoGuide variant="workspace" />
     </AuthGate>
   )
 }

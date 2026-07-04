@@ -7,6 +7,7 @@ import { LandingLoginCard } from "@/components/kleio/landing-login-card"
 import { ExploreArthouseLink } from "@/components/kleio/smart-home-link"
 import { KleioWordmarkLink } from "@/components/kleio/kleio-wordmark-link"
 import { KleioLocaleToggle } from "@/components/kleio/kleio-locale-toggle"
+import { KleioDemoGuide } from "@/components/kleio/kleio-demo-guide"
 import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
 
 // ─── tiny icon components ────────────────────────────────────────────────────
@@ -234,6 +235,8 @@ export function LandingPage() {
       >
         © 2026 KLEIO ARTHOUSE
       </footer>
+
+      <KleioDemoGuide variant="landing" />
     </main>
   )
 }

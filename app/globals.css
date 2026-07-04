@@ -299,3 +299,14 @@
     animation: none !important;
   }
 }
+
+/* ── KLEIO Demo Guide ─────────────────────────────────────────────────────── */
+
+.kleio-demo-guide-anchor {
+  pointer-events: none;
+}
+
+.kleio-demo-guide-minimized,
+.kleio-demo-guide-panel {
+  pointer-events: auto;
+}
