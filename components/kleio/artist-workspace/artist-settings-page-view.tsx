@@ -1,8 +1,11 @@
+"use client"
+
 import Link from "next/link"
 import { Globe, Bell, Lock, User } from "lucide-react"
 import { DEMO_ARTIST_PUBLIC_PROFILE, inkColor, mutedColor, lavenderSoftLine, cardStyle } from "@/lib/workspace-styles"
 import { WorkspacePageHeader } from "@/components/kleio/workspace-page-header"
 import { WorkflowCard } from "@/components/kleio/workflow-card"
+import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
 
 const settingsGroups = [
   {
@@ -28,15 +31,16 @@ const settingsGroups = [
 ]
 
 export function ArtistSettingsPageView() {
+  const { t } = useKleioLocale()
   return (
     <main className="h-full overflow-y-auto px-6 py-6">
       <div className="mx-auto max-w-[1180px] space-y-5">
         <WorkspacePageHeader
-          eyebrow="Workspace settings"
-          title="Artist Settings"
-          description="Manage artist workspace preferences, profile visibility, demo settings, and Creative Passport defaults."
-          primaryCta={{ label: "View Public Profile", href: DEMO_ARTIST_PUBLIC_PROFILE }}
-          secondaryCta={{ label: "Back to Artist Overview", href: "/artist-dashboard/" }}
+          eyebrow={t("artist.workspace.settings.eyebrow")}
+          title={t("artist.workspace.settings.title")}
+          description={t("artist.workspace.settings.description")}
+          primaryCta={{ label: t("artist.workspace.settings.cta.viewPublicProfile"), href: DEMO_ARTIST_PUBLIC_PROFILE }}
+          secondaryCta={{ label: t("artist.workspace.settings.cta.backToOverview"), href: "/artist-dashboard/" }}
         />
 
         <div className="grid gap-4 md:grid-cols-2">

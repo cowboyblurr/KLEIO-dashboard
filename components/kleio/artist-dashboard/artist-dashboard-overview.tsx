@@ -26,6 +26,7 @@ import type { kleioSyntheticArtistProfiles } from "@/lib/kleio-profile-data"
 import { assetPath } from "@/lib/asset-path"
 import { InitialAvatar } from "@/components/kleio/initial-avatar"
 import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
+import { translateStatus } from "@/lib/kleio-i18n"
 import { cn } from "@/lib/utils"
 
 type ArtistAssetProfile = (typeof kleioSyntheticArtistProfiles)[number]
@@ -80,6 +81,7 @@ function CardHeader({ title, action }: { title: string; action?: string }) {
 }
 
 function StatusChip({ status }: { status: ArtistDashboardApplicationStatus }) {
+  const { locale } = useKleioLocale()
   const styleByStatus: Record<ArtistDashboardApplicationStatus, string> = {
     Draft: "bg-[oklch(0.94_0.035_245)] text-[oklch(0.42_0.12_245)]",
     Submitted: "bg-[oklch(0.94_0.04_150)] text-[oklch(0.38_0.11_150)]",
@@ -92,7 +94,7 @@ function StatusChip({ status }: { status: ArtistDashboardApplicationStatus }) {
 
   return (
     <span className={cn("inline-flex rounded-full px-2 py-0.5 text-[0.65rem] font-semibold", styleByStatus[status])}>
-      {status}
+      {translateStatus(locale, status)}
     </span>
   )
 }
@@ -108,6 +110,8 @@ function ProgressBar({ value, tone = "lavender" }: { value: number; tone?: "lave
 }
 
 function TopBar({ artist, portrait }: { artist: Artist; portrait?: string }) {
+  const { t } = useKleioLocale()
+
   return (
     <div className="grid grid-cols-[minmax(0,1fr)_190px_auto] items-center gap-3 max-lg:grid-cols-1">
       <label
@@ -117,7 +121,7 @@ function TopBar({ artist, portrait }: { artist: Artist; portrait?: string }) {
         <Search className="size-4 shrink-0" style={{ color: mutedColor }} />
         <input
           type="search"
-          placeholder="Search opportunities, programs, or resources..."
+          placeholder={t("artist.workspace.overview.searchPlaceholder")}
           className="h-full min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-[#A8A1B8]"
           style={{ color: inkColor }}
         />
@@ -128,19 +132,19 @@ function TopBar({ artist, portrait }: { artist: Artist; portrait?: string }) {
         className="flex h-11 items-center justify-between rounded-2xl border bg-white px-4 text-sm font-medium"
         style={{ borderColor: lavenderSoftLine, color: inkColor }}
       >
-        All Programs
+        {t("artist.workspace.overview.allPrograms")}
         <ChevronDown className="size-4" style={{ color: mutedColor }} />
       </button>
 
       <div className="flex items-center justify-end gap-2 max-lg:justify-between">
-        <button type="button" aria-label="Notifications" className="grid size-10 place-items-center rounded-full border bg-white" style={{ borderColor: lavenderSoftLine }}>
+        <button type="button" aria-label={t("artist.workspace.overview.notifications")} className="grid size-10 place-items-center rounded-full border bg-white" style={{ borderColor: lavenderSoftLine }}>
           <Bell className="size-4" style={{ color: lavenderDeep }} />
         </button>
-        <button type="button" aria-label="Messages" className="grid size-10 place-items-center rounded-full border bg-white" style={{ borderColor: lavenderSoftLine }}>
+        <button type="button" aria-label={t("artist.workspace.overview.messages")} className="grid size-10 place-items-center rounded-full border bg-white" style={{ borderColor: lavenderSoftLine }}>
           <Mail className="size-4" style={{ color: mutedColor }} />
         </button>
         <button type="button" className="h-10 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90">
-          + New Application
+          {t("artist.workspace.overview.newApplication")}
         </button>
         <button type="button" className="flex h-11 items-center gap-3 rounded-2xl border bg-white px-3" style={{ borderColor: lavenderSoftLine }}>
           {portrait ? (
@@ -247,7 +251,7 @@ function HeroCard({
                 {assetProfile.displayName}
               </p>
               <Link href={`/artist/${assetProfile.username}/`} className="text-[0.72rem] font-medium transition-opacity hover:opacity-75" style={{ color: lavenderDeep }}>
-                View public profile →
+                {t("artist.workspace.overview.viewPublicProfile")}
               </Link>
             </div>
           </div>
@@ -279,9 +283,11 @@ function HeroCard({
 }
 
 function SelectedWorksPreview({ assetProfile }: { assetProfile: ArtistAssetProfile }) {
+  const { t } = useKleioLocale()
+
   return (
     <Card className="p-4">
-      <CardHeader title="Selected Works" action="View public profile" />
+      <CardHeader title={t("artist.workspace.overview.selectedWorks.title")} action={t("artist.workspace.overview.selectedWorks.action")} />
       <div className="grid grid-cols-3 gap-2">
         {assetProfile.selectedWorks.map((work) => (
           <Link
@@ -305,18 +311,20 @@ function SelectedWorksPreview({ assetProfile }: { assetProfile: ArtistAssetProfi
 }
 
 function ApplicationTracker({ profile }: { profile: ArtistDashboardProfile }) {
+  const { t } = useKleioLocale()
+
   return (
     <Card className="p-4">
-      <CardHeader title="Application Tracker" action="View all applications" />
+      <CardHeader title={t("artist.workspace.overview.applicationTracker.title")} action={t("artist.workspace.overview.applicationTracker.action")} />
       <div className="overflow-x-auto">
         <table className="w-full min-w-[700px] text-left">
           <thead>
             <tr className="border-b text-[0.68rem] uppercase tracking-wide" style={{ borderColor: lavenderSoftLine, color: mutedColor }}>
-              <th className="py-2 font-semibold">Program</th>
-              <th className="py-2 font-semibold">Status</th>
-              <th className="py-2 font-semibold">Due Date</th>
-              <th className="py-2 font-semibold">Updated</th>
-              <th className="py-2 text-right font-semibold">Actions</th>
+              <th className="py-2 font-semibold">{t("artist.workspace.overview.applicationTracker.column.program")}</th>
+              <th className="py-2 font-semibold">{t("artist.workspace.overview.applicationTracker.column.status")}</th>
+              <th className="py-2 font-semibold">{t("artist.workspace.overview.applicationTracker.column.dueDate")}</th>
+              <th className="py-2 font-semibold">{t("artist.workspace.overview.applicationTracker.column.updated")}</th>
+              <th className="py-2 text-right font-semibold">{t("artist.workspace.overview.applicationTracker.column.actions")}</th>
             </tr>
           </thead>
           <tbody>
@@ -350,9 +358,11 @@ function ApplicationTracker({ profile }: { profile: ArtistDashboardProfile }) {
 }
 
 function DecisionTimeline({ profile }: { profile: ArtistDashboardProfile }) {
+  const { t } = useKleioLocale()
+
   return (
     <Card className="p-4">
-      <CardHeader title="Decision Timeline" action="View all" />
+      <CardHeader title={t("artist.workspace.overview.decisionTimeline.title")} action={t("artist.workspace.overview.viewAll")} />
       <div className="space-y-3">
         {profile.timeline.map((item) => (
           <div key={item.program} className="flex gap-3">
@@ -378,11 +388,13 @@ function DecisionTimeline({ profile }: { profile: ArtistDashboardProfile }) {
 }
 
 function ArtistSpectrumMatches({ profile }: { profile: ArtistDashboardProfile }) {
+  const { t } = useKleioLocale()
+
   return (
     <Card className="p-4">
-      <CardHeader title="Artist Spectrum Matches" action="View all" />
+      <CardHeader title={t("artist.workspace.overview.spectrumMatches.title")} action={t("artist.workspace.overview.viewAll")} />
       <p className="mb-3 text-xs leading-relaxed" style={{ color: mutedColor }}>
-        Suggested based on practice context and opportunity fit.
+        {t("artist.workspace.overview.spectrumMatches.description")}
       </p>
       <div className="grid gap-3 sm:grid-cols-3">
         {profile.collaboratorMatches.map((match) => (
@@ -403,7 +415,7 @@ function ArtistSpectrumMatches({ profile }: { profile: ArtistDashboardProfile })
             </div>
             <div className="mt-3 flex items-center gap-2">
               <button type="button" className="h-8 flex-1 rounded-lg border text-xs font-semibold transition-colors hover:bg-primary/5" style={{ borderColor: lavenderLine, color: lavenderDeep }}>
-                Invite
+                {t("artist.workspace.overview.spectrumMatches.invite")}
               </button>
               <button type="button" aria-label={`Message ${match.name}`} className="grid size-8 place-items-center rounded-lg border transition-colors hover:bg-primary/5" style={{ borderColor: lavenderLine, color: lavenderDeep }}>
                 <MessageCircle className="size-3.5" />
@@ -417,9 +429,11 @@ function ArtistSpectrumMatches({ profile }: { profile: ArtistDashboardProfile })
 }
 
 function NextBestActions({ profile }: { profile: ArtistDashboardProfile }) {
+  const { t } = useKleioLocale()
+
   return (
     <Card className="p-4">
-      <CardHeader title="Next Best Actions" />
+      <CardHeader title={t("artist.workspace.overview.nextActions.title")} />
       <div className="space-y-3">
         {profile.nextActions.map((action, index) => (
           <div key={action.program} className="flex items-start gap-3">
@@ -441,7 +455,7 @@ function NextBestActions({ profile }: { profile: ArtistDashboardProfile }) {
         ))}
       </div>
       <button type="button" className="mt-4 flex w-full items-center justify-between border-t pt-3 text-xs font-medium" style={{ borderColor: lavenderSoftLine, color: lavenderDeep }}>
-        View all actions
+        {t("artist.workspace.overview.nextActions.viewAll")}
         <ChevronRight className="size-3.5" />
       </button>
     </Card>
@@ -455,14 +469,16 @@ function PassportCompleteness({
   profile: ArtistDashboardProfile
   analytics: ArtistAnalytics
 }) {
+  const { t } = useKleioLocale()
+
   return (
     <Card className="p-4">
       <div className="mb-4 flex items-center justify-between gap-3">
         <h2 className="text-sm font-semibold" style={{ color: inkColor }}>
-          Passport Completeness
+          {t("artist.workspace.overview.passportCompleteness.title")}
         </h2>
         <span className="rounded-full px-2 py-1 text-[0.65rem] font-semibold" style={{ backgroundColor: lavenderMist, color: lavenderDeep }}>
-          {analytics.passportCompletenessPct}% Complete
+          {t("artist.workspace.overview.passportCompleteness.complete", { pct: analytics.passportCompletenessPct })}
         </span>
       </div>
       <div className="space-y-2.5">
@@ -482,7 +498,7 @@ function PassportCompleteness({
         ))}
       </div>
       <button type="button" className="mt-4 flex w-full items-center justify-between border-t pt-3 text-xs font-medium" style={{ borderColor: lavenderSoftLine, color: lavenderDeep }}>
-        Review passport
+        {t("artist.workspace.overview.passportCompleteness.review")}
         <ChevronRight className="size-3.5" />
       </button>
     </Card>
@@ -490,17 +506,19 @@ function PassportCompleteness({
 }
 
 function QuietInsights({ profile }: { profile: ArtistDashboardProfile }) {
+  const { t } = useKleioLocale()
+
   return (
     <Card className="p-4">
       <div className="mb-4 flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <Sparkles className="size-4" style={{ color: lavenderDeep }} />
           <h2 className="text-sm font-semibold" style={{ color: inkColor }}>
-            Quiet Insights
+            {t("artist.workspace.overview.quietInsights.title")}
           </h2>
         </div>
         <span className="rounded-full px-2 py-0.5 text-[0.62rem] font-semibold" style={{ backgroundColor: lavenderMist, color: lavenderDeep }}>
-          New
+          {t("artist.workspace.overview.quietInsights.new")}
         </span>
       </div>
       <ul className="space-y-2.5">

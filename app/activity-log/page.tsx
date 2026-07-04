@@ -1,3 +1,5 @@
+"use client"
+
 import Link from "next/link"
 import { DashboardShell } from "@/components/kleio/dashboard-shell"
 import { activityLog } from "@/lib/kleio-data"
@@ -6,6 +8,7 @@ import { inkColor, mutedColor, lavenderSoftLine, cardStyle } from "@/lib/workspa
 import { WorkspacePageHeader } from "@/components/kleio/workspace-page-header"
 import { SearchFilterBar } from "@/components/kleio/search-filter-bar"
 import { DemoStatusChip } from "@/components/kleio/demo-status-chip"
+import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
 
 const filterChips = ["All Activity", "Submissions", "Reviews", "Decisions", "Reports"]
 
@@ -25,22 +28,24 @@ function typeTone(type: string): "default" | "success" | "warning" | "info" {
 }
 
 export default function Page() {
+  const { t } = useKleioLocale()
+
   return (
     <DashboardShell>
       <main className="h-full overflow-y-auto px-6 py-6">
         <div className="mx-auto max-w-[1180px] space-y-5">
           <WorkspacePageHeader
-            eyebrow="Institutional memory"
-            title="Activity Log"
-            description="Preserve review activity, status changes, messages, shortlist movement, and report history in one institutional record."
-            primaryCta={{ label: "Prepare Report", href: "/reports/new/" }}
-            secondaryCta={{ label: "Back to Dashboard", href: "/dashboard/" }}
+            eyebrow={t("institution.workspace.activityLog.eyebrow")}
+            title={t("institution.workspace.activityLog.title")}
+            description={t("institution.workspace.activityLog.description")}
+            primaryCta={{ label: t("institution.workspace.activityLog.cta.prepareReport"), href: "/reports/new/" }}
+            secondaryCta={{ label: t("institution.workspace.activityLog.cta.backToDashboard"), href: "/dashboard/" }}
           />
 
           <section className="rounded-2xl border bg-white p-5" style={cardStyle}>
-            <SearchFilterBar placeholder="Search activity, artists, programs..." filterChips={filterChips} />
+            <SearchFilterBar placeholder={t("institution.workspace.activityLog.searchPlaceholder")} filterChips={filterChips} />
             <p className="mt-3 text-sm" style={{ color: mutedColor }}>
-              Showing <span className="font-medium" style={{ color: inkColor }}>{getActivityLogCount()}</span> recorded activities across your institution workspace.
+              {t("institution.workspace.activityLog.showingCount", { count: getActivityLogCount() })}
             </p>
           </section>
 
@@ -74,7 +79,7 @@ export default function Page() {
           </section>
 
           <section className="rounded-2xl border bg-[#F7F4FF] p-5" style={{ ...cardStyle, borderColor: lavenderSoftLine }}>
-            <p className="text-sm font-medium" style={{ color: inkColor }}>Foundation activity examples</p>
+            <p className="text-sm font-medium" style={{ color: inkColor }}>{t("common.foundationWorkflow")}</p>
             <ul className="mt-2 space-y-1 text-sm" style={{ color: mutedColor }}>
               {activityExamples.map((item) => (
                 <li key={item}>· {item}</li>

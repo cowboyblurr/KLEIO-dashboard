@@ -178,7 +178,7 @@ export function getArtistMaterialReadiness(profile: { materialsReady: Record<str
 export type ArtistDeadlineEntry = {
   title: string
   dateIso: string
-  type: string
+  type: ArtistDashboardApplicationStatus
   urgency: ArtistDeadlineUrgency
   days: number
 }

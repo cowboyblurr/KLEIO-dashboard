@@ -14,7 +14,10 @@ const collaborators = [
   { name: "Nadia Clarke", location: "Toronto, Canada", tags: ["Installation", "Archives", "Community Work"], themes: ["Identity", "Space"] },
 ]
 
+import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
+
 export function ArtistCollaboratorsPageView() {
+  const { t } = useKleioLocale()
   const [query, setQuery] = useState("")
   const filtered = collaborators.filter((c) =>
     `${c.name} ${c.location} ${c.tags.join(" ")}`.toLowerCase().includes(query.toLowerCase()),
@@ -24,11 +27,11 @@ export function ArtistCollaboratorsPageView() {
     <main className="h-full overflow-y-auto px-6 py-6">
       <div className="mx-auto max-w-[1180px] space-y-5">
         <WorkspacePageHeader
-          eyebrow="Artist spectrum matches"
-          title="Collaborators"
-          description="Discover artists and collaborators with related practices, themes, locations, or opportunity interests."
-          primaryCta={{ label: "Open Messages", href: "/artist-dashboard/messages/" }}
-          secondaryCta={{ label: "Explore Opportunities", href: "/artist-dashboard/opportunities/" }}
+          eyebrow={t("artist.workspace.collaborators.eyebrow")}
+          title={t("artist.workspace.collaborators.title")}
+          description={t("artist.workspace.collaborators.description")}
+          primaryCta={{ label: t("artist.workspace.collaborators.cta.openMessages"), href: "/artist-dashboard/messages/" }}
+          secondaryCta={{ label: t("artist.workspace.collaborators.cta.exploreOpportunities"), href: "/artist-dashboard/opportunities/" }}
         />
 
         <section className="rounded-2xl border bg-white p-5" style={cardStyle}>

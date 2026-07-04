@@ -13,7 +13,10 @@ import {
 import { programs } from "@/lib/kleio-data"
 import { DemoPageShell } from "@/components/kleio/demo-page-shell"
 
+import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
+
 export function ReportsPageView() {
+  const { t } = useKleioLocale()
   const [exportConfirmation, setExportConfirmation] = useState<string | null>(null)
   const disciplineDistribution = getDisciplineDistribution()
   const reviewerProgress = getReviewerProgress()
@@ -21,18 +24,18 @@ export function ReportsPageView() {
 
   return (
     <DemoPageShell
-      title="Reports"
-      description="Turn review activity into clear records your team can preserve, export, and revisit."
+      title={t("institution.workspace.reports.title")}
+      description={t("institution.workspace.reports.description")}
     >
       <div className="mb-4 flex flex-wrap items-center gap-3">
         <div className="grid flex-1 grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
           {[
-            ["Total applications", analytics.totalApplications],
-            ["In review", analytics.inReviewCount],
-            ["Shortlisted", analytics.shortlistedCount],
-            ["Pending vote", analytics.pendingVoteCount],
-            ["Incomplete", analytics.incompleteCount],
-            ["Deadlines this week", analytics.deadlinesThisWeekCount],
+            [t("institution.workspace.reports.metric.totalApplications"), analytics.totalApplications],
+            [t("institution.workspace.reports.metric.inReview"), analytics.inReviewCount],
+            [t("institution.workspace.reports.metric.shortlisted"), analytics.shortlistedCount],
+            [t("institution.workspace.reports.metric.pendingVote"), analytics.pendingVoteCount],
+            [t("institution.workspace.reports.metric.incomplete"), analytics.incompleteCount],
+            [t("institution.workspace.reports.metric.deadlinesThisWeek"), analytics.deadlinesThisWeekCount],
           ].map(([label, value]) => (
             <div key={label} className="rounded-2xl border border-border bg-card p-4 shadow-sm">
               <p className="text-xs font-medium text-muted-foreground">{label}</p>
@@ -45,7 +48,7 @@ export function ReportsPageView() {
             href="/reports/new/"
             className="inline-flex h-10 items-center rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
           >
-            Prepare Report
+            {t("institution.workspace.reports.cta.prepareReport")}
           </Link>
           <Link
             href="/activity-log/"

@@ -105,7 +105,7 @@ export function SignupField({
   value: string
   onChange: (value: string) => void
   placeholder?: string
-  type?: "text" | "url"
+  type?: "text" | "url" | "email"
   origin?: "suggested" | "edited"
   list?: string
 }) {

@@ -1,8 +1,11 @@
+"use client"
+
 import Link from "next/link"
 import { FileText, MessageSquare, ClipboardList, Users, FileCheck2, Layers3 } from "lucide-react"
 import { inkColor, mutedColor, lavenderSoftLine, cardStyle } from "@/lib/workspace-styles"
 import { WorkspacePageHeader } from "@/components/kleio/workspace-page-header"
 import { WorkflowCard } from "@/components/kleio/workflow-card"
+import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
 
 const templateCategories = [
   { title: "Open Call", icon: FileText, example: "Grant structure, eligibility language, and required materials list." },
@@ -14,15 +17,16 @@ const templateCategories = [
 ]
 
 export function TemplatesPageView() {
+  const { t } = useKleioLocale()
   return (
     <main className="h-full overflow-y-auto px-6 py-6">
       <div className="mx-auto max-w-[1180px] space-y-5">
         <WorkspacePageHeader
-          eyebrow="Template library"
-          title="Templates"
-          description="Save reusable language, criteria, messages, and review structures for future programs."
-          primaryCta={{ label: "Create Template", href: "/templates/new/" }}
-          secondaryCta={{ label: "Create Open Call", href: "/programs/new/" }}
+          eyebrow={t("institution.workspace.templates.eyebrow")}
+          title={t("institution.workspace.templates.title")}
+          description={t("institution.workspace.templates.description")}
+          primaryCta={{ label: t("institution.workspace.templates.cta.createTemplate"), href: "/templates/new/" }}
+          secondaryCta={{ label: t("institution.workspace.templates.cta.createOpenCall"), href: "/programs/new/" }}
         />
 
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">

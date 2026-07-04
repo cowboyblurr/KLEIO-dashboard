@@ -4,6 +4,7 @@ import {
   artistWorkspaceRoutes,
   institutionWorkspaceRoutes,
   collaboratorWorkspaceRoutes,
+  allDemoRoutes,
 } from "@/lib/kleio-route-registry"
 import { analyticsIntegrity } from "@/lib/kleio-analytics"
 import { artistAnalyticsIntegrity } from "@/lib/kleio-artist-analytics"
@@ -16,11 +17,7 @@ export const kleioContentIntegrity = {
     artist: artistWorkspaceRoutes.length,
     institution: institutionWorkspaceRoutes.length,
     collaborator: collaboratorWorkspaceRoutes.length,
-    total:
-      publicRoutes.length +
-      artistWorkspaceRoutes.length +
-      institutionWorkspaceRoutes.length +
-      collaboratorWorkspaceRoutes.length,
+    total: allDemoRoutes.length,
   },
   analytics: {
     institution: analyticsIntegrity.allChecksPass,

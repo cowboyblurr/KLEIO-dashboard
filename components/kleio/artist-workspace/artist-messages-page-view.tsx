@@ -14,7 +14,10 @@ const messages = [
   { id: "4", subject: "Leila Martinez — Collaboration note", preview: "Interested in a shared research thread around archives and community practice.", type: "Collaborator", date: "Aug 3, 2026" },
 ]
 
+import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
+
 export function ArtistMessagesPageView() {
+  const { t } = useKleioLocale()
   const [selectedId, setSelectedId] = useState(messages[0].id)
   const selected = messages.find((m) => m.id === selectedId) ?? messages[0]
 
@@ -22,11 +25,11 @@ export function ArtistMessagesPageView() {
     <main className="h-full overflow-y-auto px-6 py-6">
       <div className="mx-auto max-w-[1180px] space-y-5">
         <WorkspacePageHeader
-          eyebrow="Messaging"
-          title="Messages"
-          description="Keep applicant communication, missing-material requests, collaborator notes, and institution updates in context."
-          primaryCta={{ label: "Review Applications", href: "/artist-dashboard/applications/" }}
-          secondaryCta={{ label: "Review Passport", href: "/artist-dashboard/passport/" }}
+          eyebrow={t("artist.workspace.messages.eyebrow")}
+          title={t("artist.workspace.messages.title")}
+          description={t("artist.workspace.messages.description")}
+          primaryCta={{ label: t("artist.workspace.messages.cta.reviewApplications"), href: "/artist-dashboard/applications/" }}
+          secondaryCta={{ label: t("artist.workspace.messages.cta.reviewPassport"), href: "/artist-dashboard/passport/" }}
         />
 
         <div className="grid gap-4 lg:grid-cols-[minmax(280px,0.9fr)_minmax(0,1fr)]">

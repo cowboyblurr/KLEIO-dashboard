@@ -5,7 +5,7 @@ export const publicRoutes = [
   "/journal/",
   "/signup/artist/",
   "/signup/institution/",
-]
+] as const
 
 export const artistWorkspaceRoutes = [
   "/artist-dashboard/",
@@ -19,7 +19,7 @@ export const artistWorkspaceRoutes = [
   "/artist-dashboard/funding/",
   "/artist-dashboard/insights/",
   "/artist-dashboard/settings/",
-]
+] as const
 
 export const institutionWorkspaceRoutes = [
   "/dashboard/",
@@ -37,7 +37,7 @@ export const institutionWorkspaceRoutes = [
   "/templates/",
   "/templates/new/",
   "/settings/",
-]
+] as const
 
 export const collaboratorWorkspaceRoutes = [
   "/collaborator-dashboard/",
@@ -46,9 +46,16 @@ export const collaboratorWorkspaceRoutes = [
   "/collaborator-dashboard/guidelines/",
   "/collaborator-dashboard/messages/",
   "/collaborator-dashboard/submitted/",
-]
+] as const
 
 export const publicProfileRoutePatterns = [
   "/artist/[username]/",
   "/institution/[username]/",
-]
+] as const
+
+export const allDemoRoutes = [
+  ...publicRoutes,
+  ...artistWorkspaceRoutes,
+  ...institutionWorkspaceRoutes,
+  ...collaboratorWorkspaceRoutes,
+] as const

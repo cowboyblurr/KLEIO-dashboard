@@ -1,8 +1,11 @@
+"use client"
+
 import Link from "next/link"
 import { Building2, Users, FileCheck2, Lock } from "lucide-react"
 import { inkColor, mutedColor, lavenderSoftLine, cardStyle } from "@/lib/workspace-styles"
 import { WorkspacePageHeader } from "@/components/kleio/workspace-page-header"
 import { WorkflowCard } from "@/components/kleio/workflow-card"
+import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
 
 const settingsGroups = [
   {
@@ -28,15 +31,16 @@ const settingsGroups = [
 ]
 
 export function InstitutionSettingsPageView() {
+  const { t } = useKleioLocale()
   return (
     <main className="h-full overflow-y-auto px-6 py-6">
       <div className="mx-auto max-w-[1180px] space-y-5">
         <WorkspacePageHeader
-          eyebrow="Workspace settings"
-          title="Workspace Settings"
-          description="Manage workspace details, demo preferences, team roles, and review defaults."
-          primaryCta={{ label: "View Institution Profile", href: "/institution/kleio-arthouse/" }}
-          secondaryCta={{ label: "Back to Dashboard", href: "/dashboard/" }}
+          eyebrow={t("institution.workspace.settings.eyebrow")}
+          title={t("institution.workspace.settings.title")}
+          description={t("institution.workspace.settings.description")}
+          primaryCta={{ label: t("institution.workspace.settings.cta.viewProfile"), href: "/institution/kleio-arthouse/" }}
+          secondaryCta={{ label: t("institution.workspace.settings.cta.backToDashboard"), href: "/dashboard/" }}
         />
 
         <div className="grid gap-4 md:grid-cols-2">

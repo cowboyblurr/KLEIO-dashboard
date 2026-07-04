@@ -1,3 +1,5 @@
+"use client"
+
 import Link from "next/link"
 import { assetPath } from "@/lib/asset-path"
 import { getArtistProfileByUsername } from "@/lib/kleio-profile-data"
@@ -5,8 +7,10 @@ import { DEMO_ARTIST_ID } from "@/lib/kleio-data"
 import { DEMO_ARTIST_PUBLIC_PROFILE, inkColor, mutedColor, lavenderSoftLine, cardStyle } from "@/lib/workspace-styles"
 import { WorkspacePageHeader } from "@/components/kleio/workspace-page-header"
 import { WorkflowCard } from "@/components/kleio/workflow-card"
+import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
 
 export function ArtistPortfolioPageView() {
+  const { t } = useKleioLocale()
   const profile = getArtistProfileByUsername(DEMO_ARTIST_ID)
   if (!profile) return null
 
@@ -20,11 +24,11 @@ export function ArtistPortfolioPageView() {
     <main className="h-full overflow-y-auto px-6 py-6">
       <div className="mx-auto max-w-[1180px] space-y-5">
         <WorkspacePageHeader
-          eyebrow="Portfolio library"
-          title="Portfolio"
-          description="Organize selected works, media, installation views, and portfolio materials for future applications."
-          primaryCta={{ label: "View Creative Passport", href: "/artist-dashboard/passport/" }}
-          secondaryCta={{ label: "View Public Profile", href: DEMO_ARTIST_PUBLIC_PROFILE }}
+          eyebrow={t("artist.workspace.portfolio.eyebrow")}
+          title={t("artist.workspace.portfolio.title")}
+          description={t("artist.workspace.portfolio.description")}
+          primaryCta={{ label: t("artist.workspace.portfolio.cta.viewPassport"), href: "/artist-dashboard/passport/" }}
+          secondaryCta={{ label: t("artist.workspace.portfolio.cta.viewPublicProfile"), href: DEMO_ARTIST_PUBLIC_PROFILE }}
         />
 
         <WorkflowCard title="Selected works" body="Choose the works that best represent your current practice.">

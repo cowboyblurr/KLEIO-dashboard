@@ -352,8 +352,8 @@ export function formatReviewInviteTiming(timing: ReviewInviteTiming, locale: Kle
 
 export function formatReviewInviteStatus(status: ReviewInviteStatus, locale: KleioLocale) {
   const keyMap: Record<ReviewInviteStatus, string> = {
-    Prepared: "reviewTeam.inviteStatus.preparedInvite",
-    Deferred: "reviewTeam.inviteStatus.deferredInvite",
+    Prepared: "reviewTeam.inviteStatus.prepared",
+    Deferred: "reviewTeam.inviteStatus.deferred",
   }
   return formatMessage(locale, keyMap[status])
 }
