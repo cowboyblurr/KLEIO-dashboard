@@ -181,6 +181,41 @@
 
 /* ── KLEIO Assist Object System ─────────────────────────────────────────── */
 
+.kleio-assist-object-visual {
+  position: relative;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.kleio-assist-object-stage {
+  position: relative;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  isolation: isolate;
+  border-radius: 9999px;
+  background: #ffffff;
+}
+
+.kleio-assist-object-video {
+  display: block;
+  object-fit: contain;
+  background-color: #ffffff;
+  border-radius: 9999px;
+  position: relative;
+  z-index: 1;
+}
+
+.kleio-assist-object-ring {
+  position: absolute;
+  inset: -6px;
+  border-radius: 9999px;
+  pointer-events: none;
+  z-index: 2;
+  border: 1.5px solid transparent;
+}
+
 @keyframes kleio-assist-pulse {
   0%,
   100% {
@@ -194,10 +229,10 @@
 @keyframes kleio-assist-ring {
   0%,
   100% {
-    outline-color: rgba(216, 208, 242, 0.5);
+    border-color: rgba(216, 208, 242, 0.5);
   }
   50% {
-    outline-color: rgba(169, 151, 232, 0.35);
+    border-color: rgba(169, 151, 232, 0.35);
   }
 }
 
@@ -221,50 +256,46 @@
   }
 }
 
-.kleio-assist-ring {
-  outline: 1.5px solid rgba(216, 208, 242, 0.6);
-  outline-offset: 3px;
+.kleio-assist-object-ring.kleio-assist-ring {
+  border-color: rgba(216, 208, 242, 0.6);
   animation: kleio-assist-ring 4s ease-in-out infinite;
 }
 
-.kleio-assist-pulse {
-  animation: kleio-assist-pulse 3.5s ease-in-out infinite;
+.kleio-assist-object-ring.kleio-assist-pulse {
+  animation: kleio-assist-pulse 3.5s ease-in-out infinite, kleio-assist-ring 4s ease-in-out infinite;
 }
 
-.kleio-assist-reviewing {
-  outline: 1.5px solid rgba(169, 151, 232, 0.45);
-  outline-offset: 3px;
+.kleio-assist-object-ring.kleio-assist-reviewing {
+  border-color: rgba(169, 151, 232, 0.45);
   animation: kleio-assist-shimmer 3s ease-in-out infinite;
 }
 
-.kleio-assist-attention {
-  outline: 1.5px solid rgba(200, 170, 120, 0.45);
-  outline-offset: 3px;
+.kleio-assist-object-ring.kleio-assist-attention {
+  border-color: rgba(200, 170, 120, 0.45);
   box-shadow: 0 0 12px rgba(200, 170, 120, 0.1);
   animation: kleio-assist-pulse 3s ease-in-out infinite;
 }
 
-.kleio-assist-complete {
-  outline: 1.5px solid rgba(160, 190, 170, 0.4);
-  outline-offset: 3px;
+.kleio-assist-object-ring.kleio-assist-complete {
+  border-color: rgba(160, 190, 170, 0.4);
   animation: kleio-assist-complete 4s ease-in-out infinite;
 }
 
-.kleio-assist-translating {
-  outline: 1.5px solid rgba(169, 151, 232, 0.4);
-  outline-offset: 3px;
+.kleio-assist-object-ring.kleio-assist-translating {
+  border-color: rgba(169, 151, 232, 0.4);
   box-shadow: 0 0 10px rgba(130, 120, 200, 0.08);
   animation: kleio-assist-ring 3.5s ease-in-out infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .kleio-assist-motion,
-  .kleio-assist-ring,
-  .kleio-assist-pulse,
-  .kleio-assist-reviewing,
-  .kleio-assist-attention,
-  .kleio-assist-complete,
-  .kleio-assist-translating {
+  .kleio-assist-object-ring,
+  .kleio-assist-object-ring.kleio-assist-ring,
+  .kleio-assist-object-ring.kleio-assist-pulse,
+  .kleio-assist-object-ring.kleio-assist-reviewing,
+  .kleio-assist-object-ring.kleio-assist-attention,
+  .kleio-assist-object-ring.kleio-assist-complete,
+  .kleio-assist-object-ring.kleio-assist-translating {
     animation: none !important;
   }
 }

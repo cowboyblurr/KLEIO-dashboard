@@ -24,10 +24,16 @@ export type KleioAssistObjectProps = {
   className?: string
 }
 
-const SIZE_PX: Record<KleioAssistObjectSize, number> = {
-  sm: 52,
-  md: 84,
-  lg: 140,
+const STAGE_PX: Record<KleioAssistObjectSize, number> = {
+  sm: 64,
+  md: 112,
+  lg: 168,
+}
+
+const VIDEO_PX: Record<KleioAssistObjectSize, number> = {
+  sm: 40,
+  md: 68,
+  lg: 100,
 }
 
 const MODE_RING_CLASS: Record<KleioAssistObjectMode, string> = {
@@ -83,21 +89,15 @@ function AssistFallback({ sizePx }: { sizePx: number }) {
 }
 
 function AssistVideo({
-  sizePx,
-  reducedMotion,
+  videoPx,
   onError,
 }: {
-  sizePx: number
-  reducedMotion: boolean
+  videoPx: number
   onError: () => void
 }) {
-  if (reducedMotion) {
-    return <AssistFallback sizePx={sizePx} />
-  }
-
   return (
     <video
-      className="kleio-assist-motion h-full w-full object-contain"
+      className="kleio-assist-object-video kleio-assist-motion"
       autoPlay
       muted
       loop
@@ -105,10 +105,47 @@ function AssistVideo({
       preload="metadata"
       aria-hidden
       onError={onError}
-      style={{ width: sizePx, height: sizePx }}
+      style={{ width: videoPx, height: videoPx }}
     >
       <source src={assetPath("/landing/kleio-transparent-center-video.mp4")} type="video/mp4" />
     </video>
+  )
+}
+
+function AssistObjectStage({
+  size,
+  mode,
+  videoError,
+  reducedMotion,
+  onVideoError,
+}: {
+  size: KleioAssistObjectSize
+  mode: KleioAssistObjectMode
+  videoError: boolean
+  reducedMotion: boolean
+  onVideoError: () => void
+}) {
+  const stagePx = STAGE_PX[size]
+  const videoPx = VIDEO_PX[size]
+  const ringClass = MODE_RING_CLASS[mode]
+
+  const inner =
+    videoError || reducedMotion ? (
+      <AssistFallback sizePx={videoPx} />
+    ) : (
+      <AssistVideo videoPx={videoPx} onError={onVideoError} />
+    )
+
+  return (
+    <div className="kleio-assist-object-visual">
+      <div
+        className="kleio-assist-object-stage"
+        style={{ width: stagePx, height: stagePx }}
+      >
+        {inner}
+        <div className={cn("kleio-assist-object-ring", ringClass)} aria-hidden />
+      </div>
+    </div>
   )
 }
 
@@ -124,7 +161,6 @@ export function KleioAssistObject({
   const [videoError, setVideoError] = useState(false)
   const [reducedMotion, setReducedMotion] = useState(false)
 
-  const sizePx = SIZE_PX[size]
   const safeProgress = clampProgress(progress)
   const showProgress = safeProgress !== undefined
 
@@ -136,14 +172,15 @@ export function KleioAssistObject({
     return () => mq.removeEventListener("change", update)
   }, [])
 
-  const objectVisual =
-    videoError || reducedMotion ? (
-      <AssistFallback sizePx={sizePx} />
-    ) : (
-      <AssistVideo sizePx={sizePx} reducedMotion={reducedMotion} onError={() => setVideoError(true)} />
-    )
-
-  const ringClass = MODE_RING_CLASS[mode]
+  const objectStage = (
+    <AssistObjectStage
+      size={size}
+      mode={mode}
+      videoError={videoError}
+      reducedMotion={reducedMotion}
+      onVideoError={() => setVideoError(true)}
+    />
+  )
 
   const textNode = (
     <div className={cn("min-w-0", compact ? "flex-1" : "text-center")}>
@@ -192,12 +229,7 @@ export function KleioAssistObject({
           className,
         )}
       >
-        <div
-          className={cn("relative flex shrink-0 items-center justify-center rounded-full", ringClass)}
-          style={{ width: sizePx, height: sizePx }}
-        >
-          {objectVisual}
-        </div>
+        {objectStage}
         {textNode}
       </div>
     )
@@ -210,12 +242,7 @@ export function KleioAssistObject({
         className,
       )}
     >
-      <div
-        className={cn("relative flex shrink-0 items-center justify-center rounded-full", ringClass)}
-        style={{ width: sizePx, height: sizePx }}
-      >
-        {objectVisual}
-      </div>
+      {objectStage}
       {textNode}
     </div>
   )
