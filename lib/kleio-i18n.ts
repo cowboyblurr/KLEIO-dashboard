@@ -45,6 +45,9 @@ const enMessages: Record<string, string> = {
   "landing.login.error": "Use the demo credentials or choose a demo role to continue.",
   "landing.login.demoHint":
     "Demo access: institution@kleio.demo, artist@kleio.demo, or reviewer@kleio.demo · password kleio2026",
+  "landing.login.demoAccessLabel": "Demo access",
+  "landing.login.demoAccessRoles": "institution@kleio.demo · artist@kleio.demo · reviewer@kleio.demo",
+  "landing.login.demoAccessPassword": "Password: kleio2026",
 
   // ── public.about ─────────────────────────────────────────────────────────
   "public.about.eyebrow": "About KLEIO",
@@ -1060,6 +1063,9 @@ const esMessages: Record<string, string> = {
   "landing.login.error": "Usa las credenciales demo o elige un rol demo para continuar.",
   "landing.login.demoHint":
     "Acceso demo: institution@kleio.demo, artist@kleio.demo o reviewer@kleio.demo · contraseña kleio2026",
+  "landing.login.demoAccessLabel": "Acceso demo",
+  "landing.login.demoAccessRoles": "institution@kleio.demo · artist@kleio.demo · reviewer@kleio.demo",
+  "landing.login.demoAccessPassword": "Contraseña: kleio2026",
 
   // ── public.about ─────────────────────────────────────────────────────────
   "public.about.eyebrow": "Acerca de KLEIO",

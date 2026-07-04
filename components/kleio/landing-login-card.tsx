@@ -51,7 +51,7 @@ export function LandingLoginCard() {
 
   return (
     <div
-      className="flex h-full flex-col overflow-hidden rounded-[1.1rem] p-3.5"
+      className="flex h-full min-h-0 flex-col rounded-[1.1rem] p-3.5"
       style={{
         backgroundColor: "#FFFFFF",
         border: "1px solid #E7E1F7",
@@ -86,17 +86,24 @@ export function LandingLoginCard() {
         />
       </div>
 
-      <p className="mt-1.5 truncate text-[0.58rem] leading-tight" style={{ color: "#7F7890" }} title={t("landing.login.demoHint")}>
-        {t("landing.login.demoHint")}
-      </p>
+      <div
+        className="mt-1.5 rounded-xl border border-[#E7E1F7] bg-[#F7F4FF]/60 px-2.5 py-1.5 text-[0.64rem] leading-snug"
+        style={{ color: "#6F6882" }}
+      >
+        <p className="font-semibold" style={{ color: "#5B4B8A" }}>
+          {t("landing.login.demoAccessLabel")}
+        </p>
+        <p className="mt-0.5 break-words">{t("landing.login.demoAccessRoles")}</p>
+        <p className="mt-0.5">{t("landing.login.demoAccessPassword")}</p>
+      </div>
 
       {error && (
-        <p className="mt-1 truncate text-[0.58rem] leading-tight" style={{ color: "oklch(0.45 0.14 55)" }}>
+        <p className="mt-1 text-[0.64rem] leading-snug" style={{ color: "oklch(0.45 0.14 55)" }}>
           {error}
         </p>
       )}
 
-      <div className="mt-1.5 flex items-center justify-between gap-3">
+      <div className="mt-1 flex items-center justify-between gap-3">
         <span className="text-[0.64rem]" style={{ color: "#7F7890" }}>
           {t("landing.login.demoWorkspace")}
         </span>
@@ -111,7 +118,7 @@ export function LandingLoginCard() {
         </button>
       </div>
 
-      <div className="mt-1.5 grid grid-cols-1 gap-2 sm:grid-cols-3">
+      <div className="mt-1 grid grid-cols-1 gap-1.5 sm:grid-cols-3">
         <button
           type="button"
           onClick={handleInstitutionDemo}

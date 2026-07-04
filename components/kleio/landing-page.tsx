@@ -92,7 +92,7 @@ export function LandingPage() {
       <section
         className="absolute inset-x-0 top-[104px] z-10 grid h-[558px] px-8 max-md:px-5"
         style={{
-          gridTemplateRows: "112px 190px 220px 36px",
+          gridTemplateRows: "112px 176px 236px 34px",
         }}
       >
         {/* Row 1 — hero */}
@@ -127,7 +127,7 @@ export function LandingPage() {
         {/* Row 2 — video */}
         <div className="flex h-full items-center justify-center">
           <video
-            className="kleio-transparent-center-video h-auto max-h-[185px] w-[clamp(300px,26vw,430px)] object-contain"
+            className="kleio-transparent-center-video h-auto max-h-[170px] w-[clamp(300px,26vw,430px)] object-contain"
             autoPlay
             muted
             loop
