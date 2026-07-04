@@ -178,3 +178,93 @@
 .kleio-login-input::placeholder {
   color: #a19a91;
 }
+
+/* ── KLEIO Assist Object System ─────────────────────────────────────────── */
+
+@keyframes kleio-assist-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(169, 151, 232, 0.18);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(169, 151, 232, 0.06);
+  }
+}
+
+@keyframes kleio-assist-ring {
+  0%,
+  100% {
+    outline-color: rgba(216, 208, 242, 0.5);
+  }
+  50% {
+    outline-color: rgba(169, 151, 232, 0.35);
+  }
+}
+
+@keyframes kleio-assist-shimmer {
+  0%,
+  100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes kleio-assist-complete {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(140, 180, 160, 0.12);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(140, 180, 160, 0.08);
+  }
+}
+
+.kleio-assist-ring {
+  outline: 1.5px solid rgba(216, 208, 242, 0.6);
+  outline-offset: 3px;
+  animation: kleio-assist-ring 4s ease-in-out infinite;
+}
+
+.kleio-assist-pulse {
+  animation: kleio-assist-pulse 3.5s ease-in-out infinite;
+}
+
+.kleio-assist-reviewing {
+  outline: 1.5px solid rgba(169, 151, 232, 0.45);
+  outline-offset: 3px;
+  animation: kleio-assist-shimmer 3s ease-in-out infinite;
+}
+
+.kleio-assist-attention {
+  outline: 1.5px solid rgba(200, 170, 120, 0.45);
+  outline-offset: 3px;
+  box-shadow: 0 0 12px rgba(200, 170, 120, 0.1);
+  animation: kleio-assist-pulse 3s ease-in-out infinite;
+}
+
+.kleio-assist-complete {
+  outline: 1.5px solid rgba(160, 190, 170, 0.4);
+  outline-offset: 3px;
+  animation: kleio-assist-complete 4s ease-in-out infinite;
+}
+
+.kleio-assist-translating {
+  outline: 1.5px solid rgba(169, 151, 232, 0.4);
+  outline-offset: 3px;
+  box-shadow: 0 0 10px rgba(130, 120, 200, 0.08);
+  animation: kleio-assist-ring 3.5s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kleio-assist-motion,
+  .kleio-assist-ring,
+  .kleio-assist-pulse,
+  .kleio-assist-reviewing,
+  .kleio-assist-attention,
+  .kleio-assist-complete,
+  .kleio-assist-translating {
+    animation: none !important;
+  }
+}

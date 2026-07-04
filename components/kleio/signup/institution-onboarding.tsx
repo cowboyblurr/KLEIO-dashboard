@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import { CheckCircle2 } from "lucide-react"
 import {
@@ -17,6 +17,7 @@ import {
   ImportAssistWidget,
   type ImportAssistState,
 } from "@/components/kleio/import-assist-widget"
+import { KleioAssistObject } from "@/components/kleio/kleio-assist-object"
 import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
 import {
   applySuggestionsToEmptyFields,
@@ -115,6 +116,14 @@ export function InstitutionOnboarding() {
     inviteTiming: "Prepare invite now" as ReviewInviteTiming,
   })
   const [addMemberError, setAddMemberError] = useState<string | null>(null)
+  const [isPreparingWorkspace, setIsPreparingWorkspace] = useState(false)
+  const prepareTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    return () => {
+      if (prepareTimeoutRef.current) clearTimeout(prepareTimeoutRef.current)
+    }
+  }, [])
 
   const reviewTeamStats = useMemo(() => calculateReviewTeamStats(reviewTeam), [reviewTeam])
   const reviewTeamIntegrity = useMemo(() => getReviewTeamIntegrity(reviewTeam), [reviewTeam])
@@ -228,9 +237,33 @@ export function InstitutionOnboarding() {
   }
 
   const handleCreateWorkspace = () => {
+    if (isPreparingWorkspace) return
+    setIsPreparingWorkspace(true)
     saveReviewTeamDemoState(reviewTeam)
-    loginDemoUser("institution")
-    router.push(getDashboardForRole("institution"))
+    prepareTimeoutRef.current = setTimeout(() => {
+      loginDemoUser("institution")
+      router.push(getDashboardForRole("institution"))
+    }, 1050)
+  }
+
+  if (isPreparingWorkspace) {
+    return (
+      <SignupShell
+        title={t("signup.institution.title")}
+        subtitle={t("signup.institution.subtitle")}
+        stepLabel={stepLabel}
+      >
+        <div className="mx-auto max-w-md">
+          <KleioAssistObject
+            mode="preparing"
+            title={t("assist.object.institutionSignup.title")}
+            description={t("assist.object.institutionSignup.description")}
+            size="md"
+            progress={78}
+          />
+        </div>
+      </SignupShell>
+    )
   }
 
   return (

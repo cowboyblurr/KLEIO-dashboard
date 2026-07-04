@@ -13,6 +13,7 @@ import { WorkspacePageHeader } from "@/components/kleio/workspace-page-header"
 import { SearchFilterBar } from "@/components/kleio/search-filter-bar"
 import { DemoStatusChip } from "@/components/kleio/demo-status-chip"
 import { WorkflowCard } from "@/components/kleio/workflow-card"
+import { KleioAssistObject } from "@/components/kleio/kleio-assist-object"
 import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
 
 const ACTIVE_STATUSES = new Set(["Draft", "Submitted", "Under Review", "Waiting", "Interview"])
@@ -141,6 +142,14 @@ export function ArtistOpportunitiesPageView() {
                 count: analytics.opportunityCount,
                 amount: formatKleioCurrency(locale, analytics.potentialFunding),
               })}
+            />
+            <KleioAssistObject
+              mode="reviewing"
+              title={t("assist.object.opportunities.title")}
+              description={t("assist.object.opportunities.description")}
+              size="sm"
+              compact
+              progress={analytics.fundingReadiness.completeness}
             />
           </div>
         </div>

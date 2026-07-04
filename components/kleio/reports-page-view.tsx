@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import {
   analytics,
   applicationsOverTime,
@@ -12,15 +12,39 @@ import {
 } from "@/lib/kleio-analytics"
 import { programs } from "@/lib/kleio-data"
 import { DemoPageShell } from "@/components/kleio/demo-page-shell"
-
+import { KleioAssistObject } from "@/components/kleio/kleio-assist-object"
 import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
+
+type ExportAssistPhase = "idle" | "preparing" | "complete"
+
+function reviewerCompletionPct(): number {
+  const progress = getReviewerProgress()
+  const completed = progress.reduce((sum, r) => sum + r.completed, 0)
+  const assigned = progress.reduce((sum, r) => sum + r.assigned, 0)
+  return Math.round((completed / Math.max(assigned, 1)) * 100)
+}
 
 export function ReportsPageView() {
   const { t } = useKleioLocale()
-  const [exportConfirmation, setExportConfirmation] = useState<string | null>(null)
+  const [exportPhase, setExportPhase] = useState<ExportAssistPhase>("idle")
+  const exportTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const disciplineDistribution = getDisciplineDistribution()
   const reviewerProgress = getReviewerProgress()
   const shortlistOutcomes = getShortlistGroups()
+
+  useEffect(() => {
+    return () => {
+      if (exportTimeoutRef.current) clearTimeout(exportTimeoutRef.current)
+    }
+  }, [])
+
+  function handleExportReport() {
+    if (exportPhase !== "idle") return
+    setExportPhase("preparing")
+    exportTimeoutRef.current = setTimeout(() => {
+      setExportPhase("complete")
+    }, 1050)
+  }
 
   return (
     <DemoPageShell
@@ -54,26 +78,49 @@ export function ReportsPageView() {
             href="/activity-log/"
             className="inline-flex h-10 items-center rounded-xl border border-border bg-card px-4 text-sm font-semibold text-foreground transition-colors hover:bg-accent/50"
           >
-            View Activity Log
+            {t("institution.workspace.reports.cta.viewActivityLog")}
           </Link>
           <button
             type="button"
-            onClick={() =>
-              setExportConfirmation(
-                `Report export queued for ${analytics.totalApplications} applications across ${programs.length} programs (demo only).`,
-              )
-            }
-            className="inline-flex h-10 items-center rounded-xl border border-border bg-card px-4 text-sm font-semibold text-foreground transition-colors hover:bg-accent/50"
+            onClick={handleExportReport}
+            disabled={exportPhase !== "idle"}
+            className="inline-flex h-10 items-center rounded-xl border border-border bg-card px-4 text-sm font-semibold text-foreground transition-colors hover:bg-accent/50 disabled:opacity-60"
           >
-            Export report
+            {t("institution.workspace.reports.cta.exportReport")}
           </button>
         </div>
       </div>
 
-      {exportConfirmation && (
-        <p className="mb-4 rounded-xl border border-[oklch(0.85_0.07_150)] bg-[oklch(0.96_0.04_150)] px-3 py-2 text-xs font-medium text-[oklch(0.4_0.12_150)]">
-          {exportConfirmation}
-        </p>
+      {exportPhase === "preparing" && (
+        <div className="mb-4 max-w-lg">
+          <KleioAssistObject
+            mode="preparing"
+            title={t("assist.object.reports.title")}
+            description={t("assist.object.reports.description")}
+            size="sm"
+            compact
+            progress={reviewerCompletionPct()}
+          />
+        </div>
+      )}
+
+      {exportPhase === "complete" && (
+        <div className="mb-4 max-w-lg space-y-2">
+          <KleioAssistObject
+            mode="complete"
+            title={t("assist.object.reportPrepared.title")}
+            description={t("assist.object.reportPrepared.description")}
+            size="sm"
+            compact
+          />
+          <p className="px-1 text-[0.7rem] text-muted-foreground">{t("assist.object.demoOnlyNote")}</p>
+          <p className="rounded-xl border border-[oklch(0.85_0.07_150)] bg-[oklch(0.96_0.04_150)] px-3 py-2 text-xs font-medium text-[oklch(0.4_0.12_150)]">
+            {t("institution.workspace.reports.exportConfirmation", {
+              applications: analytics.totalApplications,
+              programs: programs.length,
+            })}
+          </p>
+        </div>
       )}
 
       <div className="grid gap-4 xl:grid-cols-2">

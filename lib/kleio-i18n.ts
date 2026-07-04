@@ -375,6 +375,30 @@ const enMessages: Record<string, string> = {
   "importAssist.organizeDraft":
     "KLEIO can help organize a first draft from materials you already maintain. You remain the author. Review and edit every suggestion. Apply suggestions to empty fields only.",
 
+  // ── assist.object ────────────────────────────────────────────────────────
+  "assist.object.artistSignup.title": "Building your Creative Passport",
+  "assist.object.artistSignup.description":
+    "KLEIO is organizing your bio, statement, materials, and reusable application fields. You can review and edit everything before it becomes official.",
+  "assist.object.institutionSignup.title": "Preparing your institution workspace",
+  "assist.object.institutionSignup.description":
+    "KLEIO is organizing your program setup, review team, materials, and workspace structure.",
+  "assist.object.opportunities.title": "Preparing opportunity matches",
+  "assist.object.opportunities.description":
+    "KLEIO is checking fit, deadline pressure, missing materials, and funding readiness.",
+  "assist.object.reports.title": "Preparing institutional memory",
+  "assist.object.reports.description":
+    "KLEIO is organizing program outcomes, reviewer activity, shortlist decisions, and report context.",
+  "assist.object.translating.title": "Aligning bilingual context",
+  "assist.object.translating.description":
+    "KLEIO is preparing English and Spanish workspace language so the review flow stays clear.",
+  "assist.object.complete.title": "Prepared for review",
+  "assist.object.complete.description":
+    "The demo workspace context is organized. You approve what becomes official.",
+  "assist.object.reportPrepared.title": "Report preview prepared",
+  "assist.object.reportPrepared.description":
+    "KLEIO prepared a demo report preview from program outcomes, reviewer activity, and shortlist context.",
+  "assist.object.demoOnlyNote": "Demo-only preparation. No real files were exported.",
+
   // ── nav.artist ───────────────────────────────────────────────────────────
   "nav.artist.workspace": "Artist Workspace",
   "nav.artist.overview": "Overview",
@@ -702,6 +726,10 @@ const enMessages: Record<string, string> = {
   "institution.workspace.reports.metric.incomplete": "Incomplete",
   "institution.workspace.reports.metric.deadlinesThisWeek": "Deadlines this week",
   "institution.workspace.reports.cta.prepareReport": "Prepare Report",
+  "institution.workspace.reports.cta.viewActivityLog": "View Activity Log",
+  "institution.workspace.reports.cta.exportReport": "Export report",
+  "institution.workspace.reports.exportConfirmation":
+    "Report export queued for {applications} applications across {programs} programs (demo only).",
   "institution.workspace.submissions.searchPlaceholder": "Search artists, programs, reviewers, status...",
   "institution.workspace.submissions.showingCount":
     "Showing {count} submissions across {programs} active programs.",
@@ -1393,6 +1421,30 @@ const esMessages: Record<string, string> = {
   "importAssist.organizeDraft":
     "KLEIO puede ayudar a organizar un primer borrador a partir de materiales que ya mantienes. Tú sigues siendo el autor. Revisa y edita cada sugerencia. Aplica sugerencias solo a campos vacíos.",
 
+  // ── assist.object ────────────────────────────────────────────────────────
+  "assist.object.artistSignup.title": "Creando tu Pasaporte Creativo",
+  "assist.object.artistSignup.description":
+    "KLEIO está organizando tu biografía, declaración, materiales y campos reutilizables de postulación. Puedes revisar y editar todo antes de que se vuelva oficial.",
+  "assist.object.institutionSignup.title": "Preparando tu espacio institucional",
+  "assist.object.institutionSignup.description":
+    "KLEIO está organizando la configuración del programa, el equipo de revisión, los materiales y la estructura del espacio.",
+  "assist.object.opportunities.title": "Preparando coincidencias de oportunidades",
+  "assist.object.opportunities.description":
+    "KLEIO está revisando afinidad, presión de fechas límite, materiales faltantes y preparación de financiamiento.",
+  "assist.object.reports.title": "Preparando memoria institucional",
+  "assist.object.reports.description":
+    "KLEIO está organizando resultados del programa, actividad de revisores, decisiones de lista corta y contexto del informe.",
+  "assist.object.translating.title": "Alineando contexto bilingüe",
+  "assist.object.translating.description":
+    "KLEIO está preparando el lenguaje del espacio en inglés y español para que el flujo de revisión se mantenga claro.",
+  "assist.object.complete.title": "Preparado para revisión",
+  "assist.object.complete.description":
+    "El contexto del espacio demo está organizado. Tú apruebas lo que se vuelve oficial.",
+  "assist.object.reportPrepared.title": "Vista previa del informe preparada",
+  "assist.object.reportPrepared.description":
+    "KLEIO preparó una vista previa demo del informe a partir de resultados del programa, actividad de revisores y contexto de lista corta.",
+  "assist.object.demoOnlyNote": "Preparación solo para demo. No se exportaron archivos reales.",
+
   // ── nav.artist ───────────────────────────────────────────────────────────
   "nav.artist.workspace": "Espacio del artista",
   "nav.artist.overview": "Resumen",
@@ -1721,6 +1773,10 @@ const esMessages: Record<string, string> = {
   "institution.workspace.reports.metric.incomplete": "Incompletas",
   "institution.workspace.reports.metric.deadlinesThisWeek": "Fechas límite esta semana",
   "institution.workspace.reports.cta.prepareReport": "Preparar informe",
+  "institution.workspace.reports.cta.viewActivityLog": "Ver registro de actividad",
+  "institution.workspace.reports.cta.exportReport": "Exportar informe",
+  "institution.workspace.reports.exportConfirmation":
+    "Exportación de informe en cola para {applications} postulaciones en {programs} programas (solo demo).",
   "institution.workspace.submissions.searchPlaceholder": "Buscar artistas, programas, revisores, estado...",
   "institution.workspace.submissions.showingCount":
     "Mostrando {count} postulaciones en {programs} programas activos.",

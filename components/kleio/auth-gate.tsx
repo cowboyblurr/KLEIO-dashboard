@@ -12,6 +12,7 @@ import {
   type KleioDemoSession,
 } from "@/lib/kleio-demo-auth"
 import { KleioWordmarkLink } from "@/components/kleio/kleio-wordmark-link"
+import { KleioAssistObject } from "@/components/kleio/kleio-assist-object"
 import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
 
 type DemoRole = "artist" | "institution" | "collaborator"
@@ -216,8 +217,16 @@ export function AuthGate({ requiredRole, children }: AuthGateProps) {
 
   if (session === undefined) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[oklch(0.985_0.005_287)]">
-        <p className="text-sm text-muted-foreground">{t("auth.loading")}</p>
+      <div className="flex min-h-screen items-center justify-center bg-[oklch(0.985_0.005_287)] px-6">
+        <div className="max-w-sm">
+          <KleioAssistObject
+            mode="reviewing"
+            title={t("assist.object.complete.title")}
+            description={t("assist.object.complete.description")}
+            size="sm"
+            compact
+          />
+        </div>
       </div>
     )
   }

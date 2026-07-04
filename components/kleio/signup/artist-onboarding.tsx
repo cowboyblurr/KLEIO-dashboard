@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import { CheckCircle2 } from "lucide-react"
 import {
@@ -17,6 +17,7 @@ import {
   ImportAssistWidget,
   type ImportAssistState,
 } from "@/components/kleio/import-assist-widget"
+import { KleioAssistObject } from "@/components/kleio/kleio-assist-object"
 import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
 import {
   applySuggestionsToEmptyFields,
@@ -73,6 +74,14 @@ export function ArtistOnboarding() {
   const [form, setForm] = useState<ArtistFormState>(emptyForm)
   const [fieldOrigins, setFieldOrigins] = useState<Partial<Record<keyof ArtistFormState, FieldOrigin>>>({})
   const [importAssist, setImportAssist] = useState<ImportAssistState>(defaultImportAssistState)
+  const [isPreparingPassport, setIsPreparingPassport] = useState(false)
+  const prepareTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    return () => {
+      if (prepareTimeoutRef.current) clearTimeout(prepareTimeoutRef.current)
+    }
+  }, [])
 
   const stepLabel = t("signup.common.stepLabel", {
     current: step + 1,
@@ -121,8 +130,32 @@ export function ArtistOnboarding() {
   const origin = (key: keyof ArtistFormState) => fieldOrigins[key]
 
   const handleCreatePassport = () => {
-    loginDemoUser("artist")
-    router.push(getDashboardForRole("artist"))
+    if (isPreparingPassport) return
+    setIsPreparingPassport(true)
+    prepareTimeoutRef.current = setTimeout(() => {
+      loginDemoUser("artist")
+      router.push(getDashboardForRole("artist"))
+    }, 1050)
+  }
+
+  if (isPreparingPassport) {
+    return (
+      <SignupShell
+        title={t("signup.artist.title")}
+        subtitle={t("signup.artist.subtitle")}
+        stepLabel={stepLabel}
+      >
+        <div className="mx-auto max-w-md">
+          <KleioAssistObject
+            mode="preparing"
+            title={t("assist.object.artistSignup.title")}
+            description={t("assist.object.artistSignup.description")}
+            size="md"
+            progress={72}
+          />
+        </div>
+      </SignupShell>
+    )
   }
 
   return (
