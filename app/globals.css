@@ -179,6 +179,93 @@
   color: #a19a91;
 }
 
+/* ── Landing login card — demo workspace buttons ─────────────────────────── */
+
+.kleio-demo-workspace {
+  margin-top: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.kleio-demo-workspace-label {
+  margin: 0;
+  font-size: 0.72rem;
+  color: #7f7890;
+}
+
+.kleio-demo-workspace-actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  align-items: stretch;
+}
+
+.kleio-demo-workspace-button {
+  width: 100%;
+  min-width: 0;
+  min-height: 42px;
+  padding: 0 10px;
+  border-radius: 9999px;
+  border: 1px solid #d8d0f2;
+  background-color: #ffffff;
+  color: #5b4b8a;
+  font-size: 0.62rem;
+  line-height: 1.15;
+  white-space: normal;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.kleio-demo-workspace-button:hover {
+  border-color: #a997e8;
+  background-color: #f7f4ff;
+}
+
+.kleio-demo-workspace-guided {
+  align-self: center;
+  margin-top: 2px;
+  border: none;
+  background: transparent;
+  font-size: 0.64rem;
+  font-weight: 500;
+  color: #7f7890;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.kleio-demo-workspace-guided:hover {
+  opacity: 0.75;
+}
+
+.landing-card-grid {
+  margin-bottom: clamp(20px, 3vw, 36px);
+}
+
+.landing-quote {
+  margin-top: clamp(8px, 1.5vw, 16px);
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+@media (max-width: 720px) {
+  .kleio-demo-workspace-actions {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .kleio-demo-workspace-button {
+    min-height: 44px;
+    font-size: 0.7rem;
+    white-space: nowrap;
+  }
+}
+
 /* ── KLEIO Assist Object System ─────────────────────────────────────────── */
 
 .kleio-assist-object-visual {

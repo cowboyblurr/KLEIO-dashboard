@@ -63,7 +63,7 @@ export function LandingLoginCard() {
 
   return (
     <div
-      className="flex h-full min-h-0 flex-col rounded-[1.1rem] p-3.5"
+      className="flex min-h-0 flex-col rounded-[1.1rem] p-3.5"
       style={{
         backgroundColor: "#FFFFFF",
         border: "1px solid #E7E1F7",
@@ -115,14 +115,11 @@ export function LandingLoginCard() {
         </p>
       )}
 
-      <div className="mt-1 flex items-center justify-between gap-3">
-        <span className="text-[0.64rem]" style={{ color: "#7F7890" }}>
-          {t("landing.login.demoWorkspace")}
-        </span>
+      <div className="mt-2.5 flex justify-end">
         <button
           type="button"
           onClick={handleLogin}
-          className="flex h-7 items-center justify-center gap-1 rounded-full border px-3.5 text-[0.72rem] transition-colors hover:bg-[#1F1B29]"
+          className="flex h-9 items-center justify-center gap-1 rounded-full border px-4 text-[0.72rem] transition-colors hover:bg-[#1F1B29]"
           style={{ backgroundColor: "#292631", borderColor: "#292631", color: "#FFFFFF" }}
         >
           {t("landing.login.logIn")}
@@ -130,41 +127,37 @@ export function LandingLoginCard() {
         </button>
       </div>
 
-      <div className="mt-1 grid grid-cols-1 gap-1.5 sm:grid-cols-3">
-        <button
-          type="button"
-          onClick={handleInstitutionDemo}
-          className="h-7 rounded-full border px-2 text-[0.66rem] transition-colors hover:border-[#A997E8] hover:bg-[#F7F4FF]"
-          style={{ backgroundColor: "#FFFFFF", borderColor: "#D8D0F2", color: "#5B4B8A" }}
-        >
-          {t("landing.login.enterInstitutionDemo")}
-        </button>
-        <button
-          type="button"
-          onClick={handleArtistDemo}
-          className="h-7 rounded-full border px-2 text-[0.66rem] transition-colors hover:border-[#A997E8] hover:bg-[#F7F4FF]"
-          style={{ backgroundColor: "#FFFFFF", borderColor: "#D8D0F2", color: "#5B4B8A" }}
-        >
-          {t("landing.login.enterArtistDemo")}
-        </button>
-        <button
-          type="button"
-          onClick={handleCollaboratorDemo}
-          className="h-7 rounded-full border px-2 text-[0.66rem] transition-colors hover:border-[#A997E8] hover:bg-[#F7F4FF]"
-          style={{ backgroundColor: "#FFFFFF", borderColor: "#D8D0F2", color: "#5B4B8A" }}
-        >
-          {t("landing.login.enterCollaboratorDemo")}
+      <div className="kleio-demo-workspace">
+        <p className="kleio-demo-workspace-label">{t("landing.login.demoWorkspace")}</p>
+
+        <div className="kleio-demo-workspace-actions" aria-label={t("landing.login.demoWorkspace")}>
+          <button
+            type="button"
+            onClick={handleInstitutionDemo}
+            className="kleio-demo-workspace-button"
+          >
+            {t("landing.login.enterInstitutionDemo")}
+          </button>
+          <button
+            type="button"
+            onClick={handleArtistDemo}
+            className="kleio-demo-workspace-button"
+          >
+            {t("landing.login.enterArtistDemo")}
+          </button>
+          <button
+            type="button"
+            onClick={handleCollaboratorDemo}
+            className="kleio-demo-workspace-button"
+          >
+            {t("landing.login.enterCollaboratorDemo")}
+          </button>
+        </div>
+
+        <button type="button" onClick={handleStartGuidedDemo} className="kleio-demo-workspace-guided">
+          {t("demoGuide.startGuidedDemo")}
         </button>
       </div>
-
-      <button
-        type="button"
-        onClick={handleStartGuidedDemo}
-        className="mt-2 w-full text-center text-[0.64rem] font-medium transition-opacity hover:opacity-75"
-        style={{ color: "#7F7890" }}
-      >
-        {t("demoGuide.startGuidedDemo")}
-      </button>
     </div>
   )
 }

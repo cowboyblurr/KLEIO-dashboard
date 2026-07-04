@@ -59,9 +59,9 @@ export function LandingPage() {
   ] as const
 
   return (
-    <main className="relative h-dvh min-h-[680px] w-full overflow-hidden bg-white text-[#292631]">
+    <main className="relative min-h-dvh w-full overflow-x-hidden bg-white text-[#292631]">
       {/* ── header ──────────────────────────────────────────────────────── */}
-      <header className="absolute left-0 top-0 z-30 h-[96px] w-full">
+      <header className="relative z-30 h-[96px] w-full">
         <div className="relative mx-auto h-full w-full max-w-[1280px] px-8 max-md:px-5">
           <nav className="absolute left-8 top-1/2 flex -translate-y-1/2 items-center gap-8 max-md:left-5 max-md:gap-4">
             {navLinks.map(({ key, href }) => (
@@ -91,9 +91,10 @@ export function LandingPage() {
 
       {/* ── viewport grid stage ─────────────────────────────────────────── */}
       <section
-        className="absolute inset-x-0 top-[104px] z-10 grid h-[558px] px-8 max-md:px-5"
+        className="landing-stage relative z-10 mx-auto grid w-full max-w-[1280px] px-8 pb-16 pt-2 max-md:px-5"
         style={{
-          gridTemplateRows: "112px 176px 236px 34px",
+          gridTemplateRows: "auto auto auto auto",
+          rowGap: "clamp(12px, 2vh, 20px)",
         }}
       >
         {/* Row 1 — hero */}
@@ -141,7 +142,7 @@ export function LandingPage() {
         </div>
 
         {/* Row 3 — login + join cards */}
-        <div className="mx-auto grid h-full w-full max-w-[980px] grid-cols-[minmax(0,1fr)_26px_minmax(0,1fr)] items-stretch gap-4">
+        <div className="landing-card-grid mx-auto grid w-full max-w-[980px] grid-cols-[minmax(0,1fr)_26px_minmax(0,1fr)] items-start gap-4">
           <LandingLoginCard />
 
           {/* "or" divider */}
@@ -157,7 +158,7 @@ export function LandingPage() {
 
           {/* Join card */}
           <div
-            className="flex h-full flex-col rounded-[1.1rem] p-3.5"
+            className="flex flex-col rounded-[1.1rem] p-3.5"
             style={{
               backgroundColor: cardBg,
               border: `1px solid ${lavenderSoftLine}`,
@@ -218,7 +219,7 @@ export function LandingPage() {
 
         {/* Row 4 — quote */}
         <div
-          className="flex h-full flex-col items-center justify-center text-center font-serif text-[10px] italic leading-tight"
+          className="landing-quote flex flex-col items-center justify-center text-center font-serif text-[10px] italic leading-tight"
           style={{ color: mutedColor }}
         >
           &ldquo;{t("landing.quote.line1")}
@@ -230,7 +231,7 @@ export function LandingPage() {
 
       {/* ── footer / copyright ──────────────────────────────────────────── */}
       <footer
-        className="pointer-events-none absolute bottom-2 left-5 z-30 text-[8px] tracking-[0.15em] max-md:left-1/2 max-md:-translate-x-1/2"
+        className="pointer-events-none relative z-30 px-5 pb-4 pt-2 text-center text-[8px] tracking-[0.15em]"
         style={{ color: "#B2A9C9" }}
       >
         © 2026 KLEIO ARTHOUSE
