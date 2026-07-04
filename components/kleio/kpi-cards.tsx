@@ -1,3 +1,5 @@
+"use client"
+
 import {
   ArrowUpRight,
   Bookmark,
@@ -9,6 +11,7 @@ import {
   type LucideIcon,
 } from "lucide-react"
 import { kpis } from "@/lib/kleio-analytics"
+import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
 
 const iconMap: Record<string, LucideIcon> = {
   clipboard: ClipboardList,
@@ -20,16 +23,18 @@ const iconMap: Record<string, LucideIcon> = {
 }
 
 export function KpiCards() {
+  const { t } = useKleioLocale()
+
   return (
     <section
-      aria-label="Key metrics"
+      aria-label={t("institution.kpi.sectionLabel")}
       className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6"
     >
       {kpis.map((kpi) => {
         const Icon = iconMap[kpi.icon] ?? ClipboardList
         return (
           <div
-            key={kpi.label}
+            key={kpi.labelKey}
             className="rounded-2xl border border-border bg-card p-4 shadow-sm transition-shadow hover:shadow-md"
           >
             <div className="flex items-start justify-between">
@@ -38,7 +43,7 @@ export function KpiCards() {
               </span>
             </div>
             <p className="mt-3 text-xs font-medium text-muted-foreground">
-              {kpi.label}
+              {t(kpi.labelKey)}
             </p>
             <p className="mt-1 font-serif text-3xl font-semibold tracking-tight text-foreground">
               {kpi.value}
@@ -54,7 +59,7 @@ export function KpiCards() {
                     : ""
                 }
               >
-                {kpi.delta}
+                {t(kpi.deltaKey, kpi.deltaParams as Record<string, string | number>)}
               </span>
             </p>
           </div>

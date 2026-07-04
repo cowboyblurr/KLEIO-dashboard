@@ -1,8 +1,8 @@
 "use client"
 
 import { useMemo, useState } from "react"
-import { institution } from "@/lib/kleio-data"
 import { analytics, getPrimaryUserFirstName, getQueueForTab } from "@/lib/kleio-analytics"
+import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
 import { KpiCards } from "@/components/kleio/kpi-cards"
 import { ApplicationsChart } from "@/components/kleio/applications-chart"
 import { StatusBreakdown } from "@/components/kleio/status-breakdown"
@@ -19,6 +19,7 @@ function sortScenarioFirst<T extends { scenario?: string }>(items: T[]) {
 }
 
 export function Overview() {
+  const { t } = useKleioLocale()
   const [activeTab, setActiveTab] = useState("priority")
   const [selectedId, setSelectedId] = useState("amina-el-badri")
   const [drawerOpen, setDrawerOpen] = useState(true)
@@ -56,14 +57,14 @@ export function Overview() {
           <header className="mb-5 flex flex-wrap items-end justify-between gap-3">
             <div>
               <h1 className="text-pretty font-serif text-[1.7rem] font-semibold tracking-tight text-foreground xl:text-3xl">
-                Good morning, {getPrimaryUserFirstName()}.
+                {t("institution.workspace.dashboard.greeting", { name: getPrimaryUserFirstName() })}
               </h1>
               <p className="mt-1.5 text-sm text-muted-foreground">
-                Manage submissions, reviewer progress, missing materials, shortlists, and reports from one organized workspace.
+                {t("institution.workspace.dashboard.description")}
               </p>
             </div>
             <div className="hidden rounded-full border border-border bg-card/80 px-3 py-1.5 text-xs font-medium text-muted-foreground shadow-sm xl:block">
-              {institution.demoLabel}
+              {t("institution.workspace.dashboard.demoLabel")}
             </div>
           </header>
 

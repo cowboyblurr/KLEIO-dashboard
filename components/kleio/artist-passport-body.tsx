@@ -228,7 +228,7 @@ export function ArtistPassportHero({
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
                 <h1 className="font-serif text-2xl font-semibold text-foreground xl:text-3xl">{artist.name}</h1>
-                <BadgeCheck className="size-5 shrink-0 text-primary" aria-label="Verified KLEIO passport" />
+                <BadgeCheck className="size-5 shrink-0 text-primary" aria-label="Demo Creative Passport" />
               </div>
               <p className="mt-1 text-sm text-muted-foreground">{artist.discipline} · {artist.medium}</p>
               <p className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">

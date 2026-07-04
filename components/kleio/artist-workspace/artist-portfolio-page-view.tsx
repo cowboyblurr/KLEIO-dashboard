@@ -4,6 +4,7 @@ import Link from "next/link"
 import { assetPath } from "@/lib/asset-path"
 import { getArtistProfileByUsername } from "@/lib/kleio-profile-data"
 import { DEMO_ARTIST_ID } from "@/lib/kleio-data"
+import { getArtistAnalytics } from "@/lib/kleio-artist-analytics"
 import { DEMO_ARTIST_PUBLIC_PROFILE, inkColor, mutedColor, lavenderSoftLine, cardStyle } from "@/lib/workspace-styles"
 import { WorkspacePageHeader } from "@/components/kleio/workspace-page-header"
 import { WorkflowCard } from "@/components/kleio/workflow-card"
@@ -14,10 +15,11 @@ export function ArtistPortfolioPageView() {
   const profile = getArtistProfileByUsername(DEMO_ARTIST_ID)
   if (!profile) return null
 
+  const analytics = getArtistAnalytics({ artistId: DEMO_ARTIST_ID })
   const portfolioSets = [
-    { name: "Grant applications", count: 6, status: "Current" },
-    { name: "Residency portfolio", count: 4, status: "Updated" },
-    { name: "Exhibition selection", count: 3, status: "Draft" },
+    { name: t("artist.workspace.portfolio.set.grantApplications"), count: analytics.activeApplications, status: t("artist.workspace.portfolio.setStatus.current") },
+    { name: t("artist.workspace.portfolio.set.residency"), count: analytics.materialsReadyCount, status: t("artist.workspace.portfolio.setStatus.updated") },
+    { name: t("artist.workspace.portfolio.set.exhibition"), count: analytics.selectedWorksCount, status: t("artist.workspace.portfolio.setStatus.draft") },
   ]
 
   return (

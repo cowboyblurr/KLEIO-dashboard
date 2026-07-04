@@ -457,53 +457,62 @@ export const analytics = {
 
 export const kpis = [
   {
-    label: "Total Applications",
+    labelKey: "institution.kpi.totalApplications",
     value: totalApplications.toLocaleString(),
-    delta: `${totalDelta >= 0 ? "+" : ""}${totalDelta}% from previous cycle`,
+    deltaKey: "institution.kpi.delta.cycleChange",
+    deltaParams: { delta: `${totalDelta >= 0 ? "+" : ""}${totalDelta}%` },
     trend: totalDelta >= 0 ? ("up" as const) : ("neutral" as const),
     icon: "clipboard",
   },
   {
-    label: "In Review",
+    labelKey: "institution.kpi.inReview",
     value: inReviewCount.toLocaleString(),
-    delta: `${pct(inReviewCount, totalApplications)} of total`,
+    deltaKey: "institution.kpi.delta.percentOfTotal",
+    deltaParams: { pct: String(pct(inReviewCount, totalApplications)) },
     trend: "neutral" as const,
     icon: "eye",
   },
   {
-    label: "Shortlisted",
+    labelKey: "institution.kpi.shortlisted",
     value: shortlistedCount.toLocaleString(),
-    delta: `${pct(shortlistedCount, totalApplications)} of total`,
+    deltaKey: "institution.kpi.delta.percentOfTotal",
+    deltaParams: { pct: String(pct(shortlistedCount, totalApplications)) },
     trend: "neutral" as const,
     icon: "bookmark",
   },
   {
-    label: "Pending Committee Vote",
+    labelKey: "institution.kpi.pendingVote",
     value: pendingVoteCount.toLocaleString(),
-    delta: `${pct(pendingVoteCount, totalApplications)} of total`,
+    deltaKey: "institution.kpi.delta.percentOfTotal",
+    deltaParams: { pct: String(pct(pendingVoteCount, totalApplications)) },
     trend: "neutral" as const,
     icon: "users",
   },
   {
-    label: "Deadlines This Week",
+    labelKey: "institution.kpi.deadlinesThisWeek",
     value: deadlinesThisWeekCount.toLocaleString(),
-    delta: `${deadlinesThisWeekCount} program${deadlinesThisWeekCount === 1 ? "" : "s"}`,
+    deltaKey:
+      deadlinesThisWeekCount === 1
+        ? "institution.kpi.delta.programsOne"
+        : "institution.kpi.delta.programsOther",
+    deltaParams: { count: String(deadlinesThisWeekCount) },
     trend: "neutral" as const,
     icon: "calendar",
   },
   {
-    label: "Incomplete Applications",
+    labelKey: "institution.kpi.incomplete",
     value: incompleteCount.toLocaleString(),
-    delta: `${pct(incompleteCount, totalApplications)} of total`,
+    deltaKey: "institution.kpi.delta.percentOfTotal",
+    deltaParams: { pct: String(pct(incompleteCount, totalApplications)) },
     trend: "neutral" as const,
     icon: "file",
   },
 ]
 
 export const reviewQueueTabs = [
-  { id: "priority", label: "Priority Review Queue", count: analytics.reviewQueueCount },
-  { id: "attention", label: "Needs Attention", count: analytics.needsAttentionCount },
-  { id: "deadlines", label: "Upcoming Deadlines", count: analytics.upcomingDeadlinesCount },
+  { id: "priority", labelKey: "institution.reviewQueue.tab.priority", count: analytics.reviewQueueCount },
+  { id: "attention", labelKey: "institution.reviewQueue.tab.attention", count: analytics.needsAttentionCount },
+  { id: "deadlines", labelKey: "institution.reviewQueue.tab.deadlines", count: analytics.upcomingDeadlinesCount },
 ]
 
 export { applicationsOverTime, statusBreakdown }

@@ -53,6 +53,14 @@ export const publicProfileRoutePatterns = [
   "/institution/[username]/",
 ] as const
 
+/** Additional public routes outside workspace nav (still part of demo surface). */
+export const supplementalPublicRoutes = [
+  "/signup/",
+  "/landing/",
+  "/artists/",
+  "/artists/[artistId]/",
+] as const
+
 export const allDemoRoutes = [
   ...publicRoutes,
   ...artistWorkspaceRoutes,

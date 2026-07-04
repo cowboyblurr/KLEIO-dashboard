@@ -16,9 +16,15 @@ import { analytics, getQueueForTab, reviewQueueTabs } from "@/lib/kleio-analytic
 import type { Submission } from "@/lib/kleio-data"
 import { InitialAvatar } from "@/components/kleio/initial-avatar"
 import { PriorityPill, StatusPill } from "@/components/kleio/pills"
+import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
 
 const tabs = reviewQueueTabs
-const filterChips = ["All Programs", "All Reviewers", "All Priorities", "All Statuses"]
+const filterChipKeys = [
+  "institution.reviewQueue.filter.allPrograms",
+  "institution.reviewQueue.filter.allReviewers",
+  "institution.reviewQueue.filter.allPriorities",
+  "institution.reviewQueue.filter.allStatuses",
+] as const
 
 function CompletenessBar({ value }: { value: number }) {
   const tone =
@@ -55,6 +61,7 @@ export function ReviewQueue({
   activeTab?: string
   onTabChange?: (tabId: string) => void
 }) {
+  const { t } = useKleioLocale()
   const [internalTab, setInternalTab] = useState("priority")
   const activeTab = controlledTab ?? internalTab
 
@@ -98,7 +105,7 @@ export function ReviewQueue({
                   : "border-transparent text-muted-foreground hover:text-foreground",
               )}
             >
-              {tab.label}
+              {t(tab.labelKey)}
               <span
                 className={cn(
                   "rounded-full px-1.5 py-0.5 text-[0.65rem] font-semibold tabular-nums",
@@ -117,18 +124,18 @@ export function ReviewQueue({
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <input
             type="search"
-            placeholder="Search submissions in queue…"
+            placeholder={t("institution.reviewQueue.searchPlaceholder")}
             className="h-9 w-full rounded-lg border border-border bg-background pl-9 pr-3 text-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-primary/40 focus:ring-4 focus:ring-primary/10"
-            aria-label="Search submissions in queue"
+            aria-label={t("institution.reviewQueue.searchPlaceholder")}
           />
         </div>
-        {filterChips.map((chip) => (
+        {filterChipKeys.map((chipKey) => (
           <button
-            key={chip}
+            key={chipKey}
             type="button"
             className="flex h-9 items-center gap-1.5 rounded-lg border border-border bg-background px-3 text-xs font-medium text-foreground transition-colors hover:bg-accent/50"
           >
-            {chip}
+            {t(chipKey)}
             <ChevronDown className="size-3.5 text-muted-foreground" />
           </button>
         ))}
@@ -137,7 +144,7 @@ export function ReviewQueue({
           className="flex h-9 items-center gap-1.5 rounded-lg border border-border bg-background px-3 text-xs font-medium text-foreground transition-colors hover:bg-accent/50"
         >
           <SlidersHorizontal className="size-3.5 text-muted-foreground" />
-          Saved Filters
+          {t("institution.reviewQueue.savedFilters")}
         </button>
         <button
           type="button"
@@ -155,14 +162,14 @@ export function ReviewQueue({
               <th className="w-10 px-5 py-3">
                 <input type="checkbox" aria-label="Select all" className="accent-primary" />
               </th>
-              <th className="px-3 py-3 font-medium">Artist</th>
-              <th className="px-3 py-3 font-medium">Project Title</th>
-              <th className="px-3 py-3 font-medium">Program</th>
-              <th className="px-3 py-3 font-medium">Completeness</th>
-              <th className="px-3 py-3 font-medium">Assigned Reviewer</th>
-              <th className="px-3 py-3 font-medium">Submitted</th>
-              <th className="px-3 py-3 font-medium">Status</th>
-              <th className="px-3 py-3 font-medium">Priority</th>
+              <th className="px-3 py-3 font-medium">{t("institution.reviewQueue.column.artist")}</th>
+              <th className="px-3 py-3 font-medium">{t("institution.reviewQueue.column.project")}</th>
+              <th className="px-3 py-3 font-medium">{t("institution.reviewQueue.column.program")}</th>
+              <th className="px-3 py-3 font-medium">{t("institution.reviewQueue.column.completeness")}</th>
+              <th className="px-3 py-3 font-medium">{t("institution.reviewQueue.column.reviewer")}</th>
+              <th className="px-3 py-3 font-medium">{t("institution.reviewQueue.column.submitted")}</th>
+              <th className="px-3 py-3 font-medium">{t("institution.reviewQueue.column.status")}</th>
+              <th className="px-3 py-3 font-medium">{t("institution.reviewQueue.column.priority")}</th>
               <th className="w-10 px-3 py-3" />
             </tr>
           </thead>
@@ -248,7 +255,10 @@ export function ReviewQueue({
 
       <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-4">
         <p className="text-xs text-muted-foreground">
-          Showing 1–{visibleSubmissions.length} of {tabTotal}
+          {t("institution.reviewQueue.footer.showing", {
+            visible: String(visibleSubmissions.length),
+            total: String(tabTotal),
+          })}
         </p>
         <div className="flex items-center gap-1">
           <button

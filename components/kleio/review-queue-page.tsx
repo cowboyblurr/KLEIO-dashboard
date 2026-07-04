@@ -6,6 +6,7 @@ import { institution } from "@/lib/kleio-data"
 import { DemoPageShell, DemoStatRow } from "@/components/kleio/demo-page-shell"
 import { ReviewQueue } from "@/components/kleio/review-queue"
 import { SubmissionDrawer } from "@/components/kleio/submission-drawer"
+import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
 
 function sortScenarioFirst<T extends { scenario?: string }>(items: T[]) {
   return [...items].sort((a, b) => {
@@ -16,6 +17,7 @@ function sortScenarioFirst<T extends { scenario?: string }>(items: T[]) {
 }
 
 export function ReviewQueuePageView() {
+  const { t } = useKleioLocale()
   const [activeTab, setActiveTab] = useState("priority")
   const [selectedId, setSelectedId] = useState("mei-lin-zhang")
   const [drawerOpen, setDrawerOpen] = useState(true)
@@ -32,19 +34,19 @@ export function ReviewQueuePageView() {
     <div className="flex h-full min-h-0 overflow-hidden">
       <div className="min-w-0 flex-1 overflow-y-auto">
         <DemoPageShell
-          title="Review Queue"
-          description="Review artist submissions with structure, context, and a clear record of progress."
+          title={t("institution.reviewQueue.title")}
+          description={t("institution.reviewQueue.description")}
         >
           <div className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-4 xl:max-w-4xl">
-            <DemoStatRow label="Assigned reviews" value={analytics.reviewQueueCount} />
-            <DemoStatRow label="Needs attention" value={analytics.needsAttentionCount} />
-            <DemoStatRow label="Pending committee vote" value={analytics.pendingVoteCount} />
-            <DemoStatRow label="Upcoming deadlines" value={analytics.upcomingDeadlinesCount} />
+            <DemoStatRow label={t("institution.reviewQueue.stat.assignedReviews")} value={analytics.reviewQueueCount} />
+            <DemoStatRow label={t("institution.reviewQueue.stat.needsAttention")} value={analytics.needsAttentionCount} />
+            <DemoStatRow label={t("institution.reviewQueue.stat.pendingVote")} value={analytics.pendingVoteCount} />
+            <DemoStatRow label={t("institution.reviewQueue.stat.upcomingDeadlines")} value={analytics.upcomingDeadlinesCount} />
           </div>
 
           <section className="mb-4 rounded-2xl border border-primary/15 bg-card/80 p-4 shadow-sm">
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-              Demo scenarios · {institution.name}
+              {t("institution.reviewQueue.scenariosEyebrow", { institution: institution.name })}
             </p>
             <div className="mt-3 grid gap-2 xl:grid-cols-3">
               {demoScenarios.map((scenario) => (

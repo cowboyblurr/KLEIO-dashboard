@@ -11,33 +11,40 @@ import {
 import { artistProfileHref } from "@/lib/kleio-demo-auth"
 import { DemoPageShell, DemoStatRow } from "@/components/kleio/demo-page-shell"
 import { StatusPill } from "@/components/kleio/pills"
+import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
 
 export function ShortlistPageView() {
+  const { t } = useKleioLocale()
   const [exportConfirmation, setExportConfirmation] = useState<string | null>(null)
   const groups = getShortlistGroups()
   const selectedCount = groups.reduce((sum, group) => sum + group.submissions.length, 0)
 
   return (
     <DemoPageShell
-      title="Shortlist"
-      description="Move promising submissions into a focused decision space for final review."
+      title={t("institution.shortlist.title")}
+      description={t("institution.shortlist.description")}
     >
       <div className="mb-4 flex flex-wrap items-center gap-3">
         <div className="grid flex-1 grid-cols-2 gap-3 md:grid-cols-3 xl:max-w-3xl">
-          <DemoStatRow label="Shortlisted" value={analytics.shortlistedCount} />
-          <DemoStatRow label="Pending committee vote" value={analytics.pendingVoteCount} />
-          <DemoStatRow label="Finalist / interview" value={groups[1].submissions.length} />
+          <DemoStatRow label={t("institution.shortlist.stat.shortlisted")} value={analytics.shortlistedCount} />
+          <DemoStatRow label={t("institution.shortlist.stat.pendingVote")} value={analytics.pendingVoteCount} />
+          <DemoStatRow label={t("institution.shortlist.stat.finalist")} value={groups[1].submissions.length} />
         </div>
         <button
           type="button"
           onClick={() =>
             setExportConfirmation(
-              `Export list prepared for ${selectedCount} candidate${selectedCount === 1 ? "" : "s"} (demo only).`,
+              t(
+                selectedCount === 1
+                  ? "institution.shortlist.exportConfirmation"
+                  : "institution.shortlist.exportConfirmationOther",
+                { count: String(selectedCount) },
+              ),
             )
           }
           className="inline-flex h-10 items-center rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
         >
-          Export selection list
+          {t("institution.shortlist.cta.export")}
         </button>
       </div>
 
@@ -59,15 +66,15 @@ export function ShortlistPageView() {
             {group.submissions.length ? (
               <ul className="divide-y divide-border">
                 {group.submissions.map((submission) => {
-                  const progress = getSubmissionReviewerProgress(submission.id)
                   const note = getLatestSubmissionNote(submission.id)
+                  const progress = getSubmissionReviewerProgress(submission.id)
                   return (
                     <li key={submission.id} className="px-5 py-4">
                       <div className="flex flex-wrap items-start justify-between gap-3">
                         <div>
                           <Link
                             href={artistProfileHref(submission.artistId)}
-                            className="font-medium text-foreground transition-colors hover:text-primary"
+                            className="font-medium text-foreground hover:text-primary"
                           >
                             {submission.artist}
                           </Link>

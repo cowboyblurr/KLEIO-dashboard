@@ -2,12 +2,15 @@
 
 import { Cell, Pie, PieChart, ResponsiveContainer } from "recharts"
 import { analytics, statusBreakdown } from "@/lib/kleio-analytics"
+import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
 
 export function StatusBreakdown() {
+  const { t } = useKleioLocale()
+
   return (
     <div className="rounded-2xl border border-border bg-card p-5 shadow-sm kleio-card-shadow">
       <h2 className="font-serif text-lg font-semibold text-foreground">
-        Application Status Breakdown
+        {t("institution.chart.statusBreakdown")}
       </h2>
 
       <div className="mt-4 grid grid-cols-1 items-center gap-4 2xl:grid-cols-[12rem_minmax(0,1fr)]">
@@ -35,7 +38,7 @@ export function StatusBreakdown() {
             <span className="font-serif text-2xl font-semibold text-foreground">
               {analytics.totalApplications.toLocaleString()}
             </span>
-            <span className="text-xs text-muted-foreground">Total</span>
+            <span className="text-xs text-muted-foreground">{t("institution.chart.total")}</span>
           </div>
         </div>
 

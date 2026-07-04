@@ -197,7 +197,7 @@ function AuthWall({
               href={getPublicHomeHref()}
               className="mt-4 inline-flex h-10 w-full items-center justify-center rounded-xl border border-border bg-background text-sm font-medium text-foreground transition-colors hover:bg-accent/50"
             >
-              Return to KLEIO
+              {t("auth.returnToKleio")}
             </Link>
           </>
         )}

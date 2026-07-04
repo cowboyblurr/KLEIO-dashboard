@@ -11,6 +11,7 @@ import {
   YAxis,
 } from "recharts"
 import { applicationsOverTime } from "@/lib/kleio-analytics"
+import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
 
 function FilterChip({ label }: { label: string }) {
   return (
@@ -28,10 +29,12 @@ function CustomTooltip({
   active,
   payload,
   label,
+  applicationsLabel,
 }: {
   active?: boolean
   payload?: { value: number }[]
   label?: string
+  applicationsLabel: string
 }) {
   if (!active || !payload?.length) return null
   return (
@@ -39,22 +42,25 @@ function CustomTooltip({
       <p className="text-xs font-medium text-muted-foreground">{label}</p>
       <p className="mt-0.5 flex items-center gap-1.5 text-sm font-semibold text-foreground">
         <span className="size-2 rounded-full bg-primary" aria-hidden />
-        Applications {payload[0].value}
+        {applicationsLabel} {payload[0].value}
       </p>
     </div>
   )
 }
 
 export function ApplicationsChart() {
+  const { t } = useKleioLocale()
+  const applicationsLabel = t("institution.chart.applications")
+
   return (
     <div className="rounded-2xl border border-border bg-card p-5 shadow-sm kleio-card-shadow">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="font-serif text-lg font-semibold text-foreground">
-          Applications Over Time
+          {t("institution.chart.applicationsOverTime")}
         </h2>
         <div className="flex items-center gap-2">
-          <FilterChip label="All Programs" />
-          <FilterChip label="Last 6 months" />
+          <FilterChip label={t("institution.chart.allPrograms")} />
+          <FilterChip label={t("institution.chart.lastSixMonths")} />
         </div>
       </div>
 
@@ -90,7 +96,7 @@ export function ApplicationsChart() {
               allowDecimals={false}
             />
             <Tooltip
-              content={<CustomTooltip />}
+              content={<CustomTooltip applicationsLabel={applicationsLabel} />}
               cursor={{ stroke: "var(--color-border)", strokeWidth: 1 }}
             />
             <Area
