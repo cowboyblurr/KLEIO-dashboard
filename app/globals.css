@@ -322,9 +322,10 @@
   isolation: isolate;
   border-radius: 9999px;
   background: #ffffff;
+  box-shadow: inset 0 0 0 1px rgba(231, 225, 247, 0.85);
 }
 
-.kleio-assist-object-video {
+.kleio-assist-object-gif {
   display: block;
   object-fit: contain;
   background-color: #ffffff;

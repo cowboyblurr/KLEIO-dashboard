@@ -30,7 +30,7 @@ const STAGE_PX: Record<KleioAssistObjectSize, number> = {
   lg: 168,
 }
 
-const VIDEO_PX: Record<KleioAssistObjectSize, number> = {
+const VISUAL_PX: Record<KleioAssistObjectSize, number> = {
   sm: 40,
   md: 68,
   lg: 100,
@@ -88,52 +88,48 @@ function AssistFallback({ sizePx }: { sizePx: number }) {
   )
 }
 
-function AssistVideo({
-  videoPx,
+// KLEIO Assist uses a separate GIF asset from the landing hero video. Do not replace the landing hero video with this asset.
+function AssistGif({
+  visualPx,
   onError,
 }: {
-  videoPx: number
+  visualPx: number
   onError: () => void
 }) {
   return (
-    <video
-      className="kleio-assist-object-video kleio-assist-motion"
-      autoPlay
-      muted
-      loop
-      playsInline
-      preload="metadata"
+    <img
+      src={assetPath("/assist/kleio-assist-object.gif")}
+      alt=""
       aria-hidden
+      className="kleio-assist-object-gif kleio-assist-motion"
+      style={{ width: visualPx, height: visualPx }}
       onError={onError}
-      style={{ width: videoPx, height: videoPx }}
-    >
-      <source src={assetPath("/landing/kleio-transparent-center-video.mp4")} type="video/mp4" />
-    </video>
+    />
   )
 }
 
 function AssistObjectStage({
   size,
   mode,
-  videoError,
+  assetError,
   reducedMotion,
-  onVideoError,
+  onAssetError,
 }: {
   size: KleioAssistObjectSize
   mode: KleioAssistObjectMode
-  videoError: boolean
+  assetError: boolean
   reducedMotion: boolean
-  onVideoError: () => void
+  onAssetError: () => void
 }) {
   const stagePx = STAGE_PX[size]
-  const videoPx = VIDEO_PX[size]
+  const visualPx = VISUAL_PX[size]
   const ringClass = MODE_RING_CLASS[mode]
 
   const inner =
-    videoError || reducedMotion ? (
-      <AssistFallback sizePx={videoPx} />
+    assetError || reducedMotion ? (
+      <AssistFallback sizePx={visualPx} />
     ) : (
-      <AssistVideo videoPx={videoPx} onError={onVideoError} />
+      <AssistGif visualPx={visualPx} onError={onAssetError} />
     )
 
   return (
@@ -149,7 +145,7 @@ function AssistObjectStage({
   )
 }
 
-/** Standalone visual — circular stage + video + ring. Same composition as inside KleioAssistObject. */
+/** Standalone visual — circular stage + GIF + ring. Same composition as inside KleioAssistObject. */
 export function KleioAssistObjectVisual({
   size = "sm",
   mode = "idle",
@@ -159,7 +155,7 @@ export function KleioAssistObjectVisual({
   mode?: KleioAssistObjectMode
   className?: string
 }) {
-  const [videoError, setVideoError] = useState(false)
+  const [assetError, setAssetError] = useState(false)
   const [reducedMotion, setReducedMotion] = useState(false)
 
   useEffect(() => {
@@ -175,9 +171,9 @@ export function KleioAssistObjectVisual({
       <AssistObjectStage
         size={size}
         mode={mode}
-        videoError={videoError}
+        assetError={assetError}
         reducedMotion={reducedMotion}
-        onVideoError={() => setVideoError(true)}
+        onAssetError={() => setAssetError(true)}
       />
     </div>
   )
@@ -192,7 +188,7 @@ export function KleioAssistObject({
   compact = false,
   className,
 }: KleioAssistObjectProps) {
-  const [videoError, setVideoError] = useState(false)
+  const [assetError, setAssetError] = useState(false)
   const [reducedMotion, setReducedMotion] = useState(false)
 
   const safeProgress = clampProgress(progress)
@@ -210,9 +206,9 @@ export function KleioAssistObject({
     <AssistObjectStage
       size={size}
       mode={mode}
-      videoError={videoError}
+      assetError={assetError}
       reducedMotion={reducedMotion}
-      onVideoError={() => setVideoError(true)}
+      onAssetError={() => setAssetError(true)}
     />
   )
 
