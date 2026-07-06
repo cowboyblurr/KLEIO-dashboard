@@ -58,25 +58,28 @@ export function AboutImageSlideshow() {
   )
 
   return (
-    <aside className="relative mx-auto w-full max-w-[420px] lg:sticky lg:top-28 lg:mx-0">
+    <aside className="relative mx-auto w-full max-w-[360px] lg:sticky lg:top-28 lg:mx-auto xl:max-w-[380px]">
       <div className="absolute -left-6 top-8 h-36 w-36 rounded-full bg-[#F7F4FF] blur-3xl" aria-hidden />
       <div className="absolute -right-5 bottom-16 h-32 w-32 rounded-full bg-[#E7E1F7]/70 blur-3xl" aria-hidden />
 
-      <div className="relative overflow-hidden rounded-[2rem] border border-[#E7E1F7] bg-white p-3 shadow-[0_24px_70px_rgba(82,64,130,0.14)]">
-        <div className="relative aspect-[4/5] overflow-hidden rounded-[1.55rem] bg-[#F7F4FF]">
+      <div className="relative rounded-[2rem] border border-[#E7E1F7] bg-white p-2.5 shadow-[0_24px_70px_rgba(82,64,130,0.14)]">
+        <div className="relative mx-auto aspect-[3/4] max-w-[300px] overflow-hidden rounded-[1.45rem] bg-[#F7F4FF] shadow-[0_18px_46px_rgba(31,27,41,0.12)] sm:max-w-[320px]">
           {aboutSlides.map((slide, index) => (
             <img
               key={slide.labelEn}
               src={assetPath(slide.src)}
               alt={slide.alt}
+              decoding="async"
+              loading={index === 0 ? "eager" : "lazy"}
               className={cn(
-                "absolute inset-0 h-full w-full object-cover transition-all duration-700 ease-out",
-                index === activeIndex ? "scale-100 opacity-100" : "scale-[1.035] opacity-0",
+                "absolute inset-0 h-full w-full object-cover transition-opacity duration-700 ease-out [backface-visibility:hidden]",
+                index === activeIndex ? "opacity-100" : "opacity-0",
               )}
+              style={{ filter: "contrast(1.035) saturate(1.02)" }}
             />
           ))}
 
-          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#1F1B29]/75 via-[#1F1B29]/25 to-transparent p-4 pt-16 text-white">
+          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#1F1B29]/78 via-[#1F1B29]/24 to-transparent p-4 pt-16 text-white">
             <p className="text-[0.62rem] font-semibold uppercase tracking-[0.2em] text-white/75">{eyebrow}</p>
             <div className="mt-1 flex items-end justify-between gap-4">
               <div>
@@ -104,7 +107,10 @@ export function AboutImageSlideshow() {
                 <img
                   src={assetPath(slide.src)}
                   alt=""
-                  className="h-full w-full object-cover opacity-75 transition-transform duration-500 group-hover:scale-105 group-hover:opacity-100"
+                  decoding="async"
+                  loading="lazy"
+                  className="h-full w-full object-cover opacity-80 transition-all duration-500 group-hover:opacity-100"
+                  style={{ filter: "contrast(1.04) saturate(1.02)" }}
                 />
               </button>
             )
