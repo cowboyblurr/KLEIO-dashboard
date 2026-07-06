@@ -3,8 +3,10 @@
 import { useCallback, useEffect, useState } from "react"
 import {
   getFirstStepForScenario,
+  getGuideStep,
   getNextGuideStep,
   getPreviousGuideStep,
+  isDemoGuideScenarioId,
   type DemoGuideScenarioId,
 } from "@/lib/kleio-demo-guide"
 
@@ -33,6 +35,24 @@ function isBrowser() {
   return typeof window !== "undefined"
 }
 
+function normalizeGuideState(parsed: Partial<DemoGuideState>): DemoGuideState {
+  const activeScenarioId = isDemoGuideScenarioId(parsed.activeScenarioId)
+    ? parsed.activeScenarioId
+    : null
+  const completedScenarioId = isDemoGuideScenarioId(parsed.completedScenarioId)
+    ? parsed.completedScenarioId
+    : null
+  const activeStep = getGuideStep(parsed.activeStepId)
+
+  return {
+    ...defaultState,
+    ...parsed,
+    activeScenarioId,
+    completedScenarioId,
+    activeStepId: activeStep && activeStep.scenarioId === activeScenarioId ? activeStep.id : null,
+  }
+}
+
 function readGuideState(): DemoGuideState {
   if (!isBrowser()) return defaultState
 
@@ -43,11 +63,11 @@ function readGuideState(): DemoGuideState {
       const previousRaw = window.localStorage.getItem("kleio-demo-guide-state-v1")
       if (!previousRaw) return defaultState
       const previousParsed = JSON.parse(previousRaw) as Partial<DemoGuideState>
-      return { ...defaultState, ...previousParsed, completedScenarioId: null }
+      return normalizeGuideState({ ...previousParsed, completedScenarioId: null })
     }
 
     const parsed = JSON.parse(raw) as Partial<DemoGuideState>
-    return { ...defaultState, ...parsed }
+    return normalizeGuideState(parsed)
   } catch {
     return defaultState
   }
@@ -60,7 +80,7 @@ function writeGuideState(state: DemoGuideState) {
 }
 
 export function persistDemoGuideState(patch: Partial<DemoGuideState>) {
-  const next = { ...readGuideState(), ...patch }
+  const next = normalizeGuideState({ ...readGuideState(), ...patch })
   writeGuideState(next)
   return next
 }
@@ -76,7 +96,7 @@ export function useDemoGuide() {
   }, [])
 
   const update = useCallback((patch: Partial<DemoGuideState>) => {
-    const next = { ...readGuideState(), ...patch }
+    const next = normalizeGuideState({ ...readGuideState(), ...patch })
     writeGuideState(next)
     setState(next)
   }, [])
