@@ -232,7 +232,7 @@ export function LandingPage() {
                 Explore KLEIO by workflow
               </h3>
               <p className="mt-1 text-[0.68rem] leading-relaxed" style={{ color: mutedColor }}>
-                Choose a guided walkthrough for artists, institutions, reviewers, or partners.
+                Choose a guided walkthrough for artist or institution workflows.
               </p>
 
               <div className="mt-2.5 grid grid-cols-1 gap-2">
