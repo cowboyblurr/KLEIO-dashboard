@@ -39,18 +39,18 @@ const scenarioEs: Record<DemoGuideScenarioId, {
   },
   "find-first-grant": {
     title: "Encuentra tu primera beca o convocatoria abierta",
-    summary: "Pasa de las señales del perfil a búsqueda de oportunidades, coincidencia y preparación.",
+    summary: "Pasa de las señales del perfil a la búsqueda, afinidad y preparación de oportunidades.",
     roleLabel: "Artista",
     outcome: "Busca oportunidades y entiende qué beca o convocatoria abierta encaja mejor.",
     previewSteps: [
       "Comienza con las señales del perfil artístico",
       "Abre Oportunidades",
-      "Revisa encaje, urgencia de fecha límite y materiales faltantes",
+      "Revisa afinidad, urgencia de fecha límite y materiales faltantes",
     ],
   },
   "create-open-call": {
     title: "Crea tu primera convocatoria abierta",
-    summary: "Inicia un espacio institucional y prepara un borrador estructurado de convocatoria abierta.",
+    summary: "Inicia un espacio de trabajo institucional y prepara un borrador estructurado de convocatoria abierta.",
     roleLabel: "Institución",
     outcome: "Prepara un flujo estructurado para una convocatoria, beca, residencia o exposición.",
     previewSteps: [
@@ -66,7 +66,7 @@ const scenarioEs: Record<DemoGuideScenarioId, {
     outcome: "Revisa postulaciones con estructura y mueve candidaturas fuertes a una lista corta.",
     previewSteps: [
       "Entra al espacio institucional",
-      "Abre la Cola de revisión",
+      "Abre la cola de revisión",
       "Mueve una candidatura fuerte a la lista corta",
     ],
   },
@@ -235,7 +235,7 @@ export function ScenarioPlaylistPage() {
       <section className="mx-auto w-full max-w-[1120px] px-5 py-10">
         <div className="max-w-3xl">
           <p className="text-[0.7rem] font-semibold uppercase tracking-[0.2em] text-[#A997E8]">
-            {locale === "es" ? "Playlist de demo guiado" : "Guided demo playlist"}
+            {locale === "es" ? "Lista de recorridos guiados" : "Guided demo playlist"}
           </p>
           <h1 className="mt-3 font-serif text-4xl font-semibold tracking-[-0.035em] text-[#292631] max-md:text-3xl">
             {locale === "es" ? "Elige un recorrido de KLEIO" : "Choose one KLEIO walkthrough"}
@@ -284,7 +284,7 @@ export function ScenarioPlaylistPage() {
               title={locale === "es" ? "Para instituciones" : "For institutions"}
               description={
                 locale === "es"
-                  ? "Comienza con la configuración del espacio, luego avanza a crear convocatorias y tomar decisiones de revisión."
+                  ? "Comienza con la configuración del espacio de trabajo; luego avanza hacia la creación de convocatorias y las decisiones de revisión."
                   : "Start with workspace setup, then move into open-call creation and review decisions."
               }
               scenarios={institutionScenarios}
@@ -301,11 +301,11 @@ export function ScenarioPlaylistPage() {
                 {locale === "es" ? "Mejores rutas iniciales" : "Best first demo paths"}
               </p>
               <h2 className="mt-1 font-serif text-xl font-semibold text-[#292631]">
-                {locale === "es" ? "Usa estas rutas para mostrar KLEIO rápido." : "Use these when showing KLEIO quickly."}
+                {locale === "es" ? "Usa estas rutas para mostrar KLEIO rápidamente." : "Use these when showing KLEIO quickly."}
               </h2>
               <p className="mt-2 text-sm leading-relaxed text-[#6F6882]">
                 {locale === "es"
-                  ? "Estas dos rutas comunican la plataforma con mayor claridad: artistas crean un Pasaporte reutilizable e instituciones preparan una convocatoria estructurada."
+                  ? "Estas dos rutas comunican la plataforma con mayor claridad: los artistas crean un Pasaporte reutilizable y las instituciones preparan una convocatoria estructurada."
                   : "These two paths communicate the platform fastest: artists create a reusable Passport, and institutions prepare a structured open call."}
               </p>
             </div>
@@ -320,7 +320,7 @@ export function ScenarioPlaylistPage() {
                 {locale === "es" ? "Crear Pasaporte Creativo" : "Create Artist Passport"}
               </p>
               <p className="mt-2 flex items-center text-xs font-semibold text-[#A997E8]">
-                {locale === "es" ? "Comienza en registro" : "Start on signup"}
+                {locale === "es" ? "Comienza en el registro" : "Start on signup"}
                 <ChevronRight className="ml-1 size-3 transition-transform group-hover:translate-x-0.5" />
               </p>
             </button>
@@ -335,7 +335,7 @@ export function ScenarioPlaylistPage() {
                 {locale === "es" ? "Preparar convocatoria" : "Prepare Open Call"}
               </p>
               <p className="mt-2 flex items-center text-xs font-semibold text-[#A997E8]">
-                {locale === "es" ? "Comienza en registro" : "Start on signup"}
+                {locale === "es" ? "Comienza en el registro" : "Start on signup"}
                 <ChevronRight className="ml-1 size-3 transition-transform group-hover:translate-x-0.5" />
               </p>
             </button>
