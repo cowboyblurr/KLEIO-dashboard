@@ -7,30 +7,44 @@ import { cn } from "@/lib/utils"
 
 const aboutSlides = [
   {
-    src: "/about/about-review-wall.svg",
+    hdSrc: "/about/about-review-wall-hd.jpg",
+    fallbackSrc: "/about/about-review-wall.svg",
     alt: "Studio review wall with pinned sketches and a small group discussion.",
     labelEn: "Review wall",
     labelEs: "Muro de revisión",
   },
   {
-    src: "/about/about-archive-desk.svg",
+    hdSrc: "/about/about-archive-desk-hd.jpg",
+    fallbackSrc: "/about/about-archive-desk.svg",
     alt: "Archive table, bookshelves, and cultural records in a quiet workspace.",
     labelEn: "Archive desk",
     labelEs: "Mesa de archivo",
   },
   {
-    src: "/about/about-artist-table.svg",
+    hdSrc: "/about/about-artist-table-hd.jpg",
+    fallbackSrc: "/about/about-artist-table.svg",
     alt: "Artist working at a bright studio table with materials nearby.",
     labelEn: "Artist table",
     labelEs: "Mesa de artista",
   },
   {
-    src: "/about/about-open-studio.svg",
+    hdSrc: "/about/about-open-studio-hd.jpg",
+    fallbackSrc: "/about/about-open-studio.svg",
     alt: "Large creative studio with artwork, tools, and warm architectural light.",
     labelEn: "Open studio",
     labelEs: "Estudio abierto",
   },
 ] as const
+
+function handleImageFallback(
+  event: React.SyntheticEvent<HTMLImageElement, Event>,
+  fallbackSrc: string,
+) {
+  const fallbackUrl = assetPath(fallbackSrc)
+  if (event.currentTarget.src !== fallbackUrl) {
+    event.currentTarget.src = fallbackUrl
+  }
+}
 
 export function AboutImageSlideshow() {
   const { locale } = useKleioLocale()
@@ -58,16 +72,17 @@ export function AboutImageSlideshow() {
   )
 
   return (
-    <aside className="relative mx-auto w-full max-w-[360px] lg:sticky lg:top-28 lg:mx-auto xl:max-w-[380px]">
+    <aside className="relative mx-auto w-full max-w-[400px] lg:sticky lg:top-28 lg:mx-auto xl:max-w-[430px]">
       <div className="absolute -left-6 top-8 h-36 w-36 rounded-full bg-[#F7F4FF] blur-3xl" aria-hidden />
       <div className="absolute -right-5 bottom-16 h-32 w-32 rounded-full bg-[#E7E1F7]/70 blur-3xl" aria-hidden />
 
       <div className="relative rounded-[2rem] border border-[#E7E1F7] bg-white p-2.5 shadow-[0_24px_70px_rgba(82,64,130,0.14)]">
-        <div className="relative mx-auto aspect-[3/4] max-w-[300px] overflow-hidden rounded-[1.45rem] bg-[#F7F4FF] shadow-[0_18px_46px_rgba(31,27,41,0.12)] sm:max-w-[320px]">
+        <div className="relative mx-auto aspect-[3/4] w-full overflow-hidden rounded-[1.45rem] bg-[#F7F4FF] shadow-[0_18px_46px_rgba(31,27,41,0.12)]">
           {aboutSlides.map((slide, index) => (
             <img
               key={slide.labelEn}
-              src={assetPath(slide.src)}
+              src={assetPath(slide.hdSrc)}
+              onError={(event) => handleImageFallback(event, slide.fallbackSrc)}
               alt={slide.alt}
               decoding="async"
               loading={index === 0 ? "eager" : "lazy"}
@@ -75,7 +90,7 @@ export function AboutImageSlideshow() {
                 "absolute inset-0 h-full w-full object-cover transition-opacity duration-700 ease-out [backface-visibility:hidden]",
                 index === activeIndex ? "opacity-100" : "opacity-0",
               )}
-              style={{ filter: "contrast(1.035) saturate(1.02)" }}
+              style={{ filter: "contrast(1.02) saturate(1.01)" }}
             />
           ))}
 
@@ -105,12 +120,13 @@ export function AboutImageSlideshow() {
                 aria-label={locale === "es" ? `Ver ${slide.labelEs}` : `View ${slide.labelEn}`}
               >
                 <img
-                  src={assetPath(slide.src)}
+                  src={assetPath(slide.hdSrc)}
+                  onError={(event) => handleImageFallback(event, slide.fallbackSrc)}
                   alt=""
                   decoding="async"
                   loading="lazy"
                   className="h-full w-full object-cover opacity-80 transition-all duration-500 group-hover:opacity-100"
-                  style={{ filter: "contrast(1.04) saturate(1.02)" }}
+                  style={{ filter: "contrast(1.02) saturate(1.01)" }}
                 />
               </button>
             )
