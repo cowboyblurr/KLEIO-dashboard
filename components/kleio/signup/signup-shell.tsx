@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { cn } from "@/lib/utils"
 import { KleioWordmarkLink } from "@/components/kleio/kleio-wordmark-link"
+import { KleioDemoGuide } from "@/components/kleio/kleio-demo-guide"
 import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
 
 export function SignupShell({
@@ -46,6 +47,7 @@ export function SignupShell({
         )}
         {children}
       </main>
+      <KleioDemoGuide variant="workspace" />
     </div>
   )
 }
@@ -221,58 +223,20 @@ export function SignupStepControls({
         <button
           type="button"
           onClick={onBack}
-          className="inline-flex h-10 items-center justify-center rounded-xl border border-border bg-background px-5 text-sm font-medium text-foreground transition-colors hover:bg-accent/50"
+          className="rounded-xl border border-border bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent/50"
         >
           {t("signup.common.back")}
         </button>
       ) : (
         <span />
       )}
-
-      {isLast ? (
-        <button
-          type="button"
-          onClick={onSubmit}
-          className="inline-flex h-10 items-center justify-center rounded-xl bg-primary px-6 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
-        >
-          {submitLabel}
-        </button>
-      ) : (
-        <button
-          type="button"
-          onClick={onNext}
-          className="inline-flex h-10 items-center justify-center rounded-xl bg-primary px-6 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
-        >
-          {t("signup.common.next")}
-        </button>
-      )}
-    </div>
-  )
-}
-
-export function SignupReviewRow({
-  label,
-  value,
-  origin,
-}: {
-  label: string
-  value: string
-  origin?: "suggested" | "edited"
-}) {
-  const { t } = useKleioLocale()
-  if (!value.trim()) return null
-  return (
-    <div className="border-b border-border py-3 last:border-0">
-      <div className="flex flex-wrap items-center gap-2">
-        <p className="text-[0.65rem] font-medium uppercase tracking-wide text-muted-foreground">{label}</p>
-        {origin === "suggested" && (
-          <span className="text-[0.6rem] text-[oklch(0.42_0.14_287)]">{t("signup.common.suggestedEditable")}</span>
-        )}
-        {origin === "edited" && (
-          <span className="text-[0.6rem] text-primary">{t("signup.common.editedByUser")}</span>
-        )}
-      </div>
-      <p className="mt-1 text-sm leading-relaxed text-foreground">{value}</p>
+      <button
+        type="button"
+        onClick={isLast ? onSubmit : onNext}
+        className="rounded-xl bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+      >
+        {isLast ? submitLabel : t("signup.common.next")}
+      </button>
     </div>
   )
 }
