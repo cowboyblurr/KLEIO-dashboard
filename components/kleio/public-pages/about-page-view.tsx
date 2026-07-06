@@ -8,6 +8,7 @@ import {
   PublicPageShell,
   PublicSection,
 } from "@/components/kleio/public-page-shell"
+import { AboutImageSlideshow } from "@/components/kleio/public-pages/about-image-slideshow"
 import { ExploreArthouseLink } from "@/components/kleio/smart-home-link"
 import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
 
@@ -22,18 +23,26 @@ export function AboutPageView() {
 
   return (
     <PublicPageShell active="about">
-      <PublicEyebrow>{t("public.about.eyebrow")}</PublicEyebrow>
-      <PublicHero title={t("public.about.hero.title")} subtitle={t("public.about.hero.subtitle")} />
+      <div className="grid gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(340px,420px)] lg:items-start">
+        <div className="min-w-0">
+          <PublicEyebrow>{t("public.about.eyebrow")}</PublicEyebrow>
+          <PublicHero title={t("public.about.hero.title")} subtitle={t("public.about.hero.subtitle")} />
 
-      <div className="mt-14 space-y-10">
-        <PublicSection heading={t("public.about.artist.heading")}>{t("public.about.artist.body")}</PublicSection>
-        <PublicSection heading={t("public.about.institution.heading")}>
-          {t("public.about.institution.body")}
-        </PublicSection>
-        <PublicSection heading={t("public.about.assist.heading")}>{t("public.about.assist.body")}</PublicSection>
-        <p className="max-w-[720px] text-[0.95rem] leading-relaxed text-[#5A5468]">
-          {t("public.about.collaborator.note")}
-        </p>
+          <div className="mt-14 space-y-10">
+            <PublicSection heading={t("public.about.artist.heading")}>{t("public.about.artist.body")}</PublicSection>
+            <PublicSection heading={t("public.about.institution.heading")}>
+              {t("public.about.institution.body")}
+            </PublicSection>
+            <PublicSection heading={t("public.about.assist.heading")}>{t("public.about.assist.body")}</PublicSection>
+            <p className="max-w-[720px] text-[0.95rem] leading-relaxed text-[#5A5468]">
+              {t("public.about.collaborator.note")}
+            </p>
+          </div>
+        </div>
+
+        <div className="pt-3 lg:pt-10">
+          <AboutImageSlideshow />
+        </div>
       </div>
 
       <div className="mt-14 grid gap-4 md:grid-cols-3">
