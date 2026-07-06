@@ -198,6 +198,38 @@ export function SignupTextArea({
   )
 }
 
+export function SignupReviewRow({
+  label,
+  value,
+  origin,
+}: {
+  label: string
+  value?: string
+  origin?: string
+}) {
+  const { t } = useKleioLocale()
+  const displayValue = value?.trim() || "—"
+
+  return (
+    <div className="flex gap-4 border-b border-border py-3 last:border-b-0 max-sm:flex-col max-sm:gap-1">
+      <div className="w-40 shrink-0 text-xs font-medium text-muted-foreground max-sm:w-full">{label}</div>
+      <div className="min-w-0 flex-1 text-sm text-foreground">
+        <p className="break-words leading-relaxed">{displayValue}</p>
+        {origin === "suggested" && (
+          <span className="mt-1 inline-flex rounded-full bg-[oklch(0.93_0.04_287)] px-2 py-0.5 text-[0.6rem] font-medium text-[oklch(0.42_0.14_287)]">
+            {t("signup.common.suggested")}
+          </span>
+        )}
+        {origin === "edited" && (
+          <span className="mt-1 inline-flex rounded-full bg-primary/10 px-2 py-0.5 text-[0.6rem] font-medium text-primary">
+            {t("signup.common.edited")}
+          </span>
+        )}
+      </div>
+    </div>
+  )
+}
+
 export function SignupStepControls({
   step,
   totalSteps,
