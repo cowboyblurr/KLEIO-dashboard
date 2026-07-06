@@ -45,7 +45,7 @@ const scenarioEs: Record<DemoGuideScenarioId, ScenarioSpanishCopy> = {
   },
   "find-first-grant": {
     title: "Encuentra tu primera beca o convocatoria abierta",
-    summary: "Pasa de las señales del perfil a búsqueda y preparación.",
+    summary: "Pasa de las señales del perfil a la búsqueda y preparación de oportunidades.",
     roleLabel: "Artista",
     completionMessage:
       "El recorrido de búsqueda de becas está completo. El artista vio cómo KLEIO conecta la preparación del perfil con una búsqueda de oportunidades más clara.",
@@ -75,7 +75,7 @@ const stepEs: Record<string, { title: string; body: string; primaryActionLabel?:
   "artist-passport-setup-2": {
     title: "Prepara borradores con Import Assist",
     body:
-      "KLEIO Import Assist aparece desde el Paso 1. Prepara campos sugeridos a partir de materiales que el artista ya mantiene, y el artista revisa qué se vuelve oficial.",
+      "KLEIO Import Assist aparece desde el Paso 1. Prepara campos sugeridos a partir de materiales que el artista ya mantiene, y el artista revisa qué pasa a ser oficial.",
   },
   "artist-passport-setup-3": {
     title: "Revisa la preparación del Pasaporte Creativo",
@@ -93,9 +93,9 @@ const stepEs: Record<string, { title: string; body: string; primaryActionLabel?:
       "Pasa al directorio de oportunidades para artistas. Las oportunidades del demo usan datos sintéticos, no una base de datos de becas en vivo.",
   },
   "find-first-grant-3": {
-    title: "Lee señales de encaje y preparación",
+    title: "Lee señales de afinidad y preparación",
     body:
-      "Muestra porcentaje de coincidencia, urgencia de fecha límite, materiales faltantes y esfuerzo de postulación como señales sugeridas preparadas para revisión.",
+      "Muestra porcentaje de afinidad, urgencia de fecha límite, materiales faltantes y esfuerzo de postulación como señales sugeridas preparadas para revisión.",
   },
   "create-open-call-1": {
     title: "Comienza el espacio institucional",
@@ -123,14 +123,14 @@ const stepEs: Record<string, { title: string; body: string; primaryActionLabel?:
       "Comienza por la ruta institucional para que la persona entienda quién gestiona las postulaciones antes de ver la cola de revisión.",
   },
   "review-and-shortlist-2": {
-    title: "Abre la Cola de revisión",
+    title: "Abre la cola de revisión",
     body:
       "Muestra la cola donde se reúnen postulaciones, preparación, fechas límite, avance de revisión y señales de prioridad.",
   },
   "review-and-shortlist-3": {
     title: "Revisa con contexto",
     body:
-      "Mantén la atención en materiales del artista, encaje con el programa, notas internas y preparación de rúbrica sin enviarlo todavía a un rol separado de revisor.",
+      "Mantén la atención en materiales del artista, afinidad con el programa, notas internas y preparación de rúbrica sin enviarlo todavía a un rol separado de revisor.",
   },
   "review-and-shortlist-4": {
     title: "Mueve una candidatura fuerte a la lista corta",
@@ -160,7 +160,7 @@ function roleMismatchMessage(requiredRole: DemoGuideRole | undefined, locale: Kl
 
   if (requiredRole === "collaborator") {
     return locale === "es"
-      ? "Este paso abre el asiento de revisión para colaborador. Cambia al rol de revisor demo si la página lo solicita."
+      ? "Este paso abre el asiento de revisión para colaboradores. Cambia al rol demo de revisor si la página lo solicita."
       : "This step opens the collaborator review seat. Switch demo role if the page asks for reviewer access."
   }
 
