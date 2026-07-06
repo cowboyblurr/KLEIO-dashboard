@@ -220,6 +220,49 @@ export function LandingPage() {
                 <p className="landing-import-assist-copy">{t("landing.importAssist.note")}</p>
               </div>
             </div>
+
+            <div
+              className="mt-3 rounded-[0.95rem] border p-3"
+              style={{ borderColor: lavenderSoftLine, backgroundColor: lavenderMist }}
+            >
+              <p className="text-[0.62rem] font-semibold uppercase tracking-[0.16em]" style={{ color: lavenderAccent }}>
+                Guided demo
+              </p>
+              <h3 className="mt-1 font-serif text-[0.92rem] font-semibold" style={{ color: inkColor }}>
+                Explore KLEIO by workflow
+              </h3>
+              <p className="mt-1 text-[0.68rem] leading-relaxed" style={{ color: mutedColor }}>
+                Choose a guided walkthrough for artists, institutions, reviewers, or partners.
+              </p>
+
+              <div className="mt-2.5 grid grid-cols-1 gap-2">
+                <Link
+                  href="/demo/"
+                  className="group inline-flex min-h-8 items-center justify-between rounded-xl bg-[#5B4B8A] px-3 py-2 text-[0.68rem] font-semibold text-white transition-opacity hover:opacity-90"
+                >
+                  Choose a walkthrough
+                  <ChevronRight className="size-3 transition-transform group-hover:translate-x-0.5" />
+                </Link>
+                <div className="grid grid-cols-2 gap-2">
+                  <Link
+                    href="/demo/?scenario=artist-passport-setup"
+                    className="group inline-flex min-h-8 items-center justify-between rounded-xl border bg-white px-3 py-2 text-[0.64rem] font-semibold transition-colors hover:bg-[#F7F4FF]"
+                    style={{ borderColor: lavenderLine, color: lavenderDeep }}
+                  >
+                    Artist Passport
+                    <ChevronRight className="size-3 transition-transform group-hover:translate-x-0.5" />
+                  </Link>
+                  <Link
+                    href="/demo/?scenario=create-open-call"
+                    className="group inline-flex min-h-8 items-center justify-between rounded-xl border bg-white px-3 py-2 text-[0.64rem] font-semibold transition-colors hover:bg-[#F7F4FF]"
+                    style={{ borderColor: lavenderLine, color: lavenderDeep }}
+                  >
+                    Open Call
+                    <ChevronRight className="size-3 transition-transform group-hover:translate-x-0.5" />
+                  </Link>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
