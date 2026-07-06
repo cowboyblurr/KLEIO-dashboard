@@ -5,7 +5,7 @@ import { ScenarioPlaylistPage } from "@/components/kleio/scenario-playlist-page"
 export const metadata: Metadata = {
   title: "KLEIO — Guided Demo",
   description:
-    "Choose guided KLEIO walkthroughs for artist, institution, reviewer, and partner workflows using synthetic demo data.",
+    "Choose guided KLEIO walkthroughs for artist and institution workflows using synthetic demo data.",
 }
 
 export default function Page() {
