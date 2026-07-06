@@ -51,7 +51,8 @@ const cardShadow = "0 18px 48px rgba(82, 64, 130, 0.08)"
 // ─── main page ───────────────────────────────────────────────────────────────
 
 export function LandingPage() {
-  const { t } = useKleioLocale()
+  const { t, locale } = useKleioLocale()
+  const isSpanish = locale === "es"
 
   const navLinks = [
     { key: "nav.about", href: "/about/" },
@@ -226,13 +227,15 @@ export function LandingPage() {
               style={{ borderColor: lavenderSoftLine, backgroundColor: lavenderMist }}
             >
               <p className="text-[0.62rem] font-semibold uppercase tracking-[0.16em]" style={{ color: lavenderAccent }}>
-                Guided demo
+                {isSpanish ? "Demo guiado" : "Guided demo"}
               </p>
               <h3 className="mt-1 font-serif text-[0.92rem] font-semibold" style={{ color: inkColor }}>
-                Explore KLEIO by workflow
+                {isSpanish ? "Explora KLEIO por flujo" : "Explore KLEIO by workflow"}
               </h3>
               <p className="mt-1 text-[0.68rem] leading-relaxed" style={{ color: mutedColor }}>
-                Choose a guided walkthrough for artist or institution workflows.
+                {isSpanish
+                  ? "Elige un recorrido guiado para flujos de artista o institución."
+                  : "Choose a guided walkthrough for artist or institution workflows."}
               </p>
 
               <div className="mt-2.5 grid grid-cols-1 gap-2">
@@ -240,7 +243,7 @@ export function LandingPage() {
                   href="/demo/"
                   className="group inline-flex min-h-8 items-center justify-between rounded-xl bg-[#5B4B8A] px-3 py-2 text-[0.68rem] font-semibold text-white transition-opacity hover:opacity-90"
                 >
-                  Choose a walkthrough
+                  {isSpanish ? "Elegir recorrido" : "Choose a walkthrough"}
                   <ChevronRight className="size-3 transition-transform group-hover:translate-x-0.5" />
                 </Link>
                 <div className="grid grid-cols-2 gap-2">
@@ -249,7 +252,7 @@ export function LandingPage() {
                     className="group inline-flex min-h-8 items-center justify-between rounded-xl border bg-white px-3 py-2 text-[0.64rem] font-semibold transition-colors hover:bg-[#F7F4FF]"
                     style={{ borderColor: lavenderLine, color: lavenderDeep }}
                   >
-                    Artist Passport
+                    {isSpanish ? "Pasaporte" : "Artist Passport"}
                     <ChevronRight className="size-3 transition-transform group-hover:translate-x-0.5" />
                   </Link>
                   <Link
@@ -257,7 +260,7 @@ export function LandingPage() {
                     className="group inline-flex min-h-8 items-center justify-between rounded-xl border bg-white px-3 py-2 text-[0.64rem] font-semibold transition-colors hover:bg-[#F7F4FF]"
                     style={{ borderColor: lavenderLine, color: lavenderDeep }}
                   >
-                    Open Call
+                    {isSpanish ? "Convocatoria" : "Open Call"}
                     <ChevronRight className="size-3 transition-transform group-hover:translate-x-0.5" />
                   </Link>
                 </div>
