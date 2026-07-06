@@ -8,6 +8,7 @@ import {
   formatMessage,
   type KleioLocale,
 } from "@/lib/kleio-i18n"
+import { formatSpanishOverride } from "@/lib/kleio-spanish-overrides"
 
 type KleioLocaleContextValue = {
   locale: KleioLocale
@@ -49,7 +50,8 @@ export function KleioLocaleProvider({ children }: { children: React.ReactNode })
   }, [])
 
   const t = useCallback(
-    (key: string, params?: Record<string, string | number>) => formatMessage(locale, key, params),
+    (key: string, params?: Record<string, string | number>) =>
+      formatSpanishOverride(locale, key, params) ?? formatMessage(locale, key, params),
     [locale],
   )
 
