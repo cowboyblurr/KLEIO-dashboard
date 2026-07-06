@@ -6,6 +6,7 @@ import { KleioAssistObjectVisual } from "@/components/kleio/kleio-assist-object"
 import { useDemoGuide } from "@/components/kleio/use-demo-guide"
 import { getDemoSession } from "@/lib/kleio-demo-auth"
 import {
+  getFirstStepForScenario,
   getGuideStep,
   getNextGuideStep,
   getPreviousGuideStep,
@@ -25,7 +26,7 @@ type KleioDemoGuideProps = {
 }
 
 function roleMismatchMessage(requiredRole?: DemoGuideRole): string | null {
-  if (!requiredRole || requiredRole === "partner") return null
+  if (!requiredRole) return null
   const session = getDemoSession()
   if (!session || session.role === requiredRole) return null
 
@@ -84,8 +85,10 @@ export function KleioDemoGuide({ variant = "workspace" }: KleioDemoGuideProps) {
   const activeScenario = getScenarioById(state.activeScenarioId)
   const completedScenario = getScenarioById(state.completedScenarioId)
   const scenarioSteps = state.activeScenarioId ? getScenarioSteps(state.activeScenarioId) : []
-  const hasNext = Boolean(getNextGuideStep(state.activeStepId))
-  const hasPrevious = Boolean(getPreviousGuideStep(state.activeStepId))
+  const nextStep = getNextGuideStep(state.activeStepId)
+  const previousStep = getPreviousGuideStep(state.activeStepId)
+  const hasNext = Boolean(nextStep)
+  const hasPrevious = Boolean(previousStep)
   const roleNote = roleMismatchMessage(activeStep?.requiredRole)
 
   const displayScenarios = useMemo(() => getRecommendedScenariosForPath(pathname), [pathname])
@@ -110,6 +113,34 @@ export function KleioDemoGuide({ variant = "workspace" }: KleioDemoGuideProps) {
 
   function handleScenarioSelect(scenarioId: DemoGuideScenarioId) {
     startScenario(scenarioId)
+    const firstStep = getFirstStepForScenario(scenarioId)
+    if (firstStep?.route) router.push(firstStep.route)
+  }
+
+  function handleNextStep() {
+    if (nextStep?.route) {
+      goToNextStep()
+      router.push(nextStep.route)
+      return
+    }
+
+    goToNextStep()
+  }
+
+  function handlePreviousStep() {
+    if (!previousStep) return
+    goToPreviousStep()
+    router.push(previousStep.route)
+  }
+
+  function handleSkipStep() {
+    if (nextStep?.route) {
+      skipStep()
+      router.push(nextStep.route)
+      return
+    }
+
+    skipStep()
   }
 
   if (!state.isOpen) {
@@ -182,7 +213,7 @@ export function KleioDemoGuide({ variant = "workspace" }: KleioDemoGuideProps) {
             <div className="space-y-2">
               <p className="text-xs font-medium text-[#292631]">Choose a KLEIO walkthrough</p>
               <p className="text-[0.7rem] leading-relaxed text-[#7F7890]">
-                Pick the task you want to experience. These guided flows use synthetic demo data and prototype onboarding.
+                Pick one of the four core paths. The guide will open the right first page for that workflow.
               </p>
               <ul className="mt-2 max-h-[18rem] space-y-2 overflow-y-auto pr-1">
                 {displayScenarios.map((scenario) => (
@@ -221,7 +252,7 @@ export function KleioDemoGuide({ variant = "workspace" }: KleioDemoGuideProps) {
             </button>
             <button
               type="button"
-              onClick={goToPreviousStep}
+              onClick={handlePreviousStep}
               disabled={!hasPrevious}
               className="inline-flex h-8 items-center justify-center rounded-xl border border-[#E7E1F7] bg-white px-3 text-xs font-medium text-[#292631] transition-colors hover:bg-[#F7F4FF] disabled:cursor-not-allowed disabled:opacity-40"
             >
@@ -229,14 +260,14 @@ export function KleioDemoGuide({ variant = "workspace" }: KleioDemoGuideProps) {
             </button>
             <button
               type="button"
-              onClick={goToNextStep}
+              onClick={handleNextStep}
               className="inline-flex h-8 items-center justify-center rounded-xl border border-[#E7E1F7] bg-white px-3 text-xs font-medium text-[#292631] transition-colors hover:bg-[#F7F4FF]"
             >
               {hasNext ? "Next" : "Finish"}
             </button>
             <button
               type="button"
-              onClick={skipStep}
+              onClick={handleSkipStep}
               className="inline-flex h-8 items-center justify-center rounded-xl border border-[#E7E1F7] bg-white px-3 text-xs font-medium text-[#6F6882] transition-colors hover:bg-[#F7F4FF]"
             >
               Skip
