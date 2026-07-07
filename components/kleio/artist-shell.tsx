@@ -7,12 +7,14 @@ import { KleioDemoGuide } from "@/components/kleio/kleio-demo-guide"
 import { DemoEnvironmentBadge } from "@/components/kleio/demo-environment-badge"
 import { DemoPresentationStyles } from "@/components/kleio/demo-presentation-styles"
 import { GuideWalkthroughCollapser } from "@/components/kleio/guide-walkthrough-collapser"
+import { DemoClickFeedbackLayer } from "@/components/kleio/demo-click-feedback-layer"
 
 export function ArtistShell({ children }: { children: ReactNode }) {
   return (
     <AuthGate requiredRole="artist">
       <DemoPresentationStyles />
       <GuideWalkthroughCollapser />
+      <DemoClickFeedbackLayer />
       <div className="relative flex h-screen overflow-hidden bg-background text-foreground">
         <ArtistSidebar />
         <div className="min-w-0 flex-1 overflow-hidden">{children}</div>
