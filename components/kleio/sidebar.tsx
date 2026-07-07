@@ -10,10 +10,22 @@ import { collaborators, institution } from "@/lib/kleio-data"
 import { InitialAvatar } from "@/components/kleio/initial-avatar"
 import { KleioWordmarkLink } from "@/components/kleio/kleio-wordmark-link"
 import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
+import { persistDemoGuideState } from "@/components/kleio/use-demo-guide"
+
+function openPageGuide() {
+  persistDemoGuideState({
+    isOpen: true,
+    isMinimized: false,
+    dismissed: false,
+    activeScenarioId: null,
+    activeStepId: null,
+    completedScenarioId: null,
+  })
+}
 
 export function Sidebar() {
   const pathname = usePathname()
-  const { t } = useKleioLocale()
+  const { t, locale } = useKleioLocale()
   const programDirector = collaborators.find((person) => person.role === "Program Director") ?? collaborators[0]
 
   return (
@@ -39,10 +51,17 @@ export function Sidebar() {
               {section.items.map((item) => {
                 const active = pathname === item.href
                 const Icon = item.icon
+                const label =
+                  item.href === "/artists/"
+                    ? locale === "es"
+                      ? "Registros de artistas"
+                      : "Artist Records"
+                    : t(institutionNavLabelKeys[item.href] ?? item.label)
                 return (
                   <li key={item.href}>
                     <Link
                       href={item.href}
+                      onClick={openPageGuide}
                       aria-current={active ? "page" : undefined}
                       className={cn(
                         "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
@@ -57,7 +76,7 @@ export function Sidebar() {
                           active ? "text-primary" : "text-muted-foreground",
                         )}
                       />
-                      <span className="flex-1">{t(institutionNavLabelKeys[item.href] ?? item.label)}</span>
+                      <span className="flex-1">{label}</span>
                       {item.badge != null && (
                         <span
                           className={cn(
