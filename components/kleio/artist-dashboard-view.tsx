@@ -22,7 +22,7 @@ export function ArtistDashboardView() {
   }
 
   return (
-    <main className="h-full overflow-y-auto bg-white text-[#292631]">
+    <main className="kleio-artist-dashboard-main h-full overflow-y-auto bg-white text-[#292631]">
       <ArtistDashboardOverview
         artist={artist}
         profile={artistDashboardProfile}
