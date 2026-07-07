@@ -8,6 +8,7 @@ import { useDemoGuide } from "@/components/kleio/use-demo-guide"
 import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
 import { getDemoSession } from "@/lib/kleio-demo-auth"
 import type { KleioLocale } from "@/lib/kleio-i18n"
+import { getKleioPageGuide } from "@/lib/kleio-page-guide"
 import {
   getFirstStepForScenario,
   getGuideStep,
@@ -25,7 +26,6 @@ import {
 import { cn } from "@/lib/utils"
 
 type KleioDemoGuideProps = {
-  /** workspace shows minimized orb; landing only shows panel when explicitly opened */
   variant?: "workspace" | "landing"
 }
 
@@ -36,212 +36,34 @@ type ScenarioSpanishCopy = {
   completionMessage: string
 }
 
-type StepSpanishCopy = Partial<
-  Pick<
-    DemoGuideStep,
-    "title" | "body" | "screenLabel" | "screenCue" | "viewerAction" | "nextPreview" | "primaryActionLabel"
-  >
->
-
-const scenarioEs: Record<DemoGuideScenarioId, ScenarioSpanishCopy> = {
+const scenarioEs: Partial<Record<DemoGuideScenarioId, ScenarioSpanishCopy>> = {
   "artist-passport-setup": {
     title: "Crea tu Pasaporte Creativo",
-    summary: "Inicia un perfil de artista y prepara materiales reutilizables.",
+    summary: "Recorre el inicio del perfil de artista y la preparación de materiales reutilizables.",
     roleLabel: "Artista",
     completionMessage:
-      "El recorrido del Pasaporte Creativo está completo. El artista vio cómo KLEIO convierte materiales repetidos en una base reutilizable y lista para revisión.",
+      "Este recorrido está completo. Has visto cómo KLEIO comienza con un registro artístico reutilizable que el artista controla.",
   },
   "find-first-grant": {
     title: "Encuentra tu primera beca o convocatoria abierta",
-    summary: "Pasa de las señales del perfil a la búsqueda y preparación de oportunidades.",
+    summary: "Observa cómo el espacio de artista conecta preparación con oportunidades relevantes.",
     roleLabel: "Artista",
     completionMessage:
-      "El recorrido de búsqueda de becas está completo. El artista vio cómo KLEIO conecta la preparación del perfil con una búsqueda de oportunidades más clara.",
+      "Este recorrido está completo. Has visto cómo KLEIO ayuda al artista a entender qué oportunidades vale la pena preparar primero.",
   },
   "create-open-call": {
     title: "Crea tu primera convocatoria abierta",
-    summary: "Prepara una convocatoria estructurada desde el espacio institucional.",
+    summary: "Recorre cómo una institución prepara un flujo de recepción estructurado.",
     roleLabel: "Institución",
     completionMessage:
-      "El recorrido de convocatoria abierta está completo. La institución vio cómo KLEIO convierte la configuración de un programa en un flujo de recepción claro y estructurado.",
+      "Este recorrido está completo. Has visto cómo KLEIO convierte la configuración de un programa en un flujo estructurado.",
   },
   "review-and-shortlist": {
     title: "Revisa postulaciones y crea una lista corta",
-    summary: "Pasa de postulaciones recibidas a revisión y decisión.",
+    summary: "Sigue el flujo institucional desde resumen, cola de revisión y lista corta.",
     roleLabel: "Institución",
     completionMessage:
-      "El recorrido de revisión y lista corta está completo. La persona vio cómo KLEIO conserva el contexto desde la postulación hasta la decisión.",
-  },
-}
-
-const stepEs: Record<string, StepSpanishCopy> = {
-  "artist-passport-setup-1": {
-    title: "Comienza en la ruta de artista",
-    body:
-      "Esta primera pantalla muestra que KLEIO empieza con el artista, no con extracción institucional. El artista inicia con identidad básica e información de práctica.",
-    screenLabel: "Registro de artista · Datos básicos",
-    screenCue:
-      "Deberías ver el formulario de onboarding de artista con KLEIO Import Assist encima de los primeros campos.",
-    viewerAction:
-      "Explica que el artista puede escribir manualmente o usar Import Assist para preparar material sugerido. Nada se vuelve oficial sin revisión del artista.",
-    nextPreview: "Luego, enfoca Import Assist y por qué importa.",
-    primaryActionLabel: "Siguiente: Import Assist",
-  },
-  "artist-passport-setup-2": {
-    title: "Explica Import Assist antes del panel",
-    body:
-      "Este es el momento de confianza. KLEIO puede preparar bio, statement, etiquetas, enlaces, documentos y obras destacadas, pero el artista sigue siendo editor y autoridad final.",
-    screenLabel: "Registro de artista · Import Assist",
-    screenCue:
-      "Permanece en la página de registro de artista y mira la tarjeta compacta de Import Assist encima del formulario.",
-    viewerAction:
-      "Preséntalo como preparación de borradores, no como identidad automatizada. El demo debe hacer que los artistas se sientan apoyados, no reemplazados.",
-    nextPreview: "Luego, la guía abre el Pasaporte Creativo terminado.",
-    primaryActionLabel: "Siguiente: Pasaporte",
-  },
-  "artist-passport-setup-3": {
-    title: "Revisa la preparación del Pasaporte Creativo",
-    body:
-      "El Pasaporte es la base reutilizable del artista. Reúne los materiales que los artistas reconstruyen para becas, residencias, exposiciones y convocatorias.",
-    screenLabel: "Espacio de artista · Pasaporte Creativo",
-    screenCue:
-      "Deberías ver un perfil reutilizable con bio, statement, CV, portafolio, obras, referencias y contexto de preparación.",
-    viewerAction:
-      "Aclara que no es un perfil social. Es un registro cultural listo para postulación que el artista puede reutilizar y controlar.",
-    nextPreview: "Finaliza este recorrido o continúa hacia búsqueda de becas.",
-    primaryActionLabel: "Finalizar recorrido",
-  },
-  "find-first-grant-1": {
-    title: "Comienza con la base del perfil artístico",
-    body:
-      "La búsqueda de becas solo se vuelve útil después de que KLEIO entiende la práctica, materiales, ubicación, temas y preparación del artista.",
-    screenLabel: "Registro de artista · Señales del perfil",
-    screenCue:
-      "Deberías ver el formulario de artista donde el Pasaporte Creativo empieza a recoger señales del perfil y la práctica.",
-    viewerAction:
-      "Explica que KLEIO usa el Pasaporte para reducir ruido y mostrar oportunidades relevantes.",
-    nextPreview: "Luego, abre el espacio de Oportunidades.",
-    primaryActionLabel: "Siguiente: Oportunidades",
-  },
-  "find-first-grant-2": {
-    title: "Abre Oportunidades",
-    body:
-      "La vista de Oportunidades convierte el Pasaporte en acción: becas, residencias, exposiciones y convocatorias pueden compararse por afinidad y preparación.",
-    screenLabel: "Espacio de artista · Oportunidades",
-    screenCue:
-      "Deberías ver tarjetas o analíticas de oportunidades con afinidad y preparación. Los datos del demo son sintéticos.",
-    viewerAction:
-      "Nombra esto como pilar de adquisición de artistas: el artista recibe valor antes de convertir un piloto institucional.",
-    nextPreview: "Luego, lee las señales que ayudan a decidir dónde aplicar.",
-    primaryActionLabel: "Siguiente: Preparación",
-  },
-  "find-first-grant-3": {
-    title: "Lee señales de afinidad y preparación",
-    body:
-      "Esta pantalla debe responder la pregunta real del artista: qué vale mi tiempo, qué vence pronto y qué material me falta.",
-    screenLabel: "Espacio de artista · Afinidad y preparación",
-    screenCue:
-      "Permanece en Oportunidades y busca porcentaje de afinidad, urgencia de fecha, materiales faltantes, esfuerzo y contexto de fondos.",
-    viewerAction:
-      "Posiciona KLEIO como una capa de preparación. Recomienda y redacta, pero el artista revisa antes de aplicar o exportar.",
-    nextPreview: "Finaliza este recorrido o vuelve al Pasaporte.",
-    primaryActionLabel: "Finalizar recorrido",
-  },
-  "create-open-call-1": {
-    title: "Comienza con la configuración institucional",
-    body:
-      "Un flujo institucional claro empieza definiendo organización, entorno de revisión, equipo y estructura del programa antes de recibir postulaciones.",
-    screenLabel: "Registro institucional · Configuración",
-    screenCue:
-      "Deberías ver el formulario institucional con Import Assist disponible encima de los primeros campos.",
-    viewerAction:
-      "Explica que KLEIO reemplaza PDFs dispersos, carpetas de email y hojas de cálculo con un entorno estructurado.",
-    nextPreview: "Luego, abre Programas y Convocatorias.",
-    primaryActionLabel: "Siguiente: Programas",
-  },
-  "create-open-call-2": {
-    title: "Abre Programas y Convocatorias",
-    body:
-      "Aquí la institución ve becas, residencias, exposiciones y convocatorias como programas gestionados, no como carpetas sueltas.",
-    screenLabel: "Espacio institucional · Programas",
-    screenCue:
-      "Deberías ver programas activos, estados, fechas límite, conteos, materiales incompletos y revisores asignados.",
-    viewerAction:
-      "Muestra que la institución no solo recibe archivos; gestiona un ciclo completo de revisión.",
-    nextPreview: "Luego, crea un borrador de convocatoria.",
-    primaryActionLabel: "Siguiente: Nueva convocatoria",
-  },
-  "create-open-call-3": {
-    title: "Crea un borrador de convocatoria",
-    body:
-      "El constructor debe mostrar la estructura de intake: título, tipo, fecha límite, elegibilidad, materiales, preguntas y etapas de revisión.",
-    screenLabel: "Espacio institucional · Nuevo borrador",
-    screenCue:
-      "Deberías ver la pantalla donde la institución prepara la convocatoria antes de publicar o recibir postulantes.",
-    viewerAction:
-      "Enfatiza seguridad de borrador: es un flujo demo, no una convocatoria publicada en vivo.",
-    nextPreview: "Luego, termina en el estado de borrador preparado.",
-    primaryActionLabel: "Siguiente: Borrador listo",
-  },
-  "create-open-call-4": {
-    title: "Cierra en preparación de borrador",
-    body:
-      "El propósito no es solo un formulario. Es una estructura repetible que revisores, colaboradores e informes pueden usar después.",
-    screenLabel: "Espacio institucional · Borrador listo",
-    screenCue:
-      "Permanece en la pantalla de nuevo programa y trata la convocatoria como borrador controlado del demo.",
-    viewerAction:
-      "Di claramente que se usan datos sintéticos y que esto no implica una convocatoria pública real.",
-    nextPreview: "Finaliza este recorrido o continúa a revisión y lista corta.",
-    primaryActionLabel: "Finalizar recorrido",
-  },
-  "review-and-shortlist-1": {
-    title: "Empieza en el espacio institucional",
-    body:
-      "Antes de la cola, orienta a la persona: estado, volumen, materiales incompletos, progreso de revisores y presión de decisión.",
-    screenLabel: "Espacio institucional · Resumen",
-    screenCue:
-      "Deberías ver el panel institucional principal del ciclo demo sintético de KLEIO Arthouse.",
-    viewerAction:
-      "Explica que KLEIO da al equipo una vista compartida antes de revisar postulaciones individuales.",
-    nextPreview: "Luego, abre la Cola de revisión.",
-    primaryActionLabel: "Siguiente: Cola",
-  },
-  "review-and-shortlist-2": {
-    title: "Abre la Cola de revisión",
-    body:
-      "La cola hace manejable el trabajo: preparación, prioridad, progreso de revisores, fechas límite y contexto aparecen juntos.",
-    screenLabel: "Espacio institucional · Cola de revisión",
-    screenCue:
-      "Deberías ver postulaciones organizadas para revisión en vez de emails, PDFs y hojas de cálculo dispersas.",
-    viewerAction:
-      "Señala la información que normalmente está fragmentada: estado, completitud, revisor, prioridad y etapa.",
-    nextPreview: "Luego, explica el contexto que necesitan los revisores.",
-    primaryActionLabel: "Siguiente: Contexto",
-  },
-  "review-and-shortlist-3": {
-    title: "Revisa con contexto",
-    body:
-      "Un buen flujo mantiene materiales del artista, afinidad con el programa, notas internas, rúbrica y contexto de comité juntos.",
-    screenLabel: "Espacio institucional · Contexto del postulante",
-    screenCue:
-      "Permanece en Cola de revisión y enfoca cómo se entiende una postulación sin abrir archivos desconectados uno por uno.",
-    viewerAction:
-      "Presenta KLEIO como apoyo a la decisión, no selección automatizada. El comité decide.",
-    nextPreview: "Luego, abre el espacio de Lista corta.",
-    primaryActionLabel: "Siguiente: Lista corta",
-  },
-  "review-and-shortlist-4": {
-    title: "Mueve candidaturas fuertes a Lista corta",
-    body:
-      "Lista corta convierte el trabajo de revisión en una sala de decisión clara. Candidatos fuertes, notas y próximos pasos se conservan para selección final.",
-    screenLabel: "Espacio institucional · Lista corta",
-    screenCue:
-      "Deberías ver artistas preseleccionados o postulaciones listas para decisión separadas de la cola grande.",
-    viewerAction:
-      "Termina mostrando que KLEIO conserva el historial de revisión en vez de perder contexto después de una reunión.",
-    nextPreview: "Finaliza este recorrido o vuelve a crear convocatoria.",
-    primaryActionLabel: "Finalizar recorrido",
+      "Este recorrido está completo. Has visto cómo KLEIO mantiene visible el contexto de revisión hasta la decisión.",
   },
 }
 
@@ -258,15 +80,6 @@ function pathsMatch(pathname: string | null, targetRoute: string) {
 function scenarioCopy(scenario: DemoGuideScenario, locale: KleioLocale) {
   if (locale !== "es") return scenario
   return { ...scenario, ...scenarioEs[scenario.id] }
-}
-
-function stepCopy(step: DemoGuideStep, locale: KleioLocale) {
-  if (locale !== "es") return step
-  return {
-    ...step,
-    ...stepEs[step.id],
-    primaryActionLabel: stepEs[step.id]?.primaryActionLabel ?? "Siguiente",
-  }
 }
 
 function roleMismatchMessage(requiredRole: DemoGuideRole | undefined, locale: KleioLocale): string | null {
@@ -296,20 +109,31 @@ function labelFor(key: "screen" | "look" | "action" | "next" | "notHere", locale
     en: {
       screen: "You’re seeing",
       look: "Look for",
-      action: "What to explain",
-      next: "Next click",
+      action: "Why it helps",
+      next: "Next",
       notHere: "Open the matching screen before continuing",
     },
     es: {
       screen: "Estás viendo",
       look: "Busca",
-      action: "Qué explicar",
-      next: "Siguiente clic",
+      action: "Cómo ayuda",
+      next: "Siguiente",
       notHere: "Abre la pantalla correcta antes de continuar",
     },
   }
 
   return labels[locale === "es" ? "es" : "en"][key]
+}
+
+function roleLabel(role: string, locale: KleioLocale) {
+  if (locale !== "es") {
+    if (role === "artist") return "Artist workspace"
+    if (role === "collaborator") return "Collaborator review seat"
+    return "Institution workspace"
+  }
+  if (role === "artist") return "Espacio de artista"
+  if (role === "collaborator") return "Asiento de revisión"
+  return "Espacio institucional"
 }
 
 function ScenarioButton({
@@ -357,7 +181,7 @@ export function KleioDemoGuide({ variant = "workspace" }: KleioDemoGuideProps) {
   } = useDemoGuide()
 
   const activeStep = getGuideStep(state.activeStepId)
-  const activeStepCopy = activeStep ? stepCopy(activeStep, locale) : undefined
+  const activeStepCopy = activeStep
   const activeScenario = getScenarioById(state.activeScenarioId)
   const activeScenarioCopy = activeScenario ? scenarioCopy(activeScenario, locale) : undefined
   const completedScenario = getScenarioById(state.completedScenarioId)
@@ -369,6 +193,7 @@ export function KleioDemoGuide({ variant = "workspace" }: KleioDemoGuideProps) {
   const hasPrevious = Boolean(previousStep)
   const roleNote = roleMismatchMessage(activeStep?.requiredRole, locale)
   const isOnActiveStepRoute = activeStep ? pathsMatch(pathname, activeStep.route) : false
+  const currentPageGuide = useMemo(() => getKleioPageGuide(pathname), [pathname])
 
   const displayScenarios = useMemo(() => getRecommendedScenariosForPath(pathname), [pathname])
   const nextRecommendations = useMemo(
@@ -517,16 +342,18 @@ export function KleioDemoGuide({ variant = "workspace" }: KleioDemoGuideProps) {
           <KleioAssistObjectVisual size="sm" mode={completedScenario ? "complete" : "reviewing"} />
           <div className="min-w-0 flex-1">
             <p className="text-xs font-semibold text-[#292631]">
-              {activeStep ? (locale === "es" ? "KLEIO Assist" : "KLEIO Assist") : locale === "es" ? "Guía KLEIO" : "KLEIO Guide"}
+              {activeStep ? "KLEIO Assist" : currentPageGuide ? currentPageGuide.title : locale === "es" ? "Guía KLEIO" : "KLEIO Guide"}
             </p>
             <p className="mt-0.5 text-[0.65rem] leading-snug text-[#7F7890]">
               {activeStep
                 ? locale === "es"
                   ? "Ayuda guiada para esta pantalla"
                   : "Guided help for this screen"
-                : activeScenarioCopy?.title ??
-                  completedScenarioCopy?.title ??
-                  (locale === "es" ? "Elige un recorrido por flujo" : "Choose a workflow walkthrough")}
+                : currentPageGuide
+                  ? roleLabel(currentPageGuide.role, locale)
+                  : activeScenarioCopy?.title ??
+                    completedScenarioCopy?.title ??
+                    (locale === "es" ? "Elige un recorrido por flujo" : "Choose a workflow walkthrough")}
             </p>
           </div>
           <button
@@ -569,22 +396,48 @@ export function KleioDemoGuide({ variant = "workspace" }: KleioDemoGuideProps) {
               )}
             </div>
           ) : !state.activeScenarioId ? (
-            <div className="space-y-2">
-              <p className="text-xs font-medium text-[#292631]">
-                {locale === "es" ? "Elige un recorrido de KLEIO" : "Choose a KLEIO walkthrough"}
-              </p>
-              <p className="text-[0.7rem] leading-relaxed text-[#7F7890]">
-                {locale === "es"
-                  ? "Elige una ruta. La guía abrirá cada pantalla y el botón principal avanzará el recorrido paso a paso."
-                  : "Pick a path. The guide opens each screen and the main button advances the walkthrough step by step."}
-              </p>
-              <ul className="mt-2 max-h-[18rem] space-y-2 overflow-y-auto pr-1">
-                {displayScenarios.map((scenario) => (
-                  <li key={scenario.id}>
-                    <ScenarioButton scenario={scenario} locale={locale} onStart={handleScenarioSelect} />
-                  </li>
-                ))}
-              </ul>
+            <div className="space-y-3">
+              {currentPageGuide && (
+                <div className="rounded-[1.1rem] border border-[#E7E1F7] bg-white px-3 py-3 shadow-[0_10px_26px_rgba(82,64,130,0.08)]">
+                  <p className="text-[0.6rem] font-bold uppercase tracking-[0.16em] text-[#A997E8]">
+                    {locale === "es" ? "Esta página" : "This page"}
+                  </p>
+                  <h3 className="mt-1 text-sm font-semibold text-[#292631]">{currentPageGuide.title}</h3>
+                  <p className="mt-1 text-xs leading-relaxed text-[#6F6882]">{currentPageGuide.description}</p>
+                  <div className="mt-3 grid gap-2">
+                    <div className="rounded-xl bg-[#F7F4FF] px-3 py-2">
+                      <p className="text-[0.58rem] font-bold uppercase tracking-[0.14em] text-[#A997E8]">
+                        {locale === "es" ? "Cómo ayuda" : "How it helps"}
+                      </p>
+                      <p className="mt-0.5 text-[0.72rem] leading-snug text-[#292631]">{currentPageGuide.benefit}</p>
+                    </div>
+                    <div className="rounded-xl bg-[#F7F4FF] px-3 py-2">
+                      <p className="text-[0.58rem] font-bold uppercase tracking-[0.14em] text-[#A997E8]">
+                        {locale === "es" ? "En la práctica" : "In practice"}
+                      </p>
+                      <p className="mt-0.5 text-[0.72rem] leading-snug text-[#292631]">{currentPageGuide.realWorld}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div>
+                <p className="text-xs font-medium text-[#292631]">
+                  {locale === "es" ? "Recorridos guiados" : "Guided walkthroughs"}
+                </p>
+                <p className="mt-1 text-[0.7rem] leading-relaxed text-[#7F7890]">
+                  {locale === "es"
+                    ? "Elige una ruta completa cuando quieras ver cómo varias pantallas se conectan."
+                    : "Choose a full path when you want to see how several screens connect."}
+                </p>
+                <ul className="mt-2 max-h-[18rem] space-y-2 overflow-y-auto pr-1">
+                  {displayScenarios.map((scenario) => (
+                    <li key={scenario.id}>
+                      <ScenarioButton scenario={scenario} locale={locale} onStart={handleScenarioSelect} />
+                    </li>
+                  ))}
+                </ul>
+              </div>
             </div>
           ) : activeStepCopy ? (
             <div className="space-y-2.5">
@@ -633,7 +486,6 @@ export function KleioDemoGuide({ variant = "workspace" }: KleioDemoGuideProps) {
 
               <div className="relative pl-8">
                 <div className="absolute left-[0.875rem] top-5 bottom-5 border-l border-dashed border-[#D8D0F2]" aria-hidden />
-
                 <div className="space-y-2">
                   {guideItems.map((item, index) => {
                     const Icon = item.Icon
