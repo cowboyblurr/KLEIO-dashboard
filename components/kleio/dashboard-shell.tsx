@@ -9,6 +9,7 @@ import { DemoPresentationStyles } from "@/components/kleio/demo-presentation-sty
 import { GuideWalkthroughCollapser } from "@/components/kleio/guide-walkthrough-collapser"
 import { DemoClickFeedbackLayer } from "@/components/kleio/demo-click-feedback-layer"
 import { DemoGuideHighlightLayer } from "@/components/kleio/demo-guide-highlight-layer"
+import { DemoTrustLink } from "@/components/kleio/demo-trust-link"
 
 export function DashboardShell({ children }: { children: ReactNode }) {
   return (
@@ -17,6 +18,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
       <GuideWalkthroughCollapser />
       <DemoClickFeedbackLayer />
       <DemoGuideHighlightLayer />
+      <DemoTrustLink className="fixed bottom-4 left-4 z-40 max-lg:hidden" />
       <div className="flex h-screen overflow-hidden bg-background text-foreground">
         <Sidebar />
         <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
