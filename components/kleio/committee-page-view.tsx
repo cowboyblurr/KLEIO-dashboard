@@ -42,12 +42,20 @@ export function CommitteePageView() {
       title={t("institution.workspace.committee.title")}
       description={t("institution.workspace.committee.description")}
       actions={
-        <Link
-          href="/collaborator-dashboard/"
-          className="inline-flex h-9 items-center justify-center rounded-xl border border-primary/25 bg-primary/10 px-4 text-sm font-medium text-primary transition-colors hover:bg-primary/15"
-        >
-          {previewCta}
-        </Link>
+        <div className="flex flex-wrap items-center gap-2">
+          <Link
+            href="/demo/roles/"
+            className="inline-flex h-9 items-center justify-center rounded-xl border border-border bg-card px-4 text-sm font-medium text-foreground transition-colors hover:bg-muted"
+          >
+            Roles preview
+          </Link>
+          <Link
+            href="/collaborator-dashboard/"
+            className="inline-flex h-9 items-center justify-center rounded-xl border border-primary/25 bg-primary/10 px-4 text-sm font-medium text-primary transition-colors hover:bg-primary/15"
+          >
+            {previewCta}
+          </Link>
+        </div>
       }
     >
       <div className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-3 xl:max-w-3xl">
@@ -55,6 +63,22 @@ export function CommitteePageView() {
         <DemoStatRow label={t("institution.workspace.committee.metric.pendingActions")} value={analytics.pendingReviewerActionsCount} />
         <DemoStatRow label={t("institution.workspace.committee.metric.completion")} value={analytics.reviewerCompletionRate} />
       </div>
+
+      <section className="mb-4 rounded-2xl border border-[#E7E1F7] bg-[#F7F4FF] p-4 shadow-sm" data-kleio-guide-target="reviewer-seat-preview">
+        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">Reviewer access path</p>
+        <h2 className="mt-1 font-serif text-lg font-semibold text-foreground">Invite reviewers without opening the full workspace.</h2>
+        <p className="mt-1 max-w-3xl text-sm leading-relaxed text-muted-foreground">
+          KLEIO should let institutions assign reviewers to specific programs and submissions. The reviewer seat preview shows the intended limited-access experience: assigned work, rubric context, deadlines, and review actions only.
+        </p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <Link href="/collaborator-dashboard/" className="inline-flex h-9 items-center rounded-full bg-primary px-4 text-xs font-semibold text-primary-foreground transition-opacity hover:opacity-90">
+            Preview reviewer seat
+          </Link>
+          <Link href="/demo/roles/" className="inline-flex h-9 items-center rounded-full border border-primary/20 bg-white px-4 text-xs font-semibold text-primary transition-colors hover:bg-primary/5">
+            View role boundaries
+          </Link>
+        </div>
+      </section>
 
       <section className="mb-4 rounded-2xl border border-border bg-card shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-5 py-4">
