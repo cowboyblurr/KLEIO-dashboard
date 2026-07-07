@@ -57,6 +57,57 @@ export function DemoPresentationStyles() {
         white-space: normal;
       }
 
+      .kleio-demo-guide-panel .space-y-3 > div:has(> ul) {
+        position: relative;
+        cursor: pointer;
+        border: 1px solid #E7E1F7;
+        border-radius: 1rem;
+        background: rgba(255, 255, 255, 0.74);
+        padding: 0.85rem 2.35rem 0.85rem 0.95rem;
+        box-shadow: 0 10px 26px rgba(82, 64, 130, 0.06);
+      }
+
+      .kleio-demo-guide-panel .space-y-3 > div:has(> ul)::after {
+        content: "›";
+        position: absolute;
+        right: 0.95rem;
+        top: 0.82rem;
+        color: #5B4B8A;
+        font-size: 1.05rem;
+        line-height: 1;
+        transition: transform 260ms cubic-bezier(0.22, 1, 0.36, 1);
+      }
+
+      .kleio-demo-guide-panel .space-y-3 > div:has(> ul).is-open::after {
+        transform: rotate(90deg);
+      }
+
+      .kleio-demo-guide-panel .space-y-3 > div:has(> ul) > p:first-child {
+        font-weight: 700;
+        color: #292631;
+      }
+
+      .kleio-demo-guide-panel .space-y-3 > div:has(> ul) > p:nth-child(2),
+      .kleio-demo-guide-panel .space-y-3 > div:has(> ul) > ul {
+        max-height: 0;
+        opacity: 0;
+        overflow: hidden;
+        margin-top: 0 !important;
+        transition: max-height 340ms cubic-bezier(0.22, 1, 0.36, 1), opacity 220ms ease, margin 260ms ease;
+      }
+
+      .kleio-demo-guide-panel .space-y-3 > div:has(> ul).is-open > p:nth-child(2) {
+        max-height: 4rem;
+        opacity: 1;
+        margin-top: 0.45rem !important;
+      }
+
+      .kleio-demo-guide-panel .space-y-3 > div:has(> ul).is-open > ul {
+        max-height: 18rem;
+        opacity: 1;
+        margin-top: 0.65rem !important;
+      }
+
       .kleio-artist-dashboard-main *,
       .kleio-demo-guide-anchor,
       .kleio-demo-guide-panel {
