@@ -5,10 +5,12 @@ import { AuthGate } from "@/components/kleio/auth-gate"
 import { ArtistSidebar } from "@/components/kleio/artist-sidebar"
 import { KleioDemoGuide } from "@/components/kleio/kleio-demo-guide"
 import { DemoEnvironmentBadge } from "@/components/kleio/demo-environment-badge"
+import { DemoPresentationStyles } from "@/components/kleio/demo-presentation-styles"
 
 export function ArtistShell({ children }: { children: ReactNode }) {
   return (
     <AuthGate requiredRole="artist">
+      <DemoPresentationStyles />
       <div className="relative flex h-screen overflow-hidden bg-background text-foreground">
         <ArtistSidebar />
         <div className="min-w-0 flex-1 overflow-hidden">{children}</div>
