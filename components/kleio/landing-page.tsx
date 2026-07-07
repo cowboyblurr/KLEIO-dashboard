@@ -83,7 +83,7 @@ export function LandingPage() {
 
       <section
         className="landing-stage relative z-10 mx-auto grid w-full max-w-[1280px] px-8 pb-16 pt-2 max-md:px-5"
-        style={{ gridTemplateRows: "auto auto auto auto", rowGap: "clamp(12px, 2vh, 20px)" }}
+        style={{ gridTemplateRows: "auto auto auto auto auto", rowGap: "clamp(12px, 2vh, 20px)" }}
       >
         <div className="flex h-full flex-col items-center justify-start text-center">
           <h1 className="font-serif tracking-tight" style={{ color: inkColor, fontSize: "clamp(1.45rem, 1.95vw, 2.05rem)", lineHeight: 0.98 }}>
@@ -102,6 +102,15 @@ export function LandingPage() {
             <br />
             {t("landing.tagline.line3")}
           </p>
+        </div>
+
+        <div className="mx-auto flex max-w-[760px] flex-wrap items-center justify-center gap-2 rounded-full border border-[#E7E1F7] bg-white/85 px-4 py-2 text-center shadow-[0_12px_34px_rgba(82,64,130,0.06)] backdrop-blur-sm">
+          <span className="text-[0.62rem] font-semibold uppercase tracking-[0.14em] text-[#A997E8]">{isSpanish ? "Qué hace" : "What it does"}</span>
+          <span className="text-[0.72rem] leading-relaxed text-[#6F6882]">
+            {isSpanish
+              ? "KLEIO ayuda a instituciones a revisar artistas de forma estructurada y da a los artistas materiales reutilizables que controlan."
+              : "KLEIO helps institutions run structured artist review while giving artists reusable application materials they control."}
+          </span>
         </div>
 
         <div className="flex h-full items-center justify-center">
