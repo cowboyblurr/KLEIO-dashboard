@@ -225,7 +225,14 @@ export function useDemoGuide() {
   }, [])
 
   const dismissGuide = useCallback(() => {
-    update({ isOpen: false, isMinimized: true, dismissed: false })
+    update({
+      isOpen: false,
+      isMinimized: true,
+      dismissed: false,
+      activeScenarioId: null,
+      activeStepId: null,
+      completedScenarioId: null,
+    })
   }, [update])
 
   return {
