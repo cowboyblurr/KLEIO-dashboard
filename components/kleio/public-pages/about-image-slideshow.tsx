@@ -7,34 +7,38 @@ import { cn } from "@/lib/utils"
 
 const aboutSlides = [
   {
-    hdSrc: "/about/about-review-wall-hd.jpg",
+    hdSrc: "https://github.com/cowboyblurr/KLEIO-ASSETS/blob/main/14a346bc2f8a28767a6f1511c378675b.jpg?raw=true",
     fallbackSrc: "/about/about-review-wall.svg",
-    alt: "Studio review wall with pinned sketches and a small group discussion.",
-    labelEn: "Review wall",
-    labelEs: "Muro de revisión",
+    alt: "Atmospheric creative workspace used as a visual reference for KLEIO's cultural review environment.",
+    labelEn: "Review environment",
+    labelEs: "Entorno de revisión",
   },
   {
-    hdSrc: "/about/about-archive-desk-hd.jpg",
+    hdSrc: "https://github.com/cowboyblurr/KLEIO-ASSETS/blob/main/2b5b8aa9772b651df75feac3b69b070d.jpg?raw=true",
     fallbackSrc: "/about/about-archive-desk.svg",
-    alt: "Archive table, bookshelves, and cultural records in a quiet workspace.",
-    labelEn: "Archive desk",
-    labelEs: "Mesa de archivo",
+    alt: "Refined visual archive scene representing organized cultural records and artist materials.",
+    labelEn: "Cultural archive",
+    labelEs: "Archivo cultural",
   },
   {
-    hdSrc: "/about/about-artist-table-hd.jpg",
+    hdSrc: "https://github.com/cowboyblurr/KLEIO-ASSETS/blob/main/7cbc9a1f1d9ee2a464bed18c3dfd8ded.jpg?raw=true",
     fallbackSrc: "/about/about-artist-table.svg",
-    alt: "Artist working at a bright studio table with materials nearby.",
-    labelEn: "Artist table",
-    labelEs: "Mesa de artista",
+    alt: "Artist-centered visual reference for materials, practice, and reusable creative records.",
+    labelEn: "Artist materials",
+    labelEs: "Materiales de artista",
   },
   {
-    hdSrc: "/about/about-open-studio-hd.jpg",
+    hdSrc: "https://github.com/cowboyblurr/KLEIO-ASSETS/blob/main/ae7239203d806077d85fcb1fd86697f3.jpg?raw=true",
     fallbackSrc: "/about/about-open-studio.svg",
-    alt: "Large creative studio with artwork, tools, and warm architectural light.",
+    alt: "Open creative environment representing KLEIO's bridge between artists and institutions.",
     labelEn: "Open studio",
     labelEs: "Estudio abierto",
   },
 ] as const
+
+function resolveImageSrc(src: string) {
+  return src.startsWith("http") ? src : assetPath(src)
+}
 
 function handleImageFallback(
   event: React.SyntheticEvent<HTMLImageElement, Event>,
@@ -81,7 +85,7 @@ export function AboutImageSlideshow() {
           {aboutSlides.map((slide, index) => (
             <img
               key={slide.labelEn}
-              src={assetPath(slide.hdSrc)}
+              src={resolveImageSrc(slide.hdSrc)}
               onError={(event) => handleImageFallback(event, slide.fallbackSrc)}
               alt={slide.alt}
               decoding="async"
@@ -120,7 +124,7 @@ export function AboutImageSlideshow() {
                 aria-label={locale === "es" ? `Ver ${slide.labelEs}` : `View ${slide.labelEn}`}
               >
                 <img
-                  src={assetPath(slide.hdSrc)}
+                  src={resolveImageSrc(slide.hdSrc)}
                   onError={(event) => handleImageFallback(event, slide.fallbackSrc)}
                   alt=""
                   decoding="async"
