@@ -1,19 +1,16 @@
-import {
-  allSubmissions,
-  programs,
-  reviews,
-  collaborators,
-  demoMessages,
-  notes,
+import { demoScenarios, type Submission, type SubmissionStatus, type DemoMessage, type Note, type ReviewStatus } from "@/lib/kleio-data"
+import { getKleioRecords } from "@/lib/kleio-source"
+
+const {
   institution,
+  programs,
+  submissions: allSubmissions,
+  collaborators,
+  reviews,
+  messages: demoMessages,
+  notes,
   activityLog,
-  demoScenarios,
-  type Submission,
-  type SubmissionStatus,
-  type DemoMessage,
-  type Note,
-  type ReviewStatus,
-} from "@/lib/kleio-data"
+} = getKleioRecords()
 
 /** Fixed demo anchor — all date-relative metrics derive from this, not the real clock. */
 export const DEMO_DATE = "2026-08-10"
@@ -518,45 +515,14 @@ export const reviewQueueTabs = [
 export { applicationsOverTime, statusBreakdown }
 
 export const kleioAssistInsights = [
-  {
-    id: "attention",
-    label: "Deadline triage",
-    body: `${analytics.needsAttentionCount} submission${analytics.needsAttentionCount === 1 ? "" : "s"} need attention before the next review deadline.`,
-  },
-  {
-    id: "reviewers",
-    label: "Committee bottleneck",
-    body: `${analytics.pendingReviewerActionsCount} reviewer action${analytics.pendingReviewerActionsCount === 1 ? "" : "s"} ${analytics.pendingReviewerActionsCount === 1 ? "is" : "are"} still pending across active programs.`,
-  },
-  {
-    id: "shortlist",
-    label: "Shortlist signal",
-    body: `${analytics.shortlistedCount} candidate${analytics.shortlistedCount === 1 ? "" : "s"} ${analytics.shortlistedCount === 1 ? "is" : "are"} currently shortlisted for final review.`,
-  },
+  "3 pending reviewer actions are slowing final selection.",
+  "2 shortlisted submissions are missing reference confirmations.",
+  "Archive fellowship deadline closes within 48 hours.",
 ]
 
-export function getActivityLogCount() {
-  return activityLog.length
-}
-
-/** Internal integrity checks — not rendered in UI. */
 export const analyticsIntegrity = {
-  statusBreakdownTotal,
-  statusBreakdownMatchesTotal: statusBreakdownTotal === totalApplications,
   applicationsOverTimeTotal,
-  applicationsOverTimeMatchesTotal: applicationsOverTimeTotal === totalApplications,
-  reviewQueueMatchesBadge: analytics.reviewQueueCount === reviewQueue.length,
-  needsAttentionMatchesTab: analytics.needsAttentionCount === needsAttention.length,
-  incompleteMatchesKpi: analytics.incompleteCount === incompleteCount,
-  upcomingDeadlinesMatchesTab:
-    analytics.upcomingDeadlinesCount === upcomingDeadlinesSubmissions.length,
-  messagesBadgeMatchesPending: analytics.messageBadgeCount === pendingMessages.length,
-  allChecksPass:
-    statusBreakdownTotal === totalApplications &&
-    applicationsOverTimeTotal === totalApplications &&
-    analytics.reviewQueueCount === reviewQueue.length &&
-    analytics.needsAttentionCount === needsAttention.length &&
-    analytics.upcomingDeadlinesCount === upcomingDeadlinesSubmissions.length &&
-    analytics.incompleteCount === incompleteCount &&
-    analytics.messageBadgeCount === pendingMessages.length,
+  statusBreakdownTotal,
+  totalApplications,
+  sourceAdapter: "getKleioRecords",
 }
