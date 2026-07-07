@@ -1,13 +1,7 @@
 import Link from "next/link"
 import { cn } from "@/lib/utils"
 
-export function DemoTrustLink({
-  className,
-  label = "What is real?",
-}: {
-  className?: string
-  label?: string
-}) {
+export function DemoTrustLink({ className, label = "Data note" }: { className?: string; label?: string }) {
   return (
     <Link
       href="/demo/trust/"
