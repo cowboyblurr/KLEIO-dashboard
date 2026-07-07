@@ -40,6 +40,23 @@ export function DemoPresentationStyles() {
         animation: kleioCardIn 620ms cubic-bezier(0.22, 1, 0.36, 1) both;
       }
 
+      .kleio-demo-guide-panel,
+      .kleio-demo-guide-panel *,
+      .kleio-artist-dashboard-main,
+      .kleio-artist-dashboard-main * {
+        box-sizing: border-box;
+        min-width: 0;
+      }
+
+      .kleio-demo-guide-panel {
+        overflow-wrap: anywhere;
+        word-break: normal;
+      }
+
+      .kleio-demo-guide-panel button {
+        white-space: normal;
+      }
+
       .kleio-artist-dashboard-main *,
       .kleio-demo-guide-anchor,
       .kleio-demo-guide-panel {
@@ -64,6 +81,7 @@ export function DemoPresentationStyles() {
         body:has(.kleio-demo-guide-panel) .kleio-artist-dashboard-main > div > aside > section,
         body:has(.kleio-demo-guide-panel) .kleio-artist-dashboard-main > div > aside > div {
           min-width: 0 !important;
+          overflow: hidden !important;
         }
       }
 
@@ -86,12 +104,26 @@ export function DemoPresentationStyles() {
           padding: 0.75rem !important;
           border-radius: 1rem !important;
           background: #F7F4FF !important;
+          overflow: hidden !important;
         }
       }
 
       @media (max-width: 1279px) {
         body:has(.kleio-demo-guide-panel) .kleio-demo-guide-anchor {
           width: min(100vw - 1.5rem, 23rem) !important;
+        }
+      }
+
+      @media (max-width: 767px) {
+        .kleio-demo-guide-anchor {
+          left: 0.75rem !important;
+          right: 0.75rem !important;
+          bottom: 0.75rem !important;
+          width: auto !important;
+        }
+
+        .kleio-demo-guide-panel {
+          max-height: min(76dvh, 36rem) !important;
         }
       }
 
