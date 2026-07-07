@@ -16,6 +16,7 @@ import {
 } from "@/lib/kleio-review-team"
 import { DemoPageShell, DemoStatRow } from "@/components/kleio/demo-page-shell"
 import { InitialAvatar } from "@/components/kleio/initial-avatar"
+import { ReviewerInviteFlow } from "@/components/kleio/reviewer-invite-flow"
 import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
 
 export function CommitteePageView() {
@@ -79,6 +80,8 @@ export function CommitteePageView() {
           </Link>
         </div>
       </section>
+
+      <ReviewerInviteFlow />
 
       <section className="mb-4 rounded-2xl border border-border bg-card shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-5 py-4">
