@@ -17,11 +17,6 @@ const wordmarkGraphite = {
   filter: "brightness(0) saturate(100%) invert(16%) sepia(5%) saturate(800%) hue-rotate(220deg)",
 } as const
 
-/**
- * Shared shell for the public marketing pages (`/about/`, `/manifesto/`, `/journal/`).
- * Mirrors the landing page's white / graphite / lavender visual system without the
- * fixed-viewport hero grid, so these pages scroll normally.
- */
 export function PublicPageShell({
   active,
   children,
@@ -29,7 +24,13 @@ export function PublicPageShell({
   active?: "about" | "manifesto" | "journal"
   children: React.ReactNode
 }) {
-  const { t } = useKleioLocale()
+  const { t, locale } = useKleioLocale()
+  const isSpanish = locale === "es"
+
+  function navLabel(key: string) {
+    if (key === "nav.journal") return isSpanish ? "Notas de campo" : "Field Notes"
+    return t(key)
+  }
 
   return (
     <div className="min-h-screen bg-white text-[#292631]">
@@ -47,7 +48,7 @@ export function PublicPageShell({
                     isActive ? "text-[#5B4B8A]" : "text-[#6F6882]",
                   )}
                 >
-                  {t(item.key)}
+                  {navLabel(item.key)}
                 </Link>
               )
             })}
@@ -59,7 +60,7 @@ export function PublicPageShell({
 
           <div className="ml-auto flex items-center gap-4 max-md:gap-3">
             <ExploreArthouseLink className="text-[0.78rem] font-medium tracking-wide text-[#6F6882] transition-opacity hover:opacity-70 max-md:hidden">
-              {t("nav.exploreArthouse")}
+              {isSpanish ? "Demo guiado" : "Guided Demo"}
             </ExploreArthouseLink>
             <KleioLocaleToggle />
           </div>
