@@ -3,11 +3,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { ChevronRight } from "lucide-react"
-import {
-  getDashboardForRole,
-  loginDemoUser,
-  validateDemoCredentials,
-} from "@/lib/kleio-demo-auth"
+import { getDashboardForRole, loginDemoUser, validateDemoCredentials } from "@/lib/kleio-demo-auth"
 import { persistDemoGuideState } from "@/components/kleio/use-demo-guide"
 import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
 
@@ -66,11 +62,7 @@ export function LandingLoginCard() {
   return (
     <div
       className="landing-login-card flex flex-col rounded-[1.1rem] p-3.5"
-      style={{
-        backgroundColor: "#FFFFFF",
-        border: "1px solid #E7E1F7",
-        boxShadow: "0 18px 48px rgba(82, 64, 130, 0.08)",
-      }}
+      style={{ backgroundColor: "#FFFFFF", border: "1px solid #E7E1F7", boxShadow: "0 18px 48px rgba(82, 64, 130, 0.08)" }}
     >
       <div className="rounded-[0.95rem] border border-[#E7E1F7] bg-[#F7F4FF] p-3">
         <p className="text-[0.62rem] font-semibold uppercase tracking-[0.16em] text-[#A997E8]">
@@ -81,8 +73,8 @@ export function LandingLoginCard() {
         </h2>
         <p className="mt-1 text-[0.68rem] leading-relaxed text-[#7F7890]">
           {locale === "es"
-            ? "El recorrido abre las pantallas correctas y explica qué estás viendo, sin asumir que ya conoces KLEIO."
-            : "The walkthrough opens the right screens and explains what you are seeing, without assuming you already know KLEIO."}
+            ? "KLEIO Assist abrirá las pantallas correctas y explicará cada paso desde la esquina de la interfaz."
+            : "KLEIO Assist will open the right screens and explain each step from the corner of the interface."}
         </p>
         <button
           type="button"
@@ -94,75 +86,73 @@ export function LandingLoginCard() {
         </button>
       </div>
 
-      <div className="kleio-demo-workspace">
-        <p className="kleio-demo-workspace-label">
-          {locale === "es" ? "O entra directo a un espacio demo" : "Or enter a demo workspace directly"}
-        </p>
-
-        <div className="kleio-demo-workspace-actions" aria-label={t("landing.login.demoWorkspace")}>
-          <button type="button" onClick={handleInstitutionDemo} className="kleio-demo-workspace-button">
-            {t("landing.login.enterInstitutionDemo")}
-          </button>
-          <button type="button" onClick={handleArtistDemo} className="kleio-demo-workspace-button">
-            {t("landing.login.enterArtistDemo")}
-          </button>
-          <button type="button" onClick={handleCollaboratorDemo} className="kleio-demo-workspace-button">
-            {t("landing.login.enterCollaboratorDemo")}
-          </button>
-        </div>
-      </div>
-
-      <div className="landing-login-primary mt-3 border-t border-[#E7E1F7] pt-3">
-        <h3 className="font-serif text-[0.86rem] font-semibold" style={{ color: "#292631" }}>
-          {t("landing.login.title")}
-        </h3>
-        <p className="mt-0.5 text-[0.64rem]" style={{ color: "#7F7890" }}>
+      <details className="group mt-3 rounded-[0.95rem] border border-[#E7E1F7] bg-white px-3 py-2.5">
+        <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-[0.68rem] font-semibold text-[#5B4B8A] marker:hidden">
+          <span>{locale === "es" ? "Acceso avanzado del demo" : "Advanced demo access"}</span>
+          <ChevronRight className="size-3 transition-transform group-open:rotate-90" />
+        </summary>
+        <p className="mt-1 text-[0.64rem] leading-relaxed text-[#7F7890]">
           {locale === "es"
-            ? "Acceso manual para probar roles específicos del demo."
-            : "Manual access for testing specific demo roles."}
+            ? "Usa esto solo si quieres saltar el recorrido y entrar directamente a un rol específico."
+            : "Use this only when you want to skip the walkthrough and jump into a specific role."}
         </p>
 
-        <div className="mt-2.5 space-y-1.5">
-          <input
-            type="email"
-            placeholder={t("landing.login.emailPlaceholder")}
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleLogin()}
-            className="h-7 w-full rounded-full border bg-white px-3.5 text-[0.72rem] outline-none transition placeholder:text-[#9B94AA] focus:border-[#A997E8] focus:ring-2 focus:ring-[#A997E8]/15"
-            style={{ borderColor: "#DCD5F3", color: "#292631" }}
-          />
-          <input
-            type="password"
-            placeholder={t("landing.login.passwordPlaceholder")}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleLogin()}
-            className="h-7 w-full rounded-full border bg-white px-3.5 text-[0.72rem] outline-none transition placeholder:text-[#9B94AA] focus:border-[#A997E8] focus:ring-2 focus:ring-[#A997E8]/15"
-            style={{ borderColor: "#DCD5F3", color: "#292631" }}
-          />
-        </div>
-
-        <div className="mt-1.5 rounded-xl border border-[#E7E1F7] bg-[#F7F4FF]/60 px-2.5 py-1.5 text-[0.64rem] leading-snug" style={{ color: "#6F6882" }}>
-          <p className="font-semibold" style={{ color: "#5B4B8A" }}>{t("landing.login.demoAccessLabel")}</p>
-          <p className="mt-0.5 break-words">{t("landing.login.demoAccessRoles")}</p>
-          <p className="mt-0.5">{t("landing.login.demoAccessPassword")}</p>
-        </div>
-
-        {error && <p className="mt-1 text-[0.64rem] leading-snug" style={{ color: "oklch(0.45 0.14 55)" }}>{error}</p>}
-
-        <div className="mt-2 flex justify-end">
-          <button
-            type="button"
-            onClick={handleLogin}
-            className="flex h-8 items-center justify-center gap-1 rounded-full border px-3.5 text-[0.68rem] transition-colors hover:bg-[#1F1B29]"
-            style={{ backgroundColor: "#292631", borderColor: "#292631", color: "#FFFFFF" }}
-          >
-            {t("landing.login.logIn")}
-            <ChevronRight className="size-3" />
+        <div className="mt-2 grid grid-cols-1 gap-1.5 sm:grid-cols-3">
+          <button type="button" onClick={handleInstitutionDemo} className="rounded-full border border-[#D8D0F2] px-2 py-1.5 text-[0.62rem] font-semibold text-[#5B4B8A] transition-colors hover:bg-[#F7F4FF]">
+            {locale === "es" ? "Institución" : "Institution"}
+          </button>
+          <button type="button" onClick={handleArtistDemo} className="rounded-full border border-[#D8D0F2] px-2 py-1.5 text-[0.62rem] font-semibold text-[#5B4B8A] transition-colors hover:bg-[#F7F4FF]">
+            {locale === "es" ? "Artista" : "Artist"}
+          </button>
+          <button type="button" onClick={handleCollaboratorDemo} className="rounded-full border border-[#D8D0F2] px-2 py-1.5 text-[0.62rem] font-semibold text-[#5B4B8A] transition-colors hover:bg-[#F7F4FF]">
+            {locale === "es" ? "Revisor" : "Reviewer"}
           </button>
         </div>
-      </div>
+
+        <div className="mt-3 border-t border-[#E7E1F7] pt-3">
+          <p className="text-[0.62rem] font-semibold text-[#292631]">{t("landing.login.title")}</p>
+          <p className="mt-0.5 text-[0.62rem] leading-snug text-[#7F7890]">
+            {locale === "es" ? "Credenciales manuales para probar roles específicos." : "Manual credentials for testing specific roles."}
+          </p>
+          <div className="mt-2 space-y-1.5">
+            <input
+              type="email"
+              placeholder={t("landing.login.emailPlaceholder")}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleLogin()}
+              className="h-7 w-full rounded-full border bg-white px-3.5 text-[0.72rem] outline-none transition placeholder:text-[#9B94AA] focus:border-[#A997E8] focus:ring-2 focus:ring-[#A997E8]/15"
+              style={{ borderColor: "#DCD5F3", color: "#292631" }}
+            />
+            <input
+              type="password"
+              placeholder={t("landing.login.passwordPlaceholder")}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleLogin()}
+              className="h-7 w-full rounded-full border bg-white px-3.5 text-[0.72rem] outline-none transition placeholder:text-[#9B94AA] focus:border-[#A997E8] focus:ring-2 focus:ring-[#A997E8]/15"
+              style={{ borderColor: "#DCD5F3", color: "#292631" }}
+            />
+          </div>
+          <div className="mt-1.5 rounded-xl border border-[#E7E1F7] bg-[#F7F4FF]/60 px-2.5 py-1.5 text-[0.62rem] leading-snug text-[#6F6882]">
+            <p className="font-semibold text-[#5B4B8A]">{t("landing.login.demoAccessLabel")}</p>
+            <p className="mt-0.5 break-words">{t("landing.login.demoAccessRoles")}</p>
+            <p className="mt-0.5">{t("landing.login.demoAccessPassword")}</p>
+          </div>
+          {error && <p className="mt-1 text-[0.64rem] leading-snug" style={{ color: "oklch(0.45 0.14 55)" }}>{error}</p>}
+          <div className="mt-2 flex justify-end">
+            <button
+              type="button"
+              onClick={handleLogin}
+              className="flex h-8 items-center justify-center gap-1 rounded-full border px-3.5 text-[0.68rem] transition-colors hover:bg-[#1F1B29]"
+              style={{ backgroundColor: "#292631", borderColor: "#292631", color: "#FFFFFF" }}
+            >
+              {t("landing.login.logIn")}
+              <ChevronRight className="size-3" />
+            </button>
+          </div>
+        </div>
+      </details>
     </div>
   )
 }
