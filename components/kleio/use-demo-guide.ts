@@ -50,6 +50,7 @@ function normalizeGuideState(parsed: Partial<DemoGuideState>): DemoGuideState {
     activeScenarioId,
     completedScenarioId,
     activeStepId: activeStep && activeStep.scenarioId === activeScenarioId ? activeStep.id : null,
+    dismissed: false,
   }
 }
 
@@ -106,11 +107,11 @@ export function useDemoGuide() {
   }, [update])
 
   const closeGuide = useCallback(() => {
-    update({ isOpen: false, isMinimized: true })
+    update({ isOpen: false, isMinimized: true, dismissed: false })
   }, [update])
 
   const minimizeGuide = useCallback(() => {
-    update({ isOpen: false, isMinimized: true })
+    update({ isOpen: false, isMinimized: true, dismissed: false })
   }, [update])
 
   const returnToPlaylist = useCallback(() => {
@@ -224,7 +225,7 @@ export function useDemoGuide() {
   }, [])
 
   const dismissGuide = useCallback(() => {
-    update({ isOpen: false, isMinimized: true, dismissed: true })
+    update({ isOpen: false, isMinimized: true, dismissed: false })
   }, [update])
 
   return {
