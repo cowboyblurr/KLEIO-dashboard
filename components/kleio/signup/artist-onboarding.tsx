@@ -69,7 +69,7 @@ const emptyForm: ArtistFormState = {
 
 export function ArtistOnboarding() {
   const router = useRouter()
-  const { t } = useKleioLocale()
+  const { t, locale } = useKleioLocale()
   const [step, setStep] = useState(0)
   const [form, setForm] = useState<ArtistFormState>(emptyForm)
   const [fieldOrigins, setFieldOrigins] = useState<Partial<Record<keyof ArtistFormState, FieldOrigin>>>({})
@@ -166,7 +166,7 @@ export function ArtistOnboarding() {
     >
       <SignupProgress currentStep={step} totalSteps={STEPS.length} label={stepLabel} />
 
-      <div className="mb-5">
+      <div className="mb-5 space-y-2">
         <ImportAssistWidget
           userType="artist"
           subjectId={SUBJECT_ID}
@@ -176,6 +176,14 @@ export function ArtistOnboarding() {
           currentFormValues={formAsRecord}
           onApplySuggestions={handleApplySuggestions}
         />
+        <div className="rounded-xl border border-[#E7E1F7] bg-[#F7F4FF] px-3 py-2 text-xs leading-relaxed text-[#6F6882]">
+          <span className="font-semibold text-[#5B4B8A]">
+            {locale === "es" ? "Control del artista: " : "Artist control: "}
+          </span>
+          {locale === "es"
+            ? "Import Assist solo prepara borradores desde materiales existentes. Tú revisas, editas y apruebas antes de que algo se use."
+            : "Import Assist only prepares drafts from existing materials. You review, edit, and approve before anything is used."}
+        </div>
       </div>
 
       <SignupStepCard>
@@ -261,14 +269,13 @@ export function ArtistOnboarding() {
               label={t("signup.artist.field.documents")}
               value={form.documents}
               onChange={(v) => updateField("documents", v)}
-              placeholder={t("signup.artist.placeholder.documents")}
               origin={origin("documents")}
             />
-            <SignupField
+            <SignupTextArea
               label={t("signup.artist.field.featuredWorks")}
               value={form.featuredWorks}
               onChange={(v) => updateField("featuredWorks", v)}
-              placeholder={t("signup.artist.placeholder.featuredWorks")}
+              rows={3}
               origin={origin("featuredWorks")}
             />
           </div>
@@ -279,201 +286,59 @@ export function ArtistOnboarding() {
             <h2 className="font-serif text-lg font-semibold text-foreground">
               {t("signup.artist.materialsSuggestions.title")}
             </h2>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
               {t("signup.artist.materialsSuggestions.description")}
             </p>
-
-            {importAssist.connectedIds.length === 0 && !importAssist.draftPrepared ? (
-              <div className="rounded-xl border border-border bg-background p-4 text-sm text-muted-foreground">
-                {t("signup.artist.materialsSuggestions.noImport")}
-              </div>
-            ) : (
-              <>
-                {importAssist.draftPrepared && (
-                  <div className="rounded-xl border border-primary/15 bg-primary/5 p-4">
-                    <p className="text-xs font-semibold text-primary">
-                      {t("signup.artist.materialsSuggestions.preparedFields")}
-                    </p>
-                    <p className="mt-1 text-xs text-muted-foreground">{getAssistSummary("artist", SUBJECT_ID)}</p>
-                    <ul className="mt-3 space-y-2">
-                      {preparedSuggestions.map((item) => (
-                        <li key={item.key} className="rounded-lg border border-border bg-card p-3 text-sm">
-                          <span className="font-medium text-foreground">{item.key}</span>
-                          <p className="mt-1 text-xs text-muted-foreground">{item.value}</p>
-                          {item.inForm ? (
-                            <p className="mt-1 text-[0.65rem] text-[oklch(0.45_0.13_55)]">
-                              {t("signup.artist.materialsSuggestions.suggestionAvailable")}
-                            </p>
-                          ) : (
-                            <p className="mt-1 text-[0.65rem] text-primary">
-                              {t("signup.artist.materialsSuggestions.readyToApply")}
-                            </p>
-                          )}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-
-                <div className="rounded-xl border border-[oklch(0.88_0.08_70)] bg-[oklch(0.98_0.03_80)] p-4">
-                  <p className="text-xs font-semibold text-[oklch(0.45_0.14_65)]">
-                    {t("signup.artist.materialsSuggestions.missingChecklist")}
-                  </p>
-                  <ul className="mt-2 space-y-1">
-                    {missingFormFields.length > 0 ? (
-                      missingFormFields.map((item) => (
-                        <li key={item} className="text-xs text-[oklch(0.45_0.14_65)]">
-                          · {item}
-                        </li>
-                      ))
-                    ) : (
-                      <li className="text-xs text-[oklch(0.45_0.14_65)]">
-                        {t("signup.artist.materialsSuggestions.allFieldsEntered")}
-                      </li>
-                    )}
-                    {intelligenceMissing.map((item) => (
-                      <li key={item} className="text-xs text-[oklch(0.45_0.14_65)]">
-                        · {t("signup.artist.materialsSuggestions.fromConnected", { field: item })}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                {form.documents && (
-                  <div className="rounded-xl border border-border bg-background p-4">
-                    <p className="text-xs font-semibold text-foreground">
-                      {t("signup.artist.materialsSuggestions.documentChecklist")}
-                    </p>
-                    <p className="mt-1 text-sm text-muted-foreground">{form.documents}</p>
-                  </div>
-                )}
-              </>
-            )}
-          </div>
-        )}
-
-        {step === 3 && (
-          <div className="space-y-4">
-            <div className="text-center">
-              <CheckCircle2 className="mx-auto size-10 text-primary" />
-              <h2 className="mt-3 font-serif text-xl font-semibold text-foreground">
-                {t("signup.artist.review.title")}
-              </h2>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {t("signup.artist.review.description")}
-              </p>
+            <div className="rounded-xl border border-border bg-background p-4">
+              <p className="text-sm font-medium text-foreground">{getAssistSummary("artist", SUBJECT_ID)}</p>
+              <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
+                {intelligenceMissing.map((field) => (
+                  <li key={field} className="flex items-center gap-2">
+                    <CheckCircle2 className="size-4 text-primary" />
+                    {field}
+                  </li>
+                ))}
+              </ul>
             </div>
-
-            <div className="rounded-xl border border-border bg-background px-4">
-              <p className="border-b border-border py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                {t("signup.artist.review.heading.profileBasics")}
-              </p>
-              <SignupReviewRow
-                label={t("signup.artist.field.artistName")}
-                value={form.artistName}
-                origin={origin("artistName")}
-              />
-              <SignupReviewRow
-                label={t("signup.artist.field.location")}
-                value={form.location}
-                origin={origin("location")}
-              />
-              <SignupReviewRow
-                label={t("signup.artist.field.discipline")}
-                value={form.discipline}
-                origin={origin("discipline")}
-              />
-              <SignupReviewRow
-                label={t("signup.artist.field.website")}
-                value={form.website}
-                origin={origin("website")}
-              />
-              <SignupReviewRow
-                label={t("signup.artist.field.shortBio")}
-                value={form.shortBio}
-                origin={origin("shortBio")}
-              />
-            </div>
-
-            <div className="rounded-xl border border-border bg-background px-4">
-              <p className="border-b border-border py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                {t("signup.artist.review.heading.creativePassport")}
-              </p>
-              <SignupReviewRow
-                label={t("signup.artist.field.artistStatement")}
-                value={form.artistStatement}
-                origin={origin("artistStatement")}
-              />
-              <SignupReviewRow
-                label={t("signup.artist.field.mediums")}
-                value={form.mediums}
-                origin={origin("mediums")}
-              />
-              <SignupReviewRow
-                label={t("signup.artist.field.themes")}
-                value={form.themes}
-                origin={origin("themes")}
-              />
-              <SignupReviewRow
-                label={t("signup.artist.field.portfolioLinks")}
-                value={form.portfolioLinks}
-                origin={origin("portfolioLinks")}
-              />
-              <SignupReviewRow
-                label={t("signup.artist.field.documents")}
-                value={form.documents}
-                origin={origin("documents")}
-              />
-              <SignupReviewRow
-                label={t("signup.artist.field.featuredWorks")}
-                value={form.featuredWorks}
-                origin={origin("featuredWorks")}
-              />
-            </div>
-
-            {importAssist.connectedIds.length > 0 && (
-              <div className="rounded-xl border border-primary/15 bg-primary/5 px-4 py-3">
-                <p className="text-xs font-semibold text-primary">
-                  {t("signup.artist.review.heading.imported")}
-                </p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {importAssist.connectedIds.length === 1
-                    ? t("signup.artist.review.importedNote", {
-                        count: importAssist.connectedIds.length,
-                      })
-                    : t("signup.artist.review.importedNotePlural", {
-                        count: importAssist.connectedIds.length,
-                      })}
-                </p>
-              </div>
-            )}
-
-            {missingFormFields.length > 0 && (
-              <div className="rounded-xl border border-[oklch(0.88_0.08_70)] bg-[oklch(0.98_0.03_80)] px-4 py-3">
-                <p className="text-xs font-semibold text-[oklch(0.45_0.14_65)]">
-                  {t("signup.artist.review.stillMissing")}
-                </p>
-                <ul className="mt-1 space-y-0.5">
-                  {missingFormFields.map((item) => (
-                    <li key={item} className="text-xs text-[oklch(0.45_0.14_65)]">
-                      · {item}
+            {preparedSuggestions.length > 0 && (
+              <div className="rounded-xl border border-border bg-background p-4">
+                <p className="text-sm font-medium text-foreground">{t("signup.common.preparedSuggestions")}</p>
+                <ul className="mt-3 space-y-2 text-xs text-muted-foreground">
+                  {preparedSuggestions.slice(0, 6).map((suggestion) => (
+                    <li key={suggestion.key} className="flex items-start gap-2">
+                      <CheckCircle2 className="mt-0.5 size-3.5 text-primary" />
+                      <span>{suggestion.key}: {suggestion.inForm ? t("signup.common.alreadyInForm") : suggestion.value}</span>
                     </li>
                   ))}
                 </ul>
               </div>
             )}
+            {missingFormFields.length > 0 && (
+              <div className="rounded-xl border border-border bg-background p-4">
+                <p className="text-sm font-medium text-foreground">{t("signup.common.missingFields")}</p>
+                <p className="mt-1 text-xs text-muted-foreground">{missingFormFields.join(", ")}</p>
+              </div>
+            )}
           </div>
         )}
-      </SignupStepCard>
 
-      <SignupStepControls
-        step={step}
-        totalSteps={STEPS.length}
-        onBack={() => setStep((s) => s - 1)}
-        onNext={() => setStep((s) => s + 1)}
-        onSubmit={handleCreatePassport}
-        submitLabel={t("signup.artist.createPassport")}
-      />
+        {step === 3 && (
+          <div className="space-y-2">
+            {(Object.keys(form) as Array<keyof ArtistFormState>).map((key) => (
+              <SignupReviewRow key={key} label={t(`signup.artist.field.${key}`)} value={form[key]} origin={origin(key)} />
+            ))}
+          </div>
+        )}
+
+        <SignupStepControls
+          step={step}
+          totalSteps={STEPS.length}
+          onBack={() => setStep((s) => Math.max(0, s - 1))}
+          onNext={() => setStep((s) => Math.min(STEPS.length - 1, s + 1))}
+          onSubmit={handleCreatePassport}
+          submitLabel={t("signup.artist.submit")}
+        />
+      </SignupStepCard>
     </SignupShell>
   )
 }
