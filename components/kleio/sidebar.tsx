@@ -13,14 +13,16 @@ import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
 import { persistDemoGuideState } from "@/components/kleio/use-demo-guide"
 
 function openPageGuide() {
-  persistDemoGuideState({
-    isOpen: true,
-    isMinimized: false,
-    dismissed: false,
-    activeScenarioId: null,
-    activeStepId: null,
-    completedScenarioId: null,
-  })
+  persistDemoGuideState({ isOpen: true, isMinimized: false, dismissed: false, activeScenarioId: null, activeStepId: null, completedScenarioId: null })
+}
+
+function sectionLabel(heading: string, locale: string, t: (key: string) => string) {
+  if (locale === "es") {
+    if (heading === "Core Review Flow") return "Flujo principal"
+    if (heading === "Report") return "Informes"
+    if (heading === "Admin / More") return "Admin / Más"
+  }
+  return t(institutionSectionKeys[heading] ?? heading)
 }
 
 export function Sidebar() {
@@ -32,11 +34,7 @@ export function Sidebar() {
     <aside className="flex h-full w-64 shrink-0 flex-col border-r border-border bg-sidebar">
       <div className="flex items-center justify-between px-6 pt-6 pb-5">
         <KleioWordmarkLink href="/" className="rounded-md bg-white px-2.5 py-1.5 shadow-sm ring-1 ring-border" />
-        <button
-          type="button"
-          className="grid size-7 place-items-center rounded-md border border-border text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
-          aria-label="Collapse sidebar"
-        >
+        <button type="button" className="grid size-7 place-items-center rounded-md border border-border text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground" aria-label="Collapse sidebar">
           <ChevronDown className="size-4 -rotate-90" />
         </button>
       </div>
@@ -45,49 +43,25 @@ export function Sidebar() {
         {navSections.map((section) => (
           <div key={section.heading} className="mb-5">
             <p className="px-3 pb-2 text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground/80">
-              {t(institutionSectionKeys[section.heading] ?? section.heading)}
+              {sectionLabel(section.heading, locale, t)}
             </p>
             <ul className="space-y-0.5">
               {section.items.map((item) => {
                 const active = pathname === item.href
                 const Icon = item.icon
-                const label =
-                  item.href === "/artists/"
-                    ? locale === "es"
-                      ? "Registros de artistas"
-                      : "Artist Records"
-                    : t(institutionNavLabelKeys[item.href] ?? item.label)
+                const label = item.href === "/artists/" ? (locale === "es" ? "Registros de artistas" : "Artist Records") : t(institutionNavLabelKeys[item.href] ?? item.label)
                 return (
                   <li key={item.href}>
                     <Link
                       href={item.href}
                       onClick={openPageGuide}
                       aria-current={active ? "page" : undefined}
-                      className={cn(
-                        "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                        active
-                          ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                          : "text-foreground/70 hover:bg-accent/60 hover:text-foreground",
-                      )}
+                      className={cn("group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors", active ? "bg-sidebar-accent text-sidebar-accent-foreground" : "text-foreground/70 hover:bg-accent/60 hover:text-foreground")}
                     >
-                      <Icon
-                        className={cn(
-                          "size-4 shrink-0",
-                          active ? "text-primary" : "text-muted-foreground",
-                        )}
-                      />
+                      <Icon className={cn("size-4 shrink-0", active ? "text-primary" : "text-muted-foreground")} />
                       <span className="flex-1">{label}</span>
                       {item.badge != null && (
-                        <span
-                          className={cn(
-                            "rounded-full px-1.5 py-0.5 text-[0.65rem] font-semibold tabular-nums",
-                            active
-                              ? "bg-primary/15 text-primary"
-                              : "bg-muted text-muted-foreground",
-                          )}
-                        >
-                          {item.badge}
-                        </span>
+                        <span className={cn("rounded-full px-1.5 py-0.5 text-[0.65rem] font-semibold tabular-nums", active ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground")}>{item.badge}</span>
                       )}
                     </Link>
                   </li>
@@ -99,36 +73,20 @@ export function Sidebar() {
       </nav>
 
       <div className="border-t border-border p-3">
-        <button
-          type="button"
-          className="flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left transition-colors hover:bg-accent/60"
-        >
+        <button type="button" className="flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left transition-colors hover:bg-accent/60">
           <InitialAvatar name={programDirector.name} className="size-9 text-xs" />
           <span className="min-w-0 flex-1">
-            <span className="block truncate text-sm font-medium text-foreground">
-              {programDirector.name}
-            </span>
-            <span className="block truncate text-xs text-muted-foreground">
-              {programDirector.role}
-            </span>
+            <span className="block truncate text-sm font-medium text-foreground">{programDirector.name}</span>
+            <span className="block truncate text-xs text-muted-foreground">{programDirector.role}</span>
           </span>
           <ChevronsUpDown className="size-4 text-muted-foreground" />
         </button>
 
-        <button
-          type="button"
-          className="mt-1 flex w-full items-center gap-3 rounded-lg border border-border bg-card px-2 py-2 text-left transition-colors hover:bg-accent/40"
-        >
-          <span className="grid size-9 shrink-0 place-items-center rounded-md bg-primary text-[0.6rem] font-bold tracking-wide text-primary-foreground">
-            {institution.initials}
-          </span>
+        <button type="button" className="mt-1 flex w-full items-center gap-3 rounded-lg border border-border bg-card px-2 py-2 text-left transition-colors hover:bg-accent/40">
+          <span className="grid size-9 shrink-0 place-items-center rounded-md bg-primary text-[0.6rem] font-bold tracking-wide text-primary-foreground">{institution.initials}</span>
           <span className="min-w-0 flex-1">
-            <span className="block truncate text-sm font-medium text-foreground">
-              {institution.name}
-            </span>
-            <span className="block truncate text-xs text-muted-foreground">
-              {institution.location}
-            </span>
+            <span className="block truncate text-sm font-medium text-foreground">{institution.name}</span>
+            <span className="block truncate text-xs text-muted-foreground">{institution.location}</span>
           </span>
           <ChevronsUpDown className="size-4 text-muted-foreground" />
         </button>
