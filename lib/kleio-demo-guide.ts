@@ -64,57 +64,45 @@ export const demoGuideFilters: DemoGuideFilter[] = ["All", "Artists", "Instituti
 export const demoGuideScenarios: DemoGuideScenario[] = [
   {
     id: "artist-passport-setup",
-    title: "Create Your Artist Passport",
-    summary: "Walk through the first artist setup flow and see how reusable materials begin.",
+    title: "Set Up the Artist Passport",
+    summary: "Follow the first artist setup path and see where reusable materials begin.",
     roleLabel: "Artist",
     roleGroup: "Artists",
     requiredRole: "artist",
     timeEstimate: "3–5 min",
-    outcome: "See how an artist starts one reusable profile instead of rebuilding the same materials for each opportunity.",
+    outcome: "See how an artist starts one reusable record instead of rebuilding the same materials for every opportunity.",
     firstStepId: "artist-passport-setup-1",
-    previewSteps: [
-      "Start on artist signup",
-      "Review where Import Assist appears",
-      "Open the Creative Passport workspace",
-    ],
+    previewSteps: ["Start on artist signup", "Review Import Assist", "Open the Creative Passport"],
     completionMessage:
       "This walkthrough is complete. You have seen how KLEIO starts with a reusable artist record and keeps the artist in control of what becomes official.",
     recommendedNextScenarioIds: ["find-first-grant"],
   },
   {
     id: "find-first-grant",
-    title: "Find Your First Grant / Open Call",
-    summary: "See how the artist workspace connects profile readiness to relevant opportunities.",
+    title: "Use the Passport to Read Opportunities",
+    summary: "Move from profile context into opportunity readiness, deadlines, and missing materials.",
     roleLabel: "Artist",
     roleGroup: "Artists",
     requiredRole: "artist",
     timeEstimate: "3–5 min",
-    outcome: "Understand how an artist can compare opportunities by fit, readiness, deadline pressure, and missing materials.",
+    outcome: "Understand how an artist can decide what to prepare first and what still needs work.",
     firstStepId: "find-first-grant-1",
-    previewSteps: [
-      "Begin with the artist profile foundation",
-      "Open Opportunities",
-      "Read match and readiness signals",
-    ],
+    previewSteps: ["Begin with profile signals", "Open Opportunities", "Read readiness signals"],
     completionMessage:
       "This walkthrough is complete. You have seen how KLEIO helps an artist understand which opportunities are worth preparing for first.",
     recommendedNextScenarioIds: ["artist-passport-setup"],
   },
   {
     id: "create-open-call",
-    title: "Create Your First Open Call",
-    summary: "Walk through how an institution starts a structured program intake flow.",
+    title: "Set Up an Institution Call",
+    summary: "Move from institution setup into a structured program or open-call draft.",
     roleLabel: "Institution",
     roleGroup: "Institutions",
     requiredRole: "institution",
     timeEstimate: "4–6 min",
-    outcome: "See how program information, requirements, and review structure can be organized before submissions arrive.",
+    outcome: "See how requirements, materials, deadlines, and review structure can be organized before submissions arrive.",
     firstStepId: "create-open-call-1",
-    previewSteps: [
-      "Start with institution setup",
-      "Open Programs & Open Calls",
-      "Prepare the call as a draft",
-    ],
+    previewSteps: ["Start institution setup", "Open Programs & Open Calls", "Prepare the call as a draft"],
     completionMessage:
       "This walkthrough is complete. You have seen how KLEIO turns program setup into a structured intake flow before the review cycle begins.",
     recommendedNextScenarioIds: ["review-and-shortlist"],
@@ -129,11 +117,7 @@ export const demoGuideScenarios: DemoGuideScenario[] = [
     timeEstimate: "4–6 min",
     outcome: "See how submissions, reviewer context, committee progress, and shortlist decisions stay connected.",
     firstStepId: "review-and-shortlist-1",
-    previewSteps: [
-      "Begin in the institution overview",
-      "Open Review Queue",
-      "Move into Shortlist",
-    ],
+    previewSteps: ["Begin in the institution overview", "Open Review Queue", "Move into Shortlist"],
     completionMessage:
       "This walkthrough is complete. You have seen how KLEIO keeps review context visible from intake through shortlist decisions.",
     recommendedNextScenarioIds: ["create-open-call"],
@@ -157,12 +141,12 @@ const demoGuideSteps: DemoGuideStep[] = [
       route: "/signup/artist/",
       title: "Start on the artist path",
       body:
-        "This screen is the beginning of the artist setup flow. It collects the first details most applications ask for: name, location, practice area, links, and a short bio.",
+        "This screen starts the artist setup flow. It gathers the first details many applications ask for: name, location, practice area, links, and a short bio.",
       screenLabel: "Artist signup · Step 1 profile basics",
       screenCue:
         "Look at the profile form and the Import Assist card above it. The form can be completed manually, with or without assistance.",
       viewerAction:
-        "This step keeps the artist as the author of the record. KLEIO can help prepare drafts, but the artist reviews and edits the information before it becomes part of the passport.",
+        "This keeps the artist as the author of the record. KLEIO can help prepare drafts, but the artist reviews and edits before anything becomes part of the Passport.",
       nextPreview: "Next, the guide stays on this screen and focuses on Import Assist.",
       primaryActionLabel: "Next: Import Assist",
       requiredRole: "artist",
@@ -171,13 +155,13 @@ const demoGuideSteps: DemoGuideStep[] = [
       route: "/signup/artist/",
       title: "Review Import Assist",
       body:
-        "Import Assist is placed here so the artist can choose help before filling every field from scratch. It is optional and supports draft preparation only.",
+        "Import Assist is placed here so the artist can choose help before filling every field from scratch. It is optional and only prepares draft material.",
       screenLabel: "Artist signup · Import Assist",
       screenCue:
-        "Look at the compact Import Assist card above the profile fields. It sits inside the onboarding flow rather than taking the artist away from the form.",
+        "Look at the compact Import Assist card above the profile fields. It supports the form instead of taking the artist away from setup.",
       viewerAction:
-        "The benefit is reduced repetition. An artist can bring existing materials into the setup process, then decide what to keep, edit, or ignore.",
-      nextPreview: "Next, the guide opens the Creative Passport workspace so you can see where these materials live after setup.",
+        "This reduces repetition. The artist can bring existing materials into the setup process, then decide what to keep, edit, or ignore.",
+      nextPreview: "Next, the guide opens the Creative Passport so you can see where these materials live after setup.",
       primaryActionLabel: "Next: Creative Passport",
       requiredRole: "artist",
     },
@@ -190,7 +174,7 @@ const demoGuideSteps: DemoGuideStep[] = [
       screenCue:
         "Look for passport completeness, materials readiness, profile basics, sharing controls, and artist materials.",
       viewerAction:
-        "The reason this matters is continuity. The artist does not have to rebuild the same professional record for every grant, residency, exhibition, or open call.",
+        "This helps with continuity. The artist does not have to rebuild the same professional record for every grant, residency, exhibition, or open call.",
       nextPreview: "Finish this walkthrough, or continue into the opportunity discovery flow.",
       primaryActionLabel: "Finish walkthrough",
       requiredRole: "artist",
@@ -201,12 +185,12 @@ const demoGuideSteps: DemoGuideStep[] = [
       route: "/signup/artist/",
       title: "Begin with profile signals",
       body:
-        "Opportunity matching is clearer when the artist profile has enough context: practice area, location, materials, themes, links, and readiness.",
+        "Opportunity sorting is clearer when the artist profile has enough context: practice area, location, materials, themes, links, and readiness.",
       screenLabel: "Artist signup · Profile signals",
       screenCue:
-        "Look at the fields that describe the artist's practice. These details become useful later when KLEIO organizes opportunities and application readiness.",
+        "Look at the fields that describe the artist's practice. These details become useful later when KLEIO organizes opportunities and preparation needs.",
       viewerAction:
-        "This keeps discovery connected to the artist's actual materials. The goal is not more opportunities; it is clearer preparation for the right ones.",
+        "The goal is not just to show more opportunities. The goal is to help the artist prepare the ones that make sense first.",
       nextPreview: "Next, the guide opens the Opportunities workspace.",
       primaryActionLabel: "Next: Opportunities",
       requiredRole: "artist",
@@ -215,12 +199,12 @@ const demoGuideSteps: DemoGuideStep[] = [
       route: "/artist-dashboard/opportunities/",
       title: "Open Opportunities",
       body:
-        "This page turns the Creative Passport into a practical discovery tool. Opportunities can be reviewed by fit, funding, deadline pressure, and preparation gaps.",
+        "This page uses the Creative Passport to make grants, residencies, exhibitions, and open calls easier to sort by fit, funding, deadline, and preparation gaps.",
       screenLabel: "Artist workspace · Opportunities",
       screenCue:
         "Look for opportunity cards, match/readiness context, deadline timing, missing materials, and application effort. Demo opportunities are synthetic.",
       viewerAction:
-        "The benefit is prioritization. An artist can see what is worth preparing now, what needs more material, and what can wait.",
+        "This helps the artist decide what to prepare now, what needs more material, and what can wait.",
       nextPreview: "Next, stay on this page and read the readiness signals more closely.",
       primaryActionLabel: "Next: Readiness signals",
       requiredRole: "artist",
@@ -229,7 +213,7 @@ const demoGuideSteps: DemoGuideStep[] = [
       route: "/artist-dashboard/opportunities/",
       title: "Read readiness signals",
       body:
-        "This view should help answer a practical question: is this opportunity aligned, is the deadline manageable, and what still needs to be prepared?",
+        "This view answers a practical question: does this opportunity fit, is the deadline manageable, and what still needs to be prepared?",
       screenLabel: "Artist workspace · Match and readiness",
       screenCue:
         "Look for fit percentage, passport completeness, missing materials, deadline urgency, and funding context.",
@@ -250,7 +234,7 @@ const demoGuideSteps: DemoGuideStep[] = [
       screenCue:
         "Look at the institution onboarding fields and the Import Assist card above the form.",
       viewerAction:
-        "This step exists to reduce scattered setup work. Instead of building a process through email folders, PDFs, and spreadsheets, the institution starts with one organized workspace.",
+        "This helps the institution start with one organized workspace instead of building the process across email folders, PDFs, and spreadsheets.",
       nextPreview: "Next, the guide opens Programs & Open Calls.",
       primaryActionLabel: "Next: Programs",
       requiredRole: "institution",
@@ -264,7 +248,7 @@ const demoGuideSteps: DemoGuideStep[] = [
       screenCue:
         "Look for program status, deadlines, submission counts, incomplete materials, and assigned reviewers.",
       viewerAction:
-        "The benefit is operational clarity. A team can see where each program stands before entering individual submissions.",
+        "This helps the team see where each program stands before entering individual submissions.",
       nextPreview: "Next, the guide opens the new open-call draft screen.",
       primaryActionLabel: "Next: New open call",
       requiredRole: "institution",
@@ -278,7 +262,7 @@ const demoGuideSteps: DemoGuideStep[] = [
       screenCue:
         "Look for fields that define the call before applicants submit materials. This is a controlled demo draft, not a live published call.",
       viewerAction:
-        "The reason this matters is consistency. A structured call gives artists clearer requirements and gives reviewers cleaner information later.",
+        "A structured call gives artists clearer requirements and gives reviewers cleaner information later.",
       nextPreview: "Next, stay on the draft state and close the setup walkthrough.",
       primaryActionLabel: "Next: Draft ready",
       requiredRole: "institution",
@@ -292,7 +276,7 @@ const demoGuideSteps: DemoGuideStep[] = [
       screenCue:
         "Stay on the new program screen and treat the configured call as a demo-only draft.",
       viewerAction:
-        "This protects clarity. KLEIO is showing the workflow without implying that a real public opportunity has been launched.",
+        "This keeps the demo clear. KLEIO is showing the workflow without implying that a real public opportunity has been launched.",
       nextPreview: "Finish this walkthrough, or continue into review and shortlist.",
       primaryActionLabel: "Finish walkthrough",
       requiredRole: "institution",
@@ -308,7 +292,7 @@ const demoGuideSteps: DemoGuideStep[] = [
       screenCue:
         "Look for total applications, review status, incomplete materials, reviewer progress, deadlines, and shortlist activity.",
       viewerAction:
-        "The benefit is orientation. Administrators and committee members can see where attention is needed before decisions are made.",
+        "This helps administrators and committee members see where attention is needed before decisions are made.",
       nextPreview: "Next, the guide opens Review Queue.",
       primaryActionLabel: "Next: Review Queue",
       requiredRole: "institution",
@@ -346,12 +330,12 @@ const demoGuideSteps: DemoGuideStep[] = [
       route: "/shortlist/",
       title: "Open Shortlist",
       body:
-        "The Shortlist gathers the submissions that are ready for closer decision-making. Notes and status context stay attached as the group narrows.",
+        "The Shortlist gathers submissions ready for closer decision-making. Notes and status context stay attached as the group narrows.",
       screenLabel: "Institution workspace · Shortlist",
       screenCue:
         "Look for shortlisted artists, finalist status, committee vote context, and export/reporting actions.",
       viewerAction:
-        "The value is continuity. KLEIO helps preserve why a submission moved forward, so the review history is not lost after the meeting.",
+        "This helps preserve why a submission moved forward, so review history is not lost after the meeting.",
       nextPreview: "Finish this walkthrough, or return to the open-call setup flow.",
       primaryActionLabel: "Finish walkthrough",
       requiredRole: "institution",
@@ -364,9 +348,7 @@ const stepById = new Map(demoGuideSteps.map((step) => [step.id, step]))
 const scenarioById = new Map(demoGuideScenarios.map((scenario) => [scenario.id, scenario]))
 
 export function getScenarioSteps(scenarioId: DemoGuideScenarioId): DemoGuideStep[] {
-  return demoGuideSteps
-    .filter((step) => step.scenarioId === scenarioId)
-    .sort((a, b) => a.stepNumber - b.stepNumber)
+  return demoGuideSteps.filter((step) => step.scenarioId === scenarioId).sort((a, b) => a.stepNumber - b.stepNumber)
 }
 
 export function getFirstStepForScenario(scenarioId: DemoGuideScenarioId): DemoGuideStep | undefined {
@@ -395,9 +377,7 @@ export function getPreviousGuideStep(currentStepId: string | null | undefined): 
   return steps[index - 1]
 }
 
-export function getScenarioById(
-  scenarioId: DemoGuideScenarioId | null | undefined,
-): DemoGuideScenario | undefined {
+export function getScenarioById(scenarioId: DemoGuideScenarioId | null | undefined): DemoGuideScenario | undefined {
   if (!scenarioId) return undefined
   return scenarioById.get(scenarioId)
 }
@@ -412,9 +392,7 @@ export function getRecommendedScenariosForPath(pathname: string | null | undefin
   const artistScenarios = demoGuideScenarios.filter((scenario) => scenario.roleGroup === "Artists")
   const institutionScenarios = demoGuideScenarios.filter((scenario) => scenario.roleGroup === "Institutions")
 
-  if (path.startsWith("/artist-dashboard") || path.startsWith("/signup/artist")) {
-    return [...artistScenarios, ...institutionScenarios]
-  }
+  if (path.startsWith("/artist-dashboard") || path.startsWith("/signup/artist")) return [...artistScenarios, ...institutionScenarios]
 
   if (
     path.startsWith("/dashboard") ||
@@ -430,12 +408,8 @@ export function getRecommendedScenariosForPath(pathname: string | null | undefin
   return demoGuideScenarios
 }
 
-export function getRecommendedNextScenarios(
-  scenarioId: DemoGuideScenarioId | null | undefined,
-): DemoGuideScenario[] {
+export function getRecommendedNextScenarios(scenarioId: DemoGuideScenarioId | null | undefined): DemoGuideScenario[] {
   const scenario = getScenarioById(scenarioId)
   if (!scenario) return []
-  return scenario.recommendedNextScenarioIds
-    .map((nextId) => getScenarioById(nextId))
-    .filter((entry): entry is DemoGuideScenario => Boolean(entry))
+  return scenario.recommendedNextScenarioIds.map((nextId) => getScenarioById(nextId)).filter((entry): entry is DemoGuideScenario => Boolean(entry))
 }
