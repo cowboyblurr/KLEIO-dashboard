@@ -16,6 +16,7 @@ import { collaboratorNavLabelKeys } from "@/lib/kleio-nav-i18n"
 import { InitialAvatar } from "@/components/kleio/initial-avatar"
 import { KleioWordmarkLink } from "@/components/kleio/kleio-wordmark-link"
 import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
+import { persistDemoGuideState } from "@/components/kleio/use-demo-guide"
 
 const navItems = [
   { href: "/collaborator-dashboard/", label: "Overview", icon: LayoutDashboard },
@@ -28,6 +29,17 @@ const navItems = [
 
 function institutionLabel(organization: string) {
   return organization === "Independent" ? "KLEIO Arthouse" : organization
+}
+
+function openPageGuide() {
+  persistDemoGuideState({
+    isOpen: true,
+    isMinimized: false,
+    dismissed: false,
+    activeScenarioId: null,
+    activeStepId: null,
+    completedScenarioId: null,
+  })
 }
 
 export function CollaboratorSidebar() {
@@ -57,6 +69,7 @@ export function CollaboratorSidebar() {
               <li key={item.label}>
                 <Link
                   href={item.href}
+                  onClick={openPageGuide}
                   aria-current={active ? "page" : undefined}
                   className={cn(
                     "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
