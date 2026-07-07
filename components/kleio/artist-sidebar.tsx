@@ -21,6 +21,7 @@ import { artistNavLabelKeys } from "@/lib/kleio-nav-i18n"
 import { InitialAvatar } from "@/components/kleio/initial-avatar"
 import { KleioWordmarkLink } from "@/components/kleio/kleio-wordmark-link"
 import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
+import { persistDemoGuideState } from "@/components/kleio/use-demo-guide"
 
 type NavItem = {
   href: string
@@ -35,7 +36,7 @@ const navItems: NavItem[] = [
   { href: "/artist-dashboard/portfolio/", label: "Portfolio", icon: FolderOpen, activeMatch: "/artist-dashboard/portfolio" },
   { href: "/artist-dashboard/opportunities/", label: "Opportunities", icon: Briefcase, activeMatch: "/artist-dashboard/opportunities" },
   { href: "/artist-dashboard/applications/", label: "Applications", icon: FileText, activeMatch: "/artist-dashboard/applications" },
-  { href: "/artist-dashboard/collaborators/", label: "Collaborators", icon: UsersRound, activeMatch: "/artist-dashboard/collaborators" },
+  { href: "/artist-dashboard/collaborators/", label: "Artist Matches", icon: UsersRound, activeMatch: "/artist-dashboard/collaborators" },
   { href: "/artist-dashboard/calendar/", label: "Calendar", icon: CalendarDays, activeMatch: "/artist-dashboard/calendar" },
   { href: "/artist-dashboard/messages/", label: "Messages", icon: MessageSquare, activeMatch: "/artist-dashboard/messages" },
   { href: "/artist-dashboard/funding/", label: "Funding", icon: DollarSign, activeMatch: "/artist-dashboard/funding" },
@@ -43,10 +44,21 @@ const navItems: NavItem[] = [
   { href: "/artist-dashboard/settings/", label: "Settings", icon: Settings, activeMatch: "/artist-dashboard/settings" },
 ]
 
+function openPageGuide() {
+  persistDemoGuideState({
+    isOpen: true,
+    isMinimized: false,
+    dismissed: false,
+    activeScenarioId: null,
+    activeStepId: null,
+    completedScenarioId: null,
+  })
+}
+
 export function ArtistSidebar() {
   const pathname = usePathname()
   const artist = getArtistById(DEMO_ARTIST_ID)
-  const { t } = useKleioLocale()
+  const { t, locale } = useKleioLocale()
 
   return (
     <aside className="flex h-full w-[220px] shrink-0 flex-col border-r border-[#E7E1F7] bg-white">
@@ -64,11 +76,18 @@ export function ArtistSidebar() {
               ? pathname.startsWith(item.activeMatch)
               : pathname === item.href || `${pathname}/` === item.href
             const Icon = item.icon
+            const label =
+              item.href === "/artist-dashboard/collaborators/"
+                ? locale === "es"
+                  ? "Coincidencias de artistas"
+                  : "Artist Matches"
+                : t(artistNavLabelKeys[item.href] ?? item.label)
 
             return (
               <li key={item.label}>
                 <Link
                   href={item.href}
+                  onClick={openPageGuide}
                   aria-current={active ? "page" : undefined}
                   className={cn(
                     "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
@@ -78,7 +97,7 @@ export function ArtistSidebar() {
                   )}
                 >
                   <Icon className={cn("size-4 shrink-0", active ? "text-primary" : "text-muted-foreground")} />
-                  <span className="flex-1">{t(artistNavLabelKeys[item.href] ?? item.label)}</span>
+                  <span className="flex-1">{label}</span>
                 </Link>
               </li>
             )
