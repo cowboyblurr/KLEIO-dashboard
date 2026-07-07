@@ -34,11 +34,11 @@ export const navSections: NavSection[] = [
     items: [{ label: "Overview", href: "/dashboard/", icon: LayoutGrid }],
   },
   {
-    heading: "Manage",
+    heading: "Core Review Flow",
     items: [
       { label: "Programs", href: "/programs/", icon: FolderOpen },
       { label: "Submissions", href: "/submissions/", icon: FileStack },
-      { label: "Artists", href: "/artists/", icon: Users },
+      { label: "Artist Records", href: "/artists/", icon: Users },
       { label: "Review Queue", href: "/review-queue/", icon: ListChecks, badge: analytics.reviewQueueCount },
       { label: "Shortlist", href: "/shortlist/", icon: Bookmark, badge: analytics.shortlistedCount },
     ],
@@ -51,15 +51,13 @@ export const navSections: NavSection[] = [
     ],
   },
   {
-    heading: "Analyze",
-    items: [
-      { label: "Reports", href: "/reports/", icon: BarChart3 },
-      { label: "Activity Log", href: "/activity-log/", icon: History },
-    ],
+    heading: "Report",
+    items: [{ label: "Reports", href: "/reports/", icon: BarChart3 }],
   },
   {
-    heading: "Configure",
+    heading: "Admin / More",
     items: [
+      { label: "Activity Log", href: "/activity-log/", icon: History },
       { label: "Templates", href: "/templates/", icon: LayoutTemplate },
       { label: "Settings", href: "/settings/", icon: Settings },
     ],
