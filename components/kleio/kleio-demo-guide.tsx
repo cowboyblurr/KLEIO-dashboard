@@ -2,6 +2,7 @@
 
 import { useMemo } from "react"
 import { usePathname, useRouter } from "next/navigation"
+import { Eye, MessageSquareText, MousePointerClick, Search } from "lucide-react"
 import { KleioAssistObjectVisual } from "@/components/kleio/kleio-assist-object"
 import { useDemoGuide } from "@/components/kleio/use-demo-guide"
 import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
@@ -382,6 +383,35 @@ export function KleioDemoGuide({ variant = "workspace" }: KleioDemoGuideProps) {
       : `Step ${activeStep.stepNumber} of ${scenarioSteps.length}`
   }, [activeStep, locale, scenarioSteps.length])
 
+  const guideItems = activeStepCopy
+    ? [
+        {
+          key: "screen",
+          label: labelFor("screen", locale),
+          body: activeStepCopy.screenLabel,
+          Icon: Eye,
+        },
+        {
+          key: "look",
+          label: labelFor("look", locale),
+          body: activeStepCopy.screenCue,
+          Icon: Search,
+        },
+        {
+          key: "action",
+          label: labelFor("action", locale),
+          body: activeStepCopy.viewerAction,
+          Icon: MessageSquareText,
+        },
+        {
+          key: "next",
+          label: labelFor("next", locale),
+          body: activeStepCopy.nextPreview ?? "",
+          Icon: MousePointerClick,
+        },
+      ].filter((item) => item.body)
+    : []
+
   if (variant === "landing" && !state.isOpen) return null
   if (variant === "workspace" && state.dismissed && !state.isOpen) return null
 
@@ -449,35 +479,66 @@ export function KleioDemoGuide({ variant = "workspace" }: KleioDemoGuideProps) {
   return (
     <div
       className={cn(
-        "kleio-demo-guide-anchor fixed z-40 w-[min(100vw-1.5rem,25rem)]",
+        "kleio-demo-guide-anchor fixed z-40 w-[min(100vw-1.5rem,24rem)]",
         "bottom-4 right-4 max-md:bottom-3 max-md:right-3",
       )}
       role="complementary"
       aria-label={locale === "es" ? "Demo guiado de KLEIO" : "KLEIO guided demo"}
     >
-      <div className="kleio-demo-guide-panel overflow-hidden rounded-2xl border border-[#E7E1F7] bg-[#F7F4FF]/95 shadow-[0_12px_40px_rgba(82,64,130,0.12)] backdrop-blur-sm">
-        <div className="flex items-start gap-3 border-b border-[#E7E1F7] px-4 py-3">
+      <style>{`
+        @keyframes kleioGuideMessageIn {
+          from {
+            opacity: 0;
+            transform: translate3d(10px, 10px, 0) scale(0.985);
+            filter: blur(2px);
+          }
+          to {
+            opacity: 1;
+            transform: translate3d(0, 0, 0) scale(1);
+            filter: blur(0);
+          }
+        }
+
+        .kleio-guide-message {
+          opacity: 0;
+          animation: kleioGuideMessageIn 460ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .kleio-guide-message {
+            opacity: 1;
+            animation: none;
+          }
+        }
+      `}</style>
+
+      <div className="kleio-demo-guide-panel max-h-[calc(100dvh-1.5rem)] overflow-hidden rounded-2xl border border-[#E7E1F7] bg-[#F7F4FF]/95 shadow-[0_12px_40px_rgba(82,64,130,0.12)] backdrop-blur-sm">
+        <div className="flex items-start gap-3 border-b border-[#E7E1F7] px-3.5 py-3">
           <KleioAssistObjectVisual size="sm" mode={completedScenario ? "complete" : "reviewing"} />
           <div className="min-w-0 flex-1">
             <p className="text-xs font-semibold text-[#292631]">
-              {locale === "es" ? "Guía KLEIO" : "KLEIO Guide"}
+              {activeStep ? (locale === "es" ? "KLEIO Assist" : "KLEIO Assist") : locale === "es" ? "Guía KLEIO" : "KLEIO Guide"}
             </p>
-            <p className="mt-0.5 text-[0.65rem] text-[#7F7890]">
-              {activeScenarioCopy?.title ??
-                completedScenarioCopy?.title ??
-                (locale === "es" ? "Elige un recorrido por flujo" : "Choose a workflow walkthrough")}
+            <p className="mt-0.5 text-[0.65rem] leading-snug text-[#7F7890]">
+              {activeStep
+                ? locale === "es"
+                  ? "Ayuda guiada para esta pantalla"
+                  : "Guided help for this screen"
+                : activeScenarioCopy?.title ??
+                  completedScenarioCopy?.title ??
+                  (locale === "es" ? "Elige un recorrido por flujo" : "Choose a workflow walkthrough")}
             </p>
           </div>
           <button
             type="button"
             onClick={minimizeGuide}
-            className="text-[0.65rem] font-medium text-[#7F7890] transition-colors hover:text-[#292631]"
+            className="rounded-full border border-[#E7E1F7] bg-white/80 px-3 py-1.5 text-[0.65rem] font-medium text-[#7F7890] transition-colors hover:text-[#292631]"
           >
             {locale === "es" ? "Ocultar" : "Hide"}
           </button>
         </div>
 
-        <div className="px-4 py-3">
+        <div className="max-h-[min(64dvh,34rem)] overflow-y-auto px-3.5 py-3">
           {!state.activeScenarioId && completedScenarioCopy ? (
             <div className="space-y-3">
               <div className="rounded-xl border border-[#E7E1F7] bg-white px-3 py-2.5">
@@ -526,16 +587,16 @@ export function KleioDemoGuide({ variant = "workspace" }: KleioDemoGuideProps) {
               </ul>
             </div>
           ) : activeStepCopy ? (
-            <div className="space-y-3">
+            <div className="space-y-2.5">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 {progressLabel && (
-                  <p className="text-[0.65rem] font-medium uppercase tracking-wide text-[#A997E8]">
+                  <p className="text-[0.62rem] font-semibold uppercase tracking-wide text-[#A997E8]">
                     {progressLabel}
                   </p>
                 )}
                 <span
                   className={cn(
-                    "rounded-full px-2 py-0.5 text-[0.58rem] font-semibold uppercase tracking-wide",
+                    "rounded-full px-2 py-0.5 text-[0.55rem] font-semibold uppercase tracking-wide",
                     isOnActiveStepRoute
                       ? "bg-white text-[#5B4B8A]"
                       : "border border-[#E7E1F7] bg-white text-[#7F7890]",
@@ -565,41 +626,41 @@ export function KleioDemoGuide({ variant = "workspace" }: KleioDemoGuideProps) {
                 ))}
               </div>
 
-              <div>
-                <p className="text-sm font-semibold text-[#292631]">{activeStepCopy.title}</p>
-                <p className="mt-1 text-xs leading-relaxed text-[#7F7890]">{activeStepCopy.body}</p>
+              <div className="rounded-xl border border-[#E7E1F7] bg-white/70 px-3 py-2">
+                <p className="text-sm font-semibold leading-tight text-[#292631]">{activeStepCopy.title}</p>
+                <p className="mt-1 text-[0.72rem] leading-relaxed text-[#6F6882]">{activeStepCopy.body}</p>
               </div>
 
-              <div className="rounded-xl border border-[#E7E1F7] bg-white px-3 py-2.5">
-                <p className="text-[0.62rem] font-semibold uppercase tracking-wide text-[#A997E8]">
-                  {labelFor("screen", locale)}
-                </p>
-                <p className="mt-1 text-xs font-medium text-[#292631]">{activeStepCopy.screenLabel}</p>
-              </div>
+              <div className="relative pl-8">
+                <div className="absolute left-[0.875rem] top-5 bottom-5 border-l border-dashed border-[#D8D0F2]" aria-hidden />
 
-              <div className="grid gap-2">
-                <div className="rounded-xl border border-[#E7E1F7] bg-white/80 px-3 py-2.5">
-                  <p className="text-[0.62rem] font-semibold uppercase tracking-wide text-[#A997E8]">
-                    {labelFor("look", locale)}
-                  </p>
-                  <p className="mt-1 text-xs leading-relaxed text-[#6F6882]">{activeStepCopy.screenCue}</p>
+                <div className="space-y-2">
+                  {guideItems.map((item, index) => {
+                    const Icon = item.Icon
+                    return (
+                      <div
+                        key={`${activeStep.id}-${item.key}`}
+                        className="kleio-guide-message relative rounded-[1.05rem] border border-[#E7E1F7] bg-white px-2.5 py-2 shadow-[0_10px_26px_rgba(82,64,130,0.08)]"
+                        style={{ animationDelay: `${index * 90}ms` }}
+                      >
+                        <span className="absolute -left-8 top-1/2 grid size-7 -translate-y-1/2 place-items-center rounded-full border border-[#E7E1F7] bg-[#F0ECFF] text-[0.7rem] font-semibold text-[#5B4B8A] shadow-sm">
+                          {index + 1}
+                        </span>
+                        <div className="flex gap-2.5">
+                          <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-[#F7F4FF] text-[#6E52CC]">
+                            <Icon className="size-4" />
+                          </span>
+                          <div className="min-w-0">
+                            <p className="text-[0.58rem] font-bold uppercase tracking-[0.14em] text-[#A997E8]">
+                              {item.label}
+                            </p>
+                            <p className="mt-0.5 text-[0.74rem] leading-snug text-[#292631]">{item.body}</p>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
                 </div>
-
-                <div className="rounded-xl border border-[#E7E1F7] bg-white/80 px-3 py-2.5">
-                  <p className="text-[0.62rem] font-semibold uppercase tracking-wide text-[#A997E8]">
-                    {labelFor("action", locale)}
-                  </p>
-                  <p className="mt-1 text-xs leading-relaxed text-[#6F6882]">{activeStepCopy.viewerAction}</p>
-                </div>
-
-                {activeStepCopy.nextPreview && (
-                  <div className="rounded-xl border border-[#E7E1F7] bg-[#FFFFFF]/65 px-3 py-2.5">
-                    <p className="text-[0.62rem] font-semibold uppercase tracking-wide text-[#A997E8]">
-                      {labelFor("next", locale)}
-                    </p>
-                    <p className="mt-1 text-xs leading-relaxed text-[#6F6882]">{activeStepCopy.nextPreview}</p>
-                  </div>
-                )}
               </div>
 
               {roleNote && (
@@ -612,11 +673,11 @@ export function KleioDemoGuide({ variant = "workspace" }: KleioDemoGuideProps) {
         </div>
 
         {state.activeScenarioId && activeStepCopy && (
-          <div className="flex flex-wrap gap-2 border-t border-[#E7E1F7] px-4 py-3">
+          <div className="flex gap-2 border-t border-[#E7E1F7] px-3.5 py-2.5">
             <button
               type="button"
               onClick={handlePrimaryGuideAction}
-              className="inline-flex h-9 flex-1 items-center justify-center rounded-xl bg-[#5B4B8A] px-3 text-xs font-semibold text-white transition-colors hover:bg-[#5B4B8A]/90"
+              className="inline-flex h-9 flex-1 items-center justify-center rounded-full bg-[#5B4B8A] px-3 text-xs font-semibold text-white shadow-[0_8px_18px_rgba(82,64,130,0.18)] transition-colors hover:bg-[#5B4B8A]/90"
             >
               {primaryButtonLabel}
             </button>
@@ -624,7 +685,7 @@ export function KleioDemoGuide({ variant = "workspace" }: KleioDemoGuideProps) {
               type="button"
               onClick={handlePreviousStep}
               disabled={!hasPrevious}
-              className="inline-flex h-9 items-center justify-center rounded-xl border border-[#E7E1F7] bg-white px-3 text-xs font-medium text-[#292631] transition-colors hover:bg-[#F7F4FF] disabled:cursor-not-allowed disabled:opacity-40"
+              className="inline-flex h-9 min-w-20 items-center justify-center rounded-full border border-[#E7E1F7] bg-white px-3 text-xs font-semibold text-[#7F7890] transition-colors hover:bg-[#F7F4FF] hover:text-[#292631] disabled:cursor-not-allowed disabled:opacity-40"
             >
               {locale === "es" ? "Atrás" : "Back"}
             </button>
@@ -632,7 +693,7 @@ export function KleioDemoGuide({ variant = "workspace" }: KleioDemoGuideProps) {
               <button
                 type="button"
                 onClick={handleNextStep}
-                className="inline-flex h-9 items-center justify-center rounded-xl border border-[#E7E1F7] bg-white px-3 text-xs font-medium text-[#6F6882] transition-colors hover:bg-[#F7F4FF]"
+                className="inline-flex h-9 items-center justify-center rounded-full border border-[#E7E1F7] bg-white px-3 text-xs font-medium text-[#6F6882] transition-colors hover:bg-[#F7F4FF]"
               >
                 {hasNext ? (locale === "es" ? "Saltar" : "Skip") : locale === "es" ? "Finalizar" : "Finish"}
               </button>
@@ -640,7 +701,7 @@ export function KleioDemoGuide({ variant = "workspace" }: KleioDemoGuideProps) {
           </div>
         )}
 
-        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-[#E7E1F7] px-4 py-2">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-[#E7E1F7] px-3.5 py-2">
           <div className="flex gap-3">
             <button
               type="button"
