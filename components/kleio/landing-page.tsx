@@ -4,7 +4,6 @@ import Link from "next/link"
 import { ChevronRight } from "lucide-react"
 import { assetPath } from "@/lib/asset-path"
 import { LandingLoginCard } from "@/components/kleio/landing-login-card"
-import { ExploreArthouseLink } from "@/components/kleio/smart-home-link"
 import { KleioWordmarkLink } from "@/components/kleio/kleio-wordmark-link"
 import { KleioLocaleToggle } from "@/components/kleio/kleio-locale-toggle"
 import { KleioDemoGuide } from "@/components/kleio/kleio-demo-guide"
@@ -32,7 +31,6 @@ function InstitutionIcon() {
 }
 
 const navLinkStyle = { color: "#6F6882", letterSpacing: "0.04em" } as const
-
 const inkColor = "#292631"
 const mutedColor = "#7F7890"
 const cardBg = "#FFFFFF"
@@ -75,9 +73,9 @@ export function LandingPage() {
           </div>
 
           <nav className="absolute right-8 top-1/2 flex -translate-y-1/2 items-center gap-7 max-md:right-5 max-md:gap-4">
-            <ExploreArthouseLink className="text-[0.78rem] font-medium tracking-wide hover:opacity-70 max-md:hidden" style={navLinkStyle}>
+            <Link href="/demo/" className="text-[0.78rem] font-medium tracking-wide hover:opacity-70 max-md:hidden" style={navLinkStyle}>
               {isSpanish ? "Demo guiado" : "Guided Demo"}
-            </ExploreArthouseLink>
+            </Link>
             <KleioLocaleToggle />
           </nav>
         </div>
@@ -85,16 +83,10 @@ export function LandingPage() {
 
       <section
         className="landing-stage relative z-10 mx-auto grid w-full max-w-[1280px] px-8 pb-16 pt-2 max-md:px-5"
-        style={{
-          gridTemplateRows: "auto auto auto auto",
-          rowGap: "clamp(12px, 2vh, 20px)",
-        }}
+        style={{ gridTemplateRows: "auto auto auto auto", rowGap: "clamp(12px, 2vh, 20px)" }}
       >
         <div className="flex h-full flex-col items-center justify-start text-center">
-          <h1
-            className="font-serif tracking-tight"
-            style={{ color: inkColor, fontSize: "clamp(1.45rem, 1.95vw, 2.05rem)", lineHeight: 0.98 }}
-          >
+          <h1 className="font-serif tracking-tight" style={{ color: inkColor, fontSize: "clamp(1.45rem, 1.95vw, 2.05rem)", lineHeight: 0.98 }}>
             {t("landing.hero.line1")}
             <br />
             <em style={{ fontStyle: "italic", fontWeight: 400 }}>{t("landing.hero.line2Italic")}</em>
@@ -102,13 +94,7 @@ export function LandingPage() {
 
           <p
             className="mx-auto mt-2.5 max-w-[520px]"
-            style={{
-              color: mutedColor,
-              fontSize: "clamp(0.5rem, 0.62vw, 0.6rem)",
-              letterSpacing: "0.20em",
-              textTransform: "uppercase",
-              lineHeight: 1.42,
-            }}
+            style={{ color: mutedColor, fontSize: "clamp(0.5rem, 0.62vw, 0.6rem)", letterSpacing: "0.20em", textTransform: "uppercase", lineHeight: 1.42 }}
           >
             {t("landing.tagline.line1")}
             <br />
@@ -119,15 +105,7 @@ export function LandingPage() {
         </div>
 
         <div className="flex h-full items-center justify-center">
-          <video
-            className="kleio-transparent-center-video h-auto max-h-[170px] w-[clamp(300px,26vw,430px)] object-contain"
-            autoPlay
-            muted
-            loop
-            playsInline
-            preload="metadata"
-            aria-hidden
-          >
+          <video className="kleio-transparent-center-video h-auto max-h-[170px] w-[clamp(300px,26vw,430px)] object-contain" autoPlay muted loop playsInline preload="metadata" aria-hidden>
             <source src={assetPath("/landing/kleio-transparent-center-video.mp4")} type="video/mp4" />
           </video>
         </div>
@@ -138,41 +116,29 @@ export function LandingPage() {
           <div className="landing-or-divider flex items-center justify-center max-md:hidden">
             <div className="flex flex-col items-center justify-center">
               <div className="h-6 w-px" style={{ backgroundColor: lavenderLine }} />
-              <span className="my-1.5 font-serif text-[0.8rem] italic" style={{ color: mutedColor }}>
-                {t("nav.or")}
-              </span>
+              <span className="my-1.5 font-serif text-[0.8rem] italic" style={{ color: mutedColor }}>{t("nav.or")}</span>
               <div className="h-6 w-px" style={{ backgroundColor: lavenderLine }} />
             </div>
           </div>
 
-          <div
-            className="landing-choice-card flex flex-col rounded-[1.1rem] p-3.5"
-            style={{
-              backgroundColor: cardBg,
-              border: `1px solid ${lavenderSoftLine}`,
-              boxShadow: cardShadow,
-            }}
-          >
-            <h2 className="font-serif text-[0.95rem] font-semibold" style={{ color: inkColor, letterSpacing: "-0.01em" }}>
+          <div className="landing-choice-card flex flex-col rounded-[1.1rem] p-3.5" style={{ backgroundColor: cardBg, border: `1px solid ${lavenderSoftLine}`, boxShadow: cardShadow }}>
+            <p className="text-[0.62rem] font-semibold uppercase tracking-[0.16em]" style={{ color: lavenderAccent }}>
+              {isSpanish ? "Rutas de configuración" : "Setup paths"}
+            </p>
+            <h2 className="mt-1 font-serif text-[0.98rem] font-semibold" style={{ color: inkColor, letterSpacing: "-0.01em" }}>
               {t("landing.choosePath.title")}
             </h2>
-            <p className="mt-0.5 text-[0.68rem]" style={{ color: mutedColor }}>
-              {t("landing.choosePath.subtitle")}
+            <p className="mt-0.5 text-[0.68rem] leading-relaxed" style={{ color: mutedColor }}>
+              {isSpanish
+                ? "Usa estas rutas si quieres ver cómo empieza el perfil de artista o el espacio institucional. Para una primera vista, usa el demo guiado."
+                : "Use these paths when you want to see how artist or institution setup begins. For a first viewing, use the guided demo."}
             </p>
 
-            <div className="mt-2.5 grid grid-cols-2 gap-2.5">
-              <Link
-                href="/signup/artist/"
-                className="group flex h-[70px] flex-col justify-between rounded-[0.85rem] border p-2.5 transition-colors hover:border-[#A997E8] hover:bg-[#F7F4FF]"
-                style={{ borderColor: lavenderLine, backgroundColor: "#FFFFFF" }}
-              >
-                <span className="grid size-6 place-items-center rounded-md" style={{ backgroundColor: lavenderMist, color: lavenderDeep }}>
-                  <ArtistIcon />
-                </span>
+            <div className="mt-3 grid grid-cols-2 gap-2.5">
+              <Link href="/signup/artist/" className="group flex h-[72px] flex-col justify-between rounded-[0.85rem] border p-2.5 transition-colors hover:border-[#A997E8] hover:bg-[#F7F4FF]" style={{ borderColor: lavenderLine, backgroundColor: "#FFFFFF" }}>
+                <span className="grid size-6 place-items-center rounded-md" style={{ backgroundColor: lavenderMist, color: lavenderDeep }}><ArtistIcon /></span>
                 <span>
-                  <span className="block text-[0.62rem]" style={{ color: mutedColor }}>
-                    {t("landing.choosePath.iAmArtist")}
-                  </span>
+                  <span className="block text-[0.62rem]" style={{ color: mutedColor }}>{t("landing.choosePath.iAmArtist")}</span>
                   <span className="flex items-center justify-between font-serif text-[0.78rem] font-semibold" style={{ color: inkColor }}>
                     {t("landing.choosePath.passport")}
                     <ChevronRight className="size-3 transition-transform group-hover:translate-x-0.5" style={{ color: lavenderAccent }} />
@@ -180,18 +146,10 @@ export function LandingPage() {
                 </span>
               </Link>
 
-              <Link
-                href="/signup/institution/"
-                className="group flex h-[70px] flex-col justify-between rounded-[0.85rem] border p-2.5 transition-colors hover:border-[#A997E8] hover:bg-[#F7F4FF]"
-                style={{ borderColor: lavenderLine, backgroundColor: "#FFFFFF" }}
-              >
-                <span className="grid size-6 place-items-center rounded-md" style={{ backgroundColor: lavenderMist, color: lavenderDeep }}>
-                  <InstitutionIcon />
-                </span>
+              <Link href="/signup/institution/" className="group flex h-[72px] flex-col justify-between rounded-[0.85rem] border p-2.5 transition-colors hover:border-[#A997E8] hover:bg-[#F7F4FF]" style={{ borderColor: lavenderLine, backgroundColor: "#FFFFFF" }}>
+                <span className="grid size-6 place-items-center rounded-md" style={{ backgroundColor: lavenderMist, color: lavenderDeep }}><InstitutionIcon /></span>
                 <span>
-                  <span className="block text-[0.62rem]" style={{ color: mutedColor }}>
-                    {t("landing.choosePath.iRepresentInstitution")}
-                  </span>
+                  <span className="block text-[0.62rem]" style={{ color: mutedColor }}>{t("landing.choosePath.iRepresentInstitution")}</span>
                   <span className="flex items-center justify-between font-serif text-[0.78rem] font-semibold" style={{ color: inkColor }}>
                     {t("landing.choosePath.workspace")}
                     <ChevronRight className="size-3 transition-transform group-hover:translate-x-0.5" style={{ color: lavenderAccent }} />
@@ -200,73 +158,21 @@ export function LandingPage() {
               </Link>
             </div>
 
-            <div className="landing-import-assist-strip mt-3">
+            <div className="landing-import-assist-strip mt-3 border-t border-[#E7E1F7] pt-3">
               <KleioAssistObjectVisual size="sm" mode="preparing" className="shrink-0 scale-[0.72]" />
               <div className="min-w-0">
                 <p className="landing-import-assist-title">KLEIO Import Assist</p>
                 <p className="landing-import-assist-copy">
                   {isSpanish
-                    ? "Import Assist puede preparar borradores a partir de materiales que ya tienes organizados. Tú revisas cada detalle."
-                    : t("landing.importAssist.note")}
+                    ? "Import Assist prepara borradores desde materiales existentes. La persona revisa cada detalle antes de usarlo."
+                    : "Import Assist prepares draft fields from existing materials. The user reviews every detail before use."}
                 </p>
-              </div>
-            </div>
-
-            <div
-              className="mt-3 rounded-[0.95rem] border p-3"
-              style={{ borderColor: lavenderSoftLine, backgroundColor: lavenderMist }}
-            >
-              <div className="mb-2 inline-flex items-center gap-1.5 rounded-full border border-[#E7E1F7] bg-white px-2 py-1 text-[0.52rem] font-semibold uppercase tracking-[0.12em] text-[#7F7890]">
-                <span className="size-1.5 rounded-full bg-[#A997E8]" aria-hidden />
-                {isSpanish ? "Datos sintéticos" : "Synthetic data"}
-              </div>
-              <p className="text-[0.62rem] font-semibold uppercase tracking-[0.16em]" style={{ color: lavenderAccent }}>
-                {isSpanish ? "Demo guiado" : "Guided demo"}
-              </p>
-              <h3 className="mt-1 font-serif text-[0.92rem] font-semibold" style={{ color: inkColor }}>
-                {isSpanish ? "Explora KLEIO por flujo" : "Explore KLEIO by workflow"}
-              </h3>
-              <p className="mt-1 text-[0.68rem] leading-relaxed" style={{ color: mutedColor }}>
-                {isSpanish
-                  ? "Si es tu primera vez viendo KLEIO, comienza con un recorrido guiado. Cada paso abre la pantalla correcta y explica qué estás viendo."
-                  : "If this is your first time viewing KLEIO, start with a guided walkthrough. Each step opens the right screen and explains what you are seeing."}
-              </p>
-
-              <div className="mt-2.5 grid grid-cols-1 gap-2">
-                <Link
-                  href="/demo/"
-                  className="group inline-flex min-h-8 items-center justify-between rounded-xl bg-[#5B4B8A] px-3 py-2 text-[0.68rem] font-semibold text-white transition-opacity hover:opacity-90"
-                >
-                  {isSpanish ? "Elegir recorrido" : "Choose a walkthrough"}
-                  <ChevronRight className="size-3 transition-transform group-hover:translate-x-0.5" />
-                </Link>
-                <div className="grid grid-cols-2 gap-2">
-                  <Link
-                    href="/demo/?scenario=artist-passport-setup"
-                    className="group inline-flex min-h-8 items-center justify-between rounded-xl border bg-white px-3 py-2 text-[0.64rem] font-semibold transition-colors hover:bg-[#F7F4FF]"
-                    style={{ borderColor: lavenderLine, color: lavenderDeep }}
-                  >
-                    {isSpanish ? "Pasaporte" : "Artist Passport"}
-                    <ChevronRight className="size-3 transition-transform group-hover:translate-x-0.5" />
-                  </Link>
-                  <Link
-                    href="/demo/?scenario=create-open-call"
-                    className="group inline-flex min-h-8 items-center justify-between rounded-xl border bg-white px-3 py-2 text-[0.64rem] font-semibold transition-colors hover:bg-[#F7F4FF]"
-                    style={{ borderColor: lavenderLine, color: lavenderDeep }}
-                  >
-                    {isSpanish ? "Convocatoria" : "Open Call"}
-                    <ChevronRight className="size-3 transition-transform group-hover:translate-x-0.5" />
-                  </Link>
-                </div>
               </div>
             </div>
           </div>
         </div>
 
-        <div
-          className="landing-quote flex flex-col items-center justify-center text-center font-serif text-[10px] italic leading-tight"
-          style={{ color: mutedColor }}
-        >
+        <div className="landing-quote flex flex-col items-center justify-center text-center font-serif text-[10px] italic leading-tight" style={{ color: mutedColor }}>
           &ldquo;{t("landing.quote.line1")}
           <br />
           {t("landing.quote.line2")}&rdquo;
@@ -274,10 +180,7 @@ export function LandingPage() {
         </div>
       </section>
 
-      <footer
-        className="pointer-events-none relative z-30 px-5 pb-4 pt-2 text-center text-[8px] tracking-[0.15em]"
-        style={{ color: "#B2A9C9" }}
-      >
+      <footer className="pointer-events-none relative z-30 px-5 pb-4 pt-2 text-center text-[8px] tracking-[0.15em]" style={{ color: "#B2A9C9" }}>
         © 2026 KLEIO ARTHOUSE
       </footer>
 
