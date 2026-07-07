@@ -23,7 +23,7 @@ import { KleioWordmarkLink } from "@/components/kleio/kleio-wordmark-link"
 import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
 import { persistDemoGuideState } from "@/components/kleio/use-demo-guide"
 
-type NavItem = { href: string; label: string; icon: typeof LayoutDashboard; activeMatch?: string; preview?: boolean }
+type NavItem = { href: string; label: string; icon: typeof LayoutDashboard; activeMatch?: string; comingSoon?: boolean }
 type NavSection = { heading: string; headingEs: string; items: NavItem[] }
 
 const navSections: NavSection[] = [
@@ -43,7 +43,7 @@ const navSections: NavSection[] = [
     heading: "Preview / More",
     headingEs: "Vista previa / Más",
     items: [
-      { href: "/artist-dashboard/collaborators/", label: "Artist Matches", icon: UsersRound, activeMatch: "/artist-dashboard/collaborators", preview: true },
+      { href: "/artist-dashboard/collaborators/", label: "Artist Matches", icon: UsersRound, activeMatch: "/artist-dashboard/collaborators", comingSoon: true },
       { href: "/artist-dashboard/calendar/", label: "Calendar", icon: CalendarDays, activeMatch: "/artist-dashboard/calendar" },
       { href: "/artist-dashboard/messages/", label: "Messages", icon: MessageSquare, activeMatch: "/artist-dashboard/messages" },
       { href: "/artist-dashboard/insights/", label: "Insights", icon: BarChart3, activeMatch: "/artist-dashboard/insights" },
@@ -92,7 +92,7 @@ export function ArtistSidebar() {
                     >
                       <Icon className={cn("size-4 shrink-0", active ? "text-primary" : "text-muted-foreground")} />
                       <span className="flex-1">{label}</span>
-                      {item.preview && <span className="rounded-full bg-[#F7F4FF] px-1.5 py-0.5 text-[0.55rem] font-semibold uppercase tracking-wide text-[#7F7890]">{locale === "es" ? "Vista" : "Preview"}</span>}
+                      {item.comingSoon && <span className="rounded-full bg-[#F7F4FF] px-1.5 py-0.5 text-[0.55rem] font-semibold uppercase tracking-wide text-[#7F7890]">{locale === "es" ? "Pronto" : "Soon"}</span>}
                     </Link>
                   </li>
                 )
