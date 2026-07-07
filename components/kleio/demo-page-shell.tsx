@@ -12,6 +12,20 @@ type Guidance = {
   cta?: string
 }
 
+function targetForPath(pathname: string | null) {
+  const path = pathname ?? ""
+  if (path.startsWith("/programs")) return "institution-programs"
+  if (path.startsWith("/submissions")) return "applicant-context"
+  if (path.startsWith("/artists")) return "artist-records"
+  if (path.startsWith("/review-queue")) return "review-queue"
+  if (path.startsWith("/committee")) return "committee-reviewers"
+  if (path.startsWith("/shortlist")) return "shortlist"
+  if (path.startsWith("/reports")) return "report-preview"
+  if (path.startsWith("/activity-log")) return "activity-log"
+  if (path.startsWith("/messages")) return "messages"
+  return undefined
+}
+
 function guidanceForPath(pathname: string | null, locale: string): Guidance | null {
   const es = locale === "es"
   const path = pathname ?? ""
@@ -121,9 +135,10 @@ export function DemoPageShell({
   const pathname = usePathname()
   const { locale } = useKleioLocale()
   const guidance = guidanceForPath(pathname, locale)
+  const target = targetForPath(pathname)
 
   return (
-    <main className="flex h-full min-h-0 flex-col overflow-y-auto px-5 py-6 xl:px-7 xl:py-7">
+    <main data-kleio-guide-target={target} className="flex h-full min-h-0 flex-col overflow-y-auto px-5 py-6 xl:px-7 xl:py-7">
       <header className="mb-5 flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="font-serif text-2xl font-semibold tracking-tight text-foreground xl:text-3xl">
@@ -138,7 +153,7 @@ export function DemoPageShell({
       </header>
 
       {guidance && (
-        <section className="mb-4 rounded-2xl border border-[#E7E1F7] bg-[#F7F4FF] px-4 py-3 shadow-[0_12px_34px_rgba(82,64,130,0.06)]">
+        <section data-kleio-guide-target={target ? `${target}-guidance` : undefined} className="mb-4 rounded-2xl border border-[#E7E1F7] bg-[#F7F4FF] px-4 py-3 shadow-[0_12px_34px_rgba(82,64,130,0.06)]">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="max-w-3xl">
               <p className="text-[0.62rem] font-semibold uppercase tracking-[0.16em] text-[#A997E8]">{guidance.title}</p>
