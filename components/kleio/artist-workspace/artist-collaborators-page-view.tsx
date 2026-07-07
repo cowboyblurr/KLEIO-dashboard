@@ -1,71 +1,57 @@
 "use client"
 
 import Link from "next/link"
-import { useState } from "react"
 import { inkColor, mutedColor, lavenderSoftLine, cardStyle } from "@/lib/workspace-styles"
 import { WorkspacePageHeader } from "@/components/kleio/workspace-page-header"
-import { SearchFilterBar } from "@/components/kleio/search-filter-bar"
 import { WorkflowCard } from "@/components/kleio/workflow-card"
 import { ProfileChip } from "@/components/kleio/profile/profile-chip"
-
-const collaborators = [
-  { name: "Jamal Pierre", location: "Kingston, Jamaica", tags: ["Sculpture", "Caribbean Diaspora", "Material Culture"], themes: ["Memory", "Material"] },
-  { name: "Leila Martinez", location: "San Juan, PR", tags: ["Moving Image", "Social Practice", "Research-Based"], themes: ["Community", "Archives"] },
-  { name: "Nadia Clarke", location: "Toronto, Canada", tags: ["Installation", "Archives", "Community Work"], themes: ["Identity", "Space"] },
-]
-
 import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
+
+const comingSoonMatches = [
+  { name: "Practice-aligned artists", tags: ["Shared mediums", "Themes", "Application stage"] },
+  { name: "Residency cohorts", tags: ["Opportunity fit", "Location", "Availability"] },
+  { name: "Project collaborators", tags: ["Research overlap", "Material needs", "Funding goals"] },
+]
 
 export function ArtistCollaboratorsPageView() {
   const { t } = useKleioLocale()
-  const [query, setQuery] = useState("")
-  const filtered = collaborators.filter((c) =>
-    `${c.name} ${c.location} ${c.tags.join(" ")}`.toLowerCase().includes(query.toLowerCase()),
-  )
 
   return (
     <main className="h-full overflow-y-auto px-6 py-6">
       <div className="mx-auto max-w-[1180px] space-y-5">
         <WorkspacePageHeader
-          eyebrow={t("artist.workspace.collaborators.eyebrow")}
-          title={t("artist.workspace.collaborators.title")}
-          description={t("artist.workspace.collaborators.description")}
-          primaryCta={{ label: t("artist.workspace.collaborators.cta.openMessages"), href: "/artist-dashboard/messages/" }}
-          secondaryCta={{ label: t("artist.workspace.collaborators.cta.exploreOpportunities"), href: "/artist-dashboard/opportunities/" }}
+          eyebrow="Coming soon"
+          title="Artist Matches"
+          description="A future KLEIO feature for finding practice-aligned artists and collaborators. For this demo, the core artist flow remains Creative Passport, Opportunities, readiness, and application tracking."
+          primaryCta={{ label: "Explore opportunities", href: "/artist-dashboard/opportunities/" }}
+          secondaryCta={{ label: "Review Creative Passport", href: "/artist-dashboard/passport/" }}
         />
 
-        <section className="rounded-2xl border bg-white p-5" style={cardStyle}>
-          <SearchFilterBar
-            placeholder="Search collaborators, disciplines, locations..."
-            value={query}
-            onChange={setQuery}
-            filterChips={["All Disciplines", "Shared Themes", "Location", "Opportunity Fit"]}
-          />
+        <section className="rounded-[1.5rem] border bg-[#F7F4FF] p-5" style={{ borderColor: lavenderSoftLine }}>
+          <p className="text-[0.7rem] font-semibold uppercase tracking-[0.18em]" style={{ color: "#A997E8" }}>Not part of the core pilot</p>
+          <h2 className="mt-2 font-serif text-2xl font-semibold" style={{ color: inkColor }}>Artist Matches stays secondary for now.</h2>
+          <p className="mt-2 max-w-3xl text-sm leading-relaxed" style={{ color: mutedColor }}>
+            KLEIO should first prove the application workflow: reusable artist materials, opportunity readiness, missing-material clarity, and submission tracking. Artist matching can become valuable later, but it should not compete with the first product wedge.
+          </p>
         </section>
 
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {filtered.map((person) => (
-            <article key={person.name} className="rounded-2xl border bg-white p-5" style={cardStyle}>
-              <h2 className="font-serif text-base font-semibold" style={{ color: inkColor }}>{person.name}</h2>
-              <p className="mt-1 text-xs" style={{ color: mutedColor }}>{person.location}</p>
+        <div className="grid gap-4 md:grid-cols-3">
+          {comingSoonMatches.map((match) => (
+            <article key={match.name} className="rounded-2xl border bg-white p-5" style={cardStyle}>
+              <p className="text-[0.64rem] font-bold uppercase tracking-[0.16em]" style={{ color: "#A997E8" }}>Future match type</p>
+              <h2 className="mt-1 font-serif text-base font-semibold" style={{ color: inkColor }}>{match.name}</h2>
               <div className="mt-3 flex flex-wrap gap-1.5">
-                {person.tags.map((tag) => <ProfileChip key={tag} label={tag} />)}
+                {match.tags.map((tag) => <ProfileChip key={tag} label={tag} />)}
               </div>
-              <p className="mt-3 text-xs" style={{ color: mutedColor }}>
-                Shared themes: {person.themes.join(", ")}
-              </p>
-              <Link href="/artist-dashboard/messages/" className="mt-4 inline-flex h-9 items-center rounded-xl border px-3 text-xs font-semibold transition-colors hover:bg-[#F7F4FF]" style={{ borderColor: lavenderSoftLine, color: "#5B4B8A" }}>
-                Send collaboration note
-              </Link>
             </article>
           ))}
         </div>
 
         <div className="grid gap-4 md:grid-cols-2">
-          <WorkflowCard title="Shared themes" body="Artists working across memory, archives, and material culture appear most often in your match set." />
-          <WorkflowCard title="Invitation foundation" body="Prepare collaboration invitations connected to your current applications and open opportunities.">
-            <Link href="/artist-dashboard/messages/" className="text-xs font-medium transition-opacity hover:opacity-75" style={{ color: "#5B4B8A" }}>
-              Draft invitation →
+          <WorkflowCard title="Current artist priority" body="Complete the Creative Passport, understand opportunity fit, resolve missing materials, and track active applications." />
+          <WorkflowCard title="Future direction" body="Once KLEIO has enough artists and opportunity context, matching can surface aligned practices, cohorts, and collaborators without becoming a distraction.">
+            <Link href="/artist-dashboard/opportunities/" className="text-xs font-medium transition-opacity hover:opacity-75" style={{ color: "#5B4B8A" }}>
+              Return to opportunities →
             </Link>
           </WorkflowCard>
         </div>
