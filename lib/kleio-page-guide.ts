@@ -6,22 +6,47 @@ export type KleioPageGuide = {
   realWorld: string
 }
 
-const guides: Record<string, KleioPageGuide> = {
-  "/dashboard/": {
-    title: "Overview",
-    role: "institution",
-    description: "This page gives the institution a shared view of the current cycle.",
-    benefit: "It helps the team see status, deadlines, materials, and progress before opening individual records.",
-    realWorld: "Use it like the first page of a meeting: where are we and what needs attention?",
-  },
-  "/artist-dashboard/": {
-    title: "Overview",
-    role: "artist",
-    description: "This page gives the artist a quick read on readiness, applications, opportunities, and deadlines.",
-    benefit: "It helps the artist understand what needs attention without digging through folders, portals, and notes.",
-    realWorld: "For an artist balancing studio work and admin, this is the daily command center.",
-  },
-}
+type GuideRow = [string, string, KleioPageGuide["role"], string, string, string]
+
+const rows: GuideRow[] = [
+  ["/dashboard/", "Overview", "institution", "This page gives the institution a shared view of the current review cycle.", "It helps the team see status, deadlines, materials, progress, and decision pressure before opening individual records.", "Use it like the first page of a review meeting: where are we, what is behind, and what needs attention today?"],
+  ["/programs/", "Programs & Open Calls", "institution", "This page organizes grants, residencies, exhibitions, and open calls as managed programs.", "It helps the institution see each program's status, deadline, submission count, required materials, and review progress.", "This replaces scattered intake folders with one operating board for active calls."],
+  ["/programs/new/", "New Program Draft", "institution", "This page shapes a new open call, grant, residency, or exhibition intake flow.", "It helps define eligibility, deadlines, required materials, questions, and review stages before submissions arrive.", "A clear intake structure gives artists clearer instructions and gives reviewers cleaner information later."],
+  ["/submissions/", "Submissions", "institution", "This is the searchable record of artist submissions across active programs.", "It helps staff find artists, compare submissions, check material status, and avoid losing context across files and notes.", "For teams used to inboxes, PDFs, and spreadsheets, this becomes the central record of what was received."],
+  ["/artists/", "Artist Records", "institution", "This page keeps artist records connected to submissions and program history.", "It helps the institution understand an applicant beyond a single uploaded file.", "It prevents artist materials from becoming disconnected attachments with no memory between review cycles."],
+  ["/review-queue/", "Review Queue", "institution", "This page organizes submissions that need review, follow-up, or committee attention.", "It brings readiness, priority, reviewer assignment, deadline, and status into one working view.", "This is the table a committee wants before review: organized, current, and tied to the materials being evaluated."],
+  ["/shortlist/", "Shortlist", "institution", "This page gathers submissions that have moved into closer decision-making.", "It keeps stronger candidates, notes, status, reviewer context, and final decision steps together.", "Instead of rebuilding a final list after a meeting, the shortlist keeps the decision trail attached."],
+  ["/committee/", "Committee", "institution", "This page coordinates reviewers, jurors, committee members, and pending actions.", "It helps track who has been invited, who has completed work, and what is still blocking progress.", "This reduces manual follow-up and uncertainty around whether reviewers have finished their part."],
+  ["/messages/", "Messages", "institution", "This page keeps program and review communication close to the work it affects.", "It helps teams avoid losing important context in outside email threads or private notes.", "A note about missing materials or reviewer timing should stay near the related record."],
+  ["/reports/", "Reports", "institution", "This page prepares review activity, outcomes, shortlist decisions, and program records for reporting.", "It helps institutions preserve what happened during a cycle instead of rebuilding the story after the fact.", "Reports matter for boards, funders, internal records, and future program planning."],
+  ["/activity-log/", "Activity Log", "institution", "This page records status changes, review movement, messages, shortlist updates, and report history.", "It helps the institution maintain memory across a review cycle.", "When someone asks why an applicant advanced or when a reviewer completed work, this becomes the record."],
+  ["/templates/", "Templates", "institution", "This page stores reusable language, criteria, messages, and review structures.", "It helps teams avoid rewriting the same eligibility language, rubric notes, and reviewer instructions for each program.", "Templates reduce administrative repetition while keeping institutional language consistent."],
+  ["/settings/", "Workspace Settings", "institution", "This page controls workspace details, preferences, team roles, and review defaults.", "It helps the institution keep the workspace aligned with how its programs and committees operate.", "Settings matter once multiple programs, reviewers, and templates need a consistent structure."],
+  ["/artist-dashboard/", "Overview", "artist", "This page gives the artist a quick read on readiness, applications, opportunities, and deadlines.", "It helps the artist understand what needs attention without digging through folders, portals, and notes.", "For an artist balancing studio work and admin, this is the daily command center."],
+  ["/artist-dashboard/passport/", "Creative Passport", "artist", "This page is the artist's reusable professional record.", "It organizes bios, statements, CV, portfolio context, documents, links, and application answers in one place.", "Update it once, then adapt it for grants, residencies, exhibitions, and open calls."],
+  ["/artist-dashboard/portfolio/", "Portfolio", "artist", "This page organizes selected works, images, project notes, and portfolio materials.", "It helps the artist keep visual work ready for applications without rebuilding image sets from scratch.", "When a call asks for images, captions, dates, materials, and dimensions, this becomes the source of truth."],
+  ["/artist-dashboard/opportunities/", "Opportunities", "artist", "This page reviews grants, residencies, exhibitions, and open calls through fit and readiness signals.", "It helps prioritize what is worth preparing now, what is missing, and what may not be the best use of time.", "Artists often face too many calls and not enough admin time. This turns search into a clearer preparation plan."],
+  ["/artist-dashboard/applications/", "Applications", "artist", "This page tracks applications from draft to submitted, waiting, review, interview, award, or decline.", "It helps the artist see where each opportunity stands and what still needs action.", "Instead of remembering status across multiple portals and inbox threads, the artist gets one tracker."],
+  ["/artist-dashboard/collaborators/", "Artist Matches", "artist", "This page previews future peer and collaborator matching by practice and opportunity alignment.", "It helps artists discover people who may share a compatible creative context or application direction.", "For residencies, grants, and collaborative projects, the right peer can matter as much as the right institution."],
+  ["/artist-dashboard/calendar/", "Calendar", "artist", "This page organizes deadlines, review dates, application tasks, and follow-up timing.", "It helps the artist avoid deadline drift and plan preparation before materials are due.", "Many opportunities fall apart because the deadline arrives before files and language are ready."],
+  ["/artist-dashboard/messages/", "Messages", "artist", "This page keeps opportunity and application communication close to the artist's materials.", "It helps prevent important follow-ups from getting lost outside the application workflow.", "A request for a missing document should be connected to the application it affects."],
+  ["/artist-dashboard/funding/", "Funding", "artist", "This page summarizes funding opportunities, possible awards, and application value.", "It helps the artist understand which opportunities could materially support the practice.", "Funding affects studio rent, materials, travel, time, and whether a project can happen."],
+  ["/artist-dashboard/insights/", "Insights", "artist", "This page turns profile, application, and opportunity activity into readiness signals.", "It helps the artist see what is complete, what is missing, what repeats, and what can be improved.", "Instead of guessing why applications feel heavy, the artist can see where the friction is coming from."],
+  ["/artist-dashboard/settings/", "Settings", "artist", "This page manages artist workspace preferences, profile settings, and sharing behavior.", "It helps the artist decide what is private, reusable, and ready to share.", "Artists should understand and control how their materials move through a submission workflow."],
+  ["/collaborator-dashboard/", "Collaborator Overview", "collaborator", "This page gives an invited reviewer a focused view of assigned work only.", "It shows deadlines, completion rate, messages, and program context without opening the full institution workspace.", "Institutions can involve outside reviewers without giving them broad workspace access."],
+  ["/collaborator-dashboard/assignments/", "My Assignments", "collaborator", "This page shows only the submissions assigned to the collaborator.", "It keeps the reviewer focused on their own queue and protects broader workspace context.", "A guest juror should see the work they need to review, not every institutional record."],
+  ["/collaborator-dashboard/review-queue/", "Review Queue", "collaborator", "This page is the collaborator's focused queue for assigned reviews.", "It keeps rubric, notes, score, and recommendation controls close to the assigned submission.", "The reviewer gets the context needed to complete the task without navigating the full admin workspace."],
+  ["/collaborator-dashboard/guidelines/", "Guidelines", "collaborator", "This page keeps program rubrics and review expectations visible.", "It helps external reviewers evaluate consistently without extra documents or repeated instructions.", "Clear guidelines reduce confusion before a reviewer submits notes or recommendations."],
+  ["/collaborator-dashboard/messages/", "Messages", "collaborator", "This page contains messages related to assigned review work.", "It keeps collaborator communication scoped to the assignments they are responsible for.", "The reviewer should see messages needed for the task, not the full institution conversation history."],
+  ["/collaborator-dashboard/submitted/", "Submitted Reviews", "collaborator", "This page preserves completed reviews and recommendations.", "It creates a clear reviewer record for submitted work.", "The institution can trace completed reviews without asking reviewers to resend notes."],
+]
+
+const guides: Record<string, KleioPageGuide> = Object.fromEntries(
+  rows.map(([path, title, role, description, benefit, realWorld]) => [
+    path,
+    { title, role, description, benefit, realWorld },
+  ]),
+)
 
 export function getKleioPageGuide(pathname: string | null | undefined): KleioPageGuide | undefined {
   if (!pathname) return undefined
