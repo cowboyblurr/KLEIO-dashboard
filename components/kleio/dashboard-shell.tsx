@@ -6,11 +6,13 @@ import { KleioDemoGuide } from "@/components/kleio/kleio-demo-guide"
 import { Sidebar } from "@/components/kleio/sidebar"
 import { TopBar } from "@/components/kleio/top-bar"
 import { DemoPresentationStyles } from "@/components/kleio/demo-presentation-styles"
+import { GuideWalkthroughCollapser } from "@/components/kleio/guide-walkthrough-collapser"
 
 export function DashboardShell({ children }: { children: ReactNode }) {
   return (
     <AuthGate requiredRole="institution">
       <DemoPresentationStyles />
+      <GuideWalkthroughCollapser />
       <div className="flex h-screen overflow-hidden bg-background text-foreground">
         <Sidebar />
         <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
