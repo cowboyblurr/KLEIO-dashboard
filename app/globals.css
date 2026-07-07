@@ -288,3 +288,26 @@
     animation-delay: 0ms !important;
   }
 }
+
+/* ── KLEIO Assist — docked desktop layout ───────────────────────────────── */
+
+@media (min-width: 1280px) {
+  body:has(.kleio-demo-guide-panel) {
+    padding-right: 25.5rem;
+    transition: padding-right 220ms ease;
+  }
+
+  body:has(.kleio-demo-guide-panel) .kleio-demo-guide-anchor {
+    right: 1rem !important;
+  }
+}
+
+@media (min-width: 1280px) and (max-width: 1500px) {
+  body:has(.kleio-demo-guide-panel) {
+    padding-right: 23rem;
+  }
+
+  body:has(.kleio-demo-guide-panel) .kleio-demo-guide-anchor {
+    width: min(100vw - 1.5rem, 22rem) !important;
+  }
+}
