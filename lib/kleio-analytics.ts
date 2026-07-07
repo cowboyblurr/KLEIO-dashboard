@@ -292,6 +292,10 @@ export function getSubmissionActivity(submissionId: string): SubmissionActivityE
   return submission?.activity ?? []
 }
 
+export function getActivityLogCount() {
+  return activityLog.length
+}
+
 export function getDemoMessageForThread(linkedMessageId?: string) {
   if (!linkedMessageId) return undefined
   return demoMessages.find((message) => message.id === linkedMessageId)
