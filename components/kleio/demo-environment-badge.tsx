@@ -14,11 +14,11 @@ export function DemoEnvironmentBadge({
   const label =
     locale === "es"
       ? compact
-        ? "Demo · Datos sintéticos"
-        : "Entorno demo · Datos sintéticos · Sin postulaciones reales"
+        ? "Prototipo · Datos sintéticos"
+        : "Prototipo clicable · Datos sintéticos · Sin cuentas ni postulaciones reales"
       : compact
-        ? "Demo · Synthetic data"
-        : "Demo environment · Synthetic data · No live submissions"
+        ? "Prototype · Synthetic data"
+        : "Clickable prototype · Synthetic data · No real accounts or live submissions"
 
   return (
     <span
