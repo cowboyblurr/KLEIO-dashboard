@@ -9,6 +9,28 @@ type GuideState = {
   isOpen?: boolean
 }
 
+const stepTargets: Record<string, string[]> = {
+  "artist-passport-setup-1": ["artist-profile-basics", "artist-import-assist"],
+  "artist-passport-setup-2": ["artist-import-assist"],
+  "artist-passport-setup-3": ["artist-passport", "passport-completeness", "artist-materials"],
+  "find-first-grant-1": ["artist-profile-basics", "artist-import-assist"],
+  "find-first-grant-2": ["artist-opportunities", "opportunity-readiness"],
+  "find-first-grant-3": ["opportunity-readiness", "opportunity-missing-materials"],
+  "create-open-call-1": ["institution-import-assist", "institution-profile-basics"],
+  "create-open-call-2": ["institution-programs", "programs-table"],
+  "create-open-call-3": ["new-program-form", "required-materials"],
+  "create-open-call-4": ["new-program-form", "program-draft"],
+  "invite-reviewers-resolve-materials-1": ["institution-programs", "incomplete-materials"],
+  "invite-reviewers-resolve-materials-2": ["committee-reviewers", "reviewer-seat-preview"],
+  "invite-reviewers-resolve-materials-3": ["review-queue", "incomplete-materials"],
+  "invite-reviewers-resolve-materials-4": ["messages", "missing-materials-message"],
+  "invite-reviewers-resolve-materials-5": ["activity-log", "decision-history"],
+  "review-and-shortlist-1": ["institution-overview", "review-metrics"],
+  "review-and-shortlist-2": ["review-queue", "review-table"],
+  "review-and-shortlist-3": ["applicant-context", "review-notes"],
+  "review-and-shortlist-4": ["shortlist", "report-preview"],
+}
+
 const stepKeywords: Record<string, string[]> = {
   "artist-passport-setup-1": ["Import Assist", "Profile basics", "Name", "Practice"],
   "artist-passport-setup-2": ["Import Assist"],
@@ -53,6 +75,16 @@ function candidateElements() {
   ).filter((element) => !element.closest(".kleio-demo-guide-panel"))
 }
 
+function explicitTarget(stepId: string) {
+  const targets = stepTargets[stepId]
+  if (!targets?.length) return null
+  for (const target of targets) {
+    const element = document.querySelector(`[data-kleio-guide-target="${target}"]`)
+    if (element) return element as HTMLElement
+  }
+  return null
+}
+
 function scoreElement(element: Element, keywords: string[]) {
   const text = visibleText(element).toLowerCase()
   if (!text) return 0
@@ -75,15 +107,17 @@ function applyHighlight() {
   clearHighlights()
   const state = readState()
   if (!state?.isOpen || !state.activeStepId) return
+
+  const explicit = explicitTarget(state.activeStepId)
   const keywords = stepKeywords[state.activeStepId]
-  if (!keywords?.length) return
+  const ranked = keywords?.length
+    ? candidateElements()
+        .map((element) => ({ element, score: scoreElement(element, keywords) }))
+        .filter((entry) => entry.score > 0)
+        .sort((a, b) => b.score - a.score)
+    : []
 
-  const ranked = candidateElements()
-    .map((element) => ({ element, score: scoreElement(element, keywords) }))
-    .filter((entry) => entry.score > 0)
-    .sort((a, b) => b.score - a.score)
-
-  const target = ranked[0]?.element as HTMLElement | undefined
+  const target = explicit ?? (ranked[0]?.element as HTMLElement | undefined)
   if (!target) return
   target.classList.add("kleio-guide-target-highlight")
   target.setAttribute("data-kleio-guide-highlight", "true")
