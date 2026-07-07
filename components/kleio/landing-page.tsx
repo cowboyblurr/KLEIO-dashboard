@@ -11,8 +11,6 @@ import { KleioDemoGuide } from "@/components/kleio/kleio-demo-guide"
 import { KleioAssistObjectVisual } from "@/components/kleio/kleio-assist-object"
 import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
 
-// ─── tiny icon components ────────────────────────────────────────────────────
-
 function ArtistIcon() {
   return (
     <svg width="16" height="16" viewBox="0 0 28 28" fill="none" aria-hidden>
@@ -37,38 +35,32 @@ const navLinkStyle = { color: "#6F6882", letterSpacing: "0.04em" } as const
 
 const inkColor = "#292631"
 const mutedColor = "#7F7890"
-
 const cardBg = "#FFFFFF"
-
 const lavenderLine = "#D8D0F2"
 const lavenderSoftLine = "#E7E1F7"
 const lavenderMist = "#F7F4FF"
 const lavenderAccent = "#A997E8"
 const lavenderDeep = "#5B4B8A"
-
 const cardShadow = "0 18px 48px rgba(82, 64, 130, 0.08)"
-
-// ─── main page ───────────────────────────────────────────────────────────────
 
 export function LandingPage() {
   const { t, locale } = useKleioLocale()
   const isSpanish = locale === "es"
 
   const navLinks = [
-    { key: "nav.about", href: "/about/" },
-    { key: "nav.manifesto", href: "/manifesto/" },
-    { key: "nav.journal", href: "/journal/" },
+    { label: t("nav.about"), href: "/about/" },
+    { label: t("nav.manifesto"), href: "/manifesto/" },
+    { label: isSpanish ? "Notas de campo" : "Field Notes", href: "/journal/" },
   ] as const
 
   return (
     <main className="relative min-h-dvh w-full overflow-x-hidden bg-white text-[#292631]">
-      {/* ── header ──────────────────────────────────────────────────────── */}
       <header className="relative z-30 h-[96px] w-full">
         <div className="relative mx-auto h-full w-full max-w-[1280px] px-8 max-md:px-5">
           <nav className="absolute left-8 top-1/2 flex -translate-y-1/2 items-center gap-8 max-md:left-5 max-md:gap-4">
-            {navLinks.map(({ key, href }) => (
-              <Link key={key} href={href} className="text-[0.78rem] font-medium tracking-wide hover:opacity-70" style={navLinkStyle}>
-                {t(key)}
+            {navLinks.map(({ label, href }) => (
+              <Link key={href} href={href} className="text-[0.78rem] font-medium tracking-wide hover:opacity-70" style={navLinkStyle}>
+                {label}
               </Link>
             ))}
           </nav>
@@ -84,14 +76,13 @@ export function LandingPage() {
 
           <nav className="absolute right-8 top-1/2 flex -translate-y-1/2 items-center gap-7 max-md:right-5 max-md:gap-4">
             <ExploreArthouseLink className="text-[0.78rem] font-medium tracking-wide hover:opacity-70 max-md:hidden" style={navLinkStyle}>
-              {t("nav.exploreArthouse")}
+              {isSpanish ? "Demo guiado" : "Guided Demo"}
             </ExploreArthouseLink>
             <KleioLocaleToggle />
           </nav>
         </div>
       </header>
 
-      {/* ── viewport grid stage ─────────────────────────────────────────── */}
       <section
         className="landing-stage relative z-10 mx-auto grid w-full max-w-[1280px] px-8 pb-16 pt-2 max-md:px-5"
         style={{
@@ -99,7 +90,6 @@ export function LandingPage() {
           rowGap: "clamp(12px, 2vh, 20px)",
         }}
       >
-        {/* Row 1 — hero */}
         <div className="flex h-full flex-col items-center justify-start text-center">
           <h1
             className="font-serif tracking-tight"
@@ -128,7 +118,6 @@ export function LandingPage() {
           </p>
         </div>
 
-        {/* Row 2 — video */}
         <div className="flex h-full items-center justify-center">
           <video
             className="kleio-transparent-center-video h-auto max-h-[170px] w-[clamp(300px,26vw,430px)] object-contain"
@@ -143,11 +132,9 @@ export function LandingPage() {
           </video>
         </div>
 
-        {/* Row 3 — login + join cards */}
         <div className="landing-card-grid mx-auto grid w-full max-w-[980px] grid-cols-[minmax(0,1fr)_26px_minmax(0,1fr)] items-start gap-4 max-md:grid-cols-1 max-md:gap-4">
           <LandingLoginCard />
 
-          {/* "or" divider */}
           <div className="landing-or-divider flex items-center justify-center max-md:hidden">
             <div className="flex flex-col items-center justify-center">
               <div className="h-6 w-px" style={{ backgroundColor: lavenderLine }} />
@@ -158,7 +145,6 @@ export function LandingPage() {
             </div>
           </div>
 
-          {/* Join card */}
           <div
             className="landing-choice-card flex flex-col rounded-[1.1rem] p-3.5"
             style={{
@@ -218,7 +204,11 @@ export function LandingPage() {
               <KleioAssistObjectVisual size="sm" mode="preparing" className="shrink-0 scale-[0.72]" />
               <div className="min-w-0">
                 <p className="landing-import-assist-title">KLEIO Import Assist</p>
-                <p className="landing-import-assist-copy">{t("landing.importAssist.note")}</p>
+                <p className="landing-import-assist-copy">
+                  {isSpanish
+                    ? "Import Assist puede preparar borradores a partir de materiales que ya tienes organizados. Tú revisas cada detalle."
+                    : t("landing.importAssist.note")}
+                </p>
               </div>
             </div>
 
@@ -226,6 +216,10 @@ export function LandingPage() {
               className="mt-3 rounded-[0.95rem] border p-3"
               style={{ borderColor: lavenderSoftLine, backgroundColor: lavenderMist }}
             >
+              <div className="mb-2 inline-flex items-center gap-1.5 rounded-full border border-[#E7E1F7] bg-white px-2 py-1 text-[0.52rem] font-semibold uppercase tracking-[0.12em] text-[#7F7890]">
+                <span className="size-1.5 rounded-full bg-[#A997E8]" aria-hidden />
+                {isSpanish ? "Datos sintéticos" : "Synthetic data"}
+              </div>
               <p className="text-[0.62rem] font-semibold uppercase tracking-[0.16em]" style={{ color: lavenderAccent }}>
                 {isSpanish ? "Demo guiado" : "Guided demo"}
               </p>
@@ -234,8 +228,8 @@ export function LandingPage() {
               </h3>
               <p className="mt-1 text-[0.68rem] leading-relaxed" style={{ color: mutedColor }}>
                 {isSpanish
-                  ? "Elige un recorrido guiado para flujos de artista o institución."
-                  : "Choose a guided walkthrough for artist or institution workflows."}
+                  ? "Si es tu primera vez viendo KLEIO, comienza con un recorrido guiado. Cada paso abre la pantalla correcta y explica qué estás viendo."
+                  : "If this is your first time viewing KLEIO, start with a guided walkthrough. Each step opens the right screen and explains what you are seeing."}
               </p>
 
               <div className="mt-2.5 grid grid-cols-1 gap-2">
@@ -269,7 +263,6 @@ export function LandingPage() {
           </div>
         </div>
 
-        {/* Row 4 — quote */}
         <div
           className="landing-quote flex flex-col items-center justify-center text-center font-serif text-[10px] italic leading-tight"
           style={{ color: mutedColor }}
@@ -281,7 +274,6 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* ── footer / copyright ──────────────────────────────────────────── */}
       <footer
         className="pointer-events-none relative z-30 px-5 pb-4 pt-2 text-center text-[8px] tracking-[0.15em]"
         style={{ color: "#B2A9C9" }}
