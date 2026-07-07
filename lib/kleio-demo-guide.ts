@@ -25,6 +25,10 @@ export type DemoGuideStep = {
   route: string
   title: string
   body: string
+  screenLabel: string
+  screenCue: string
+  viewerAction: string
+  nextPreview?: string
   primaryActionLabel: string
   secondaryActionLabel?: string
   requiredRole?: DemoGuideRole
@@ -69,12 +73,12 @@ export const demoGuideScenarios: DemoGuideScenario[] = [
     outcome: "Create the reusable profile that makes future applications easier.",
     firstStepId: "artist-passport-setup-1",
     previewSteps: [
-      "Start artist profile basics",
-      "Use Import Assist for draft material",
-      "Review Creative Passport readiness",
+      "Start on artist signup",
+      "Use Import Assist while the artist still controls the profile",
+      "Land inside the reusable Creative Passport",
     ],
     completionMessage:
-      "The Artist Passport walkthrough is complete. The artist has seen how KLEIO turns repeated profile materials into one reusable, reviewable foundation.",
+      "The Artist Passport walkthrough is complete. The viewer has seen how KLEIO turns repeated artist materials into one reusable, reviewable foundation.",
     recommendedNextScenarioIds: ["find-first-grant"],
   },
   {
@@ -88,12 +92,12 @@ export const demoGuideScenarios: DemoGuideScenario[] = [
     outcome: "Search opportunities and understand which grant or open call is a strong fit.",
     firstStepId: "find-first-grant-1",
     previewSteps: [
-      "Start with artist profile signals",
-      "Open Opportunities",
-      "Review fit, deadline urgency, and missing materials",
+      "Begin with the artist profile foundation",
+      "Open the Opportunities workspace",
+      "Read fit, deadline urgency, missing materials, and effort",
     ],
     completionMessage:
-      "The grant search walkthrough is complete. The artist has seen how KLEIO connects profile readiness to a clearer opportunity search.",
+      "The grant search walkthrough is complete. The viewer has seen how KLEIO connects artist readiness to a clearer opportunity search.",
     recommendedNextScenarioIds: ["artist-passport-setup"],
   },
   {
@@ -107,12 +111,12 @@ export const demoGuideScenarios: DemoGuideScenario[] = [
     outcome: "Prepare a structured open call, grant, residency, or exhibition intake flow.",
     firstStepId: "create-open-call-1",
     previewSteps: [
-      "Start institution workspace setup",
-      "Open Programs / Open Calls",
-      "Add eligibility, deadlines, and required materials",
+      "Start with institution workspace setup",
+      "Move into Programs & Open Calls",
+      "Prepare the open call structure as a draft",
     ],
     completionMessage:
-      "The open call walkthrough is complete. The institution has seen how KLEIO turns program setup into a clear, structured intake flow.",
+      "The open call walkthrough is complete. The viewer has seen how KLEIO turns program setup into a clear, structured intake flow.",
     recommendedNextScenarioIds: ["review-and-shortlist"],
   },
   {
@@ -128,7 +132,7 @@ export const demoGuideScenarios: DemoGuideScenario[] = [
     previewSteps: [
       "Enter the institution workspace",
       "Open Review Queue",
-      "Move a strong applicant to shortlist",
+      "Move a strong applicant to Shortlist",
     ],
     completionMessage:
       "The review and shortlist walkthrough is complete. The viewer has seen how KLEIO preserves review context from submission to decision.",
@@ -142,7 +146,7 @@ function buildSteps(scenarioId: DemoGuideScenarioId, steps: StepSeed[]): DemoGui
     id: `${scenarioId}-${index + 1}`,
     scenarioId,
     stepNumber: index + 1,
-    primaryActionLabel: step.primaryActionLabel ?? "Take me there",
+    primaryActionLabel: step.primaryActionLabel ?? "Next",
     nextStepId: index < steps.length - 1 ? `${scenarioId}-${index + 2}` : undefined,
   }))
 }
@@ -151,93 +155,205 @@ const demoGuideSteps: DemoGuideStep[] = [
   ...buildSteps("artist-passport-setup", [
     {
       route: "/signup/artist/",
-      title: "Start the artist profile",
-      body: "Begin on the artist signup page. This is the right first page for creating a Creative Passport because it starts with profile basics instead of dropping the viewer into a finished dashboard.",
+      title: "Start on the artist path",
+      body:
+        "This first screen tells a new viewer that KLEIO begins with the artist, not with institutional extraction. The artist starts with basic identity and practice information.",
+      screenLabel: "Artist signup · Step 1 profile basics",
+      screenCue:
+        "You should see the artist onboarding form with KLEIO Import Assist sitting above the first profile fields.",
+      viewerAction:
+        "Notice that the artist can type manually or let Import Assist prepare suggested profile material. Nothing becomes official until the artist reviews it.",
+      nextPreview: "Next, focus on Import Assist and why it matters.",
+      primaryActionLabel: "Next: Import Assist",
       requiredRole: "artist",
     },
     {
       route: "/signup/artist/",
-      title: "Prepare draft material with Import Assist",
-      body: "KLEIO Import Assist is visible from Step 1. It prepares suggested fields from material the artist already maintains, and the artist reviews what becomes official.",
+      title: "Explain Import Assist before the dashboard",
+      body:
+        "This is the key trust moment. KLEIO can help prepare a short bio, statement, tags, links, documents, and featured works, but the artist remains the editor and final authority.",
+      screenLabel: "Artist signup · Import Assist",
+      screenCue:
+        "Stay on the artist signup page and look at the compact Import Assist card above the form.",
+      viewerAction:
+        "Frame this as draft preparation, not automated identity creation. The demo should make artists feel supported, not replaced.",
+      nextPreview: "Next, the guide opens the finished Creative Passport workspace.",
+      primaryActionLabel: "Next: Creative Passport",
       requiredRole: "artist",
     },
     {
       route: "/artist-dashboard/passport/",
       title: "Review Creative Passport readiness",
-      body: "After the profile is created, the Passport view shows reusable materials like bio, statement, CV, portfolio, work samples, references, and sharing controls.",
+      body:
+        "The Passport is the reusable artist foundation. It gathers the materials artists repeatedly rebuild for grants, residencies, exhibitions, and open calls.",
+      screenLabel: "Artist workspace · Creative Passport",
+      screenCue:
+        "You should see a reusable artist profile with bio, statement, CV, portfolio, works, references, and sharing/readiness context.",
+      viewerAction:
+        "Point out that this is not a social profile. It is an application-ready cultural record the artist can reuse and control.",
+      nextPreview: "Finish this walkthrough or continue into grant discovery.",
+      primaryActionLabel: "Finish walkthrough",
       requiredRole: "artist",
     },
   ]),
   ...buildSteps("find-first-grant", [
     {
       route: "/signup/artist/",
-      title: "Start with the artist profile signals",
-      body: "A grant search should begin with the artist profile because KLEIO needs practice type, location, materials, and themes to make the opportunity view useful.",
+      title: "Begin with the artist profile foundation",
+      body:
+        "Grant discovery only becomes useful after KLEIO understands the artist's practice, materials, location, themes, and readiness.",
+      screenLabel: "Artist signup · Profile signals",
+      screenCue:
+        "You should see the artist onboarding form where the Creative Passport begins collecting profile and practice signals.",
+      viewerAction:
+        "Explain that KLEIO uses the Passport to reduce search noise and surface opportunities that are actually relevant.",
+      nextPreview: "Next, open the Opportunities workspace.",
+      primaryActionLabel: "Next: Opportunities",
       requiredRole: "artist",
     },
     {
       route: "/artist-dashboard/opportunities/",
       title: "Open Opportunities",
-      body: "Move into the artist opportunity directory. Demo opportunities use synthetic data, not a live grant database.",
+      body:
+        "The Opportunities view turns the Passport into action: grants, residencies, exhibitions, and open calls can be compared by fit and readiness.",
+      screenLabel: "Artist workspace · Opportunities",
+      screenCue:
+        "You should see opportunity cards or analytics with match/readiness context. Demo opportunities are synthetic, not live scraped grant data.",
+      viewerAction:
+        "Call out that this is the artist acquisition pillar: artists get value before an institution pilot is converted.",
+      nextPreview: "Next, read the signals that help an artist decide what to apply for.",
+      primaryActionLabel: "Next: Readiness signals",
       requiredRole: "artist",
     },
     {
       route: "/artist-dashboard/opportunities/",
       title: "Read fit and readiness signals",
-      body: "Show match percentage, deadline urgency, missing materials, and application effort as suggested signals prepared for review.",
+      body:
+        "This screen should answer the artist's real question: what is worth my time, what is due soon, and what material is missing?",
+      screenLabel: "Artist workspace · Match and readiness",
+      screenCue:
+        "Stay on Opportunities and look for match percentage, deadline urgency, missing materials, application effort, and funding context.",
+      viewerAction:
+        "Position KLEIO as a preparation layer. It recommends and drafts, but the artist reviews before applying or exporting.",
+      nextPreview: "Finish this walkthrough or return to Artist Passport.",
+      primaryActionLabel: "Finish walkthrough",
       requiredRole: "artist",
     },
   ]),
   ...buildSteps("create-open-call", [
     {
       route: "/signup/institution/",
-      title: "Start the institution workspace",
-      body: "Begin on the institution signup page. This is the clean first step before creating an open call because the workspace defines the organization and review environment.",
+      title: "Start with institution setup",
+      body:
+        "A clean institutional workflow starts by defining the organization, review environment, team needs, and program structure before any applications arrive.",
+      screenLabel: "Institution signup · Workspace setup",
+      screenCue:
+        "You should see the institution onboarding form with Import Assist available above the first fields.",
+      viewerAction:
+        "Explain that KLEIO replaces scattered PDFs, email folders, and spreadsheets with one structured review environment.",
+      nextPreview: "Next, open Programs & Open Calls.",
+      primaryActionLabel: "Next: Programs",
       requiredRole: "institution",
     },
     {
       route: "/programs/",
-      title: "Open Programs / Open Calls",
-      body: "Move into the area where grants, residencies, exhibitions, and open calls are managed from draft to review.",
+      title: "Open Programs & Open Calls",
+      body:
+        "This is where an institution sees its grants, residencies, exhibitions, and open calls as managed programs instead of loose intake folders.",
+      screenLabel: "Institution workspace · Programs",
+      screenCue:
+        "You should see active programs, statuses, deadlines, submission counts, incomplete materials, and assigned reviewers.",
+      viewerAction:
+        "Point out that the institution is not just receiving files; it is managing a full review cycle with structure.",
+      nextPreview: "Next, create a new open call draft.",
+      primaryActionLabel: "Next: New open call",
       requiredRole: "institution",
     },
     {
       route: "/programs/new/",
       title: "Create a new open call draft",
-      body: "Prepare the call structure: title, program type, deadline, eligibility, required materials, and review stages.",
+      body:
+        "The open call builder should make the intake structure visible: title, type, deadline, eligibility, materials, questions, and review stages.",
+      screenLabel: "Institution workspace · New program draft",
+      screenCue:
+        "You should see the program creation screen where the institution prepares the call before publishing or receiving applicants.",
+      viewerAction:
+        "Emphasize draft safety: this is a demo setup flow, not a live published call.",
+      nextPreview: "Next, finish on the prepared draft state.",
+      primaryActionLabel: "Next: Draft ready",
       requiredRole: "institution",
     },
     {
       route: "/programs/new/",
-      title: "Save the call as a demo draft",
-      body: "End with the call prepared as a draft. Do not imply it has been published to a live marketplace or real applicant pool.",
+      title: "Close on draft readiness",
+      body:
+        "The purpose is not just a form. The purpose is a repeatable intake structure that reviewers, collaborators, and reports can use later.",
+      screenLabel: "Institution workspace · Draft readiness",
+      screenCue:
+        "Stay on the new program screen and treat the configured call as a controlled draft in the demo environment.",
+      viewerAction:
+        "Say clearly that synthetic demo data is being used and that this does not imply a real public open call has been launched.",
+      nextPreview: "Finish this walkthrough or continue into review and shortlist.",
+      primaryActionLabel: "Finish walkthrough",
       requiredRole: "institution",
     },
   ]),
   ...buildSteps("review-and-shortlist", [
     {
-      route: "/signup/institution/",
-      title: "Enter the institution workflow first",
-      body: "Start through the institution path so the viewer understands who is managing the submissions before seeing the review queue.",
+      route: "/dashboard/",
+      title: "Begin in the institution workspace",
+      body:
+        "Before the queue, orient the viewer to the institution home base: status, volume, incomplete materials, reviewer progress, and decision pressure.",
+      screenLabel: "Institution workspace · Overview",
+      screenCue:
+        "You should see the main institution dashboard overview for the synthetic KLEIO Arthouse review cycle.",
+      viewerAction:
+        "Explain that KLEIO gives administrators and committees a shared operating picture before individual reviews begin.",
+      nextPreview: "Next, open the Review Queue.",
+      primaryActionLabel: "Next: Review Queue",
       requiredRole: "institution",
     },
     {
       route: "/review-queue/",
       title: "Open Review Queue",
-      body: "Show the queue where submissions, readiness, deadlines, reviewer progress, and priority signals come together.",
+      body:
+        "The queue is where submission work becomes manageable: readiness, priority, reviewer progress, deadlines, and applicant context are visible together.",
+      screenLabel: "Institution workspace · Review Queue",
+      screenCue:
+        "You should see submissions organized for review instead of scattered across email, PDFs, and spreadsheets.",
+      viewerAction:
+        "Point to the information that would normally be fragmented: status, completeness, reviewer assignment, priority, and decision stage.",
+      nextPreview: "Next, explain what reviewers need to evaluate with context.",
+      primaryActionLabel: "Next: Review context",
       requiredRole: "institution",
       targetAction: "open_submission",
     },
     {
       route: "/review-queue/",
       title: "Review with context",
-      body: "Keep the viewer focused on artist materials, program fit, internal notes, and rubric readiness without sending them into a separate reviewer role yet.",
+      body:
+        "A strong review workflow keeps artist materials, program fit, internal notes, rubric readiness, and committee context together.",
+      screenLabel: "Institution workspace · Applicant context",
+      screenCue:
+        "Stay in Review Queue and focus on how submissions can be understood without opening disconnected files one by one.",
+      viewerAction:
+        "Frame KLEIO as decision support, not automated selection. The committee still makes the decision.",
+      nextPreview: "Next, open the Shortlist decision space.",
+      primaryActionLabel: "Next: Shortlist",
       requiredRole: "institution",
     },
     {
       route: "/shortlist/",
-      title: "Move a strong applicant to shortlist",
-      body: "End by showing how promising submissions move into a focused decision space for final review.",
+      title: "Move strong applicants into Shortlist",
+      body:
+        "The Shortlist view turns review work into a cleaner decision room. Strong applicants, notes, and next actions can be preserved for final selection.",
+      screenLabel: "Institution workspace · Shortlist",
+      screenCue:
+        "You should see shortlisted artists or decision-ready submissions separated from the larger review queue.",
+      viewerAction:
+        "End by showing that KLEIO preserves the review history instead of losing context after a committee meeting.",
+      nextPreview: "Finish this walkthrough or return to open-call setup.",
+      primaryActionLabel: "Finish walkthrough",
       requiredRole: "institution",
       targetAction: "move_to_shortlist",
     },
