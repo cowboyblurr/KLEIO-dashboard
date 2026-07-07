@@ -1,11 +1,13 @@
 "use client"
 
 import { useCallback, useEffect, useState } from "react"
+import { loginDemoUser } from "@/lib/kleio-demo-auth"
 import {
   getFirstStepForScenario,
   getGuideStep,
   getNextGuideStep,
   getPreviousGuideStep,
+  getScenarioById,
   isDemoGuideScenarioId,
   type DemoGuideScenarioId,
 } from "@/lib/kleio-demo-guide"
@@ -22,62 +24,42 @@ export type DemoGuideState = {
   dismissed: boolean
 }
 
-const defaultState: DemoGuideState = {
-  isOpen: false,
-  isMinimized: true,
-  activeScenarioId: null,
-  activeStepId: null,
-  completedScenarioId: null,
-  dismissed: false,
-}
+const defaultState: DemoGuideState = { isOpen: false, isMinimized: true, activeScenarioId: null, activeStepId: null, completedScenarioId: null, dismissed: false }
 
-function isBrowser() {
-  return typeof window !== "undefined"
-}
+function isBrowser() { return typeof window !== "undefined" }
 
 function normalizeGuideState(parsed: Partial<DemoGuideState>): DemoGuideState {
-  const activeScenarioId = isDemoGuideScenarioId(parsed.activeScenarioId)
-    ? parsed.activeScenarioId
-    : null
-  const completedScenarioId = isDemoGuideScenarioId(parsed.completedScenarioId)
-    ? parsed.completedScenarioId
-    : null
+  const activeScenarioId = isDemoGuideScenarioId(parsed.activeScenarioId) ? parsed.activeScenarioId : null
+  const completedScenarioId = isDemoGuideScenarioId(parsed.completedScenarioId) ? parsed.completedScenarioId : null
   const activeStep = getGuideStep(parsed.activeStepId)
-
-  return {
-    ...defaultState,
-    ...parsed,
-    activeScenarioId,
-    completedScenarioId,
-    activeStepId: activeStep && activeStep.scenarioId === activeScenarioId ? activeStep.id : null,
-    dismissed: false,
-  }
+  return { ...defaultState, ...parsed, activeScenarioId, completedScenarioId, activeStepId: activeStep && activeStep.scenarioId === activeScenarioId ? activeStep.id : null, dismissed: false }
 }
 
 function readGuideState(): DemoGuideState {
   if (!isBrowser()) return defaultState
-
   try {
     const raw = window.localStorage.getItem(DEMO_GUIDE_STORAGE_KEY)
-
     if (!raw) {
       const previousRaw = window.localStorage.getItem("kleio-demo-guide-state-v1")
       if (!previousRaw) return defaultState
       const previousParsed = JSON.parse(previousRaw) as Partial<DemoGuideState>
       return normalizeGuideState({ ...previousParsed, completedScenarioId: null })
     }
-
     const parsed = JSON.parse(raw) as Partial<DemoGuideState>
     return normalizeGuideState(parsed)
-  } catch {
-    return defaultState
-  }
+  } catch { return defaultState }
 }
 
 function writeGuideState(state: DemoGuideState) {
   if (!isBrowser()) return
   window.localStorage.setItem(DEMO_GUIDE_STORAGE_KEY, JSON.stringify(state))
   window.dispatchEvent(new CustomEvent(DEMO_GUIDE_CHANGED_EVENT))
+}
+
+function setDemoRoleForScenario(scenarioId: DemoGuideScenarioId) {
+  const scenario = getScenarioById(scenarioId)
+  if (!scenario?.requiredRole) return
+  loginDemoUser(scenario.requiredRole)
 }
 
 export function persistDemoGuideState(patch: Partial<DemoGuideState>) {
@@ -102,152 +84,56 @@ export function useDemoGuide() {
     setState(next)
   }, [])
 
-  const openGuide = useCallback(() => {
-    update({ isOpen: true, isMinimized: false, dismissed: false })
-  }, [update])
-
-  const closeGuide = useCallback(() => {
-    update({ isOpen: false, isMinimized: true, dismissed: false })
-  }, [update])
-
-  const minimizeGuide = useCallback(() => {
-    update({ isOpen: false, isMinimized: true, dismissed: false })
-  }, [update])
+  const openGuide = useCallback(() => update({ isOpen: true, isMinimized: false, dismissed: false }), [update])
+  const closeGuide = useCallback(() => update({ isOpen: false, isMinimized: true, dismissed: false }), [update])
+  const minimizeGuide = useCallback(() => update({ isOpen: false, isMinimized: true, dismissed: false }), [update])
 
   const returnToPlaylist = useCallback(() => {
-    update({
-      isOpen: true,
-      isMinimized: false,
-      dismissed: false,
-      activeScenarioId: null,
-      activeStepId: null,
-      completedScenarioId: null,
-    })
+    update({ isOpen: true, isMinimized: false, dismissed: false, activeScenarioId: null, activeStepId: null, completedScenarioId: null })
   }, [update])
 
-  const startScenario = useCallback(
-    (scenarioId: DemoGuideScenarioId) => {
-      const firstStep = getFirstStepForScenario(scenarioId)
-      update({
-        isOpen: true,
-        isMinimized: false,
-        dismissed: false,
-        activeScenarioId: scenarioId,
-        activeStepId: firstStep?.id ?? null,
-        completedScenarioId: null,
-      })
-    },
-    [update],
-  )
+  const startScenario = useCallback((scenarioId: DemoGuideScenarioId) => {
+    setDemoRoleForScenario(scenarioId)
+    const firstStep = getFirstStepForScenario(scenarioId)
+    update({ isOpen: true, isMinimized: false, dismissed: false, activeScenarioId: scenarioId, activeStepId: firstStep?.id ?? null, completedScenarioId: null })
+  }, [update])
 
   const finishScenario = useCallback(() => {
     const current = readGuideState()
     if (!current.activeScenarioId) return
-
-    update({
-      isOpen: true,
-      isMinimized: false,
-      dismissed: false,
-      completedScenarioId: current.activeScenarioId,
-      activeScenarioId: null,
-      activeStepId: null,
-    })
+    update({ isOpen: true, isMinimized: false, dismissed: false, completedScenarioId: current.activeScenarioId, activeScenarioId: null, activeStepId: null })
   }, [update])
 
   const goToNextStep = useCallback(() => {
     const current = readGuideState()
     const next = getNextGuideStep(current.activeStepId)
-
     if (!next) {
-      if (current.activeScenarioId) {
-        update({
-          completedScenarioId: current.activeScenarioId,
-          activeScenarioId: null,
-          activeStepId: null,
-          isOpen: true,
-          isMinimized: false,
-          dismissed: false,
-        })
-      }
+      if (current.activeScenarioId) update({ completedScenarioId: current.activeScenarioId, activeScenarioId: null, activeStepId: null, isOpen: true, isMinimized: false, dismissed: false })
       return
     }
-
-    update({
-      activeStepId: next.id,
-      activeScenarioId: next.scenarioId,
-      completedScenarioId: null,
-      isOpen: true,
-      isMinimized: false,
-      dismissed: false,
-    })
+    update({ activeStepId: next.id, activeScenarioId: next.scenarioId, completedScenarioId: null, isOpen: true, isMinimized: false, dismissed: false })
   }, [update])
 
   const goToPreviousStep = useCallback(() => {
     const current = readGuideState()
     const previous = getPreviousGuideStep(current.activeStepId)
     if (!previous) return
-    update({
-      activeStepId: previous.id,
-      activeScenarioId: previous.scenarioId,
-      completedScenarioId: null,
-      isOpen: true,
-      isMinimized: false,
-      dismissed: false,
-    })
+    update({ activeStepId: previous.id, activeScenarioId: previous.scenarioId, completedScenarioId: null, isOpen: true, isMinimized: false, dismissed: false })
   }, [update])
 
-  const skipStep = useCallback(() => {
-    goToNextStep()
-  }, [goToNextStep])
+  const skipStep = useCallback(() => goToNextStep(), [goToNextStep])
 
   const restartScenario = useCallback(() => {
     const current = readGuideState()
     const scenarioId = current.activeScenarioId ?? current.completedScenarioId
-    if (!scenarioId) {
-      returnToPlaylist()
-      return
-    }
-
+    if (!scenarioId) { returnToPlaylist(); return }
+    setDemoRoleForScenario(scenarioId)
     const firstStep = getFirstStepForScenario(scenarioId)
-    update({
-      isOpen: true,
-      isMinimized: false,
-      dismissed: false,
-      activeScenarioId: scenarioId,
-      activeStepId: firstStep?.id ?? null,
-      completedScenarioId: null,
-    })
+    update({ isOpen: true, isMinimized: false, dismissed: false, activeScenarioId: scenarioId, activeStepId: firstStep?.id ?? null, completedScenarioId: null })
   }, [returnToPlaylist, update])
 
-  const resetGuide = useCallback(() => {
-    writeGuideState(defaultState)
-    setState(defaultState)
-  }, [])
+  const resetGuide = useCallback(() => { writeGuideState(defaultState); setState(defaultState) }, [])
+  const dismissGuide = useCallback(() => update({ isOpen: false, isMinimized: true, dismissed: false, activeScenarioId: null, activeStepId: null, completedScenarioId: null }), [update])
 
-  const dismissGuide = useCallback(() => {
-    update({
-      isOpen: false,
-      isMinimized: true,
-      dismissed: false,
-      activeScenarioId: null,
-      activeStepId: null,
-      completedScenarioId: null,
-    })
-  }, [update])
-
-  return {
-    state,
-    openGuide,
-    closeGuide,
-    minimizeGuide,
-    returnToPlaylist,
-    startScenario,
-    finishScenario,
-    goToNextStep,
-    goToPreviousStep,
-    skipStep,
-    restartScenario,
-    resetGuide,
-    dismissGuide,
-  }
+  return { state, openGuide, closeGuide, minimizeGuide, returnToPlaylist, startScenario, finishScenario, goToNextStep, goToPreviousStep, skipStep, restartScenario, resetGuide, dismissGuide }
 }
