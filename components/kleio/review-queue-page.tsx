@@ -35,8 +35,8 @@ export function ReviewQueuePageView() {
   const selected = drawerSubmissions[index] ?? drawerSubmissions[0]
 
   return (
-    <div className="flex h-full min-h-0 overflow-hidden">
-      <div className="min-w-0 flex-1 overflow-y-auto">
+    <div className="flex h-full min-h-0 overflow-x-auto overflow-y-hidden">
+      <div className="min-w-[760px] flex-1 overflow-x-auto overflow-y-hidden">
         <DemoPageShell
           title={t("institution.reviewQueue.title")}
           description="Start here to clean incomplete records, follow up with reviewers, and move ready applicants into the Review Room."
