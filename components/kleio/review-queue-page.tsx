@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { useMemo, useState } from "react"
 import { analytics, demoScenarios, getQueueForTab } from "@/lib/kleio-analytics"
 import { institution } from "@/lib/kleio-data"
@@ -35,14 +36,43 @@ export function ReviewQueuePageView() {
       <div className="min-w-0 flex-1 overflow-y-auto">
         <DemoPageShell
           title={t("institution.reviewQueue.title")}
-          description={t("institution.reviewQueue.description")}
+          description="Here are the applicants, what is incomplete, which reviewers are pending, and what can move into the editorial Review Room."
+          actions={
+            <>
+              <Link href="/review-room/" className="inline-flex h-10 items-center rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90">
+                Open Review Room
+              </Link>
+              <Link href="/reports/" className="inline-flex h-10 items-center rounded-xl border border-border bg-card px-4 text-sm font-semibold text-foreground transition-colors hover:bg-accent/50">
+                View Report
+              </Link>
+            </>
+          }
         >
           <div className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-4 xl:max-w-4xl">
-            <DemoStatRow label={t("institution.reviewQueue.stat.assignedReviews")} value={analytics.reviewQueueCount} />
-            <DemoStatRow label={t("institution.reviewQueue.stat.needsAttention")} value={analytics.needsAttentionCount} />
-            <DemoStatRow label={t("institution.reviewQueue.stat.pendingVote")} value={analytics.pendingVoteCount} />
-            <DemoStatRow label={t("institution.reviewQueue.stat.upcomingDeadlines")} value={analytics.upcomingDeadlinesCount} />
+            <DemoStatRow label={t("institution.reviewQueue.stat.assignedReviews")} value={analytics.reviewQueueCount} href="/review-queue/" />
+            <DemoStatRow label={t("institution.reviewQueue.stat.needsAttention")} value={analytics.needsAttentionCount} href="/review-queue/" />
+            <DemoStatRow label={t("institution.reviewQueue.stat.pendingVote")} value={analytics.pendingVoteCount} href="/review-room/" />
+            <DemoStatRow label={t("institution.reviewQueue.stat.upcomingDeadlines")} value={analytics.upcomingDeadlinesCount} href="/programs/" />
           </div>
+
+          <section className="mb-4 rounded-2xl border border-[#E7E1F7] bg-[#F7F4FF] p-4 shadow-sm">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#A997E8]">
+              Review queue answers the first UX gap
+            </p>
+            <div className="mt-3 grid gap-2 xl:grid-cols-4">
+              {[
+                ["Applicants", `${analytics.reviewQueueCount} records in queue`],
+                ["Incomplete", `${analytics.incompleteCount} need material cleanup`],
+                ["Reviewers", `${analytics.pendingReviewerActionsCount} actions pending`],
+                ["Next room", "Move clean records into Review Room"],
+              ].map(([title, body]) => (
+                <div key={title} className="rounded-xl border border-[#E7E1F7] bg-white p-3">
+                  <p className="font-serif text-sm font-semibold text-[#292631]">{title}</p>
+                  <p className="mt-1 text-xs leading-relaxed text-[#7F7890]">{body}</p>
+                </div>
+              ))}
+            </div>
+          </section>
 
           <section className="mb-4 rounded-2xl border border-primary/15 bg-card/80 p-4 shadow-sm">
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
