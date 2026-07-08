@@ -40,6 +40,7 @@ export const navSections: NavSection[] = [
       { label: "Submissions", href: "/submissions/", icon: FileStack },
       { label: "Artist Records", href: "/artists/", icon: Users },
       { label: "Review Queue", href: "/review-queue/", icon: ListChecks, badge: analytics.reviewQueueCount },
+      { label: "Review Room", href: "/review-room/", icon: Vote, badge: analytics.pendingVoteCount },
       { label: "Shortlist", href: "/shortlist/", icon: Bookmark, badge: analytics.shortlistedCount },
     ],
   },
