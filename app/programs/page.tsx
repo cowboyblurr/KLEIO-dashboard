@@ -40,25 +40,25 @@ export default function Page() {
   const es = locale === "es"
   const workflowSteps = es
     ? [
-        ["01", "Crear convocatoria", "/programs/new/"],
+        ["01", "Configurar convocatoria", "/programs/new/"],
         ["02", "Recibir postulantes", "/review-queue/"],
         ["03", "Resolver incompletos", "/review-queue/"],
-        ["04", "Sala de revisión", "/review-room/"],
-        ["05", "Informe", "/reports/"],
+        ["04", "Revisar con comité", "/review-room/"],
+        ["05", "Preparar informe", "/reports/"],
       ]
     : [
-        ["01", "Create call", "/programs/new/"],
-        ["02", "Collect applicants", "/review-queue/"],
-        ["03", "Resolve incomplete", "/review-queue/"],
-        ["04", "Review room", "/review-room/"],
-        ["05", "Report", "/reports/"],
+        ["01", "Set up call", "/programs/new/"],
+        ["02", "Receive applicants", "/review-queue/"],
+        ["03", "Resolve incomplete files", "/review-queue/"],
+        ["04", "Committee review", "/review-room/"],
+        ["05", "Prepare report", "/reports/"],
       ]
 
   return (
     <DashboardShell>
       <DemoPageShell
         title={es ? "Programas y convocatorias" : "Programs & Open Calls"}
-        description={es ? "Este es el punto de partida institucional: crea oportunidades, define materiales, asigna revisores y lleva a los postulantes hacia la revisión." : "Here is the institutional starting point: create opportunities, define materials, assign reviewers, and route applicants into review."}
+        description={es ? "Configura convocatorias, materiales requeridos, fechas de revisión y asignaciones antes de que las postulaciones avancen por el ciclo." : "Set up open calls, required materials, review dates, and reviewer assignments before submissions move through the cycle."}
       >
         <div className="mb-4 flex flex-wrap gap-2">
           <Link href="/programs/new/" className="inline-flex h-10 items-center rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90">{es ? "Crear convocatoria" : "Create Open Call"}</Link>
@@ -68,7 +68,7 @@ export default function Page() {
         </div>
 
         <section className="mb-4 rounded-2xl border border-[#E7E1F7] bg-[#F7F4FF] p-4 shadow-sm">
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#A997E8]">{es ? "Ruta de conversión" : "Conversion path"}</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#A997E8]">{es ? "Flujo de revisión" : "Review workflow"}</p>
           <div className="mt-3 grid gap-2 md:grid-cols-5">
             {workflowSteps.map(([number, label, href], index) => (
               <Link key={label} href={href} className={`${workflowMotion.step} rounded-xl border border-[#E7E1F7] bg-white p-3 text-sm font-semibold text-[#292631] transition-colors hover:bg-white/70`} style={workflowDelay(index)}>
