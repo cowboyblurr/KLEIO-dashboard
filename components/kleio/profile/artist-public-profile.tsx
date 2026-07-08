@@ -76,9 +76,108 @@ function ExpressionOption({ icon: Icon, title, body }: { icon: typeof Palette; t
       <span className="grid size-8 place-items-center rounded-full" style={{ backgroundColor: lavenderMist, color: lavenderDeep }}>
         <Icon className="size-4" />
       </span>
-      <h3 className="mt-3 font-serif text-sm font-semibold" style={{ color: inkColor }}>{title}</h3>
-      <p className="mt-1 text-xs leading-relaxed" style={{ color: mutedColor }}>{body}</p>
+      <h3 className="mt-3 font-serif text-sm font-semibold" style={{ color: inkColor }}>
+        {title}
+      </h3>
+      <p className="mt-1 text-xs leading-relaxed" style={{ color: mutedColor }}>
+        {body}
+      </p>
     </div>
+  )
+}
+
+function PublicProfileHero({ profile, statementExcerpt, onDemoAction }: { profile: ArtistProfile; statementExcerpt: string; onDemoAction: (message: string) => void }) {
+  const { t } = useKleioLocale()
+
+  return (
+    <section className="relative overflow-hidden rounded-[1.75rem] border bg-white" style={cardStyle}>
+      <div className="absolute inset-0">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={assetPath(profile.heroImage)} alt={`${profile.displayName} featured practice image`} className="size-full object-cover object-center opacity-90" />
+        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(255,255,255,0.96)_0%,rgba(255,255,255,0.92)_36%,rgba(255,255,255,0.64)_61%,rgba(255,255,255,0.18)_100%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_80%,rgba(241,236,251,0.95),transparent_32%),radial-gradient(circle_at_72%_22%,rgba(255,255,255,0.5),transparent_24%)]" />
+      </div>
+
+      <div aria-hidden="true" className="absolute -bottom-24 -left-10 h-60 w-72 rounded-full bg-[#F1ECFB]/70 blur-3xl" />
+      <div aria-hidden="true" className="absolute right-12 top-10 h-40 w-40 rounded-full bg-white/35 blur-3xl" />
+
+      <div className="relative z-10 grid min-h-[390px] gap-6 p-5 md:p-8 lg:grid-cols-[160px_minmax(0,1fr)_235px] lg:items-center">
+        <div className="flex justify-center lg:justify-start">
+          <div className="relative">
+            <div className="size-32 overflow-hidden rounded-full border-[6px] border-white bg-[#F7F4FF] shadow-[0_22px_46px_rgba(82,64,130,0.18)] md:size-36">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={assetPath(profile.portrait)} alt={profile.displayName} className="h-full w-full object-cover object-center" />
+            </div>
+            {profile.nativeOnKleio && (
+              <span className="absolute bottom-2 right-1 grid size-8 place-items-center rounded-full border-4 border-white bg-primary text-primary-foreground shadow-sm" aria-label={t("profile.creativePassport")}>
+                <BadgeCheck className="size-4" />
+              </span>
+            )}
+          </div>
+        </div>
+
+        <div className="min-w-0 text-center lg:text-left">
+          <p className="text-[0.72rem] font-semibold uppercase tracking-[0.2em]" style={{ color: lavenderDeep }}>
+            Artist-Controlled Public Passport
+          </p>
+          <div className="mt-2 flex flex-wrap items-center justify-center gap-2 lg:justify-start">
+            <h1 className="font-serif text-4xl font-semibold tracking-tight md:text-5xl" style={{ color: inkColor }}>
+              {profile.displayName}
+            </h1>
+            <BadgeCheck className="size-5" style={{ color: lavenderDeep }} aria-label={t("profile.creativePassport")} />
+          </div>
+
+          <div className="mt-3 flex flex-wrap items-center justify-center gap-2 lg:justify-start">
+            <span className="rounded-full border border-[#D8D0F2] bg-[#F7F4FF]/90 px-2.5 py-1 text-[0.68rem] font-semibold" style={{ color: lavenderDeep }}>
+              {profile.profileBadge}
+            </span>
+            <span className="text-sm" style={{ color: mutedColor }}>
+              {profile.role} · {profile.location}
+            </span>
+          </div>
+
+          <div className="mt-4 flex flex-wrap justify-center gap-1.5 lg:justify-start">
+            {profile.practiceTags.map((tag) => <ProfileChip key={tag} label={tag} />)}
+          </div>
+
+          <p className="mt-5 max-w-2xl text-sm leading-relaxed md:text-[0.95rem]" style={{ color: "#4A4458" }}>
+            {statementExcerpt}
+          </p>
+
+          <div className="mt-5 flex flex-wrap justify-center gap-2 lg:justify-start">
+            <button type="button" onClick={() => onDemoAction("Portfolio preview opened")} className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-primary px-3 text-xs font-semibold text-primary-foreground transition-colors hover:bg-primary/90">
+              <ExternalLink className="size-3.5" />
+              View Portfolio
+            </button>
+            <button type="button" onClick={() => onDemoAction("Share link copied")} className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-[#D8D0F2] bg-white/85 px-3 text-xs font-semibold transition-colors hover:bg-[#F7F4FF]" style={{ color: lavenderDeep }}>
+              <Share2 className="size-3.5" />
+              Share Profile
+            </button>
+            <Link href="/signup/artist/" className="inline-flex h-10 items-center justify-center rounded-xl border border-[#D8D0F2] bg-white/85 px-3 text-center text-xs font-semibold transition-colors hover:bg-[#F7F4FF]" style={{ color: lavenderDeep }}>
+              Create Passport
+            </Link>
+          </div>
+        </div>
+
+        <div className="hidden rounded-2xl border bg-white/72 p-4 shadow-[0_18px_40px_rgba(82,64,130,0.08)] backdrop-blur lg:block" style={{ borderColor: lavenderSoftLine }}>
+          <p className="text-[0.68rem] font-semibold uppercase tracking-[0.18em]" style={{ color: lavenderDeep }}>
+            Practice Atmosphere
+          </p>
+          <div className="mt-4 space-y-3">
+            {profile.practiceTags.slice(0, 4).map((tag) => (
+              <div key={tag} className="flex items-center justify-between gap-3 rounded-xl border bg-white/70 px-3 py-2" style={{ borderColor: lavenderSoftLine }}>
+                <span className="text-xs font-medium" style={{ color: inkColor }}>{tag}</span>
+                <span className="size-2 rounded-full bg-primary/70" />
+              </div>
+            ))}
+          </div>
+          <a href={`https://${profile.website}`} className="mt-4 inline-flex items-center gap-2 text-xs font-medium" style={{ color: lavenderDeep }}>
+            <Globe className="size-3.5" />
+            {profile.website}
+          </a>
+        </div>
+      </div>
+    </section>
   )
 }
 
@@ -95,70 +194,15 @@ export function ArtistPublicProfile({ profile }: { profile: ArtistProfile }) {
 
   return (
     <div className="mx-auto w-full max-w-[1200px] space-y-6">
-      <section className="overflow-hidden rounded-[1.5rem] border bg-white" style={cardStyle}>
-        <div className="grid gap-6 p-5 lg:grid-cols-[auto_minmax(0,1fr)] xl:p-6">
-          <div className="flex justify-center lg:block">
-            <div className="size-28 overflow-hidden rounded-full border-4 border-[#F1ECFB] bg-[#F7F4FF] shadow-sm">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={assetPath(profile.portrait)} alt={profile.displayName} className="h-full w-full object-cover object-center" />
-            </div>
+      <div className="relative">
+        <PublicProfileHero profile={profile} statementExcerpt={statementExcerpt} onDemoAction={demoAction} />
+        {confirmation && (
+          <div role="status" className="absolute bottom-4 left-1/2 z-20 flex -translate-x-1/2 items-center gap-2 rounded-xl border border-[oklch(0.85_0.07_150)] bg-[oklch(0.96_0.04_150)] px-3 py-2 text-xs text-[oklch(0.4_0.12_150)] shadow-lg">
+            <CheckCircle2 className="size-3.5 shrink-0" />
+            {confirmation} <span className="opacity-70">(demo only)</span>
           </div>
-
-          <div className="min-w-0">
-            <p className="text-[0.72rem] font-semibold uppercase tracking-[0.2em]" style={{ color: lavenderDeep }}>
-              Artist-Controlled Public Passport
-            </p>
-            <div className="mt-1 flex flex-wrap items-center gap-2">
-              <h1 className="font-serif text-3xl font-semibold tracking-tight" style={{ color: inkColor }}>
-                {profile.displayName}
-              </h1>
-              <BadgeCheck className="size-5" style={{ color: lavenderDeep }} aria-label={t("profile.creativePassport")} />
-            </div>
-            <div className="mt-2 flex flex-wrap items-center gap-2">
-              <span className="rounded-full border border-[#D8D0F2] bg-[#F7F4FF] px-2.5 py-1 text-[0.68rem] font-semibold" style={{ color: lavenderDeep }}>
-                {profile.profileBadge}
-              </span>
-              <span className="text-sm" style={{ color: mutedColor }}>
-                {profile.role} · {profile.location}
-              </span>
-            </div>
-            <div className="mt-3 flex flex-wrap gap-1.5">
-              {profile.practiceTags.map((tag) => <ProfileChip key={tag} label={tag} />)}
-            </div>
-            <p className="mt-4 max-w-xl text-sm leading-relaxed" style={{ color: "#4A4458" }}>
-              {statementExcerpt}
-            </p>
-
-            <div className="mt-5 flex flex-wrap gap-2">
-              <button type="button" onClick={() => demoAction("Portfolio preview opened")} className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-primary px-3 text-xs font-semibold text-primary-foreground transition-colors hover:bg-primary/90">
-                <ExternalLink className="size-3.5" />
-                View Portfolio
-              </button>
-              <button type="button" onClick={() => demoAction("Share link copied")} className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-[#D8D0F2] bg-white px-3 text-xs font-semibold transition-colors hover:bg-[#F7F4FF]" style={{ color: lavenderDeep }}>
-                <Share2 className="size-3.5" />
-                Share Profile
-              </button>
-              <Link href="/signup/artist/" className="inline-flex h-10 items-center justify-center rounded-xl border border-[#D8D0F2] bg-white px-3 text-center text-xs font-semibold transition-colors hover:bg-[#F7F4FF]" style={{ color: lavenderDeep }}>
-                Create Passport
-              </Link>
-            </div>
-            {confirmation && (
-              <div role="status" className="mt-3 flex items-center gap-2 rounded-xl border border-[oklch(0.85_0.07_150)] bg-[oklch(0.96_0.04_150)] px-3 py-2 text-xs text-[oklch(0.4_0.12_150)]">
-                <CheckCircle2 className="size-3.5 shrink-0" />
-                {confirmation} <span className="opacity-70">(demo only)</span>
-              </div>
-            )}
-          </div>
-        </div>
-
-        <div className="px-5 pb-5 xl:px-6 xl:pb-6">
-          <div className="relative aspect-[16/9] overflow-hidden rounded-2xl border bg-[#F7F4FF]" style={{ borderColor: lavenderSoftLine }}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={assetPath(profile.heroImage)} alt={`${profile.displayName} featured practice image`} className="h-full w-full object-cover object-center" />
-            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-white/15 via-transparent to-transparent" />
-          </div>
-        </div>
-      </section>
+        )}
+      </div>
 
       <Card>
         <SectionHeading title="Artistic Expression Controls" />
