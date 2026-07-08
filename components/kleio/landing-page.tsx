@@ -132,15 +132,15 @@ export function LandingPage() {
 
           <div className="landing-choice-card flex flex-col rounded-[1.1rem] p-3.5" style={{ backgroundColor: cardBg, border: `1px solid ${lavenderSoftLine}`, boxShadow: cardShadow }}>
             <p className="text-[0.62rem] font-semibold uppercase tracking-[0.16em]" style={{ color: lavenderAccent }}>
-              {isSpanish ? "Rutas de configuración" : "Setup paths"}
+              {isSpanish ? "Crear espacio" : "Create a demo space"}
             </p>
             <h2 className="mt-1 font-serif text-[0.98rem] font-semibold" style={{ color: inkColor, letterSpacing: "-0.01em" }}>
               {t("landing.choosePath.title")}
             </h2>
             <p className="mt-0.5 text-[0.68rem] leading-relaxed" style={{ color: mutedColor }}>
               {isSpanish
-                ? "Usa estas rutas si quieres ver cómo empieza el perfil de artista o el espacio institucional. Para una primera vista, usa el demo guiado."
-                : "Use these paths when you want to see how artist or institution setup begins. For a first viewing, use the guided demo."}
+                ? "Usa estas rutas para ver cómo comienza un Pasaporte Creativo o un espacio institucional antes de entrar al flujo completo."
+                : "Use these paths to see how a Creative Passport or institution workspace begins before entering the full workflow."}
             </p>
 
             <div className="mt-3 grid grid-cols-2 gap-2.5">
@@ -173,8 +173,8 @@ export function LandingPage() {
                 <p className="landing-import-assist-title">KLEIO Import Assist</p>
                 <p className="landing-import-assist-copy">
                   {isSpanish
-                    ? "Import Assist prepara borradores desde materiales existentes. La persona revisa cada detalle antes de usarlo."
-                    : "Import Assist prepares draft fields from existing materials. The user reviews every detail before use."}
+                    ? "Import Assist prepara borradores desde materiales existentes. Nada se comparte o envía hasta que la persona lo aprueba."
+                    : "Import Assist prepares draft fields from existing materials. Nothing is shared or submitted until the user approves it."}
                 </p>
               </div>
             </div>
