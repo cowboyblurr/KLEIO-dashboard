@@ -17,9 +17,9 @@ export function ArtistShell({ children }: { children: ReactNode }) {
       <GuideWalkthroughCollapser />
       <DemoClickFeedbackLayer />
       <DemoGuideHighlightLayer />
-      <div className="relative flex h-screen overflow-hidden bg-background text-foreground">
+      <div className="relative flex h-screen overflow-x-auto overflow-y-hidden bg-background text-foreground">
         <ArtistSidebar />
-        <div className="min-w-0 flex-1 overflow-hidden">{children}</div>
+        <div className="min-w-[860px] flex-1 overflow-x-auto overflow-y-hidden">{children}</div>
         <DemoEnvironmentBadge compact className="pointer-events-none absolute right-5 top-5 z-30 hidden 2xl:inline-flex" />
       </div>
       <KleioDemoGuide variant="workspace" />
