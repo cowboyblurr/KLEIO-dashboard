@@ -142,27 +142,32 @@ function TopBar({ artist, portrait }: { artist: Artist; portrait?: string }) {
   )
 }
 
-function AmbientStudioAccent({ image, alt }: { image?: string; alt?: string }) {
+function AmbientStudioAccent() {
   return (
-    <div className="relative min-h-[265px] overflow-hidden rounded-[1.25rem] bg-[#FBFAFF] max-lg:min-h-[210px]">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_72%_18%,rgba(169,151,232,0.28),transparent_30%),radial-gradient(circle_at_28%_78%,rgba(226,220,246,0.74),transparent_35%),linear-gradient(135deg,#fff_0%,#FAF8FF_44%,#F3EEF9_100%)]" />
-      <div className="absolute -left-10 bottom-0 h-40 w-52 rounded-[50%] bg-white/70 blur-2xl" />
-      <div className="absolute right-7 top-7 h-28 w-28 rounded-full bg-[#EDE6FF]/70 blur-3xl" />
+    <div className="relative min-h-[315px] overflow-hidden rounded-[1.25rem] bg-[#F8F4FF] max-lg:min-h-[245px]">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_72%_22%,rgba(255,255,255,0.84),transparent_26%),radial-gradient(circle_at_31%_61%,rgba(206,190,232,0.38),transparent_36%),linear-gradient(130deg,#ECE3F4_0%,#F8F4FF_48%,#FFFFFF_100%)]" />
+      <div aria-hidden="true" className="absolute -left-16 bottom-0 h-52 w-64 rounded-full bg-white/55 blur-3xl" />
+      <div aria-hidden="true" className="absolute left-6 top-8 h-[78%] w-24 rounded-[1.4rem] bg-[linear-gradient(180deg,rgba(255,255,255,0.42),rgba(231,222,240,0.28))] shadow-[20px_0_42px_rgba(82,64,130,0.08)]" />
+      <div aria-hidden="true" className="absolute bottom-0 left-0 h-24 w-44 rounded-tr-[5rem] bg-white/45 blur-xl" />
 
-      {image && (
-        <div className="absolute inset-x-7 top-7 h-[56%] overflow-hidden rounded-[1.1rem] border border-white/70 bg-white/45 shadow-[0_22px_55px_rgba(82,64,130,0.13)] backdrop-blur-sm">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={assetPath(image)} alt={alt ?? "Artist work preview"} className="size-full object-cover opacity-80 saturate-[0.9]" />
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-white/28 via-transparent to-white/35" />
-        </div>
-      )}
+      <div aria-hidden="true" className="absolute bottom-0 left-0 h-24 w-44 rounded-tr-[4rem] bg-[linear-gradient(25deg,rgba(255,255,255,0.96),rgba(238,232,244,0.68))] shadow-[0_-18px_42px_rgba(82,64,130,0.08)]" />
+      <div aria-hidden="true" className="absolute bottom-4 left-8 h-14 w-40 rounded-[50%] bg-[linear-gradient(180deg,#F5EFE7,#D8C9BB)] shadow-[0_20px_50px_rgba(73,57,91,0.14)]" />
+      <div aria-hidden="true" className="absolute bottom-8 left-11 h-[4.75rem] w-28 rounded-[50%] border border-white/70 bg-[linear-gradient(145deg,#F9F5EE,#E8DED3)] shadow-[inset_-12px_-18px_28px_rgba(111,91,75,0.12),0_16px_34px_rgba(82,64,130,0.1)]" />
 
-      <div aria-hidden="true" className="absolute bottom-7 left-8 h-20 w-28 rounded-[52%_48%_42%_58%] border border-white/80 bg-white/65 shadow-[0_18px_42px_rgba(82,64,130,0.12)] backdrop-blur" />
-      <div aria-hidden="true" className="absolute bottom-18 left-20 h-28 w-px rotate-[14deg] bg-[#B9ACDF]/80" />
-      <div aria-hidden="true" className="absolute bottom-28 left-24 h-16 w-10 rotate-[-28deg] rounded-full border border-[#B9ACDF]/80 bg-white/35" />
-      <div aria-hidden="true" className="absolute bottom-32 left-12 h-14 w-8 rotate-[32deg] rounded-full border border-[#B9ACDF]/70 bg-white/30" />
-      <div aria-hidden="true" className="absolute bottom-21 left-32 h-20 w-8 rotate-[48deg] rounded-full border border-[#E2D9F7]/80 bg-white/30" />
-      <div aria-hidden="true" className="absolute bottom-10 right-9 h-16 w-16 rounded-full border border-white/70 bg-white/35 shadow-[0_14px_34px_rgba(82,64,130,0.08)]" />
+      <div aria-hidden="true" className="absolute bottom-[5.9rem] left-[4.6rem] h-24 w-16 rounded-[54%_46%_47%_53%] bg-[linear-gradient(145deg,#FBF8F2,#E2D5C8)] shadow-[inset_-10px_-18px_24px_rgba(87,67,52,0.12),0_18px_44px_rgba(82,64,130,0.12)]" />
+      <div aria-hidden="true" className="absolute bottom-[11.25rem] left-[5.72rem] h-7 w-7 rounded-[50%] bg-[#F6EFE7] shadow-[inset_-4px_-5px_8px_rgba(87,67,52,0.1)]" />
+      <div aria-hidden="true" className="absolute bottom-[12.15rem] left-[6.32rem] h-28 w-px -rotate-[13deg] bg-[#6A563D]/72" />
+      <div aria-hidden="true" className="absolute bottom-[13.8rem] left-[4.85rem] h-20 w-px rotate-[30deg] bg-[#7C674B]/54" />
+      <div aria-hidden="true" className="absolute bottom-[15.8rem] left-[6.9rem] h-24 w-px rotate-[36deg] bg-[#6A563D]/56" />
+      <div aria-hidden="true" className="absolute bottom-[18.4rem] left-[6.08rem] h-9 w-5 rotate-[31deg] rounded-[50%] border border-white/80 bg-[linear-gradient(135deg,rgba(255,255,255,0.72),rgba(229,215,200,0.34))] shadow-[0_8px_18px_rgba(82,64,130,0.08)]" />
+      <div aria-hidden="true" className="absolute bottom-[17.1rem] left-[4.64rem] h-8 w-5 -rotate-[44deg] rounded-[50%] border border-white/75 bg-[linear-gradient(135deg,rgba(255,255,255,0.68),rgba(229,215,200,0.32))]" />
+      <div aria-hidden="true" className="absolute bottom-[15.4rem] left-[8.6rem] h-8 w-5 rotate-[46deg] rounded-[50%] border border-white/75 bg-[linear-gradient(135deg,rgba(255,255,255,0.7),rgba(229,215,200,0.28))]" />
+      <div aria-hidden="true" className="absolute bottom-[14.2rem] left-[5.9rem] h-7 w-4 rotate-[13deg] rounded-[50%] border border-white/70 bg-white/36" />
+
+      <div aria-hidden="true" className="absolute bottom-[4.6rem] left-[11.2rem] size-[4.35rem] rounded-full bg-[radial-gradient(circle_at_38%_28%,rgba(255,255,255,0.98),rgba(244,240,250,0.64)_42%,rgba(198,181,225,0.36)_100%)] shadow-[inset_-16px_-18px_22px_rgba(112,92,146,0.1),0_18px_42px_rgba(82,64,130,0.13)]" />
+      <div aria-hidden="true" className="absolute bottom-[4.9rem] left-[16.2rem] h-14 w-20 rounded-[47%_53%_48%_52%] bg-[linear-gradient(145deg,#F6EFE7,#D7C6B8)] shadow-[inset_-10px_-12px_18px_rgba(87,67,52,0.12),0_14px_34px_rgba(82,64,130,0.1)]" />
+      <div aria-hidden="true" className="absolute bottom-[6.1rem] left-[17.3rem] h-5 w-10 rounded-[50%] bg-[radial-gradient(circle,#F9F5EF_0%,#DCCBBE_74%)] shadow-[inset_0_3px_8px_rgba(91,71,58,0.14)]" />
+      <div aria-hidden="true" className="absolute bottom-[2.1rem] left-[13.5rem] h-24 w-36 rounded-[56%_44%_55%_45%] border border-white/38 bg-[radial-gradient(circle_at_24%_18%,rgba(255,255,255,0.72),rgba(218,207,238,0.2)_44%,rgba(170,151,210,0.12)_100%)] shadow-[0_18px_50px_rgba(82,64,130,0.08)] backdrop-blur-[2px]" />
     </div>
   )
 }
@@ -194,12 +199,11 @@ function HeroCard({ profile, assetProfile, analytics }: { profile: ArtistDashboa
 
   const title = assetProfile?.dashboardHero.title ?? profile.hero.title
   const subtitle = assetProfile?.dashboardHero.subtitle ?? profile.hero.subtitle
-  const heroArtwork = assetProfile?.selectedWorks[0]
 
   return (
-    <section className="relative grid min-h-[285px] grid-cols-[minmax(260px,0.34fr)_minmax(0,1fr)] gap-5 overflow-hidden rounded-[1.5rem] border bg-white p-4 max-lg:grid-cols-1" style={cardStyle}>
+    <section className="relative grid min-h-[315px] grid-cols-[minmax(320px,0.37fr)_minmax(0,1fr)] gap-7 overflow-hidden rounded-[1.5rem] border bg-white p-4 max-lg:grid-cols-1" style={cardStyle}>
       <div aria-hidden="true" className="pointer-events-none absolute right-10 top-6 h-44 w-44 rounded-full bg-[#F1ECFB]/60 blur-3xl" />
-      <AmbientStudioAccent image={heroArtwork?.image} alt={heroArtwork ? `${assetProfile?.displayName} — ${heroArtwork.title}` : undefined} />
+      <AmbientStudioAccent />
 
       <div className="relative z-10 flex min-w-0 flex-col justify-center py-6 pr-5 max-lg:px-2 max-md:py-3">
         {assetProfile && (
