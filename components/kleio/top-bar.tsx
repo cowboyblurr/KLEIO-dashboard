@@ -6,7 +6,7 @@ import { usePathname, useRouter } from "next/navigation"
 import { Bell, Bookmark, ChevronDown, LogOut, Mail, Plus, Search, Send, SlidersHorizontal, Vote, X } from "lucide-react"
 import { analytics, getDemoMessageForThread, isSubmissionMessagePending } from "@/lib/kleio-analytics"
 import { messageThreads, type MessageThread } from "@/lib/kleio-data"
-import { getGlobalSearchResults } from "@/lib/kleio-search"
+import { getGlobalSearchResults, type KleioSearchResult } from "@/lib/kleio-search"
 import { useDemoSignOut } from "@/components/kleio/auth-gate"
 import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
 import { useKleioMode } from "@/components/kleio/use-kleio-mode"
@@ -25,11 +25,26 @@ function getPrimaryAction(pathname: string, locale: string, isPreview: boolean) 
   return { label: es ? "Crear convocatoria" : "Create Open Call", href: "/programs/new/", icon: Plus }
 }
 
-function taskForThread(thread: MessageThread) {
-  if (thread.channel === "Reviewer") return { title: "Reviewer follow-up", action: "Send reminder", icon: Send }
-  if (thread.channel === "Committee") return { title: "Committee decision note", action: "Open decision thread", icon: Vote }
-  if (thread.preview.toLowerCase().includes("missing") || thread.preview.toLowerCase().includes("need")) return { title: "Missing material request", action: "Request material", icon: Mail }
-  return { title: "Applicant message", action: "Reply", icon: Mail }
+function taskForThread(thread: MessageThread, locale: string) {
+  const es = locale === "es"
+  if (thread.channel === "Reviewer") return { title: es ? "Seguimiento de revisor" : "Reviewer follow-up", action: es ? "Enviar recordatorio" : "Send reminder", icon: Send }
+  if (thread.channel === "Committee") return { title: es ? "Nota de decisión del comité" : "Committee decision note", action: es ? "Abrir conversación" : "Open decision thread", icon: Vote }
+  if (thread.preview.toLowerCase().includes("missing") || thread.preview.toLowerCase().includes("need")) return { title: es ? "Solicitud de material faltante" : "Missing material request", action: es ? "Solicitar material" : "Request material", icon: Mail }
+  return { title: es ? "Mensaje de postulante" : "Applicant message", action: es ? "Responder" : "Reply", icon: Mail }
+}
+
+function categoryLabel(category: KleioSearchResult["category"], locale: string) {
+  if (locale !== "es") return category
+  const labels: Record<KleioSearchResult["category"], string> = {
+    Page: "Página",
+    Applicant: "Postulante",
+    Artist: "Artista",
+    Program: "Programa",
+    Reviewer: "Revisor",
+    Message: "Mensaje",
+    Report: "Informe",
+  }
+  return labels[category]
 }
 
 export function TopBar() {
@@ -43,11 +58,16 @@ export function TopBar() {
   const [searchQuery, setSearchQuery] = useState("")
   const primaryAction = getPrimaryAction(pathname, locale, isPreview)
   const PrimaryIcon = primaryAction.icon
-  const demoMessage = isPreview ? locale === "es" ? "Acción de vista previa. El backend de producción todavía no está conectado." : "Preview action. Production backend export is not connected yet." : locale === "es" ? "Acción de demostración. Este prototipo no modifica datos reales." : "Demo action. This prototype does not change live data."
+  const es = locale === "es"
+  const demoMessage = isPreview
+    ? es ? "Acción de vista previa. El backend de producción todavía no está conectado." : "Preview action. Production backend export is not connected yet."
+    : es ? "Acción de demostración. Este prototipo no modifica datos reales." : "Demo action. This prototype does not change live data."
 
   const notificationThreads = useMemo(() => messageThreads.filter((thread) => thread.unread || isSubmissionMessagePending(thread.submissionId)).slice(0, 3), [])
   const searchResults = useMemo(() => getGlobalSearchResults(searchQuery, searchQuery.trim() ? 9 : 6), [searchQuery])
-  const searchPlaceholder = isPreview ? locale === "es" ? "Buscar en KLEIO Workspace…" : "Search KLEIO Workspace…" : locale === "es" ? "Buscar en el demo institucional…" : "Search the institution demo…"
+  const searchPlaceholder = isPreview
+    ? es ? "Buscar en el espacio KLEIO…" : "Search KLEIO Workspace…"
+    : es ? "Buscar en el demo institucional…" : "Search the institution demo…"
 
   function openResult(href: string) {
     setSearchOpen(false)
@@ -78,38 +98,41 @@ export function TopBar() {
           <div className="absolute left-0 right-0 top-12 z-50 overflow-hidden rounded-2xl border border-border bg-card shadow-[0_18px_50px_rgba(40,30,70,0.14)]">
             <div className="flex items-center justify-between border-b border-border px-4 py-3">
               <div>
-                <p className="text-sm font-semibold text-foreground">{searchQuery.trim() ? "Search results" : "Suggested workspace paths"}</p>
-                <p className="text-xs text-muted-foreground">Applicants, artists, programs, reviewers, messages, and reports.</p>
+                <p className="text-sm font-semibold text-foreground">{searchQuery.trim() ? (es ? "Resultados de búsqueda" : "Search results") : (es ? "Rutas sugeridas del espacio" : "Suggested workspace paths")}</p>
+                <p className="text-xs text-muted-foreground">{es ? "Postulantes, artistas, programas, revisores, mensajes e informes." : "Applicants, artists, programs, reviewers, messages, and reports."}</p>
               </div>
-              <button type="button" onClick={() => setSearchOpen(false)} className="grid size-7 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground" aria-label="Close search"><X className="size-4" /></button>
+              <button type="button" onClick={() => setSearchOpen(false)} className="grid size-7 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground" aria-label={es ? "Cerrar búsqueda" : "Close search"}><X className="size-4" /></button>
             </div>
             <div className="max-h-[25rem] overflow-y-auto p-2">
-              {searchResults.length > 0 ? searchResults.map((result) => (
-                <button key={result.id} type="button" onMouseDown={(event) => event.preventDefault()} onClick={() => openResult(result.href)} className="flex w-full items-start gap-3 rounded-xl px-3 py-3 text-left transition-colors hover:bg-accent/40">
-                  <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-primary/10 text-[0.65rem] font-semibold uppercase text-primary">{result.category.slice(0, 2)}</span>
-                  <span className="min-w-0 flex-1"><span className="flex items-center justify-between gap-2"><span className="truncate text-sm font-semibold text-foreground">{result.title}</span><span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[0.58rem] font-semibold uppercase tracking-wide text-muted-foreground">{result.category}</span></span><span className="mt-0.5 block text-xs leading-snug text-muted-foreground">{result.subtitle}</span></span>
-                </button>
-              )) : <p className="px-3 py-6 text-center text-sm text-muted-foreground">No results yet. Try “Amina,” “Report,” “Review Queue,” or “missing materials.”</p>}
+              {searchResults.length > 0 ? searchResults.map((result) => {
+                const translatedCategory = categoryLabel(result.category, locale)
+                return (
+                  <button key={result.id} type="button" onMouseDown={(event) => event.preventDefault()} onClick={() => openResult(result.href)} className="flex w-full items-start gap-3 rounded-xl px-3 py-3 text-left transition-colors hover:bg-accent/40">
+                    <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-primary/10 text-[0.65rem] font-semibold uppercase text-primary">{translatedCategory.slice(0, 2)}</span>
+                    <span className="min-w-0 flex-1"><span className="flex items-center justify-between gap-2"><span className="truncate text-sm font-semibold text-foreground">{result.title}</span><span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[0.58rem] font-semibold uppercase tracking-wide text-muted-foreground">{translatedCategory}</span></span><span className="mt-0.5 block text-xs leading-snug text-muted-foreground">{result.subtitle}</span></span>
+                  </button>
+                )
+              }) : <p className="px-3 py-6 text-center text-sm text-muted-foreground">{es ? "Sin resultados todavía. Prueba “Amina”, “Informe”, “Cola de revisión” o “materiales faltantes”." : "No results yet. Try “Amina,” “Report,” “Review Queue,” or “missing materials.”"}</p>}
             </div>
           </div>
         )}
       </div>
 
       <DemoEnvironmentBadge compact className="hidden xl:inline-flex" />
-      {isPreview && <span className="hidden rounded-full border border-border bg-card px-3 py-1 text-[0.62rem] font-semibold uppercase tracking-[0.12em] text-muted-foreground xl:inline-flex">Workspace Preview</span>}
+      {isPreview && <span className="hidden rounded-full border border-border bg-card px-3 py-1 text-[0.62rem] font-semibold uppercase tracking-[0.12em] text-muted-foreground xl:inline-flex">{es ? "Vista previa" : "Workspace Preview"}</span>}
 
       <div className="ml-auto flex shrink-0 items-center gap-2">
         <Link href="/submissions/" className="hidden h-10 items-center gap-2 rounded-xl border border-border bg-card px-3.5 text-sm font-medium text-foreground shadow-sm transition-colors hover:bg-accent/50 lg:flex"><SlidersHorizontal className="size-4 text-muted-foreground" />{t("institution.topBar.filterSubmissions")}</Link>
         <Link href="/shortlist/" aria-label={t("institution.shortlist.title")} className="grid size-10 place-items-center rounded-xl border border-border bg-card text-muted-foreground shadow-sm transition-colors hover:bg-accent/50 hover:text-foreground"><Bookmark className="size-4" /></Link>
 
         <div className="relative">
-          <button type="button" onClick={() => setNotificationsOpen((open) => !open)} aria-expanded={notificationsOpen} aria-label={locale === "es" ? "Ver tareas pendientes" : "View pending tasks"} className="relative grid size-10 place-items-center rounded-xl border border-border bg-card text-muted-foreground shadow-sm transition-colors hover:bg-accent/50 hover:text-foreground"><Bell className="size-4" /><span className="absolute -right-1 -top-1 grid size-5 place-items-center rounded-full bg-primary text-[0.65rem] font-semibold text-primary-foreground ring-2 ring-background">{notificationThreads.length}</span></button>
+          <button type="button" onClick={() => setNotificationsOpen((open) => !open)} aria-expanded={notificationsOpen} aria-label={es ? "Ver tareas pendientes" : "View pending tasks"} className="relative grid size-10 place-items-center rounded-xl border border-border bg-card text-muted-foreground shadow-sm transition-colors hover:bg-accent/50 hover:text-foreground"><Bell className="size-4" /><span className="absolute -right-1 -top-1 grid size-5 place-items-center rounded-full bg-primary text-[0.65rem] font-semibold text-primary-foreground ring-2 ring-background">{notificationThreads.length}</span></button>
 
           {notificationsOpen && (
             <div className="absolute right-0 top-12 z-50 w-[24rem] overflow-hidden rounded-2xl border border-border bg-card shadow-[0_18px_50px_rgba(40,30,70,0.14)]">
-              <div className="flex items-center justify-between border-b border-border px-4 py-3"><div><p className="text-sm font-semibold text-foreground">{notificationThreads.length} actions need attention</p><p className="text-xs text-muted-foreground">Each item opens the exact thread or workflow.</p></div><button type="button" onClick={() => setNotificationsOpen(false)} aria-label="Close notifications" className="grid size-7 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground"><X className="size-4" /></button></div>
-              <div className="max-h-[22rem] overflow-y-auto p-2">{notificationThreads.map((thread) => { const linkedMessage = getDemoMessageForThread(thread.linkedMessageId); const task = taskForThread(thread); const TaskIcon = task.icon; return <Link key={thread.id} href={`/messages/?thread=${thread.id}`} onClick={() => setNotificationsOpen(false)} className="block rounded-xl px-3 py-3 transition-colors hover:bg-accent/40"><div className="flex items-start gap-3"><InitialAvatar name={thread.counterpart} className="size-9 text-xs" /><span className="min-w-0 flex-1"><span className="flex items-center justify-between gap-2"><span className="truncate text-sm font-medium text-foreground">{thread.counterpart}</span><span className="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-[0.58rem] font-semibold uppercase tracking-wide text-primary">{linkedMessage?.status ?? thread.channel}</span></span><span className="mt-0.5 block text-xs font-semibold text-foreground/80">{task.title}</span><span className="mt-0.5 block text-xs leading-snug text-muted-foreground">{thread.preview}</span><span className="mt-2 inline-flex h-7 items-center gap-1.5 rounded-full bg-primary px-2.5 text-[0.65rem] font-semibold text-primary-foreground"><TaskIcon className="size-3" />{task.action}</span></span></div></Link> })}</div>
-              <div className="border-t border-border p-3"><Link href="/messages/" onClick={() => setNotificationsOpen(false)} className="inline-flex h-9 w-full items-center justify-center rounded-xl bg-primary text-xs font-semibold text-primary-foreground transition-colors hover:bg-primary/90">Open full message center</Link></div>
+              <div className="flex items-center justify-between border-b border-border px-4 py-3"><div><p className="text-sm font-semibold text-foreground">{es ? `${notificationThreads.length} acciones requieren atención` : `${notificationThreads.length} actions need attention`}</p><p className="text-xs text-muted-foreground">{es ? "Cada elemento abre la conversación o flujo correspondiente." : "Each item opens the exact thread or workflow."}</p></div><button type="button" onClick={() => setNotificationsOpen(false)} aria-label={es ? "Cerrar tareas" : "Close notifications"} className="grid size-7 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground"><X className="size-4" /></button></div>
+              <div className="max-h-[22rem] overflow-y-auto p-2">{notificationThreads.map((thread) => { const linkedMessage = getDemoMessageForThread(thread.linkedMessageId); const task = taskForThread(thread, locale); const TaskIcon = task.icon; return <Link key={thread.id} href={`/messages/?thread=${thread.id}`} onClick={() => setNotificationsOpen(false)} className="block rounded-xl px-3 py-3 transition-colors hover:bg-accent/40"><div className="flex items-start gap-3"><InitialAvatar name={thread.counterpart} className="size-9 text-xs" /><span className="min-w-0 flex-1"><span className="flex items-center justify-between gap-2"><span className="truncate text-sm font-medium text-foreground">{thread.counterpart}</span><span className="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-[0.58rem] font-semibold uppercase tracking-wide text-primary">{linkedMessage?.status ?? thread.channel}</span></span><span className="mt-0.5 block text-xs font-semibold text-foreground/80">{task.title}</span><span className="mt-0.5 block text-xs leading-snug text-muted-foreground">{thread.preview}</span><span className="mt-2 inline-flex h-7 items-center gap-1.5 rounded-full bg-primary px-2.5 text-[0.65rem] font-semibold text-primary-foreground"><TaskIcon className="size-3" />{task.action}</span></span></div></Link> })}</div>
+              <div className="border-t border-border p-3"><Link href="/messages/" onClick={() => setNotificationsOpen(false)} className="inline-flex h-9 w-full items-center justify-center rounded-xl bg-primary text-xs font-semibold text-primary-foreground transition-colors hover:bg-primary/90">{es ? "Abrir centro de mensajes" : "Open full message center"}</Link></div>
             </div>
           )}
         </div>
