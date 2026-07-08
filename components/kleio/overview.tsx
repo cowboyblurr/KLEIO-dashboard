@@ -31,6 +31,15 @@ export function Overview() {
   const index = Math.max(0, drawerSubmissions.findIndex((s) => s.id === selectedId))
   const selected = drawerSubmissions[index] ?? drawerSubmissions[0]
 
+  const conversionSteps = [
+    { label: locale === "es" ? "Convocatoria" : "Open Call", detail: locale === "es" ? "Programa activo configurado" : "Active program configured", href: "/programs/" },
+    { label: locale === "es" ? "Postulantes" : "Applicants", detail: `${analytics.totalApplications} ${locale === "es" ? "registros" : "records"}`, href: "/review-queue/" },
+    { label: locale === "es" ? "Revisores" : "Reviewers", detail: `${analytics.pendingReviewerActionsCount} ${locale === "es" ? "pendientes" : "pending"}`, href: "/committee/" },
+    { label: locale === "es" ? "Incompleto" : "Incomplete", detail: `${analytics.incompleteCount} ${locale === "es" ? "necesitan atención" : "need attention"}`, href: "/review-queue/" },
+    { label: locale === "es" ? "Shortlist" : "Shortlist", detail: `${analytics.shortlistedCount} ${locale === "es" ? "candidaturas" : "candidates"}`, href: "/shortlist/" },
+    { label: locale === "es" ? "Informe" : "Report", detail: locale === "es" ? "Resumen listo" : "Summary ready", href: "/reports/" },
+  ]
+
   function select(id: string) {
     setSelectedId(id)
     setDrawerOpen(true)
@@ -59,25 +68,34 @@ export function Overview() {
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="max-w-2xl">
                 <p className="text-[0.62rem] font-semibold uppercase tracking-[0.16em] text-[#A997E8]">
-                  {locale === "es" ? "Siguiente mejor acción" : "Next best action"}
+                  {locale === "es" ? "Ruta de conversión" : "Conversion path"}
                 </p>
                 <h2 className="mt-1 font-serif text-lg font-semibold text-[#292631]">
-                  {locale === "es" ? "Revisa postulaciones incompletas y asignaciones pendientes" : "Review incomplete submissions and pending reviewer assignments"}
+                  {locale === "es" ? "Convocatoria → Postulantes → Revisión → Shortlist → Informe" : "Open call → Applicants → Review room → Shortlist → Report"}
                 </h2>
                 <p className="mt-1 text-sm leading-relaxed text-[#6F6882]">
                   {locale === "es"
-                    ? "Empieza por la Cola de revisión para ver qué materiales faltan, qué revisores siguen pendientes y qué candidaturas pueden avanzar."
-                    : "Start in Review Queue to see missing materials, pending reviewers, and which candidates can move forward."}
+                    ? "Empieza por el programa abierto, revisa materiales incompletos, confirma revisores y avanza candidatos al informe final."
+                    : "Start with the open call, resolve incomplete materials, confirm reviewer progress, and move candidates toward a final report."}
                 </p>
               </div>
               <div className="flex flex-wrap gap-2">
-                <Link href="/review-queue/" className="inline-flex h-9 items-center rounded-full bg-[#5B4B8A] px-4 text-xs font-semibold text-white transition-opacity hover:opacity-90">
-                  {locale === "es" ? "Abrir Cola" : "Open Review Queue"}
+                <Link href="/programs/" className="inline-flex h-9 items-center rounded-full bg-[#5B4B8A] px-4 text-xs font-semibold text-white transition-opacity hover:opacity-90">
+                  {locale === "es" ? "Ver programas" : "View Programs"}
                 </Link>
-                <Link href="/committee/" className="inline-flex h-9 items-center rounded-full border border-[#E7E1F7] bg-white px-4 text-xs font-semibold text-[#5B4B8A] transition-colors hover:bg-[#F7F4FF]">
-                  {locale === "es" ? "Ver Comité" : "View Committee"}
+                <Link href="/review-room/" className="inline-flex h-9 items-center rounded-full border border-[#E7E1F7] bg-white px-4 text-xs font-semibold text-[#5B4B8A] transition-colors hover:bg-[#F7F4FF]">
+                  {locale === "es" ? "Abrir sala" : "Open Review Room"}
                 </Link>
               </div>
+            </div>
+            <div className="mt-4 grid gap-2 md:grid-cols-3 xl:grid-cols-6">
+              {conversionSteps.map((step, i) => (
+                <Link key={step.label} href={step.href} className="rounded-xl border border-[#E7E1F7] bg-[#FDFBFF] p-3 transition-colors hover:bg-[#F7F4FF]">
+                  <span className="text-[0.62rem] font-semibold uppercase tracking-[0.14em] text-[#A997E8]">0{i + 1}</span>
+                  <p className="mt-1 font-serif text-sm font-semibold text-[#292631]">{step.label}</p>
+                  <p className="mt-0.5 text-xs text-[#7F7890]">{step.detail}</p>
+                </Link>
+              ))}
             </div>
           </section>
 
