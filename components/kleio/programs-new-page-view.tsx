@@ -18,6 +18,14 @@ const applicationQuestions = [
   "Two professional references",
 ]
 
+const setupSteps = [
+  ["01", "Call details", "Define title, description, category, and public-facing eligibility."],
+  ["02", "Materials", "Choose the exact files and fields artists must provide."],
+  ["03", "Rubric", "Set the criteria reviewers will use to evaluate submissions."],
+  ["04", "Committee", "Assign reviewers, jurors, or staff before intake begins."],
+  ["05", "Publish", "Open the call and route incoming applicants into the review queue."],
+]
+
 export function ProgramsNewPageView() {
   const [published, setPublished] = useState(false)
 
@@ -26,29 +34,51 @@ export function ProgramsNewPageView() {
       <div className="mx-auto max-w-6xl">
         <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">Program setup</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">Open call creation</p>
             <h1 className="mt-2 font-serif text-3xl font-semibold tracking-tight text-foreground">
               Create open call
             </h1>
             <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">
-              Demo setup for {institution.name}. Define the opportunity, required materials, rubric, and review
-              committee before applications arrive.
+              Build the institutional entry point for {institution.name}: opportunity details, required materials,
+              application questions, rubric, and committee coverage before submissions arrive.
             </p>
           </div>
           <span className="rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium text-muted-foreground">
-            {institution.demoLabel}
+            Working demo workflow
           </span>
         </div>
 
+        <section className="mb-4 rounded-2xl border border-[#E7E1F7] bg-[#F7F4FF] p-4 shadow-[0_14px_38px_rgba(82,64,130,0.06)]">
+          <div className="grid gap-3 md:grid-cols-5">
+            {setupSteps.map(([number, title, body]) => (
+              <div key={title} className="rounded-xl border border-[#E7E1F7] bg-white px-3 py-3">
+                <p className="text-[0.62rem] font-semibold uppercase tracking-[0.14em] text-[#A997E8]">{number}</p>
+                <p className="mt-1 font-serif text-sm font-semibold text-[#292631]">{title}</p>
+                <p className="mt-1 text-xs leading-relaxed text-[#7F7890]">{body}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
         {published && (
-          <p className="mb-4 rounded-xl border border-[oklch(0.85_0.07_150)] bg-[oklch(0.96_0.04_150)] px-3 py-2 text-xs font-medium text-[oklch(0.4_0.12_150)]">
-            Open call published for {program.title} (demo only — no data leaves this session).
-          </p>
+          <div className="mb-4 rounded-xl border border-[oklch(0.85_0.07_150)] bg-[oklch(0.96_0.04_150)] px-3 py-3 text-sm text-[oklch(0.4_0.12_150)]">
+            <p className="font-semibold">Open call published for {program.title}.</p>
+            <p className="mt-1 text-xs opacity-80">Incoming applicants now route to the Review Queue and Review Room for intake, reviewer progress, shortlist, and reporting.</p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Link href="/review-queue/" className="inline-flex h-9 items-center rounded-xl bg-primary px-3 text-xs font-semibold text-primary-foreground transition-colors hover:bg-primary/90">
+                Open Review Queue
+              </Link>
+              <Link href="/review-room/" className="inline-flex h-9 items-center rounded-xl border border-[oklch(0.85_0.07_150)] bg-white px-3 text-xs font-semibold text-[oklch(0.4_0.12_150)] transition-colors hover:bg-white/70">
+                Enter Review Room
+              </Link>
+            </div>
+          </div>
         )}
 
         <div className="grid gap-4 lg:grid-cols-[minmax(0,1.1fr)_minmax(320px,0.9fr)]">
           <section className="rounded-2xl border border-border bg-card p-5 shadow-sm kleio-card-shadow">
-            <h2 className="font-serif text-xl font-semibold text-foreground">Program details</h2>
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">Here is the open call</p>
+            <h2 className="mt-2 font-serif text-xl font-semibold text-foreground">{program.title}</h2>
             <p className="mt-1 text-sm text-muted-foreground">{program.category} · {program.cycle}</p>
             <p className="mt-4 text-sm leading-relaxed text-muted-foreground">{program.description}</p>
           </section>
@@ -64,6 +94,7 @@ export function ProgramsNewPageView() {
 
           <section className="rounded-2xl border border-border bg-card p-5 shadow-sm kleio-card-shadow">
             <h2 className="font-serif text-xl font-semibold text-foreground">Required artist materials</h2>
+            <p className="mt-1 text-sm text-muted-foreground">These fields become the completeness checklist inside the Review Queue.</p>
             <div className="mt-4 grid gap-2 sm:grid-cols-2">
               {program.requiredMaterials.map((item) => (
                 <div key={item} className="rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground">
@@ -75,6 +106,7 @@ export function ProgramsNewPageView() {
 
           <section className="rounded-2xl border border-border bg-card p-5 shadow-sm kleio-card-shadow">
             <h2 className="font-serif text-xl font-semibold text-foreground">Application questions</h2>
+            <p className="mt-1 text-sm text-muted-foreground">Artist answers can be drafted from a Creative Passport, then reviewed before submission.</p>
             <div className="mt-4 space-y-2">
               {applicationQuestions.map((item) => (
                 <div key={item} className="rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground">
@@ -86,6 +118,7 @@ export function ProgramsNewPageView() {
 
           <section className="rounded-2xl border border-border bg-card p-5 shadow-sm kleio-card-shadow">
             <h2 className="font-serif text-xl font-semibold text-foreground">Review rubric</h2>
+            <p className="mt-1 text-sm text-muted-foreground">Criteria stay visible to reviewers and preserved for reports.</p>
             <div className="mt-4 space-y-2">
               {program.rubric.map((item) => (
                 <div key={item} className="flex items-center justify-between rounded-xl border border-border bg-background px-3 py-2 text-sm">
@@ -98,6 +131,7 @@ export function ProgramsNewPageView() {
 
           <section className="rounded-2xl border border-border bg-card p-5 shadow-sm kleio-card-shadow">
             <h2 className="font-serif text-xl font-semibold text-foreground">Committee assignment</h2>
+            <p className="mt-1 text-sm text-muted-foreground">Reviewer seats remain simple: assigned, in review, submitted, or needs discussion.</p>
             <div className="mt-4 space-y-3">
               {committee.map((person) => {
                 const progress = reviewerProgress.find((entry) => entry.reviewerId === person.id)
@@ -132,10 +166,10 @@ export function ProgramsNewPageView() {
             Back to Programs
           </Link>
           <Link
-            href="/dashboard/"
+            href="/review-queue/"
             className="inline-flex h-11 items-center rounded-xl border border-border bg-card px-5 text-sm font-semibold text-foreground transition-colors hover:bg-accent/50"
           >
-            Institution Overview
+            Review Queue
           </Link>
         </div>
       </div>
