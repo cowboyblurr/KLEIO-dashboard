@@ -21,12 +21,9 @@ export function ReviewQueuePageView() {
   const { t } = useKleioLocale()
   const [activeTab, setActiveTab] = useState("priority")
   const [selectedId, setSelectedId] = useState("mei-lin-zhang")
-  const [drawerOpen, setDrawerOpen] = useState(true)
+  const [drawerOpen, setDrawerOpen] = useState(false)
 
-  const visibleSubmissions = useMemo(
-    () => sortScenarioFirst(getQueueForTab(activeTab)),
-    [activeTab],
-  )
+  const visibleSubmissions = useMemo(() => sortScenarioFirst(getQueueForTab(activeTab)), [activeTab])
   const drawerSubmissions = useMemo(() => sortScenarioFirst(analytics.reviewQueue), [])
   const index = Math.max(0, drawerSubmissions.findIndex((s) => s.id === selectedId))
   const selected = drawerSubmissions[index] ?? drawerSubmissions[0]
@@ -36,7 +33,7 @@ export function ReviewQueuePageView() {
       <div className="min-w-0 flex-1 overflow-y-auto">
         <DemoPageShell
           title={t("institution.reviewQueue.title")}
-          description="Here are the applicants, what is incomplete, which reviewers are pending, and what can move into the editorial Review Room."
+          description="Start here to clean incomplete records, follow up with reviewers, and move ready applicants into the Review Room."
           actions={
             <>
               <Link href="/review-room/" className="inline-flex h-10 items-center rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90">
@@ -56,15 +53,16 @@ export function ReviewQueuePageView() {
           </div>
 
           <section className="mb-4 rounded-2xl border border-[#E7E1F7] bg-[#F7F4FF] p-4 shadow-sm">
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#A997E8]">
-              Review queue answers the first UX gap
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#A997E8]">Before committee review</p>
+            <p className="mt-1 max-w-3xl text-sm leading-relaxed text-[#6F6882]">
+              Every applicant row now has one recommended action: request missing materials, open review, send a reviewer reminder, or move the record into the Review Room.
             </p>
             <div className="mt-3 grid gap-2 xl:grid-cols-4">
               {[
                 ["Applicants", `${analytics.reviewQueueCount} records in queue`],
                 ["Incomplete", `${analytics.incompleteCount} need material cleanup`],
-                ["Reviewers", `${analytics.pendingReviewerActionsCount} actions pending`],
-                ["Next room", "Move clean records into Review Room"],
+                ["Reviewer follow-up", `${analytics.pendingReviewerActionsCount} actions pending`],
+                ["Next room", "Ready records move into Review Room"],
               ].map(([title, body]) => (
                 <div key={title} className="rounded-xl border border-[#E7E1F7] bg-white p-3">
                   <p className="font-serif text-sm font-semibold text-[#292631]">{title}</p>
