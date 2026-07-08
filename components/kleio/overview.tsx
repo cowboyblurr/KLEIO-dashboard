@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { useMemo, useState } from "react"
+import { useMemo, useState, type CSSProperties } from "react"
 import { AlertCircle, CheckCircle2, Clock3, FileText, UsersRound } from "lucide-react"
 import { analytics, getPrimaryUserFirstName, getQueueForTab } from "@/lib/kleio-analytics"
 import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
@@ -17,6 +17,10 @@ function sortScenarioFirst<T extends { scenario?: string }>(items: T[]) {
     if (!a.scenario && b.scenario) return 1
     return 0
   })
+}
+
+function clampPercent(value: number) {
+  return Math.max(0, Math.min(100, value))
 }
 
 type PriorityCardProps = {
@@ -77,6 +81,99 @@ function ReviewCycleStrip({ locale }: { locale: string }) {
   )
 }
 
+function ReviewReadinessWidget({
+  locale,
+  pct,
+  readyCount,
+  attentionCount,
+}: {
+  locale: string
+  pct: number
+  readyCount: number
+  attentionCount: number
+}) {
+  const radius = 48
+  const circumference = 2 * Math.PI * radius
+  const safePct = clampPercent(pct)
+  const targetOffset = circumference - (safePct / 100) * circumference
+  const animatedStyle = {
+    "--target-offset": targetOffset,
+    "--ring-length": circumference,
+  } as CSSProperties
+
+  return (
+    <aside className="relative overflow-hidden rounded-2xl border border-[#E7E1F7] bg-[radial-gradient(circle_at_35%_20%,#FFFFFF_0%,#F7F4FF_45%,#FDFBFF_100%)] p-4 shadow-[0_18px_46px_rgba(82,64,130,0.075)]">
+      <style>{`
+        @keyframes kleioReadinessRing {
+          from { stroke-dashoffset: var(--ring-length); }
+          to { stroke-dashoffset: var(--target-offset); }
+        }
+        @keyframes kleioReadinessGlow {
+          0%, 100% { opacity: 0.34; transform: scale(0.96); }
+          50% { opacity: 0.72; transform: scale(1.03); }
+        }
+        .kleio-readiness-ring { animation: kleioReadinessRing 1200ms cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+        .kleio-readiness-glow { animation: kleioReadinessGlow 2800ms ease-in-out infinite; }
+        @media (prefers-reduced-motion: reduce) {
+          .kleio-readiness-ring, .kleio-readiness-glow { animation: none; }
+          .kleio-readiness-ring { stroke-dashoffset: var(--target-offset); }
+        }
+      `}</style>
+
+      <div className="pointer-events-none absolute -right-10 -top-10 size-28 rounded-full bg-[#D8D0F2]/35 blur-2xl kleio-readiness-glow" />
+      <div className="relative flex items-start justify-between gap-3">
+        <div>
+          <p className="text-[0.64rem] font-semibold uppercase tracking-[0.16em] text-[#A997E8]">
+            {locale === "es" ? "Preparación" : "Review readiness"}
+          </p>
+          <p className="mt-1 max-w-36 text-sm leading-relaxed text-[#6F6882]">
+            {locale === "es" ? "Qué parte de la cola puede revisarse con información suficiente." : "How much of the queue has enough context to review now."}
+          </p>
+        </div>
+        <Link href="/review-room/" className="rounded-full border border-[#E7E1F7] bg-white/80 px-3 py-1 text-[0.65rem] font-semibold text-[#5B4B8A] transition-colors hover:bg-white">
+          {locale === "es" ? "Sala" : "Room"}
+        </Link>
+      </div>
+
+      <div className="relative mt-4 grid place-items-center">
+        <svg viewBox="0 0 120 120" className="size-36 rotate-[-90deg]" aria-hidden="true">
+          <circle cx="60" cy="60" r={radius} fill="none" stroke="#EEE9FA" strokeWidth="10" />
+          <circle
+            cx="60"
+            cy="60"
+            r={radius}
+            fill="none"
+            stroke="#5B4B8A"
+            strokeWidth="10"
+            strokeLinecap="round"
+            strokeDasharray={circumference}
+            strokeDashoffset={circumference}
+            className="kleio-readiness-ring"
+            style={animatedStyle}
+          />
+        </svg>
+        <div className="absolute text-center">
+          <p className="font-serif text-4xl font-semibold tracking-tight text-[#292631]">{safePct}%</p>
+          <p className="mt-0.5 text-[0.65rem] font-medium uppercase tracking-[0.14em] text-[#A997E8]">
+            {locale === "es" ? "listo" : "ready"}
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
+        <div className="rounded-xl bg-white/80 px-3 py-2">
+          <p className="font-semibold text-[#292631]">{readyCount}</p>
+          <p className="mt-0.5 text-[#7F7890]">{locale === "es" ? "revisables" : "review-ready"}</p>
+        </div>
+        <div className="rounded-xl bg-white/80 px-3 py-2">
+          <p className="font-semibold text-[#292631]">{attentionCount}</p>
+          <p className="mt-0.5 text-[#7F7890]">{locale === "es" ? "requieren cuidado" : "need care"}</p>
+        </div>
+      </div>
+    </aside>
+  )
+}
+
 export function Overview() {
   const { t, locale } = useKleioLocale()
   const [activeTab, setActiveTab] = useState("priority")
@@ -87,6 +184,8 @@ export function Overview() {
   const drawerSubmissions = useMemo(() => sortScenarioFirst(analytics.reviewQueue), [])
   const index = Math.max(0, drawerSubmissions.findIndex((s) => s.id === selectedId))
   const selected = drawerSubmissions[index] ?? drawerSubmissions[0]
+  const readyReviewCount = Math.max(analytics.reviewQueueCount - analytics.needsAttentionCount, 0)
+  const reviewReadinessPct = Math.round((readyReviewCount / Math.max(analytics.reviewQueueCount, 1)) * 100)
 
   function select(id: string) {
     setSelectedId(id)
@@ -118,30 +217,39 @@ export function Overview() {
 
           <ReviewCycleStrip locale={locale} />
 
-          <section className="grid gap-3 md:grid-cols-3">
-            <PriorityCard
-              label={locale === "es" ? "Necesita atención" : "Needs attention"}
-              value={analytics.needsAttentionCount}
-              body={locale === "es" ? "Postulaciones con materiales faltantes o aclaraciones pendientes antes de revisión." : "Submissions with missing materials or clarification needed before review can move cleanly."}
-              href="/review-queue/"
-              cta={locale === "es" ? "Abrir cola" : "Open queue"}
-              tone="attention"
-            />
-            <PriorityCard
-              label={locale === "es" ? "Revisión pendiente" : "Reviewer follow-up"}
-              value={analytics.pendingReviewerActionsCount}
-              body={locale === "es" ? "Revisores que aún están asignados, en progreso o esperando completar su parte." : "Reviewer seats that are still assigned, in progress, or waiting for completion."}
-              href="/committee/"
-              cta={locale === "es" ? "Ver revisores" : "View reviewers"}
-              tone="review"
-            />
-            <PriorityCard
-              label={locale === "es" ? "Decisión cercana" : "Ready for decision"}
-              value={analytics.shortlistedCount + analytics.pendingVoteCount}
-              body={locale === "es" ? "Candidaturas con contexto suficiente para shortlist, voto de comité o informe." : "Candidates with enough context for shortlist, committee vote, or report preparation."}
-              href="/review-room/"
-              cta={locale === "es" ? "Abrir sala" : "Open review room"}
-              tone="decision"
+          <section className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_18rem]">
+            <div className="grid gap-3 md:grid-cols-3">
+              <PriorityCard
+                label={locale === "es" ? "Necesita atención" : "Needs attention"}
+                value={analytics.needsAttentionCount}
+                body={locale === "es" ? "Postulaciones con materiales faltantes o aclaraciones pendientes antes de revisión." : "Submissions with missing materials or clarification needed before review can move cleanly."}
+                href="/review-queue/"
+                cta={locale === "es" ? "Abrir cola" : "Open queue"}
+                tone="attention"
+              />
+              <PriorityCard
+                label={locale === "es" ? "Revisión pendiente" : "Reviewer follow-up"}
+                value={analytics.pendingReviewerActionsCount}
+                body={locale === "es" ? "Revisores que aún están asignados, en progreso o esperando completar su parte." : "Reviewer seats that are still assigned, in progress, or waiting for completion."}
+                href="/committee/"
+                cta={locale === "es" ? "Ver revisores" : "View reviewers"}
+                tone="review"
+              />
+              <PriorityCard
+                label={locale === "es" ? "Decisión cercana" : "Ready for decision"}
+                value={analytics.shortlistedCount + analytics.pendingVoteCount}
+                body={locale === "es" ? "Candidaturas con contexto suficiente para shortlist, voto de comité o informe." : "Candidates with enough context for shortlist, committee vote, or report preparation."}
+                href="/review-room/"
+                cta={locale === "es" ? "Abrir sala" : "Open review room"}
+                tone="decision"
+              />
+            </div>
+
+            <ReviewReadinessWidget
+              locale={locale}
+              pct={reviewReadinessPct}
+              readyCount={readyReviewCount}
+              attentionCount={analytics.needsAttentionCount}
             />
           </section>
 
