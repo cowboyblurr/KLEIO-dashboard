@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from "react"
 import Link from "next/link"
-import { useSearchParams } from "next/navigation"
 import { Mail, Send } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { institution, messageThreads, type MessageEntry } from "@/lib/kleio-data"
@@ -21,21 +20,19 @@ function todayLabel() {
 }
 
 export function MessagesView() {
-  const searchParams = useSearchParams()
-  const requestedThreadId = searchParams.get("thread")
-  const requestedThreadExists = messageThreads.some((thread) => thread.id === requestedThreadId)
-  const [selectedId, setSelectedId] = useState(requestedThreadExists ? requestedThreadId! : messageThreads[0]?.id ?? "")
+  const [selectedId, setSelectedId] = useState(messageThreads[0]?.id ?? "")
   const [sent, setSent] = useState(false)
   const [draft, setDraft] = useState("")
   const [localReplies, setLocalReplies] = useState<Record<string, MessageEntry[]>>({})
 
   useEffect(() => {
+    const requestedThreadId = new URLSearchParams(window.location.search).get("thread")
     if (requestedThreadId && messageThreads.some((thread) => thread.id === requestedThreadId)) {
       setSelectedId(requestedThreadId)
       setSent(false)
       setDraft("")
     }
-  }, [requestedThreadId])
+  }, [])
 
   const selected = messageThreads.find((thread) => thread.id === selectedId) ?? messageThreads[0]
   const visibleMessages = useMemo(() => {
