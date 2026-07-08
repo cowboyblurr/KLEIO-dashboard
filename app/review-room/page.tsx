@@ -5,7 +5,7 @@ import { ReviewRoomPageView } from "@/components/kleio/review-room-page-view"
 export const metadata: Metadata = {
   title: "KLEIO — Review Room",
   description:
-    "An editorial review room for open calls, applicants, reviewers, incomplete materials, shortlist decisions, and reports.",
+    "A focused committee workspace for discussing applicants with enough context to move from review into shortlist, decision history, and reporting.",
 }
 
 export default function Page() {
