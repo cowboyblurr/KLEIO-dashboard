@@ -23,6 +23,16 @@ function institutionLabel(organization: string) {
   return organization === "Independent" ? "KLEIO Arthouse" : organization
 }
 
+function StageCard({ label, value, body }: { label: string; value: number | string; body: string }) {
+  return (
+    <div className="rounded-2xl border bg-white p-4" style={cardStyle}>
+      <p className="text-[0.68rem] font-semibold uppercase tracking-[0.16em]" style={{ color: mutedColor }}>{label}</p>
+      <p className="mt-2 font-serif text-3xl font-semibold" style={{ color: inkColor }}>{value}</p>
+      <p className="mt-1 text-xs leading-relaxed" style={{ color: mutedColor }}>{body}</p>
+    </div>
+  )
+}
+
 export function CollaboratorDashboardView() {
   const { locale, t } = useKleioLocale()
   const analytics = collaboratorAnalytics
@@ -32,17 +42,21 @@ export function CollaboratorDashboardView() {
 
   const pendingCount = analytics.pendingSubmissions.length
   const guidelineCount = analytics.guidelinePrograms.length
+  const needsDiscussionCount = analytics.dueSoonReviews + analytics.overdueReviews
 
   return (
     <main className="h-full overflow-y-auto px-6 py-6">
       <div className="mx-auto max-w-[1180px] space-y-5">
         <header className="rounded-2xl border bg-white p-6" style={cardStyle}>
           <p className="text-[0.72rem] font-semibold uppercase tracking-[0.2em]" style={{ color: lavenderDeep }}>
-            {t("collaborator.overview.eyebrow")}
+            Reviewer seat
           </p>
           <h1 className="mt-2 font-serif text-2xl font-semibold tracking-tight xl:text-3xl" style={{ color: inkColor }}>
-            {t("collaborator.overview.title", { institution: institutionLabel(collaborator.organization) })}
+            Your assigned reviews for {institutionLabel(collaborator.organization)}
           </h1>
+          <p className="mt-2 max-w-2xl text-sm leading-relaxed" style={{ color: mutedColor }}>
+            This seat stays intentionally simple. Reviewers see what is assigned, what is in review, what has been submitted, and what needs discussion.
+          </p>
           <div className="mt-4 flex flex-wrap items-center gap-3 text-sm" style={{ color: mutedColor }}>
             <span className="font-medium" style={{ color: inkColor }}>{collaborator.name}</span>
             <span>·</span>
@@ -64,17 +78,24 @@ export function CollaboratorDashboardView() {
               href="/collaborator-dashboard/review-queue/"
               className="inline-flex h-10 items-center justify-center rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
             >
-              {t("collaborator.overview.cta.continueReviewing")}
+              Continue Reviewing
             </Link>
             <Link
               href="/collaborator-dashboard/guidelines/"
               className="inline-flex h-10 items-center justify-center rounded-xl border px-4 text-sm font-semibold transition-colors hover:bg-[#F7F4FF]"
               style={{ borderColor: "#D8D0F2", color: lavenderDeep }}
             >
-              {t("collaborator.overview.cta.viewGuidelines")}
+              View Guidelines
             </Link>
           </div>
         </header>
+
+        <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <StageCard label="Assigned" value={analytics.assignedReviews} body="All submissions currently assigned to this reviewer seat." />
+          <StageCard label="In Review" value={analytics.pendingReviews} body="Reviews not yet submitted or still actively being read." />
+          <StageCard label="Submitted" value={analytics.completedReviews} body="Completed reviews already returned to the committee." />
+          <StageCard label="Needs Discussion" value={needsDiscussionCount} body="Due soon, overdue, or likely to need committee context." />
+        </section>
 
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
           <WorkspaceMetricCard label={t("collaborator.overview.metric.assignedReviews")} value={analytics.assignedReviews} />
@@ -89,10 +110,10 @@ export function CollaboratorDashboardView() {
             <div className="border-b px-5 py-4" style={{ borderColor: lavenderSoftLine }}>
               <div className="flex items-center justify-between gap-3">
                 <h2 className="font-serif text-lg font-semibold" style={{ color: inkColor }}>
-                  {t("collaborator.overview.section.myReviewQueue")}
+                  My Review Queue
                 </h2>
                 <Link href="/collaborator-dashboard/review-queue/" className="text-xs font-medium" style={{ color: lavenderDeep }}>
-                  {t("collaborator.overview.cta.openQueue")}
+                  Open queue
                 </Link>
               </div>
               <p className="mt-1 text-sm" style={{ color: mutedColor }}>
@@ -124,7 +145,7 @@ export function CollaboratorDashboardView() {
                         href="/collaborator-dashboard/review-queue/"
                         className="text-xs font-medium" style={{ color: lavenderDeep }}
                       >
-                        {t("collaborator.overview.cta.openReview")}
+                        Open review
                       </Link>
                     </div>
                   </li>
@@ -184,10 +205,10 @@ export function CollaboratorDashboardView() {
           <div className="border-b px-5 py-4" style={{ borderColor: lavenderSoftLine }}>
             <div className="flex items-center justify-between gap-3">
               <h2 className="font-serif text-lg font-semibold" style={{ color: inkColor }}>
-                {t("collaborator.overview.section.completedReviews")}
+                Submitted Reviews
               </h2>
               <Link href="/collaborator-dashboard/submitted/" className="text-xs font-medium" style={{ color: lavenderDeep }}>
-                {t("collaborator.overview.cta.viewSubmitted")}
+                View submitted
               </Link>
             </div>
           </div>
