@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { useMemo, useState, type CSSProperties } from "react"
 import { AlertCircle, CheckCircle2, Clock3, FileText, UsersRound } from "lucide-react"
-import { analytics, getPrimaryUserFirstName, getQueueForTab } from "@/lib/kleio-analytics"
+import { analytics, getQueueForTab } from "@/lib/kleio-analytics"
 import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
 import { ApplicationsChart } from "@/components/kleio/applications-chart"
 import { StatusBreakdown } from "@/components/kleio/status-breakdown"
@@ -64,9 +64,9 @@ function ReviewCycleStrip({ locale }: { locale: string }) {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2 text-sm text-[#6F6882]">
           <Clock3 className="size-4 text-[#A997E8]" />
-          <span className="font-medium text-[#292631]">{locale === "es" ? "El flujo empieza aquí" : "Workflow starts here"}</span>
+          <span className="font-medium text-[#292631]">{locale === "es" ? "Flujo de revisión" : "Review workflow"}</span>
           <span className="text-[#B4ADC4]">/</span>
-          <span>{locale === "es" ? "Resumen primero, trabajo después" : "Orient first, then work the queue"}</span>
+          <span>{locale === "es" ? "Revisar estado, limpiar pendientes y avanzar decisiones" : "Check status, clear blockers, and move decisions forward"}</span>
         </div>
         <div className="flex flex-wrap items-center gap-1.5 text-[0.68rem] font-medium text-[#7F7890]">
           {steps.map((step, index) => (
@@ -101,7 +101,7 @@ function ReviewReadinessWidget({ locale, pct, readyCount, attentionCount }: { lo
       <div className="relative flex items-start justify-between gap-3">
         <div>
           <p className="text-[0.64rem] font-semibold uppercase tracking-[0.16em] text-[#A997E8]">{locale === "es" ? "Preparación" : "Review readiness"}</p>
-          <p className="mt-1 max-w-36 text-sm leading-relaxed text-[#6F6882]">{locale === "es" ? "Qué parte de la cola puede revisarse con información suficiente." : "How much of the queue has enough context to review now."}</p>
+          <p className="mt-1 max-w-36 text-sm leading-relaxed text-[#6F6882]">{locale === "es" ? "Qué parte de la cola tiene suficiente contexto para revisarse ahora." : "How much of the queue has enough context to review now."}</p>
         </div>
         <Link href="/review-room/" className="rounded-full border border-[#E7E1F7] bg-white/80 px-3 py-1 text-[0.65rem] font-semibold text-[#5B4B8A] transition-colors hover:bg-white">{locale === "es" ? "Sala" : "Room"}</Link>
       </div>
@@ -115,7 +115,7 @@ function ReviewReadinessWidget({ locale, pct, readyCount, attentionCount }: { lo
 }
 
 export function Overview() {
-  const { t, locale } = useKleioLocale()
+  const { locale } = useKleioLocale()
   const [activeTab, setActiveTab] = useState("priority")
   const [selectedId, setSelectedId] = useState("amina-el-badri")
   const [drawerOpen, setDrawerOpen] = useState(false)
@@ -135,8 +135,8 @@ export function Overview() {
         <div className="w-full max-w-none">
           <header data-kleio-guide-target="institution-overview-intro" className="mb-5 flex flex-wrap items-end justify-between gap-3">
             <div>
-              <h1 className="text-pretty font-serif text-[1.7rem] font-semibold tracking-tight text-foreground xl:text-3xl">{t("institution.workspace.dashboard.greeting", { name: getPrimaryUserFirstName() })}</h1>
-              <p className="mt-1.5 max-w-2xl text-sm text-muted-foreground">{locale === "es" ? "Una vista tranquila para ver qué necesita atención, qué revisión sigue pendiente y qué decisiones pueden avanzar." : "A calm view of what needs attention, which reviews are still pending, and which decisions can move forward."}</p>
+              <h1 className="text-pretty font-serif text-[1.7rem] font-semibold tracking-tight text-foreground xl:text-3xl">{locale === "es" ? "Espacio institucional" : "Institution Workspace"}</h1>
+              <p className="mt-1.5 max-w-2xl text-sm text-muted-foreground">{locale === "es" ? "Da seguimiento a postulaciones abiertas, materiales incompletos, avance de revisores y candidaturas listas para decisión dentro del ciclo actual." : "Track open submissions, incomplete materials, reviewer progress, and decision-ready candidates across the current review cycle."}</p>
             </div>
             <DemoEnvironmentBadge compact className="hidden xl:inline-flex" />
           </header>
