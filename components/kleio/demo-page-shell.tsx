@@ -33,10 +33,10 @@ function guidanceForPath(pathname: string | null, locale: string): Guidance | nu
 
   if (path.startsWith("/programs")) {
     return {
-      title: es ? "Siguiente mejor paso" : "Next best step",
+      title: es ? "Por qué esta página importa" : "Why this page matters",
       body: es
-        ? "Confirma que cada convocatoria tenga fechas, materiales requeridos y revisores claros antes de que lleguen postulaciones."
-        : "Confirm each call has clear dates, required materials, and reviewer coverage before submissions arrive.",
+        ? "Programas le da a cada convocatoria una estructura clara antes de recibir postulaciones: fechas, materiales, revisores y próximos pasos quedan visibles desde el inicio."
+        : "Programs gives each call a clear structure before submissions arrive, so deadlines, materials, reviewers, and next steps stay visible from the beginning.",
       href: "/review-queue/",
       cta: es ? "Ver revisión" : "View review flow",
     }
@@ -44,10 +44,10 @@ function guidanceForPath(pathname: string | null, locale: string): Guidance | nu
 
   if (path.startsWith("/submissions")) {
     return {
-      title: es ? "Por qué importa" : "Why this matters",
+      title: es ? "Por qué esta página importa" : "Why this page matters",
       body: es
-        ? "Las postulaciones deben poder encontrarse, compararse y revisarse sin volver a buscar entre correos, PDFs y hojas de cálculo."
-        : "Submissions need to be findable, comparable, and reviewable without returning to email threads, PDFs, and spreadsheets.",
+        ? "Submissions convierte archivos recibidos en registros comparables. El equipo puede encontrar postulantes, revisar materiales y mantener contexto sin volver a correos, PDFs y hojas."
+        : "Submissions turns received files into comparable records, so the team can find applicants, review materials, and keep context without returning to emails, PDFs, and spreadsheets.",
       href: "/review-queue/",
       cta: es ? "Abrir cola" : "Open queue",
     }
@@ -55,10 +55,10 @@ function guidanceForPath(pathname: string | null, locale: string): Guidance | nu
 
   if (path.startsWith("/artists")) {
     return {
-      title: es ? "Por qué importa" : "Why this matters",
+      title: es ? "Por qué esta página importa" : "Why this page matters",
       body: es
-        ? "Los registros de artistas mantienen materiales, historial y contexto conectados entre ciclos de revisión."
-        : "Artist records keep materials, history, and context connected across review cycles.",
+        ? "Artist Records mantiene práctica, materiales e historial conectados. La institución entiende al artista más allá de una sola aplicación o un archivo aislado."
+        : "Artist Records keeps practice, materials, and history connected, helping the institution understand the artist beyond one application or isolated file.",
       href: "/submissions/",
       cta: es ? "Ver postulaciones" : "View submissions",
     }
@@ -66,10 +66,10 @@ function guidanceForPath(pathname: string | null, locale: string): Guidance | nu
 
   if (path.startsWith("/review-queue")) {
     return {
-      title: es ? "Siguiente mejor paso" : "Next best step",
+      title: es ? "Por qué esta página importa" : "Why this page matters",
       body: es
-        ? "Empieza por materiales incompletos y revisores pendientes para que el comité pueda evaluar con información limpia."
-        : "Start with incomplete materials and pending reviewers so the committee can evaluate with clean information.",
+        ? "Review Queue muestra qué postulaciones están listas, cuáles necesitan materiales y qué revisores siguen pendientes. Es la capa de trabajo antes de la conversación curatorial."
+        : "Review Queue shows which submissions are ready, which need materials, and which reviewers are still pending. It is the working layer before curatorial discussion.",
       href: "/review-room/",
       cta: es ? "Abrir sala" : "Open review room",
     }
@@ -77,10 +77,10 @@ function guidanceForPath(pathname: string | null, locale: string): Guidance | nu
 
   if (path.startsWith("/review-room")) {
     return {
-      title: es ? "Por qué importa" : "Why this matters",
+      title: es ? "Por qué esta página importa" : "Why this page matters",
       body: es
-        ? "La sala de revisión mantiene contexto curatorial, materiales, progreso de revisores, shortlist e informe en una vista antes de cerrar decisiones."
-        : "The review room keeps curatorial context, materials, reviewer progress, shortlist movement, and report readiness together before decisions harden.",
+        ? "Review Room le da al comité un espacio más claro para conversar sobre postulantes con contexto suficiente: qué está listo, qué falta resolver y qué puede avanzar hacia shortlist o informe."
+        : "Review Room gives the committee a clearer place to discuss applicants with enough context: what is ready, what still needs resolution, and what can move toward shortlist or report.",
       href: "/shortlist/",
       cta: es ? "Avanzar shortlist" : "Move to shortlist",
     }
@@ -88,10 +88,10 @@ function guidanceForPath(pathname: string | null, locale: string): Guidance | nu
 
   if (path.startsWith("/committee")) {
     return {
-      title: es ? "Por qué importa" : "Why this matters",
+      title: es ? "Por qué esta página importa" : "Why this page matters",
       body: es
-        ? "Los revisores invitados deben ver solo su trabajo asignado, con guías claras y sin acceso innecesario al espacio completo."
-        : "Invited reviewers should see only assigned work, with clear guidelines and without unnecessary access to the full workspace.",
+        ? "Committee hace visible quién está asignado, quién está revisando, quién entregó y qué necesita discusión. La coordinación deja de depender de memoria o seguimiento manual."
+        : "Committee makes reviewer coordination visible: who is assigned, who is in review, who has submitted, and what needs discussion. Follow-up no longer depends on memory.",
       href: "/collaborator-dashboard/",
       cta: es ? "Vista de revisor" : "Preview reviewer seat",
     }
@@ -99,10 +99,10 @@ function guidanceForPath(pathname: string | null, locale: string): Guidance | nu
 
   if (path.startsWith("/shortlist")) {
     return {
-      title: es ? "Siguiente mejor paso" : "Next best step",
+      title: es ? "Por qué esta página importa" : "Why this page matters",
       body: es
-        ? "Conserva notas, contexto de comité y estado final para que la decisión no se pierda después de la reunión."
-        : "Keep notes, committee context, and final status attached so the decision is not lost after the meeting.",
+        ? "Shortlist conserva notas, contexto de comité y estado final mientras el grupo se reduce. La razón de avance queda conectada al registro."
+        : "Shortlist preserves notes, committee context, and final status as the group narrows, keeping the reason for advancement attached to the record.",
       href: "/reports/",
       cta: es ? "Preparar informe" : "Prepare report",
     }
@@ -110,10 +110,10 @@ function guidanceForPath(pathname: string | null, locale: string): Guidance | nu
 
   if (path.startsWith("/reports")) {
     return {
-      title: es ? "Por qué importa" : "Why this matters",
+      title: es ? "Por qué esta página importa" : "Why this page matters",
       body: es
-        ? "Los informes ayudan a explicar qué pasó en el ciclo de revisión sin reconstruirlo manualmente al final."
-        : "Reports help explain what happened in the review cycle without rebuilding the story manually at the end.",
+        ? "Reports convierte el ciclo de revisión en memoria institucional: resultados, progreso de revisores, shortlist e historial de decisiones sin reconstruir todo manualmente."
+        : "Reports turns the review cycle into institutional memory: outcomes, reviewer progress, shortlist movement, and decision history without rebuilding the story manually.",
       href: "/activity-log/",
       cta: es ? "Ver historial" : "View history",
     }
@@ -121,10 +121,10 @@ function guidanceForPath(pathname: string | null, locale: string): Guidance | nu
 
   if (path.startsWith("/activity-log")) {
     return {
-      title: es ? "Por qué importa" : "Why this matters",
+      title: es ? "Por qué esta página importa" : "Why this page matters",
       body: es
-        ? "El historial conserva cambios de estado, mensajes y movimientos de revisión para que el equipo pueda rastrear decisiones."
-        : "The history preserves status changes, messages, and review movement so the team can trace decisions.",
+        ? "Activity Log conserva qué cambió, cuándo cambió y quién lo movió. Es la memoria operativa detrás de decisiones, mensajes y actualizaciones."
+        : "Activity Log preserves what changed, when it changed, and who moved it forward. It is the operating memory behind decisions, messages, and updates.",
       href: "/reports/",
       cta: es ? "Ver informes" : "View reports",
     }
