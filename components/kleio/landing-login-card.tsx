@@ -24,14 +24,7 @@ export function LandingLoginCard() {
   }
 
   function setPreviewGuideState() {
-    persistDemoGuideState({
-      isOpen: false,
-      isMinimized: true,
-      dismissed: true,
-      activeScenarioId: null,
-      activeStepId: null,
-      completedScenarioId: null,
-    })
+    persistDemoGuideState({ isOpen: false, isMinimized: true, dismissed: true, activeScenarioId: null, activeStepId: null, completedScenarioId: null })
   }
 
   function setDemoGuideState(role: Role) {
@@ -72,100 +65,65 @@ export function LandingLoginCard() {
     setError("")
   }
 
-  function handleStartGuidedDemo() {
-    setError("")
-    setKleioMode("demo")
-    persistDemoGuideState({
-      isOpen: true,
-      isMinimized: false,
-      dismissed: false,
-      activeScenarioId: null,
-      activeStepId: null,
-      completedScenarioId: null,
-    })
-    router.push("/demo/")
-  }
-
   return (
-    <div className="landing-login-card rounded-[1.1rem] p-3.5" style={{ backgroundColor: "#FFFFFF", border: "1px solid #E7E1F7", boxShadow: "0 18px 48px rgba(82, 64, 130, 0.08)" }}>
-      <div className="grid gap-3 lg:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)]">
-        <section className="rounded-[0.95rem] border border-[#E7E1F7] bg-white p-3.5">
-          <div className="flex items-start gap-2.5">
-            <span className="mt-0.5 grid size-8 shrink-0 place-items-center rounded-xl bg-[#F7F4FF] text-[#5B4B8A]"><KeyRound className="size-4" /></span>
-            <div className="min-w-0 flex-1">
-              <p className="text-[0.62rem] font-semibold uppercase tracking-[0.16em] text-[#A997E8]">{locale === "es" ? "Acceso privado" : "Private preview access"}</p>
-              <h2 className="mt-1 font-serif text-[1rem] font-semibold text-[#292631]">{locale === "es" ? "Entrar a KLEIO Workspace" : "Log in to KLEIO Workspace"}</h2>
-              <p className="mt-1 text-[0.68rem] leading-relaxed text-[#7F7890]">{locale === "es" ? "Estas credenciales abren la vista previa limpia del producto, sin guía abierta ni recorrido demo." : "These credentials open the cleaner Product Preview workspace, without the open demo guide or walkthrough scaffolding."}</p>
-            </div>
+    <div className="landing-login-card flex flex-col rounded-[1.1rem] p-3.5" style={{ backgroundColor: "#FFFFFF", border: "1px solid #E7E1F7", boxShadow: "0 18px 48px rgba(82, 64, 130, 0.08)" }}>
+      <section className="rounded-[0.95rem] border border-[#E7E1F7] bg-white p-3.5">
+        <div className="flex items-start gap-2.5">
+          <span className="mt-0.5 grid size-8 shrink-0 place-items-center rounded-xl bg-[#F7F4FF] text-[#5B4B8A]"><KeyRound className="size-4" /></span>
+          <div className="min-w-0 flex-1">
+            <p className="text-[0.62rem] font-semibold uppercase tracking-[0.16em] text-[#A997E8]">{locale === "es" ? "Acceso privado" : "Private preview access"}</p>
+            <h2 className="mt-1 font-serif text-[1rem] font-semibold text-[#292631]">{locale === "es" ? "Entrar a KLEIO Workspace" : "Log in to KLEIO Workspace"}</h2>
+            <p className="mt-1 text-[0.68rem] leading-relaxed text-[#7F7890]">{locale === "es" ? "Estas credenciales abren la vista previa limpia del producto, sin guía abierta ni recorrido demo." : "These credentials open the cleaner Product Preview workspace, without the open demo guide or walkthrough scaffolding."}</p>
           </div>
+        </div>
 
-          <div className="mt-3 grid gap-2">
-            <input type="email" placeholder={t("landing.login.emailPlaceholder")} value={email} onChange={(e) => setEmail(e.target.value)} onKeyDown={(e) => e.key === "Enter" && handleLogin()} className="h-9 w-full rounded-full border bg-white px-3.5 text-[0.72rem] outline-none transition placeholder:text-[#9B94AA] focus:border-[#A997E8] focus:ring-2 focus:ring-[#A997E8]/15" style={{ borderColor: "#DCD5F3", color: "#292631" }} />
-            <input type="password" placeholder={t("landing.login.passwordPlaceholder")} value={password} onChange={(e) => setPassword(e.target.value)} onKeyDown={(e) => e.key === "Enter" && handleLogin()} className="h-9 w-full rounded-full border bg-white px-3.5 text-[0.72rem] outline-none transition placeholder:text-[#9B94AA] focus:border-[#A997E8] focus:ring-2 focus:ring-[#A997E8]/15" style={{ borderColor: "#DCD5F3", color: "#292631" }} />
-          </div>
+        <div className="mt-3 grid gap-2">
+          <input type="email" placeholder={t("landing.login.emailPlaceholder")} value={email} onChange={(e) => setEmail(e.target.value)} onKeyDown={(e) => e.key === "Enter" && handleLogin()} className="h-9 w-full rounded-full border bg-white px-3.5 text-[0.72rem] outline-none transition placeholder:text-[#9B94AA] focus:border-[#A997E8] focus:ring-2 focus:ring-[#A997E8]/15" style={{ borderColor: "#DCD5F3", color: "#292631" }} />
+          <input type="password" placeholder={t("landing.login.passwordPlaceholder")} value={password} onChange={(e) => setPassword(e.target.value)} onKeyDown={(e) => e.key === "Enter" && handleLogin()} className="h-9 w-full rounded-full border bg-white px-3.5 text-[0.72rem] outline-none transition placeholder:text-[#9B94AA] focus:border-[#A997E8] focus:ring-2 focus:ring-[#A997E8]/15" style={{ borderColor: "#DCD5F3", color: "#292631" }} />
+        </div>
 
-          <div className="mt-2 grid grid-cols-3 gap-1.5">
-            {previewAccess.map((accessEmail) => (
-              <button key={accessEmail} type="button" onClick={() => fillCredentials(accessEmail)} className="truncate rounded-full border border-[#E7E1F7] bg-[#F7F4FF]/70 px-2 py-1.5 text-[0.58rem] font-semibold text-[#5B4B8A] transition-colors hover:bg-[#F7F4FF]" title={accessEmail}>
-                {accessEmail.replace("@kleio.demo", "")}
-              </button>
-            ))}
-          </div>
-
-          <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
-            <p className="text-[0.62rem] text-[#7F7890]">Password: <span className="font-semibold text-[#5B4B8A]">kleio2026</span></p>
-            <button type="button" onClick={handleLogin} className="inline-flex h-9 items-center justify-center gap-1 rounded-full bg-[#292631] px-4 text-[0.72rem] font-semibold text-white transition-opacity hover:opacity-90">
-              {locale === "es" ? "Entrar" : "Log in"}
-              <ChevronRight className="size-3" />
+        <div className="mt-2 grid grid-cols-3 gap-1.5">
+          {previewAccess.map((accessEmail) => (
+            <button key={accessEmail} type="button" onClick={() => fillCredentials(accessEmail)} className="truncate rounded-full border border-[#E7E1F7] bg-[#F7F4FF]/70 px-2 py-1.5 text-[0.58rem] font-semibold text-[#5B4B8A] transition-colors hover:bg-[#F7F4FF]" title={accessEmail}>
+              {accessEmail.replace("@kleio.demo", "")}
             </button>
-          </div>
-          {error && <p className="mt-1 text-[0.64rem] leading-snug" style={{ color: "oklch(0.45 0.14 55)" }}>{error}</p>}
-        </section>
+          ))}
+        </div>
 
-        <aside className="grid gap-3">
-          <section className="rounded-[0.95rem] border border-[#E7E1F7] bg-[#F7F4FF] p-3.5">
-            <p className="text-[0.62rem] font-semibold uppercase tracking-[0.16em] text-[#A997E8]">{locale === "es" ? "Modo demo" : "Demo walkthrough"}</p>
-            <h2 className="mt-1 font-serif text-[0.98rem] font-semibold text-[#292631]">{locale === "es" ? "Prueba el flujo institucional" : "Try the institution flow"}</h2>
-            <p className="mt-1 text-[0.66rem] leading-relaxed text-[#7F7890]">{locale === "es" ? "Usa datos de muestra y guía para ver el recorrido completo." : "Use sample records and guidance to see the full review story."}</p>
-            <div className="mt-3 grid gap-2">
-              <button type="button" onClick={() => openWorkspace("institution", "demo")} className="inline-flex h-9 items-center justify-center gap-1 rounded-full bg-[#5B4B8A] px-4 text-[0.7rem] font-semibold text-white shadow-[0_10px_24px_rgba(82,64,130,0.16)] transition-opacity hover:opacity-90">
-                {locale === "es" ? "Empezar demo" : "Start demo flow"}
-                <ChevronRight className="size-3" />
-              </button>
-              <button type="button" onClick={handleStartGuidedDemo} className="inline-flex h-9 items-center justify-center gap-1 rounded-full border border-[#D8D0F2] bg-white px-4 text-[0.7rem] font-semibold text-[#5B4B8A] transition-colors hover:bg-white/75">
-                {t("demoGuide.startGuidedDemo")}
-                <ChevronRight className="size-3" />
-              </button>
+        <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+          <p className="text-[0.62rem] text-[#7F7890]">Password: <span className="font-semibold text-[#5B4B8A]">kleio2026</span></p>
+          <button type="button" onClick={handleLogin} className="inline-flex h-9 items-center justify-center gap-1 rounded-full bg-[#292631] px-4 text-[0.72rem] font-semibold text-white transition-opacity hover:opacity-90">
+            {locale === "es" ? "Entrar" : "Log in"}
+            <ChevronRight className="size-3" />
+          </button>
+        </div>
+        {error && <p className="mt-1 text-[0.64rem] leading-snug" style={{ color: "oklch(0.45 0.14 55)" }}>{error}</p>}
+      </section>
+
+      <details className="group mt-3 rounded-[0.95rem] border border-[#E7E1F7] bg-white px-3 py-2.5">
+        <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-[0.68rem] font-semibold text-[#5B4B8A] marker:hidden">
+          <span>{locale === "es" ? "Opciones avanzadas" : "Advanced role shortcuts"}</span>
+          <ChevronRight className="size-3 transition-transform group-open:rotate-90" />
+        </summary>
+        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+          <section className="rounded-xl border border-[#E7E1F7] bg-[#F7F4FF] p-3">
+            <p className="text-[0.62rem] font-semibold uppercase tracking-[0.14em] text-[#A997E8]">Demo</p>
+            <div className="mt-2 grid gap-1.5">
+              <button type="button" onClick={() => openWorkspace("institution", "demo")} className="rounded-full border border-[#D8D0F2] bg-white px-2 py-1.5 text-[0.62rem] font-semibold text-[#5B4B8A] transition-colors hover:bg-white/75">Institution</button>
+              <button type="button" onClick={() => openWorkspace("artist", "demo")} className="rounded-full border border-[#D8D0F2] bg-white px-2 py-1.5 text-[0.62rem] font-semibold text-[#5B4B8A] transition-colors hover:bg-white/75">Artist</button>
+              <button type="button" onClick={() => openWorkspace("collaborator", "demo")} className="rounded-full border border-[#D8D0F2] bg-white px-2 py-1.5 text-[0.62rem] font-semibold text-[#5B4B8A] transition-colors hover:bg-white/75">Reviewer</button>
             </div>
           </section>
-
-          <details className="group rounded-[0.95rem] border border-[#E7E1F7] bg-white px-3 py-2.5">
-            <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-[0.68rem] font-semibold text-[#5B4B8A] marker:hidden">
-              <span>{locale === "es" ? "Opciones avanzadas" : "Advanced shortcuts"}</span>
-              <ChevronRight className="size-3 transition-transform group-open:rotate-90" />
-            </summary>
-            <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
-              <section className="rounded-xl border border-[#E7E1F7] bg-[#F7F4FF] p-3">
-                <p className="text-[0.58rem] font-semibold uppercase tracking-[0.14em] text-[#A997E8]">Demo</p>
-                <div className="mt-2 grid gap-1.5">
-                  <button type="button" onClick={() => openWorkspace("institution", "demo")} className="rounded-full border border-[#D8D0F2] bg-white px-2 py-1.5 text-[0.6rem] font-semibold text-[#5B4B8A] transition-colors hover:bg-white/75">Institution</button>
-                  <button type="button" onClick={() => openWorkspace("artist", "demo")} className="rounded-full border border-[#D8D0F2] bg-white px-2 py-1.5 text-[0.6rem] font-semibold text-[#5B4B8A] transition-colors hover:bg-white/75">Artist</button>
-                  <button type="button" onClick={() => openWorkspace("collaborator", "demo")} className="rounded-full border border-[#D8D0F2] bg-white px-2 py-1.5 text-[0.6rem] font-semibold text-[#5B4B8A] transition-colors hover:bg-white/75">Reviewer</button>
-                </div>
-              </section>
-
-              <section className="rounded-xl border border-[#E7E1F7] bg-white p-3">
-                <p className="text-[0.58rem] font-semibold uppercase tracking-[0.14em] text-[#A997E8]">Preview</p>
-                <div className="mt-2 grid gap-1.5">
-                  <button type="button" onClick={() => openWorkspace("institution", "preview")} className="rounded-full border border-[#D8D0F2] bg-[#F7F4FF] px-2 py-1.5 text-[0.6rem] font-semibold text-[#5B4B8A] transition-colors hover:bg-white">Institution</button>
-                  <button type="button" onClick={() => openWorkspace("artist", "preview")} className="rounded-full border border-[#D8D0F2] bg-[#F7F4FF] px-2 py-1.5 text-[0.6rem] font-semibold text-[#5B4B8A] transition-colors hover:bg-white">Artist</button>
-                  <button type="button" onClick={() => openWorkspace("collaborator", "preview")} className="rounded-full border border-[#D8D0F2] bg-[#F7F4FF] px-2 py-1.5 text-[0.6rem] font-semibold text-[#5B4B8A] transition-colors hover:bg-white">Reviewer</button>
-                </div>
-              </section>
+          <section className="rounded-xl border border-[#E7E1F7] bg-white p-3">
+            <p className="text-[0.62rem] font-semibold uppercase tracking-[0.14em] text-[#A997E8]">Preview</p>
+            <div className="mt-2 grid gap-1.5">
+              <button type="button" onClick={() => openWorkspace("institution", "preview")} className="rounded-full border border-[#D8D0F2] bg-[#F7F4FF] px-2 py-1.5 text-[0.62rem] font-semibold text-[#5B4B8A] transition-colors hover:bg-white">Institution</button>
+              <button type="button" onClick={() => openWorkspace("artist", "preview")} className="rounded-full border border-[#D8D0F2] bg-[#F7F4FF] px-2 py-1.5 text-[0.62rem] font-semibold text-[#5B4B8A] transition-colors hover:bg-white">Artist</button>
+              <button type="button" onClick={() => openWorkspace("collaborator", "preview")} className="rounded-full border border-[#D8D0F2] bg-[#F7F4FF] px-2 py-1.5 text-[0.62rem] font-semibold text-[#5B4B8A] transition-colors hover:bg-white">Reviewer</button>
             </div>
-          </details>
-        </aside>
-      </div>
+          </section>
+        </div>
+      </details>
     </div>
   )
 }
