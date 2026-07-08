@@ -45,8 +45,8 @@ function stageClass(stage: string) {
 function missingCopy(submission: Submission) {
   const count = submission.missingMaterials?.length ?? 0
   if (!count) return "Complete file"
-  if (count === 1) return "1 missing material"
-  return `${count} missing materials`
+  if (count === 1) return "1 material still needs attention"
+  return `${count} materials still need attention`
 }
 
 function Card({ children, className = "" }: { children: React.ReactNode; className?: string }) {
@@ -74,7 +74,7 @@ export function ReviewRoomPageView() {
   return (
     <DemoPageShell
       title="Review Room"
-      description="An editorial decision space: open call context, applicant dossiers, reviewer progress, incomplete materials, shortlist movement, and report readiness in one view."
+      description="The Review Room gives the committee a calmer place to discuss applicants with the right context nearby, so promising work can move from review into shortlist, decision history, and reporting without losing the reason behind each step."
       actions={
         <>
           <Link href="/shortlist/" className="inline-flex h-10 items-center rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90">
@@ -90,15 +90,15 @@ export function ReviewRoomPageView() {
         <DemoStatRow label="Open call" value={primaryProgram.status} href="/programs/" />
         <DemoStatRow label="Applicants" value={analytics.reviewQueueCount} href="/review-queue/" />
         <DemoStatRow label="Reviewers" value={roomReviewers.length} href="/committee/" />
-        <DemoStatRow label="Incomplete" value={analytics.incompleteCount} href="/review-queue/" />
+        <DemoStatRow label="Needs attention" value={analytics.incompleteCount} href="/review-queue/" />
       </div>
 
       <div className="grid gap-4 xl:grid-cols-[0.95fr_1.05fr]">
         <Card>
           <SectionHeader
-            eyebrow="Here is the open call"
+            eyebrow="Open call context"
             title={primaryProgram.title}
-            body={primaryProgram.description}
+            body="The call stays visible during review so the committee can discuss applicants against the actual requirements, dates, materials, and rubric that shaped the opportunity."
           />
           <div className="grid gap-3 p-5 md:grid-cols-3">
             <Info label="Deadline" value={formatDate(primaryProgram.deadline)} />
@@ -115,7 +115,7 @@ export function ReviewRoomPageView() {
               </div>
             </div>
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.16em]" style={{ color: mutedColor }}>Rubric</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.16em]" style={{ color: mutedColor }}>Review criteria</p>
               <div className="mt-3 flex flex-wrap gap-2">
                 {primaryProgram.rubric.map((item) => (
                   <span key={item} className="rounded-full bg-[#F7F4FF] px-2.5 py-1 text-xs font-medium" style={{ color: lavenderDeep }}>{item}</span>
@@ -127,9 +127,9 @@ export function ReviewRoomPageView() {
 
         <Card>
           <SectionHeader
-            eyebrow="Here are the applicants"
-            title="Applicant dossiers in review"
-            body="Each row keeps the artist, project, completeness, reviewer status, and next action close together."
+            eyebrow="Applicant context"
+            title="Applicants ready for discussion"
+            body="Each applicant row keeps the project, material readiness, reviewer progress, and next action close enough for the committee to understand what is ready and what still needs care."
           />
           <ul className="divide-y" style={{ borderColor: lavenderSoftLine }}>
             {reviewSubmissions.map((submission) => {
@@ -163,9 +163,9 @@ export function ReviewRoomPageView() {
       <div className="mt-4 grid gap-4 xl:grid-cols-[0.85fr_1.15fr]">
         <Card>
           <SectionHeader
-            eyebrow="Here are the reviewers"
-            title="Reviewer seat status"
-            body="The collaborator view is intentionally simple: Assigned, In Review, Submitted, Needs Discussion."
+            eyebrow="Reviewer progress"
+            title="Simple reviewer states"
+            body="Reviewer status stays intentionally easy to read, so the institution can see whether each seat is assigned, in review, submitted, or needs discussion."
           />
           <div className="space-y-3 p-5">
             {roomReviewers.map((person) => {
@@ -188,14 +188,14 @@ export function ReviewRoomPageView() {
 
         <Card>
           <SectionHeader
-            eyebrow="Here is the shortlist"
-            title="Editorial decision lanes"
-            body="A softer curatorial view for conversation before final reporting."
+            eyebrow="Decision movement"
+            title="From discussion to shortlist"
+            body="This area helps the committee separate what needs more context from what is ready to move forward, so the final report can explain the path clearly."
           />
           <div className="grid gap-3 p-5 md:grid-cols-3">
-            <DecisionLane title="Needs Discussion" count={discussionCandidates.length} body="Incomplete files, pending clarification, or uneven reviewer coverage." href="/review-queue/" />
-            <DecisionLane title="Shortlist" count={shortlistCandidates.length || analytics.shortlistedCount} body="Candidates moving toward committee confirmation or interview." href="/shortlist/" />
-            <DecisionLane title="Report" count={programs.length} body="Cycle summary, reviewer progress, outcomes, and decision history." href="/reports/" />
+            <DecisionLane title="Needs Discussion" count={discussionCandidates.length} body="Use this lane for promising files that still need material clarification, reviewer context, or committee conversation." href="/review-queue/" />
+            <DecisionLane title="Shortlist" count={shortlistCandidates.length || analytics.shortlistedCount} body="Use this lane for applicants with enough context to move toward final comparison or interview." href="/shortlist/" />
+            <DecisionLane title="Report" count={programs.length} body="Use this lane to see how program context, reviewer progress, outcomes, and decision history become institutional memory." href="/reports/" />
           </div>
         </Card>
       </div>
@@ -203,10 +203,10 @@ export function ReviewRoomPageView() {
       <Card className="mt-4 overflow-hidden">
         <div className="grid gap-0 xl:grid-cols-[0.95fr_1.05fr]">
           <div className="p-6" style={{ backgroundColor: lavenderMist }}>
-            <p className="text-[0.62rem] font-semibold uppercase tracking-[0.16em]" style={{ color: "#A997E8" }}>Here is the report</p>
-            <h2 className="mt-2 font-serif text-2xl font-semibold" style={{ color: inkColor }}>The review story is preserved as it happens.</h2>
+            <p className="text-[0.62rem] font-semibold uppercase tracking-[0.16em]" style={{ color: "#A997E8" }}>Report readiness</p>
+            <h2 className="mt-2 font-serif text-2xl font-semibold" style={{ color: inkColor }}>The reason behind each decision stays attached.</h2>
             <p className="mt-3 max-w-xl text-sm leading-relaxed" style={{ color: mutedColor }}>
-              KLEIO should feel like a prepared editorial room, not a cold spreadsheet. The report inherits program context, applicant movement, reviewer progress, shortlist notes, and decision history from the workflow.
+              KLEIO should feel like a prepared editorial room, not a cold spreadsheet. As the committee reviews, the report can inherit program context, applicant movement, reviewer progress, shortlist notes, and decision history from the workflow.
             </p>
             <div className="mt-5 flex flex-wrap gap-2">
               <Link href="/reports/" className="inline-flex h-10 items-center rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90">Open report</Link>
@@ -218,9 +218,9 @@ export function ReviewRoomPageView() {
               ["Open call", primaryProgram.title],
               ["Applicants", `${analytics.reviewQueueCount} active records`],
               ["Reviewers", `${roomReviewers.length} assigned seats`],
-              ["Incomplete", `${analytics.incompleteCount} files need attention`],
+              ["Needs attention", `${analytics.incompleteCount} records need care`],
               ["Shortlist", `${analytics.shortlistedCount} candidates`],
-              ["Report", "Cycle summary ready"],
+              ["Report", "Decision context preserved"],
             ].map(([label, value]) => (
               <div key={label} className="rounded-2xl border p-4" style={{ borderColor: lavenderSoftLine }}>
                 <p className="text-xs font-medium" style={{ color: mutedColor }}>{label}</p>
