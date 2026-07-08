@@ -1,10 +1,11 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import Link from "next/link"
+import { useSearchParams } from "next/navigation"
 import { Mail, Send } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { institution, messageThreads } from "@/lib/kleio-data"
+import { institution, messageThreads, type MessageEntry } from "@/lib/kleio-data"
 import { analytics, getDemoMessageForThread, isSubmissionMessagePending } from "@/lib/kleio-analytics"
 import { artistProfileHref } from "@/lib/kleio-demo-auth"
 import { InitialAvatar } from "@/components/kleio/initial-avatar"
@@ -15,16 +16,58 @@ const channelStyles: Record<string, string> = {
   Committee: "bg-[oklch(0.96_0.05_75)] text-[oklch(0.5_0.12_60)]",
 }
 
-export function MessagesView() {
-  const [selectedId, setSelectedId] = useState(messageThreads[0]?.id ?? "")
-  const [sent, setSent] = useState(false)
+function todayLabel() {
+  return "Today · just now"
+}
 
-  const selected =
-    messageThreads.find((thread) => thread.id === selectedId) ?? messageThreads[0]
+export function MessagesView() {
+  const searchParams = useSearchParams()
+  const requestedThreadId = searchParams.get("thread")
+  const requestedThreadExists = messageThreads.some((thread) => thread.id === requestedThreadId)
+  const [selectedId, setSelectedId] = useState(requestedThreadExists ? requestedThreadId! : messageThreads[0]?.id ?? "")
+  const [sent, setSent] = useState(false)
+  const [draft, setDraft] = useState("")
+  const [localReplies, setLocalReplies] = useState<Record<string, MessageEntry[]>>({})
+
+  useEffect(() => {
+    if (requestedThreadId && messageThreads.some((thread) => thread.id === requestedThreadId)) {
+      setSelectedId(requestedThreadId)
+      setSent(false)
+      setDraft("")
+    }
+  }, [requestedThreadId])
+
+  const selected = messageThreads.find((thread) => thread.id === selectedId) ?? messageThreads[0]
+  const visibleMessages = useMemo(() => {
+    if (!selected) return []
+    return [...selected.messages, ...(localReplies[selected.id] ?? [])]
+  }, [selected, localReplies])
 
   function select(id: string) {
     setSelectedId(id)
     setSent(false)
+    setDraft("")
+  }
+
+  function sendReply() {
+    if (!selected) return
+    const body = draft.trim()
+    if (!body) return
+
+    const reply: MessageEntry = {
+      id: `local-reply-${selected.id}-${Date.now()}`,
+      author: "Mara Voss",
+      role: "Program Team",
+      body,
+      date: todayLabel(),
+    }
+
+    setLocalReplies((current) => ({
+      ...current,
+      [selected.id]: [...(current[selected.id] ?? []), reply],
+    }))
+    setDraft("")
+    setSent(true)
   }
 
   return (
@@ -130,7 +173,7 @@ export function MessagesView() {
             </div>
 
             <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-5 py-5">
-              {selected.messages.map((message) => (
+              {visibleMessages.map((message) => (
                 <div key={message.id} className="flex items-start gap-3">
                   <InitialAvatar
                     name={message.role === "System" ? "KLEIO" : message.author}
@@ -150,24 +193,26 @@ export function MessagesView() {
             <div className="border-t border-border p-4">
               {sent && (
                 <p className="mb-2 rounded-lg border border-[oklch(0.85_0.07_150)] bg-[oklch(0.96_0.04_150)] px-3 py-2 text-xs font-medium text-[oklch(0.4_0.12_150)]">
-                  Demo reply queued — no message is actually sent in this synthetic environment.
+                  Demo reply added to this thread. No real message is sent outside the prototype.
                 </p>
               )}
-              <div className="flex items-center gap-2">
+              <div className="flex items-end gap-2">
                 <div className="relative flex-1">
-                  <Mail className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                  <input
-                    type="text"
-                    readOnly
-                    value={`Reply to ${selected.counterpart}…`}
-                    aria-label="Message reply (demo)"
-                    className="h-10 w-full cursor-default rounded-xl border border-border bg-background pl-9 pr-3 text-sm text-muted-foreground outline-none"
+                  <Mail className="pointer-events-none absolute left-3 top-3 size-4 text-muted-foreground" />
+                  <textarea
+                    value={draft}
+                    onChange={(event) => setDraft(event.target.value)}
+                    placeholder={`Reply to ${selected.counterpart}…`}
+                    aria-label="Message reply"
+                    rows={2}
+                    className="min-h-11 w-full resize-none rounded-xl border border-border bg-background py-2.5 pl-9 pr-3 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-primary/40 focus:ring-4 focus:ring-primary/10"
                   />
                 </div>
                 <button
                   type="button"
-                  onClick={() => setSent(true)}
-                  className="flex h-10 items-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
+                  onClick={sendReply}
+                  disabled={!draft.trim()}
+                  className="flex h-11 items-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <Send className="size-4" />
                   Send
