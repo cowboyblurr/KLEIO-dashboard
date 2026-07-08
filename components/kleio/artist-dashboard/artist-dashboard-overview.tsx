@@ -15,8 +15,6 @@ import {
   MoreVertical,
   Search,
   Sparkles,
-  UserRound,
-  UsersRound,
 } from "lucide-react"
 import Link from "next/link"
 import type { Artist, ArtistDashboardApplicationStatus, ArtistDashboardProfile } from "@/lib/kleio-data"
@@ -36,8 +34,6 @@ const mutedColor = "#7F7890"
 const lavenderLine = "#D8D0F2"
 const lavenderSoftLine = "#E7E1F7"
 const lavenderMist = "#F7F4FF"
-const lavenderHover = "#F3EEFF"
-const lavenderAccent = "#A997E8"
 const lavenderDeep = "#5B4B8A"
 const cardShadow = "0 18px 48px rgba(82, 64, 130, 0.06)"
 
@@ -46,13 +42,7 @@ const cardStyle = {
   boxShadow: cardShadow,
 } as const
 
-function Card({
-  children,
-  className,
-}: {
-  children: React.ReactNode
-  className?: string
-}) {
+function Card({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
     <section className={cn("rounded-[1.25rem] border bg-white", className)} style={cardStyle}>
       {children}
@@ -67,11 +57,7 @@ function CardHeader({ title, action }: { title: string; action?: string }) {
         {title}
       </h2>
       {action && (
-        <button
-          type="button"
-          className="inline-flex items-center gap-1 text-[0.72rem] font-medium transition-colors hover:opacity-75"
-          style={{ color: lavenderDeep }}
-        >
+        <button type="button" className="inline-flex items-center gap-1 text-[0.72rem] font-medium transition-opacity hover:opacity-75" style={{ color: lavenderDeep }}>
           {action}
           <ChevronRight className="size-3.5" />
         </button>
@@ -114,24 +100,12 @@ function TopBar({ artist, portrait }: { artist: Artist; portrait?: string }) {
 
   return (
     <div className="grid grid-cols-[minmax(0,1fr)_190px_auto] items-center gap-3 max-lg:grid-cols-1">
-      <label
-        className="flex h-11 min-w-0 items-center gap-2 rounded-2xl border bg-white px-3"
-        style={{ borderColor: lavenderSoftLine, boxShadow: "0 8px 24px rgba(82, 64, 130, 0.04)" }}
-      >
+      <label className="flex h-11 min-w-0 items-center gap-2 rounded-2xl border bg-white px-3" style={{ borderColor: lavenderSoftLine, boxShadow: "0 8px 24px rgba(82, 64, 130, 0.04)" }}>
         <Search className="size-4 shrink-0" style={{ color: mutedColor }} />
-        <input
-          type="search"
-          placeholder={t("artist.workspace.overview.searchPlaceholder")}
-          className="h-full min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-[#A8A1B8]"
-          style={{ color: inkColor }}
-        />
+        <input type="search" placeholder={t("artist.workspace.overview.searchPlaceholder")} className="h-full min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-[#A8A1B8]" style={{ color: inkColor }} />
       </label>
 
-      <button
-        type="button"
-        className="flex h-11 items-center justify-between rounded-2xl border bg-white px-4 text-sm font-medium"
-        style={{ borderColor: lavenderSoftLine, color: inkColor }}
-      >
+      <button type="button" className="flex h-11 items-center justify-between rounded-2xl border bg-white px-4 text-sm font-medium" style={{ borderColor: lavenderSoftLine, color: inkColor }}>
         {t("artist.workspace.overview.allPrograms")}
         <ChevronDown className="size-4" style={{ color: mutedColor }} />
       </button>
@@ -168,39 +142,32 @@ function TopBar({ artist, portrait }: { artist: Artist; portrait?: string }) {
   )
 }
 
-function HeroVisual({ image, alt }: { image?: string; alt?: string }) {
-  if (image) {
-    return (
-      <div className="relative min-h-[240px] overflow-hidden rounded-[1.25rem]" style={{ backgroundColor: lavenderMist }}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={assetPath(image)} alt={alt ?? ""} className="absolute inset-0 size-full object-cover" />
-      </div>
-    )
-  }
-
+function AmbientStudioAccent({ image, alt }: { image?: string; alt?: string }) {
   return (
-    <div className="relative min-h-[240px] overflow-hidden rounded-[1.25rem]" style={{ backgroundColor: lavenderMist }} aria-hidden>
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_58%_30%,rgba(169,151,232,0.32),transparent_30%),radial-gradient(circle_at_25%_76%,rgba(216,208,242,0.55),transparent_34%),linear-gradient(135deg,#fff,#F7F4FF)]" />
-      <div className="absolute bottom-8 left-9 h-24 w-28 rounded-[50%] border border-white/80 bg-white/55 shadow-[0_18px_42px_rgba(82,64,130,0.12)] backdrop-blur" />
-      <div className="absolute bottom-16 left-24 h-28 w-px rotate-[18deg] bg-[#B9ACDF]" />
-      <div className="absolute bottom-28 left-28 h-16 w-10 rounded-full border border-[#B9ACDF] bg-white/35 rotate-[-28deg]" />
-      <div className="absolute bottom-32 left-14 h-14 w-8 rounded-full border border-[#B9ACDF] bg-white/35 rotate-[34deg]" />
-      <div className="absolute right-10 top-10 h-28 w-28 rounded-full bg-white/40 blur-2xl" />
+    <div className="relative min-h-[265px] overflow-hidden rounded-[1.25rem] bg-[#FBFAFF] max-lg:min-h-[210px]">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_72%_18%,rgba(169,151,232,0.28),transparent_30%),radial-gradient(circle_at_28%_78%,rgba(226,220,246,0.74),transparent_35%),linear-gradient(135deg,#fff_0%,#FAF8FF_44%,#F3EEF9_100%)]" />
+      <div className="absolute -left-10 bottom-0 h-40 w-52 rounded-[50%] bg-white/70 blur-2xl" />
+      <div className="absolute right-7 top-7 h-28 w-28 rounded-full bg-[#EDE6FF]/70 blur-3xl" />
+
+      {image && (
+        <div className="absolute inset-x-7 top-7 h-[56%] overflow-hidden rounded-[1.1rem] border border-white/70 bg-white/45 shadow-[0_22px_55px_rgba(82,64,130,0.13)] backdrop-blur-sm">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={assetPath(image)} alt={alt ?? "Artist work preview"} className="size-full object-cover opacity-80 saturate-[0.9]" />
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-white/28 via-transparent to-white/35" />
+        </div>
+      )}
+
+      <div aria-hidden="true" className="absolute bottom-7 left-8 h-20 w-28 rounded-[52%_48%_42%_58%] border border-white/80 bg-white/65 shadow-[0_18px_42px_rgba(82,64,130,0.12)] backdrop-blur" />
+      <div aria-hidden="true" className="absolute bottom-18 left-20 h-28 w-px rotate-[14deg] bg-[#B9ACDF]/80" />
+      <div aria-hidden="true" className="absolute bottom-28 left-24 h-16 w-10 rotate-[-28deg] rounded-full border border-[#B9ACDF]/80 bg-white/35" />
+      <div aria-hidden="true" className="absolute bottom-32 left-12 h-14 w-8 rotate-[32deg] rounded-full border border-[#B9ACDF]/70 bg-white/30" />
+      <div aria-hidden="true" className="absolute bottom-21 left-32 h-20 w-8 rotate-[48deg] rounded-full border border-[#E2D9F7]/80 bg-white/30" />
+      <div aria-hidden="true" className="absolute bottom-10 right-9 h-16 w-16 rounded-full border border-white/70 bg-white/35 shadow-[0_14px_34px_rgba(82,64,130,0.08)]" />
     </div>
   )
 }
 
-function DashboardStat({
-  label,
-  value,
-  detail,
-  icon: Icon,
-}: {
-  label: string
-  value: string
-  detail: string
-  icon: typeof FileText
-}) {
+function DashboardStat({ label, value, detail, icon: Icon }: { label: string; value: string; detail: string; icon: typeof FileText }) {
   return (
     <div className="flex items-start justify-between gap-3 px-4 first:pl-0 last:pr-0 max-md:px-0">
       <div className="min-w-0">
@@ -221,31 +188,24 @@ function DashboardStat({
   )
 }
 
-function HeroCard({
-  profile,
-  assetProfile,
-  analytics,
-}: {
-  profile: ArtistDashboardProfile
-  assetProfile?: ArtistAssetProfile
-  analytics: ArtistAnalytics
-}) {
+function HeroCard({ profile, assetProfile, analytics }: { profile: ArtistDashboardProfile; assetProfile?: ArtistAssetProfile; analytics: ArtistAnalytics }) {
   const { locale, t } = useKleioLocale()
   const funding = formatArtistCurrency(analytics.potentialFunding, locale)
 
   const title = assetProfile?.dashboardHero.title ?? profile.hero.title
   const subtitle = assetProfile?.dashboardHero.subtitle ?? profile.hero.subtitle
-  // Hero composites bake in mockup text; the selected-work images are clean artwork, so use one here.
   const heroArtwork = assetProfile?.selectedWorks[0]
 
   return (
-    <section className="grid min-h-[260px] grid-cols-[260px_minmax(0,1fr)] overflow-hidden rounded-[1.5rem] border bg-white p-4 max-lg:grid-cols-1" style={cardStyle}>
-      <HeroVisual image={heroArtwork?.image} alt={heroArtwork ? `${assetProfile?.displayName} — ${heroArtwork.title}` : undefined} />
-      <div className="flex min-w-0 flex-col justify-center p-6 max-md:p-4">
+    <section className="relative grid min-h-[285px] grid-cols-[minmax(260px,0.34fr)_minmax(0,1fr)] gap-5 overflow-hidden rounded-[1.5rem] border bg-white p-4 max-lg:grid-cols-1" style={cardStyle}>
+      <div aria-hidden="true" className="pointer-events-none absolute right-10 top-6 h-44 w-44 rounded-full bg-[#F1ECFB]/60 blur-3xl" />
+      <AmbientStudioAccent image={heroArtwork?.image} alt={heroArtwork ? `${assetProfile?.displayName} — ${heroArtwork.title}` : undefined} />
+
+      <div className="relative z-10 flex min-w-0 flex-col justify-center py-6 pr-5 max-lg:px-2 max-md:py-3">
         {assetProfile && (
-          <div className="mb-3 flex items-center gap-3">
+          <div className="mb-4 flex items-center gap-3">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={assetPath(assetProfile.portrait)} alt={assetProfile.displayName} className="size-11 rounded-full border-2 border-[#F1ECFB] object-cover" />
+            <img src={assetPath(assetProfile.portrait)} alt={assetProfile.displayName} className="size-11 rounded-full border-2 border-[#F1ECFB] object-cover shadow-sm" />
             <div className="min-w-0">
               <p className="truncate text-sm font-semibold" style={{ color: inkColor }}>
                 {assetProfile.displayName}
@@ -256,22 +216,25 @@ function HeroCard({
             </div>
           </div>
         )}
-        <h1 className="font-serif text-3xl font-semibold tracking-tight md:text-4xl" style={{ color: inkColor }}>
+
+        <h1 className="max-w-3xl font-serif text-3xl font-semibold tracking-tight md:text-5xl" style={{ color: inkColor }}>
           {title}
         </h1>
-        <p className="mt-2 max-w-2xl text-sm leading-relaxed" style={{ color: mutedColor }}>
+        <p className="mt-3 max-w-2xl text-sm leading-relaxed md:text-base" style={{ color: mutedColor }}>
           {subtitle}
         </p>
+
         {assetProfile && (
-          <div className="mt-3 flex flex-wrap gap-1.5">
+          <div className="mt-4 flex flex-wrap gap-1.5">
             {assetProfile.practiceTags.map((tag) => (
-              <span key={tag} className="rounded-full px-2 py-0.5 text-[0.62rem] font-medium" style={{ backgroundColor: lavenderMist, color: lavenderDeep }}>
+              <span key={tag} className="rounded-full px-2.5 py-1 text-[0.65rem] font-medium" style={{ backgroundColor: lavenderMist, color: lavenderDeep }}>
                 {tag}
               </span>
             ))}
           </div>
         )}
-        <div className="mt-7 grid grid-cols-4 divide-x max-md:grid-cols-2 max-md:gap-4 max-md:divide-x-0" style={{ borderColor: lavenderSoftLine }}>
+
+        <div className="mt-8 grid grid-cols-4 divide-x max-md:grid-cols-2 max-md:gap-4 max-md:divide-x-0" style={{ borderColor: lavenderSoftLine }}>
           <DashboardStat label={t("artist.workspace.passport.metric.activeApplications")} value={String(analytics.activeApplications)} detail={t("artist.workspace.overview.stat.dueSoonDetail", { count: analytics.dueSoon })} icon={FileText} />
           <DashboardStat label={t("artist.workspace.calendar.metric.upcomingDeadlines")} value={String(analytics.upcomingDeadlines)} detail={t("artist.workspace.overview.stat.nextDeadline", { date: formatArtistNextDeadline(analytics.nextDeadline, locale) })} icon={CalendarDays} />
           <DashboardStat label={t("artist.workspace.applications.metric.pendingDecisions")} value={String(analytics.pendingDecisions)} detail={t("artist.workspace.overview.stat.overdueDetail", { count: analytics.overdueDecisions })} icon={Hourglass} />
@@ -290,12 +253,7 @@ function SelectedWorksPreview({ assetProfile }: { assetProfile: ArtistAssetProfi
       <CardHeader title={t("artist.workspace.overview.selectedWorks.title")} action={t("artist.workspace.overview.selectedWorks.action")} />
       <div className="grid grid-cols-3 gap-2">
         {assetProfile.selectedWorks.map((work) => (
-          <Link
-            key={work.title}
-            href={`/artist/${assetProfile.username}/`}
-            className="group block overflow-hidden rounded-xl border"
-            style={{ borderColor: lavenderSoftLine }}
-          >
+          <Link key={work.title} href={`/artist/${assetProfile.username}/`} className="group block overflow-hidden rounded-xl border" style={{ borderColor: lavenderSoftLine }}>
             <span className="relative block aspect-[4/3] overflow-hidden bg-[#F7F4FF]">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={assetPath(work.image)} alt={work.title} className="size-full object-cover transition-transform duration-300 group-hover:scale-105" />
@@ -330,19 +288,13 @@ function ApplicationTracker({ profile }: { profile: ArtistDashboardProfile }) {
           <tbody>
             {profile.applications.map((app) => (
               <tr key={app.program} className="border-b last:border-0" style={{ borderColor: lavenderSoftLine }}>
-                <td className="py-3 text-sm font-medium" style={{ color: inkColor }}>
-                  {app.program}
-                </td>
-                <td className="py-3">
-                  <StatusChip status={app.status} />
-                </td>
+                <td className="py-3 text-sm font-medium" style={{ color: inkColor }}>{app.program}</td>
+                <td className="py-3"><StatusChip status={app.status} /></td>
                 <td className="py-3 text-sm" style={{ color: app.note ? "#A85656" : inkColor }}>
                   <span>{app.dueDate}</span>
                   {app.note && <span className="ml-2 rounded-full bg-[oklch(0.96_0.035_25)] px-2 py-0.5 text-[0.62rem] font-semibold text-[oklch(0.48_0.14_25)]">{app.note}</span>}
                 </td>
-                <td className="py-3 text-sm" style={{ color: mutedColor }}>
-                  {app.updated}
-                </td>
+                <td className="py-3 text-sm" style={{ color: mutedColor }}>{app.updated}</td>
                 <td className="py-3 text-right">
                   <button type="button" aria-label={`Actions for ${app.program}`} className="inline-grid size-8 place-items-center rounded-full transition-colors hover:bg-primary/5">
                     <MoreVertical className="size-4" style={{ color: mutedColor }} />
@@ -370,12 +322,8 @@ function DecisionTimeline({ profile }: { profile: ArtistDashboardProfile }) {
               {item.tone === "overdue" ? <Hourglass className="size-4" /> : <Clock3 className="size-4" />}
             </span>
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-medium" style={{ color: inkColor }}>
-                {item.program}
-              </p>
-              <p className="text-xs" style={{ color: mutedColor }}>
-                {item.expected}
-              </p>
+              <p className="text-sm font-medium" style={{ color: inkColor }}>{item.program}</p>
+              <p className="text-xs" style={{ color: mutedColor }}>{item.expected}</p>
             </div>
             <span className="shrink-0 text-xs font-medium" style={{ color: item.tone === "overdue" ? "#A85656" : mutedColor }}>
               {item.status}
@@ -400,17 +348,11 @@ function ArtistSpectrumMatches({ profile }: { profile: ArtistDashboardProfile })
         {profile.collaboratorMatches.map((match) => (
           <article key={match.name} className="rounded-2xl border bg-white p-3" style={{ borderColor: lavenderSoftLine }}>
             <InitialAvatar name={match.name} className="size-11 text-xs" />
-            <h3 className="mt-3 text-sm font-semibold" style={{ color: inkColor }}>
-              {match.name}
-            </h3>
-            <p className="text-[0.68rem]" style={{ color: mutedColor }}>
-              {match.location}
-            </p>
+            <h3 className="mt-3 text-sm font-semibold" style={{ color: inkColor }}>{match.name}</h3>
+            <p className="text-[0.68rem]" style={{ color: mutedColor }}>{match.location}</p>
             <div className="mt-3 flex flex-wrap gap-1.5">
               {match.tags.map((tag) => (
-                <span key={tag} className="rounded-full px-2 py-0.5 text-[0.62rem] font-medium" style={{ backgroundColor: lavenderMist, color: lavenderDeep }}>
-                  {tag}
-                </span>
+                <span key={tag} className="rounded-full px-2 py-0.5 text-[0.62rem] font-medium" style={{ backgroundColor: lavenderMist, color: lavenderDeep }}>{tag}</span>
               ))}
             </div>
             <div className="mt-3 flex items-center gap-2">
@@ -437,20 +379,12 @@ function NextBestActions({ profile }: { profile: ArtistDashboardProfile }) {
       <div className="space-y-3">
         {profile.nextActions.map((action, index) => (
           <div key={action.program} className="flex items-start gap-3">
-            <span className="grid size-7 shrink-0 place-items-center rounded-full text-xs font-semibold" style={{ backgroundColor: lavenderMist, color: lavenderDeep }}>
-              {index + 1}
-            </span>
+            <span className="grid size-7 shrink-0 place-items-center rounded-full text-xs font-semibold" style={{ backgroundColor: lavenderMist, color: lavenderDeep }}>{index + 1}</span>
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-semibold" style={{ color: inkColor }}>
-                {action.program}
-              </p>
-              <p className="text-xs" style={{ color: mutedColor }}>
-                {action.task}
-              </p>
+              <p className="text-sm font-semibold" style={{ color: inkColor }}>{action.program}</p>
+              <p className="text-xs" style={{ color: mutedColor }}>{action.task}</p>
             </div>
-            <span className="shrink-0 text-[0.68rem] font-medium" style={{ color: action.tone === "follow-up" ? "#A85656" : mutedColor }}>
-              {action.due}
-            </span>
+            <span className="shrink-0 text-[0.68rem] font-medium" style={{ color: action.tone === "follow-up" ? "#A85656" : mutedColor }}>{action.due}</span>
           </div>
         ))}
       </div>
@@ -462,21 +396,13 @@ function NextBestActions({ profile }: { profile: ArtistDashboardProfile }) {
   )
 }
 
-function PassportCompleteness({
-  profile,
-  analytics,
-}: {
-  profile: ArtistDashboardProfile
-  analytics: ArtistAnalytics
-}) {
+function PassportCompleteness({ profile, analytics }: { profile: ArtistDashboardProfile; analytics: ArtistAnalytics }) {
   const { t } = useKleioLocale()
 
   return (
     <Card className="p-4">
       <div className="mb-4 flex items-center justify-between gap-3">
-        <h2 className="text-sm font-semibold" style={{ color: inkColor }}>
-          {t("artist.workspace.overview.passportCompleteness.title")}
-        </h2>
+        <h2 className="text-sm font-semibold" style={{ color: inkColor }}>{t("artist.workspace.overview.passportCompleteness.title")}</h2>
         <span className="rounded-full px-2 py-1 text-[0.65rem] font-semibold" style={{ backgroundColor: lavenderMist, color: lavenderDeep }}>
           {t("artist.workspace.overview.passportCompleteness.complete", { pct: analytics.passportCompletenessPct })}
         </span>
@@ -513,9 +439,7 @@ function QuietInsights({ profile }: { profile: ArtistDashboardProfile }) {
       <div className="mb-4 flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <Sparkles className="size-4" style={{ color: lavenderDeep }} />
-          <h2 className="text-sm font-semibold" style={{ color: inkColor }}>
-            {t("artist.workspace.overview.quietInsights.title")}
-          </h2>
+          <h2 className="text-sm font-semibold" style={{ color: inkColor }}>{t("artist.workspace.overview.quietInsights.title")}</h2>
         </div>
         <span className="rounded-full px-2 py-0.5 text-[0.62rem] font-semibold" style={{ backgroundColor: lavenderMist, color: lavenderDeep }}>
           {t("artist.workspace.overview.quietInsights.new")}
@@ -556,9 +480,7 @@ function FundingReadiness({ analytics }: { analytics: ArtistAnalytics }) {
             {metric.value != null ? (
               <ProgressBar value={metric.value} tone={metric.tone} />
             ) : (
-              <p className="text-[0.68rem]" style={{ color: mutedColor }}>
-                {t("status.preparedForScoring")}
-              </p>
+              <p className="text-[0.68rem]" style={{ color: mutedColor }}>{t("status.preparedForScoring")}</p>
             )}
           </div>
         ))}
@@ -567,17 +489,7 @@ function FundingReadiness({ analytics }: { analytics: ArtistAnalytics }) {
   )
 }
 
-export function ArtistDashboardOverview({
-  artist,
-  profile,
-  assetProfile,
-  analytics,
-}: {
-  artist: Artist
-  profile: ArtistDashboardProfile
-  assetProfile?: ArtistAssetProfile
-  analytics: ArtistAnalytics
-}) {
+export function ArtistDashboardOverview({ artist, profile, assetProfile, analytics }: { artist: Artist; profile: ArtistDashboardProfile; assetProfile?: ArtistAssetProfile; analytics: ArtistAnalytics }) {
   return (
     <div className="mx-auto grid w-full max-w-[1540px] grid-cols-[minmax(0,1fr)_330px] gap-5 px-5 py-5 max-2xl:grid-cols-[minmax(0,1fr)_310px] max-xl:grid-cols-1 max-lg:px-4">
       <section className="min-w-0 space-y-4">
