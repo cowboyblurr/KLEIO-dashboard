@@ -1,9 +1,11 @@
 "use client"
 
+import type { CSSProperties } from "react"
 import Link from "next/link"
 import { useState } from "react"
 import { getReviewerProgress } from "@/lib/kleio-analytics"
 import { programs, collaborators, institution } from "@/lib/kleio-data"
+import workflowMotion from "@/components/kleio/workflow-motion.module.css"
 
 const program = programs[0]
 const committee = collaborators.filter((person) => program.committeeIds.includes(person.id))
@@ -25,6 +27,10 @@ const setupSteps = [
   ["04", "Committee", "Assign reviewers, jurors, or staff before intake begins."],
   ["05", "Publish", "Open the call and route incoming applicants into the review queue."],
 ]
+
+function workflowDelay(index: number): CSSProperties {
+  return { "--workflow-delay": `${index * 95}ms` } as CSSProperties
+}
 
 export function ProgramsNewPageView() {
   const [published, setPublished] = useState(false)
@@ -50,8 +56,12 @@ export function ProgramsNewPageView() {
 
         <section className="mb-4 rounded-2xl border border-[#E7E1F7] bg-[#F7F4FF] p-4 shadow-[0_14px_38px_rgba(82,64,130,0.06)]">
           <div className="grid gap-3 md:grid-cols-5">
-            {setupSteps.map(([number, title, body]) => (
-              <div key={title} className="rounded-xl border border-[#E7E1F7] bg-white px-3 py-3">
+            {setupSteps.map(([number, title, body], index) => (
+              <div
+                key={title}
+                className={`${workflowMotion.step} rounded-xl border border-[#E7E1F7] bg-white px-3 py-3`}
+                style={workflowDelay(index)}
+              >
                 <p className="text-[0.62rem] font-semibold uppercase tracking-[0.14em] text-[#A997E8]">{number}</p>
                 <p className="mt-1 font-serif text-sm font-semibold text-[#292631]">{title}</p>
                 <p className="mt-1 text-xs leading-relaxed text-[#7F7890]">{body}</p>
@@ -96,8 +106,8 @@ export function ProgramsNewPageView() {
             <h2 className="font-serif text-xl font-semibold text-foreground">Required artist materials</h2>
             <p className="mt-1 text-sm text-muted-foreground">These fields become the completeness checklist inside the Review Queue.</p>
             <div className="mt-4 grid gap-2 sm:grid-cols-2">
-              {program.requiredMaterials.map((item) => (
-                <div key={item} className="rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground">
+              {program.requiredMaterials.map((item, index) => (
+                <div key={item} className={`${workflowMotion.step} rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground`} style={workflowDelay(index)}>
                   {item}
                 </div>
               ))}
@@ -108,8 +118,8 @@ export function ProgramsNewPageView() {
             <h2 className="font-serif text-xl font-semibold text-foreground">Application questions</h2>
             <p className="mt-1 text-sm text-muted-foreground">Artist answers can be drafted from a Creative Passport, then reviewed before submission.</p>
             <div className="mt-4 space-y-2">
-              {applicationQuestions.map((item) => (
-                <div key={item} className="rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground">
+              {applicationQuestions.map((item, index) => (
+                <div key={item} className={`${workflowMotion.step} rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground`} style={workflowDelay(index)}>
                   {item}
                 </div>
               ))}
@@ -120,8 +130,8 @@ export function ProgramsNewPageView() {
             <h2 className="font-serif text-xl font-semibold text-foreground">Review rubric</h2>
             <p className="mt-1 text-sm text-muted-foreground">Criteria stay visible to reviewers and preserved for reports.</p>
             <div className="mt-4 space-y-2">
-              {program.rubric.map((item) => (
-                <div key={item} className="flex items-center justify-between rounded-xl border border-border bg-background px-3 py-2 text-sm">
+              {program.rubric.map((item, index) => (
+                <div key={item} className={`${workflowMotion.step} flex items-center justify-between rounded-xl border border-border bg-background px-3 py-2 text-sm`} style={workflowDelay(index)}>
                   <span className="text-foreground">{item}</span>
                   <span className="text-xs text-muted-foreground">1–5</span>
                 </div>
@@ -133,10 +143,10 @@ export function ProgramsNewPageView() {
             <h2 className="font-serif text-xl font-semibold text-foreground">Committee assignment</h2>
             <p className="mt-1 text-sm text-muted-foreground">Reviewer seats remain simple: assigned, in review, submitted, or needs discussion.</p>
             <div className="mt-4 space-y-3">
-              {committee.map((person) => {
+              {committee.map((person, index) => {
                 const progress = reviewerProgress.find((entry) => entry.reviewerId === person.id)
                 return (
-                  <div key={person.id} className="flex items-center justify-between rounded-xl border border-border bg-background p-3">
+                  <div key={person.id} className={`${workflowMotion.step} flex items-center justify-between rounded-xl border border-border bg-background p-3`} style={workflowDelay(index)}>
                     <div>
                       <p className="text-sm font-medium text-foreground">{person.name}</p>
                       <p className="text-xs text-muted-foreground">{person.role} · {person.inviteStatus}</p>
@@ -152,23 +162,13 @@ export function ProgramsNewPageView() {
         </div>
 
         <div className="mt-4 flex flex-wrap gap-2">
-          <button
-            type="button"
-            onClick={() => setPublished(true)}
-            className="inline-flex h-11 items-center rounded-xl bg-primary px-5 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
-          >
+          <button type="button" onClick={() => setPublished(true)} className="inline-flex h-11 items-center rounded-xl bg-primary px-5 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90">
             Publish open call
           </button>
-          <Link
-            href="/programs/"
-            className="inline-flex h-11 items-center rounded-xl border border-border bg-card px-5 text-sm font-semibold text-foreground transition-colors hover:bg-accent/50"
-          >
+          <Link href="/programs/" className="inline-flex h-11 items-center rounded-xl border border-border bg-card px-5 text-sm font-semibold text-foreground transition-colors hover:bg-accent/50">
             Back to Programs
           </Link>
-          <Link
-            href="/review-queue/"
-            className="inline-flex h-11 items-center rounded-xl border border-border bg-card px-5 text-sm font-semibold text-foreground transition-colors hover:bg-accent/50"
-          >
+          <Link href="/review-queue/" className="inline-flex h-11 items-center rounded-xl border border-border bg-card px-5 text-sm font-semibold text-foreground transition-colors hover:bg-accent/50">
             Review Queue
           </Link>
         </div>
