@@ -11,7 +11,9 @@ import {
   Globe,
   Mail,
   MapPin,
+  Palette,
   Share2,
+  SlidersHorizontal,
 } from "lucide-react"
 import { assetPath } from "@/lib/asset-path"
 import type { kleioSyntheticArtistProfiles } from "@/lib/kleio-profile-data"
@@ -24,6 +26,7 @@ const inkColor = "#292631"
 const mutedColor = "#7F7890"
 const lavenderSoftLine = "#E7E1F7"
 const lavenderDeep = "#5B4B8A"
+const lavenderMist = "#F7F4FF"
 const cardShadow = "0 18px 48px rgba(82, 64, 130, 0.08)"
 
 const cardStyle = { borderColor: lavenderSoftLine, boxShadow: cardShadow } as const
@@ -67,6 +70,18 @@ function SectionHeading({ title, action }: { title: string; action?: string }) {
   )
 }
 
+function ExpressionOption({ icon: Icon, title, body }: { icon: typeof Palette; title: string; body: string }) {
+  return (
+    <div className="rounded-2xl border bg-white p-4" style={{ borderColor: lavenderSoftLine }}>
+      <span className="grid size-8 place-items-center rounded-full" style={{ backgroundColor: lavenderMist, color: lavenderDeep }}>
+        <Icon className="size-4" />
+      </span>
+      <h3 className="mt-3 font-serif text-sm font-semibold" style={{ color: inkColor }}>{title}</h3>
+      <p className="mt-1 text-xs leading-relaxed" style={{ color: mutedColor }}>{body}</p>
+    </div>
+  )
+}
+
 export function ArtistPublicProfile({ profile }: { profile: ArtistProfile }) {
   const [confirmation, setConfirmation] = useState<string | null>(null)
   const { t } = useKleioLocale()
@@ -80,23 +95,18 @@ export function ArtistPublicProfile({ profile }: { profile: ArtistProfile }) {
 
   return (
     <div className="mx-auto w-full max-w-[1200px] space-y-6">
-      {/* Hero */}
       <section className="overflow-hidden rounded-[1.5rem] border bg-white" style={cardStyle}>
         <div className="grid gap-6 p-5 lg:grid-cols-[auto_minmax(0,1fr)] xl:p-6">
           <div className="flex justify-center lg:block">
             <div className="size-28 overflow-hidden rounded-full border-4 border-[#F1ECFB] bg-[#F7F4FF] shadow-sm">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={assetPath(profile.portrait)}
-                alt={profile.displayName}
-                className="h-full w-full object-cover object-center"
-              />
+              <img src={assetPath(profile.portrait)} alt={profile.displayName} className="h-full w-full object-cover object-center" />
             </div>
           </div>
 
           <div className="min-w-0">
             <p className="text-[0.72rem] font-semibold uppercase tracking-[0.2em]" style={{ color: lavenderDeep }}>
-              Artist Profile
+              Artist-Controlled Public Passport
             </p>
             <div className="mt-1 flex flex-wrap items-center gap-2">
               <h1 className="font-serif text-3xl font-semibold tracking-tight" style={{ color: inkColor }}>
@@ -113,37 +123,22 @@ export function ArtistPublicProfile({ profile }: { profile: ArtistProfile }) {
               </span>
             </div>
             <div className="mt-3 flex flex-wrap gap-1.5">
-              {profile.practiceTags.map((tag) => (
-                <ProfileChip key={tag} label={tag} />
-              ))}
+              {profile.practiceTags.map((tag) => <ProfileChip key={tag} label={tag} />)}
             </div>
             <p className="mt-4 max-w-xl text-sm leading-relaxed" style={{ color: "#4A4458" }}>
               {statementExcerpt}
             </p>
 
             <div className="mt-5 flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={() => demoAction("Portfolio preview opened")}
-                className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-primary px-3 text-xs font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
-              >
+              <button type="button" onClick={() => demoAction("Portfolio preview opened")} className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-primary px-3 text-xs font-semibold text-primary-foreground transition-colors hover:bg-primary/90">
                 <ExternalLink className="size-3.5" />
                 View Portfolio
               </button>
-              <button
-                type="button"
-                onClick={() => demoAction("Share link copied")}
-                className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-[#D8D0F2] bg-white px-3 text-xs font-semibold transition-colors hover:bg-[#F7F4FF]"
-                style={{ color: lavenderDeep }}
-              >
+              <button type="button" onClick={() => demoAction("Share link copied")} className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-[#D8D0F2] bg-white px-3 text-xs font-semibold transition-colors hover:bg-[#F7F4FF]" style={{ color: lavenderDeep }}>
                 <Share2 className="size-3.5" />
                 Share Profile
               </button>
-              <Link
-                href="/signup/artist/"
-                className="inline-flex h-10 items-center justify-center rounded-xl border border-[#D8D0F2] bg-white px-3 text-center text-xs font-semibold transition-colors hover:bg-[#F7F4FF]"
-                style={{ color: lavenderDeep }}
-              >
+              <Link href="/signup/artist/" className="inline-flex h-10 items-center justify-center rounded-xl border border-[#D8D0F2] bg-white px-3 text-center text-xs font-semibold transition-colors hover:bg-[#F7F4FF]" style={{ color: lavenderDeep }}>
                 Create Passport
               </Link>
             </div>
@@ -159,17 +154,24 @@ export function ArtistPublicProfile({ profile }: { profile: ArtistProfile }) {
         <div className="px-5 pb-5 xl:px-6 xl:pb-6">
           <div className="relative aspect-[16/9] overflow-hidden rounded-2xl border bg-[#F7F4FF]" style={{ borderColor: lavenderSoftLine }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={assetPath(profile.heroImage)}
-              alt={`${profile.displayName} featured practice image`}
-              className="h-full w-full object-cover object-center"
-            />
+            <img src={assetPath(profile.heroImage)} alt={`${profile.displayName} featured practice image`} className="h-full w-full object-cover object-center" />
             <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-white/15 via-transparent to-transparent" />
           </div>
         </div>
       </section>
 
-      {/* Selected Works */}
+      <Card>
+        <SectionHeading title="Artistic Expression Controls" />
+        <p className="mb-4 max-w-2xl text-sm leading-relaxed" style={{ color: mutedColor }}>
+          KLEIO should not flatten an artist into a generic application voice. The public passport shows how the artist can choose what tone, context, visibility, and practice language remain attached to their profile.
+        </p>
+        <div className="grid gap-3 md:grid-cols-3">
+          <ExpressionOption icon={Palette} title="Practice voice" body="Keep the artist statement primary and choose whether public copy feels lyrical, concise, archival, or grant-ready." />
+          <ExpressionOption icon={SlidersHorizontal} title="Profile emphasis" body="Prioritize selected works, process notes, materials, exhibition history, or availability depending on the opportunity." />
+          <ExpressionOption icon={BadgeCheck} title="Artist approval" body="Suggested edits remain drafts. The artist controls what is saved, shared, submitted, or rewritten." />
+        </div>
+      </Card>
+
       <Card>
         <SectionHeading title={t("profile.selectedWorks")} action={t("common.viewAll")} />
         <p className="mb-4 max-w-2xl text-xs leading-relaxed" style={{ color: mutedColor }}>
@@ -180,38 +182,23 @@ export function ArtistPublicProfile({ profile }: { profile: ArtistProfile }) {
             <article key={work.title} className="overflow-hidden rounded-2xl border bg-white" style={{ borderColor: lavenderSoftLine }}>
               <div className="relative aspect-[4/3] overflow-hidden bg-[#F7F4FF]">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={assetPath(work.image)}
-                  alt={work.title}
-                  className="h-full w-full object-cover object-center transition-transform duration-500 hover:scale-[1.03]"
-                />
+                <img src={assetPath(work.image)} alt={work.title} className="h-full w-full object-cover object-center transition-transform duration-500 hover:scale-[1.03]" />
               </div>
               <div className="p-3">
-                <h3 className="text-sm font-semibold" style={{ color: inkColor }}>
-                  {work.title}
-                </h3>
-                <p className="mt-0.5 text-xs" style={{ color: mutedColor }}>
-                  {work.year} · {work.medium}
-                </p>
-                <p className="mt-0.5 text-xs" style={{ color: mutedColor }}>
-                  {work.details}
-                </p>
+                <h3 className="text-sm font-semibold" style={{ color: inkColor }}>{work.title}</h3>
+                <p className="mt-0.5 text-xs" style={{ color: mutedColor }}>{work.year} · {work.medium}</p>
+                <p className="mt-0.5 text-xs" style={{ color: mutedColor }}>{work.details}</p>
               </div>
             </article>
           ))}
         </div>
       </Card>
 
-      {/* Detail grid */}
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>
           <SectionHeading title={t("profile.aboutPractice")} action={t("profile.artistStatement")} />
-          <p className="text-sm leading-relaxed" style={{ color: "#4A4458" }}>
-            {profile.shortBio}
-          </p>
-          <p className="mt-3 text-sm leading-relaxed" style={{ color: mutedColor }}>
-            {profile.artistStatement}
-          </p>
+          <p className="text-sm leading-relaxed" style={{ color: "#4A4458" }}>{profile.shortBio}</p>
+          <p className="mt-3 text-sm leading-relaxed" style={{ color: mutedColor }}>{profile.artistStatement}</p>
         </Card>
 
         <Card>
@@ -219,18 +206,14 @@ export function ArtistPublicProfile({ profile }: { profile: ArtistProfile }) {
           <div className="grid gap-2 sm:grid-cols-2">
             {Object.entries(profile.materialsReady).map(([key, ready]) => (
               <div key={key} className="flex items-center justify-between gap-2 rounded-xl border px-3 py-2.5" style={{ borderColor: lavenderSoftLine }}>
-                <span className="text-sm" style={{ color: inkColor }}>
-                  {materialLabelKeys[key] ? t(materialLabelKeys[key]) : key}
-                </span>
+                <span className="text-sm" style={{ color: inkColor }}>{materialLabelKeys[key] ? t(materialLabelKeys[key]) : key}</span>
                 {ready ? (
                   <span className="inline-flex items-center gap-1 rounded-full bg-[oklch(0.94_0.04_150)] px-2 py-0.5 text-[0.62rem] font-semibold text-[oklch(0.4_0.13_150)]">
                     <CheckCircle2 className="size-3" />
                     {t("status.ready")}
                   </span>
                 ) : (
-                  <span className="rounded-full bg-[oklch(0.95_0.04_75)] px-2 py-0.5 text-[0.62rem] font-semibold text-[oklch(0.48_0.12_65)]">
-                    Needs Review
-                  </span>
+                  <span className="rounded-full bg-[oklch(0.95_0.04_75)] px-2 py-0.5 text-[0.62rem] font-semibold text-[oklch(0.48_0.12_65)]">Needs Review</span>
                 )}
               </div>
             ))}
@@ -240,9 +223,7 @@ export function ArtistPublicProfile({ profile }: { profile: ArtistProfile }) {
         <Card>
           <SectionHeading title={t("profile.themes")} />
           <div className="flex flex-wrap gap-1.5">
-            {profile.themes.map((theme) => (
-              <ProfileChip key={theme} label={theme} muted />
-            ))}
+            {profile.themes.map((theme) => <ProfileChip key={theme} label={theme} muted />)}
           </div>
         </Card>
 
@@ -255,16 +236,7 @@ export function ArtistPublicProfile({ profile }: { profile: ArtistProfile }) {
                   <CalendarDays className="size-3.5" style={{ color: mutedColor }} />
                   {availabilityLabels[key] ?? key}
                 </span>
-                <span
-                  className="rounded-full px-2 py-0.5 text-[0.62rem] font-semibold"
-                  style={
-                    value === "Open"
-                      ? { backgroundColor: "oklch(0.94 0.04 150)", color: "oklch(0.4 0.13 150)" }
-                      : { backgroundColor: "#F1ECFB", color: lavenderDeep }
-                  }
-                >
-                  {value}
-                </span>
+                <span className="rounded-full px-2 py-0.5 text-[0.62rem] font-semibold" style={value === "Open" ? { backgroundColor: "oklch(0.94 0.04 150)", color: "oklch(0.4 0.13 150)" } : { backgroundColor: "#F1ECFB", color: lavenderDeep }}>{value}</span>
               </div>
             ))}
           </div>
@@ -276,9 +248,7 @@ export function ArtistPublicProfile({ profile }: { profile: ArtistProfile }) {
             {profile.history.map((entry) => (
               <div key={entry} className="flex items-start gap-3 rounded-xl border px-3 py-2.5" style={{ borderColor: lavenderSoftLine }}>
                 <span className="mt-1 size-1.5 shrink-0 rounded-full" style={{ backgroundColor: lavenderDeep }} />
-                <span className="text-sm" style={{ color: "#4A4458" }}>
-                  {entry}
-                </span>
+                <span className="text-sm" style={{ color: "#4A4458" }}>{entry}</span>
               </div>
             ))}
           </div>
@@ -307,19 +277,14 @@ export function ArtistPublicProfile({ profile }: { profile: ArtistProfile }) {
         </Card>
       </div>
 
-      {/* CTA band */}
       <div className="rounded-2xl border border-[#E7E1F7] bg-[#F7F4FF] p-8 text-center" style={{ boxShadow: cardShadow }}>
         <h2 className="font-serif text-2xl font-semibold tracking-tight" style={{ color: inkColor }}>
-          Build a passport once. Adapt it for every opportunity.
+          Build a passport once. Keep the artist&rsquo;s voice intact.
         </h2>
         <p className="mx-auto mt-3 max-w-2xl text-sm leading-relaxed" style={{ color: mutedColor }}>
-          KLEIO helps artists organize bios, statements, CVs, portfolios, documents, and reusable answers so they are
-          ready for grants, residencies, exhibitions, and open calls.
+          KLEIO helps artists organize bios, statements, CVs, portfolios, documents, reusable answers, and expression settings so applications stay efficient without flattening the work.
         </p>
-        <Link
-          href="/signup/artist/"
-          className="mt-5 inline-flex h-11 items-center justify-center rounded-full bg-primary px-6 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
-        >
+        <Link href="/signup/artist/" className="mt-5 inline-flex h-11 items-center justify-center rounded-full bg-primary px-6 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90">
           Create Artist Passport
         </Link>
       </div>
