@@ -9,20 +9,23 @@ import { DemoPresentationStyles } from "@/components/kleio/demo-presentation-sty
 import { GuideWalkthroughCollapser } from "@/components/kleio/guide-walkthrough-collapser"
 import { DemoClickFeedbackLayer } from "@/components/kleio/demo-click-feedback-layer"
 import { DemoGuideHighlightLayer } from "@/components/kleio/demo-guide-highlight-layer"
+import { useKleioMode } from "@/components/kleio/use-kleio-mode"
 
 export function ArtistShell({ children }: { children: ReactNode }) {
+  const { isDemo } = useKleioMode()
+
   return (
     <AuthGate requiredRole="artist">
       <DemoPresentationStyles />
-      <GuideWalkthroughCollapser />
-      <DemoClickFeedbackLayer />
-      <DemoGuideHighlightLayer />
+      {isDemo && <GuideWalkthroughCollapser />}
+      {isDemo && <DemoClickFeedbackLayer />}
+      {isDemo && <DemoGuideHighlightLayer />}
       <div className="relative flex h-screen overflow-x-auto overflow-y-hidden bg-background text-foreground">
         <ArtistSidebar />
         <div className="min-w-[860px] flex-1 overflow-x-auto overflow-y-hidden">{children}</div>
         <DemoEnvironmentBadge compact className="pointer-events-none absolute right-5 top-5 z-30 hidden 2xl:inline-flex" />
       </div>
-      <KleioDemoGuide variant="workspace" />
+      {isDemo && <KleioDemoGuide variant="workspace" />}
     </AuthGate>
   )
 }
