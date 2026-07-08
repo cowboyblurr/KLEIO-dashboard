@@ -10,7 +10,7 @@ import {
   getShortlistGroups,
   statusBreakdown,
 } from "@/lib/kleio-analytics"
-import { programs } from "@/lib/kleio-data"
+import { activityLog, programs } from "@/lib/kleio-data"
 import { DemoPageShell } from "@/components/kleio/demo-page-shell"
 import { KleioAssistObject } from "@/components/kleio/kleio-assist-object"
 import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
@@ -31,6 +31,7 @@ export function ReportsPageView() {
   const disciplineDistribution = getDisciplineDistribution()
   const reviewerProgress = getReviewerProgress()
   const shortlistOutcomes = getShortlistGroups()
+  const decisionHistory = activityLog.filter((entry) => entry.type === "decision" || entry.type === "review" || entry.type === "message").slice(0, 6)
 
   useEffect(() => {
     return () => {
@@ -49,7 +50,7 @@ export function ReportsPageView() {
   return (
     <DemoPageShell
       title={t("institution.workspace.reports.title")}
-      description={t("institution.workspace.reports.description")}
+      description="Here is the report: program summary, applicant status, reviewer progress, shortlist outcomes, and decision history preserved from the workflow."
     >
       <div className="mb-4 flex flex-wrap items-center gap-3">
         <div className="grid flex-1 grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
@@ -78,7 +79,7 @@ export function ReportsPageView() {
             href="/activity-log/"
             className="inline-flex h-10 items-center rounded-xl border border-border bg-card px-4 text-sm font-semibold text-foreground transition-colors hover:bg-accent/50"
           >
-            {t("institution.workspace.reports.cta.viewActivityLog")}
+            Decision History
           </Link>
           <button
             type="button"
@@ -123,6 +124,22 @@ export function ReportsPageView() {
         </div>
       )}
 
+      <section className="mb-4 rounded-2xl border border-[#E7E1F7] bg-[#F7F4FF] p-5 shadow-sm">
+        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#A997E8]">Report proof points</p>
+        <div className="mt-3 grid gap-3 md:grid-cols-3">
+          {[
+            ["Open call context", "Dates, required materials, rubric, and committee coverage."],
+            ["Decision movement", "Incomplete files, reviewer actions, shortlist status, and pending votes."],
+            ["Preserved history", "A traceable activity record for reports, debriefs, and future cycles."],
+          ].map(([title, body]) => (
+            <div key={title} className="rounded-xl border border-[#E7E1F7] bg-white p-3">
+              <p className="font-serif text-sm font-semibold text-[#292631]">{title}</p>
+              <p className="mt-1 text-xs leading-relaxed text-[#7F7890]">{body}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
       <div className="grid gap-4 xl:grid-cols-2">
         <section className="rounded-2xl border border-border bg-card shadow-sm">
           <div className="border-b border-border px-5 py-4">
@@ -142,13 +159,17 @@ export function ReportsPageView() {
 
         <section className="rounded-2xl border border-border bg-card shadow-sm">
           <div className="border-b border-border px-5 py-4">
-            <h2 className="font-serif text-lg font-semibold text-foreground">Applications over time</h2>
+            <h2 className="font-serif text-lg font-semibold text-foreground">Decision History</h2>
+            <p className="mt-1 text-xs text-muted-foreground">Visible module for decisions, reviewer movement, and message-driven changes.</p>
           </div>
           <ul className="divide-y divide-border">
-            {applicationsOverTime.map((entry) => (
-              <li key={entry.month} className="flex items-center justify-between px-5 py-3 text-sm">
-                <span className="text-foreground">{entry.month}</span>
-                <span className="font-medium text-foreground tabular-nums">{entry.applications}</span>
+            {decisionHistory.map((entry) => (
+              <li key={entry.id} className="px-5 py-3 text-sm">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="text-foreground"><span className="font-medium">{entry.actor}</span> <span className="text-muted-foreground">{entry.action}</span></span>
+                  <span className="text-xs text-muted-foreground">{entry.date}</span>
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">{entry.target}</p>
               </li>
             ))}
           </ul>
@@ -156,15 +177,13 @@ export function ReportsPageView() {
 
         <section className="rounded-2xl border border-border bg-card shadow-sm">
           <div className="border-b border-border px-5 py-4">
-            <h2 className="font-serif text-lg font-semibold text-foreground">Discipline distribution</h2>
+            <h2 className="font-serif text-lg font-semibold text-foreground">Applications over time</h2>
           </div>
           <ul className="divide-y divide-border">
-            {disciplineDistribution.map((entry) => (
-              <li key={entry.medium} className="flex items-center justify-between px-5 py-3 text-sm">
-                <span className="text-foreground">{entry.medium}</span>
-                <span className="font-medium text-foreground tabular-nums">
-                  {entry.count} <span className="text-muted-foreground">({entry.pct})</span>
-                </span>
+            {applicationsOverTime.map((entry) => (
+              <li key={entry.month} className="flex items-center justify-between px-5 py-3 text-sm">
+                <span className="text-foreground">{entry.month}</span>
+                <span className="font-medium text-foreground tabular-nums">{entry.applications}</span>
               </li>
             ))}
           </ul>
