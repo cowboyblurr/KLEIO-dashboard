@@ -11,6 +11,7 @@ import {
   loginDemoUser,
   type KleioDemoSession,
 } from "@/lib/kleio-demo-auth"
+import { clearKleioMode, setKleioMode, type KleioMode } from "@/lib/kleio-mode"
 import { KleioWordmarkLink } from "@/components/kleio/kleio-wordmark-link"
 import { KleioAssistObject } from "@/components/kleio/kleio-assist-object"
 import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
@@ -22,42 +23,12 @@ type AuthGateProps = {
   children: React.ReactNode
 }
 
-function DemoAuthButtons({
-  onInstitution,
-  onArtist,
-  onCollaborator,
-  compact = false,
-}: {
-  onInstitution: () => void
-  onArtist: () => void
-  onCollaborator: () => void
-  compact?: boolean
-}) {
-  const { t } = useKleioLocale()
-
+function RoleAccessButtons({ onSelect, mode, compact = false }: { onSelect: (role: DemoRole, mode: KleioMode) => void; mode: KleioMode; compact?: boolean }) {
   return (
     <div className={`flex ${compact ? "flex-col" : "flex-wrap"} gap-2`}>
-      <button
-        type="button"
-        onClick={onInstitution}
-        className="inline-flex h-10 items-center justify-center rounded-xl border border-primary/25 bg-primary/10 px-4 text-sm font-medium text-primary transition-colors hover:bg-primary/15"
-      >
-        {t("auth.enterInstitutionDemo")}
-      </button>
-      <button
-        type="button"
-        onClick={onArtist}
-        className="inline-flex h-10 items-center justify-center rounded-xl border border-border bg-background px-4 text-sm font-medium text-foreground transition-colors hover:bg-accent/50"
-      >
-        {t("auth.enterArtistDemo")}
-      </button>
-      <button
-        type="button"
-        onClick={onCollaborator}
-        className="inline-flex h-10 items-center justify-center rounded-xl border border-border bg-background px-4 text-sm font-medium text-foreground transition-colors hover:bg-accent/50"
-      >
-        {t("auth.enterCollaboratorDemo")}
-      </button>
+      <button type="button" onClick={() => onSelect("institution", mode)} className="inline-flex h-10 items-center justify-center rounded-xl border border-primary/25 bg-primary/10 px-4 text-sm font-medium text-primary transition-colors hover:bg-primary/15">Institution</button>
+      <button type="button" onClick={() => onSelect("artist", mode)} className="inline-flex h-10 items-center justify-center rounded-xl border border-border bg-background px-4 text-sm font-medium text-foreground transition-colors hover:bg-accent/50">Artist</button>
+      <button type="button" onClick={() => onSelect("collaborator", mode)} className="inline-flex h-10 items-center justify-center rounded-xl border border-border bg-background px-4 text-sm font-medium text-foreground transition-colors hover:bg-accent/50">Reviewer</button>
     </div>
   )
 }
@@ -75,19 +46,9 @@ function switchLabelKey(role: DemoRole) {
 }
 
 function wrongRoleDescriptionKey(sessionRole: DemoRole, requiredRole: DemoRole) {
-  if (sessionRole === "artist") {
-    return requiredRole === "collaborator"
-      ? "auth.wrongRole.artistToCollaborator"
-      : "auth.wrongRole.artistToInstitution"
-  }
-  if (sessionRole === "collaborator") {
-    return requiredRole === "artist"
-      ? "auth.wrongRole.collaboratorToArtist"
-      : "auth.wrongRole.collaboratorToInstitution"
-  }
-  return requiredRole === "collaborator"
-    ? "auth.wrongRole.institutionToCollaborator"
-    : "auth.wrongRole.institutionToArtist"
+  if (sessionRole === "artist") return requiredRole === "collaborator" ? "auth.wrongRole.artistToCollaborator" : "auth.wrongRole.artistToInstitution"
+  if (sessionRole === "collaborator") return requiredRole === "artist" ? "auth.wrongRole.collaboratorToArtist" : "auth.wrongRole.collaboratorToInstitution"
+  return requiredRole === "collaborator" ? "auth.wrongRole.institutionToCollaborator" : "auth.wrongRole.institutionToArtist"
 }
 
 function loggedOutHeadingKey(requiredRole?: DemoRole) {
@@ -104,20 +65,13 @@ function loggedOutDescriptionKey(requiredRole?: DemoRole) {
   return "auth.generic.description"
 }
 
-function AuthWall({
-  requiredRole,
-  session,
-  onRefresh,
-}: {
-  requiredRole?: DemoRole
-  session: KleioDemoSession | null
-  onRefresh: () => void
-}) {
+function AuthWall({ requiredRole, session, onRefresh }: { requiredRole?: DemoRole; session: KleioDemoSession | null; onRefresh: () => void }) {
   const router = useRouter()
   const pathname = usePathname()
   const { t } = useKleioLocale()
 
-  function enterDemo(role: DemoRole) {
+  function enter(role: DemoRole, mode: KleioMode) {
+    setKleioMode(mode)
     loginDemoUser(role)
     onRefresh()
     if (requiredRole === role && pathname) {
@@ -134,72 +88,43 @@ function AuthWall({
   }
 
   const wrongRole = session && requiredRole && session.role !== requiredRole
-
   const loggedOutHeading = t(loggedOutHeadingKey(requiredRole))
   const loggedOutDescription = t(loggedOutDescriptionKey(requiredRole))
-  const wrongRoleDescription =
-    session && requiredRole
-      ? t(wrongRoleDescriptionKey(session.role, requiredRole))
-      : ""
+  const wrongRoleDescription = session && requiredRole ? t(wrongRoleDescriptionKey(session.role, requiredRole)) : ""
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-[oklch(0.985_0.005_287)] px-5 py-12">
       <div className="w-full max-w-md rounded-2xl border border-border bg-[oklch(0.99_0.005_287)] p-8 shadow-sm">
-        <div className="mb-6 flex justify-center">
-          <KleioWordmarkLink href="/" imageClassName="h-7 w-auto" priority />
-        </div>
+        <div className="mb-6 flex justify-center"><KleioWordmarkLink href="/" imageClassName="h-7 w-auto" priority /></div>
 
         {wrongRole ? (
           <>
-            <h1 className="text-center font-serif text-2xl font-semibold text-foreground">
-              {t("auth.switchRole")}
-            </h1>
-            <p className="mt-2 text-center text-sm leading-relaxed text-muted-foreground">
-              {wrongRoleDescription}
-            </p>
+            <h1 className="text-center font-serif text-2xl font-semibold text-foreground">{t("auth.switchRole")}</h1>
+            <p className="mt-2 text-center text-sm leading-relaxed text-muted-foreground">{wrongRoleDescription}</p>
             <div className="mt-6 space-y-2">
-              <button
-                type="button"
-                onClick={() => router.push(getDashboardForRole(session.role))}
-                className="inline-flex h-10 w-full items-center justify-center rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
-              >
-                {t("auth.goToDashboard", { dashboard: t(dashboardLabelKey(session.role)) })}
-              </button>
-              <button
-                type="button"
-                onClick={() => switchToRole(requiredRole!)}
-                className="inline-flex h-10 w-full items-center justify-center rounded-xl border border-border bg-background px-4 text-sm font-medium text-foreground transition-colors hover:bg-accent/50"
-              >
-                {t(switchLabelKey(requiredRole!))}
-              </button>
-              <Link
-                href={getPublicHomeHref()}
-                className="inline-flex h-10 w-full items-center justify-center rounded-xl px-4 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-              >
-                {t("auth.returnToKleio")}
-              </Link>
+              <button type="button" onClick={() => router.push(getDashboardForRole(session.role))} className="inline-flex h-10 w-full items-center justify-center rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90">{t("auth.goToDashboard", { dashboard: t(dashboardLabelKey(session.role)) })}</button>
+              <button type="button" onClick={() => switchToRole(requiredRole!)} className="inline-flex h-10 w-full items-center justify-center rounded-xl border border-border bg-background px-4 text-sm font-medium text-foreground transition-colors hover:bg-accent/50">{t(switchLabelKey(requiredRole!))}</button>
+              <Link href={getPublicHomeHref()} className="inline-flex h-10 w-full items-center justify-center rounded-xl px-4 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">{t("auth.returnToKleio")}</Link>
             </div>
           </>
         ) : (
           <>
             <h1 className="text-center font-serif text-2xl font-semibold text-foreground">{loggedOutHeading}</h1>
-            <p className="mt-2 text-center text-sm leading-relaxed text-muted-foreground">
-              {loggedOutDescription}
-            </p>
-            <div className="mt-6">
-              <DemoAuthButtons
-                onInstitution={() => enterDemo("institution")}
-                onArtist={() => enterDemo("artist")}
-                onCollaborator={() => enterDemo("collaborator")}
-                compact
-              />
+            <p className="mt-2 text-center text-sm leading-relaxed text-muted-foreground">{loggedOutDescription}</p>
+
+            <div className="mt-6 rounded-2xl border border-[#E7E1F7] bg-[#F7F4FF] p-3">
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#A997E8]">Demo walkthrough</p>
+              <p className="mt-1 text-xs leading-relaxed text-muted-foreground">Use sample records and the guide to understand the review flow.</p>
+              <div className="mt-3"><RoleAccessButtons onSelect={enter} mode="demo" compact /></div>
             </div>
-            <Link
-              href={getPublicHomeHref()}
-              className="mt-4 inline-flex h-10 w-full items-center justify-center rounded-xl border border-border bg-background text-sm font-medium text-foreground transition-colors hover:bg-accent/50"
-            >
-              {t("auth.returnToKleio")}
-            </Link>
+
+            <div className="mt-3 rounded-2xl border border-border bg-background p-3">
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">Product preview</p>
+              <p className="mt-1 text-xs leading-relaxed text-muted-foreground">Enter a cleaner workspace mode with less demo scaffolding.</p>
+              <div className="mt-3"><RoleAccessButtons onSelect={enter} mode="preview" compact /></div>
+            </div>
+
+            <Link href={getPublicHomeHref()} className="mt-4 inline-flex h-10 w-full items-center justify-center rounded-xl border border-border bg-background text-sm font-medium text-foreground transition-colors hover:bg-accent/50">{t("auth.returnToKleio")}</Link>
           </>
         )}
       </div>
@@ -218,29 +143,13 @@ export function AuthGate({ requiredRole, children }: AuthGateProps) {
   if (session === undefined) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[oklch(0.985_0.005_287)] px-6">
-        <div className="max-w-sm">
-          <KleioAssistObject
-            mode="reviewing"
-            title={t("assist.object.complete.title")}
-            description={t("assist.object.complete.description")}
-            size="sm"
-            compact
-          />
-        </div>
+        <div className="max-w-sm"><KleioAssistObject mode="reviewing" title={t("assist.object.complete.title")} description={t("assist.object.complete.description")} size="sm" compact /></div>
       </div>
     )
   }
 
-  if (!session) {
-    return <AuthWall requiredRole={requiredRole} session={null} onRefresh={() => setSession(getDemoSession())} />
-  }
-
-  if (requiredRole && session.role !== requiredRole) {
-    return (
-      <AuthWall requiredRole={requiredRole} session={session} onRefresh={() => setSession(getDemoSession())} />
-    )
-  }
-
+  if (!session) return <AuthWall requiredRole={requiredRole} session={null} onRefresh={() => setSession(getDemoSession())} />
+  if (requiredRole && session.role !== requiredRole) return <AuthWall requiredRole={requiredRole} session={session} onRefresh={() => setSession(getDemoSession())} />
   return <>{children}</>
 }
 
@@ -248,6 +157,7 @@ export function useDemoSignOut() {
   const router = useRouter()
   return () => {
     clearDemoSession()
+    clearKleioMode()
     router.push("/")
   }
 }
