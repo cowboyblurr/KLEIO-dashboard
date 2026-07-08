@@ -3,6 +3,16 @@
 import { Search } from "lucide-react"
 import { inkColor, mutedColor, lavenderSoftLine } from "@/lib/workspace-styles"
 
+function valueForChip(chip: string) {
+  const normalized = chip.toLowerCase()
+  if (normalized.startsWith("all")) return ""
+  if (normalized.includes("high fit")) return "fit"
+  if (normalized.includes("due soon")) return "due"
+  if (normalized.includes("material")) return "material"
+  if (normalized.includes("review")) return "review"
+  return chip.replace(/^all\s+/i, "")
+}
+
 export function SearchFilterBar({
   placeholder,
   value,
@@ -30,16 +40,22 @@ export function SearchFilterBar({
       </div>
       {filterChips && filterChips.length > 0 && (
         <div className="flex flex-wrap gap-2">
-          {filterChips.map((chip) => (
-            <button
-              key={chip}
-              type="button"
-              className="rounded-full border px-3 py-1.5 text-xs font-medium transition-colors hover:bg-[#F7F4FF]"
-              style={{ borderColor: lavenderSoftLine, color: inkColor }}
-            >
-              {chip}
-            </button>
-          ))}
+          {filterChips.map((chip) => {
+            const chipValue = valueForChip(chip)
+            const active = Boolean(value && chipValue && value.toLowerCase() === chipValue.toLowerCase()) || (!value && chipValue === "")
+            return (
+              <button
+                key={chip}
+                type="button"
+                onClick={() => onChange?.(chipValue)}
+                disabled={!onChange}
+                className={`rounded-full border px-3 py-1.5 text-xs font-medium transition-colors disabled:cursor-default ${active ? "bg-[#F7F4FF]" : "hover:bg-[#F7F4FF]"}`}
+                style={{ borderColor: active ? "#D8D0F2" : lavenderSoftLine, color: active ? "#5B4B8A" : inkColor }}
+              >
+                {chip}
+              </button>
+            )
+          })}
         </div>
       )}
     </div>
