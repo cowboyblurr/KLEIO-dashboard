@@ -25,6 +25,12 @@ function sectionLabel(heading: string, locale: string, t: (key: string) => strin
   return t(institutionSectionKeys[heading] ?? heading)
 }
 
+function itemLabel(href: string, label: string, locale: string, t: (key: string) => string) {
+  if (href === "/artists/") return locale === "es" ? "Registros de artistas" : "Artist Records"
+  if (href === "/review-room/") return locale === "es" ? "Sala de revisión" : "Review Room"
+  return t(institutionNavLabelKeys[href] ?? label)
+}
+
 export function Sidebar() {
   const pathname = usePathname()
   const { t, locale } = useKleioLocale()
@@ -49,7 +55,7 @@ export function Sidebar() {
               {section.items.map((item) => {
                 const active = pathname === item.href
                 const Icon = item.icon
-                const label = item.href === "/artists/" ? (locale === "es" ? "Registros de artistas" : "Artist Records") : t(institutionNavLabelKeys[item.href] ?? item.label)
+                const label = itemLabel(item.href, item.label, locale, t)
                 return (
                   <li key={item.href}>
                     <Link
