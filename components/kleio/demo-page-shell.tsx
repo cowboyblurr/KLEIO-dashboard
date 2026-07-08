@@ -18,6 +18,7 @@ function targetForPath(pathname: string | null) {
   if (path.startsWith("/submissions")) return "applicant-context"
   if (path.startsWith("/artists")) return "artist-records"
   if (path.startsWith("/review-queue")) return "review-queue"
+  if (path.startsWith("/review-room")) return "review-room"
   if (path.startsWith("/committee")) return "committee-reviewers"
   if (path.startsWith("/shortlist")) return "shortlist"
   if (path.startsWith("/reports")) return "report-preview"
@@ -69,8 +70,19 @@ function guidanceForPath(pathname: string | null, locale: string): Guidance | nu
       body: es
         ? "Empieza por materiales incompletos y revisores pendientes para que el comité pueda evaluar con información limpia."
         : "Start with incomplete materials and pending reviewers so the committee can evaluate with clean information.",
-      href: "/committee/",
-      cta: es ? "Ver comité" : "View committee",
+      href: "/review-room/",
+      cta: es ? "Abrir sala" : "Open review room",
+    }
+  }
+
+  if (path.startsWith("/review-room")) {
+    return {
+      title: es ? "Por qué importa" : "Why this matters",
+      body: es
+        ? "La sala de revisión mantiene contexto curatorial, materiales, progreso de revisores, shortlist e informe en una vista antes de cerrar decisiones."
+        : "The review room keeps curatorial context, materials, reviewer progress, shortlist movement, and report readiness together before decisions harden.",
+      href: "/shortlist/",
+      cta: es ? "Avanzar shortlist" : "Move to shortlist",
     }
   }
 
