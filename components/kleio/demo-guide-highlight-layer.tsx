@@ -25,10 +25,11 @@ const stepTargets: Record<string, string[]> = {
   "invite-reviewers-resolve-materials-3": ["review-queue", "incomplete-materials"],
   "invite-reviewers-resolve-materials-4": ["messages", "missing-materials-message"],
   "invite-reviewers-resolve-materials-5": ["activity-log", "decision-history"],
-  "review-and-shortlist-1": ["institution-overview", "review-metrics"],
+  "review-and-shortlist-1": ["institution-overview-intro", "institution-priorities", "institution-workflow-path"],
   "review-and-shortlist-2": ["review-queue", "review-table"],
-  "review-and-shortlist-3": ["applicant-context", "review-notes"],
-  "review-and-shortlist-4": ["shortlist", "report-preview"],
+  "review-and-shortlist-3": ["review-room", "decision-lanes", "reviewer-progress"],
+  "review-and-shortlist-4": ["shortlist", "shortlist-candidates"],
+  "review-and-shortlist-5": ["report-preview", "decision-history"],
 }
 
 const stepKeywords: Record<string, string[]> = {
@@ -47,11 +48,14 @@ const stepKeywords: Record<string, string[]> = {
   "invite-reviewers-resolve-materials-3": ["Review Queue", "Incomplete", "Materials", "Priority"],
   "invite-reviewers-resolve-materials-4": ["Messages", "Missing", "Follow-up"],
   "invite-reviewers-resolve-materials-5": ["Activity", "History", "Log"],
-  "review-and-shortlist-1": ["Review", "Deadline", "Shortlist", "Applications"],
+  "review-and-shortlist-1": ["Priority", "Needs attention", "Reviewer follow-up", "Ready for decision"],
   "review-and-shortlist-2": ["Review Queue", "Completeness", "Assigned"],
-  "review-and-shortlist-3": ["Applicant", "Notes", "Rubric", "Review"],
+  "review-and-shortlist-3": ["Review Room", "Decision", "Reviewer", "Applicant"],
   "review-and-shortlist-4": ["Shortlist", "Finalist", "Report"],
+  "review-and-shortlist-5": ["Report", "Decision History", "Reviewer Completion"],
 }
+
+let lastScrollKey = ""
 
 function readState(): GuideState | null {
   try {
@@ -119,10 +123,18 @@ function applyHighlight() {
 
   const target = explicit ?? (ranked[0]?.element as HTMLElement | undefined)
   if (!target) return
+
   target.classList.add("kleio-guide-target-highlight")
   target.setAttribute("data-kleio-guide-highlight", "true")
+
+  const targetName = target.getAttribute("data-kleio-guide-target") ?? visibleText(target).slice(0, 40)
+  const scrollKey = `${state.activeStepId}:${targetName}`
+  if (lastScrollKey === scrollKey) return
+  lastScrollKey = scrollKey
+
   window.setTimeout(() => {
-    target.scrollIntoView({ behavior: "smooth", block: "center", inline: "nearest" })
+    const block: ScrollLogicalPosition = state.activeStepId === "review-and-shortlist-1" ? "start" : "center"
+    target.scrollIntoView({ behavior: "smooth", block, inline: "nearest" })
   }, 180)
 }
 
@@ -171,9 +183,7 @@ export function DemoGuideHighlightLayer() {
       }
 
       @media (max-width: 767px) {
-        .kleio-guide-target-highlight::before {
-          display: none;
-        }
+        .kleio-guide-target-highlight::before { display: none; }
       }
     `}</style>
   )
