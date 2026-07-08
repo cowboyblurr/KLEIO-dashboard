@@ -133,67 +133,47 @@ function guidanceForPath(pathname: string | null, locale: string): Guidance | nu
   return null
 }
 
-export function DemoPageShell({
-  title,
-  description,
-  actions,
-  children,
-}: {
-  title: string
-  description: string
-  actions?: React.ReactNode
-  children: React.ReactNode
-}) {
+export function DemoPageShell({ title, description, actions, children }: { title: string; description: string; actions?: React.ReactNode; children: React.ReactNode }) {
   const pathname = usePathname()
   const { locale } = useKleioLocale()
   const guidance = guidanceForPath(pathname, locale)
   const target = targetForPath(pathname)
 
   return (
-    <main data-kleio-guide-target={target} className="flex h-full min-h-0 flex-col overflow-y-auto px-5 py-6 xl:px-7 xl:py-7">
-      <header className="mb-5 flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="font-serif text-2xl font-semibold tracking-tight text-foreground xl:text-3xl">
-            {title}
-          </h1>
-          <p className="mt-1.5 max-w-2xl text-sm text-muted-foreground">{description}</p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          {actions}
-          <DemoEnvironmentBadge compact />
-        </div>
-      </header>
-
-      {guidance && (
-        <section data-kleio-guide-target={target ? `${target}-guidance` : undefined} className="mb-4 rounded-2xl border border-[#E7E1F7] bg-[#F7F4FF] px-4 py-3 shadow-[0_12px_34px_rgba(82,64,130,0.06)]">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="max-w-3xl">
-              <p className="text-[0.62rem] font-semibold uppercase tracking-[0.16em] text-[#A997E8]">{guidance.title}</p>
-              <p className="mt-1 text-sm leading-relaxed text-[#4A425D]">{guidance.body}</p>
-            </div>
-            {guidance.href && guidance.cta && (
-              <Link href={guidance.href} className="inline-flex h-9 items-center rounded-full bg-[#5B4B8A] px-4 text-xs font-semibold text-white transition-opacity hover:opacity-90">
-                {guidance.cta}
-              </Link>
-            )}
+    <main data-kleio-guide-target={target} className="flex h-full min-h-0 flex-col overflow-auto px-5 py-6 xl:px-7 xl:py-7">
+      <div className="min-w-[760px]">
+        <header className="mb-5 flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <h1 className="font-serif text-2xl font-semibold tracking-tight text-foreground xl:text-3xl">{title}</h1>
+            <p className="mt-1.5 max-w-2xl text-sm text-muted-foreground">{description}</p>
           </div>
-        </section>
-      )}
+          <div className="flex flex-wrap items-center gap-2">
+            {actions}
+            <DemoEnvironmentBadge compact />
+          </div>
+        </header>
 
-      {children}
+        {guidance && (
+          <section data-kleio-guide-target={target ? `${target}-guidance` : undefined} className="mb-4 rounded-2xl border border-[#E7E1F7] bg-[#F7F4FF] px-4 py-3 shadow-[0_12px_34px_rgba(82,64,130,0.06)]">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="max-w-3xl">
+                <p className="text-[0.62rem] font-semibold uppercase tracking-[0.16em] text-[#A997E8]">{guidance.title}</p>
+                <p className="mt-1 text-sm leading-relaxed text-[#4A425D]">{guidance.body}</p>
+              </div>
+              {guidance.href && guidance.cta && (
+                <Link href={guidance.href} className="inline-flex h-9 items-center rounded-full bg-[#5B4B8A] px-4 text-xs font-semibold text-white transition-opacity hover:opacity-90">{guidance.cta}</Link>
+              )}
+            </div>
+          </section>
+        )}
+
+        {children}
+      </div>
     </main>
   )
 }
 
-export function DemoStatRow({
-  label,
-  value,
-  href,
-}: {
-  label: string
-  value: string | number
-  href?: string
-}) {
+export function DemoStatRow({ label, value, href }: { label: string; value: string | number; href?: string }) {
   const content = (
     <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
       <p className="text-xs font-medium text-muted-foreground">{label}</p>
@@ -202,11 +182,7 @@ export function DemoStatRow({
   )
 
   if (href) {
-    return (
-      <Link href={href} className="block transition-opacity hover:opacity-90">
-        {content}
-      </Link>
-    )
+    return <Link href={href} className="block transition-opacity hover:opacity-90">{content}</Link>
   }
 
   return content
