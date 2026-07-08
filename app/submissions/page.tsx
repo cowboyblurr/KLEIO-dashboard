@@ -16,8 +16,8 @@ export default function SubmissionsPage() {
 
   return (
     <DashboardShell>
-      <main className="h-full overflow-y-auto px-6 py-6">
-        <div className="mx-auto max-w-[1180px] space-y-5">
+      <main className="h-full overflow-auto px-6 py-6">
+        <div className="mx-auto min-w-[760px] max-w-[1180px] space-y-5">
           <WorkspacePageHeader
             eyebrow={t("institution.workspace.submissions.eyebrow")}
             title={t("institution.workspace.submissions.title")}
@@ -27,15 +27,9 @@ export default function SubmissionsPage() {
           />
 
           <section className="rounded-2xl border bg-white p-5" style={cardStyle}>
-            <SearchFilterBar
-              placeholder={t("institution.workspace.submissions.searchPlaceholder")}
-              filterChips={["All Programs", "All Statuses", "Material Readiness", "Review Stage"]}
-            />
+            <SearchFilterBar placeholder={t("institution.workspace.submissions.searchPlaceholder")} filterChips={["All Programs", "All Statuses", "Material Readiness", "Review Stage"]} />
             <p className="mt-3 text-sm" style={{ color: mutedColor }}>
-              {t("institution.workspace.submissions.showingCount", {
-                count: analytics.totalApplications,
-                programs: analytics.activePrograms,
-              })}
+              {t("institution.workspace.submissions.showingCount", { count: analytics.totalApplications, programs: analytics.activePrograms })}
             </p>
           </section>
 
@@ -55,36 +49,13 @@ export default function SubmissionsPage() {
               <tbody>
                 {allSubmissions.map((submission) => (
                   <tr key={submission.id} className="border-b" style={{ borderColor: lavenderSoftLine }}>
-                    <td className="px-5 py-3">
-                      <p className="font-medium" style={{ color: inkColor }}>{submission.artist}</p>
-                      <p className="text-xs" style={{ color: mutedColor }}>{submission.location}</p>
-                    </td>
+                    <td className="px-5 py-3"><p className="font-medium" style={{ color: inkColor }}>{submission.artist}</p><p className="text-xs" style={{ color: mutedColor }}>{submission.location}</p></td>
                     <td className="px-3 py-3" style={{ color: mutedColor }}>{submission.program}</td>
-                    <td className="px-3 py-3">
-                      <StatusPill status={submission.status} />
-                    </td>
-                    <td className="px-3 py-3">
-                      <DemoStatusChip
-                        label={
-                          submission.completeness >= 100
-                            ? t("institution.workspace.submissions.materialsComplete")
-                            : t("institution.workspace.submissions.materialsReady", { pct: submission.completeness })
-                        }
-                        tone={submission.completeness >= 100 ? "success" : "warning"}
-                      />
-                    </td>
+                    <td className="px-3 py-3"><StatusPill status={submission.status} /></td>
+                    <td className="px-3 py-3"><DemoStatusChip label={submission.completeness >= 100 ? t("institution.workspace.submissions.materialsComplete") : t("institution.workspace.submissions.materialsReady", { pct: submission.completeness })} tone={submission.completeness >= 100 ? "success" : "warning"} /></td>
                     <td className="px-3 py-3" style={{ color: mutedColor }}>{submission.reviewer}</td>
                     <td className="px-3 py-3" style={{ color: mutedColor }}>{submission.submitted}</td>
-                    <td className="px-3 py-3">
-                      <div className="flex flex-wrap gap-2">
-                        <Link href={`/artists/${submission.artistId}/`} className="text-xs font-medium transition-opacity hover:opacity-75" style={{ color: "#5B4B8A" }}>
-                          {t("institution.workspace.submissions.action.review")}
-                        </Link>
-                        <Link href={`/artist/${submission.artistId}/`} className="text-xs font-medium transition-opacity hover:opacity-75" style={{ color: mutedColor }}>
-                          {t("institution.workspace.submissions.action.public")}
-                        </Link>
-                      </div>
-                    </td>
+                    <td className="px-3 py-3"><div className="flex flex-wrap gap-2"><Link href={`/artists/${submission.artistId}/`} className="text-xs font-medium transition-opacity hover:opacity-75" style={{ color: "#5B4B8A" }}>{t("institution.workspace.submissions.action.review")}</Link><Link href={`/artist/${submission.artistId}/`} className="text-xs font-medium transition-opacity hover:opacity-75" style={{ color: mutedColor }}>{t("institution.workspace.submissions.action.public")}</Link></div></td>
                   </tr>
                 ))}
               </tbody>
