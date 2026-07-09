@@ -1,374 +1,280 @@
-// KLEIO synthetic public profile seed data
-// Copy this into lib/kleio-profile-data.ts or merge carefully with lib/kleio-data.ts.
-// All image paths assume the profile-assets folder is copied into /public/profile-assets.
+import { artists, institution, programs, type Artist, type Program } from "@/lib/kleio-data"
 
-export const kleioSyntheticArtistProfiles = [
-  {
-    "username": "amina-el-badri",
-    "displayName": "Amina El Badri",
-    "role": "Visual Artist",
-    "location": "Cairo, Egypt",
-    "nativeOnKleio": true,
-    "profileBadge": "Creative Passport",
-    "portrait": "/profile-assets/artists/amina-el-badri/portrait.png",
-    "heroImage": "/profile-assets/artists/amina-el-badri/hero-light-installation.png",
-    "visualTheme": "light-installation",
-    "accentColor": "lavender",
-    "website": "aminatelbadri.com",
-    "instagram": "@amina.elbadri",
-    "email": "hello@aminatelbadri.com",
-    "practiceTags": [
-      "Installation",
-      "Light",
-      "Memory",
-      "Site-Specific",
-      "Atmospheric"
-    ],
-    "shortBio": "Amina El Badri creates immersive installations using fabric, light, and spatial quiet to explore memory, perception, and presence.",
-    "artistStatement": "My work explores the relationship between memory, space, and visibility through minimal forms and subtle light. I build installations that invite stillness, perception, and presence while holding room for personal and collective memory.",
-    "selectedWorks": [
-      {
-        "title": "Echoes of Memory",
-        "year": "2024",
-        "medium": "Installation",
-        "details": "Light, fabric, steel",
-        "image": "/profile-assets/artists/amina-el-badri/work-echoes-of-memory.png"
-      },
-      {
-        "title": "Between Breaths",
-        "year": "2024",
-        "medium": "Mixed Media",
-        "details": "Layered fabric and light",
-        "image": "/profile-assets/artists/amina-el-badri/work-between-breaths.png"
-      },
-      {
-        "title": "Thresholds",
-        "year": "2023",
-        "medium": "Light, Fabric, Steel",
-        "details": "Immersive installation",
-        "image": "/profile-assets/artists/amina-el-badri/work-thresholds.png"
-      }
-    ],
-    "materialsReady": {
-      "bio": true,
-      "artistStatement": true,
-      "cvResume": true,
-      "portfolio": true,
-      "workSamples": false,
-      "references": false
-    },
-    "themes": [
-      "Memory",
-      "Perception",
-      "Presence",
-      "Silence",
-      "Space"
-    ],
-    "availability": {
-      "residencies": "Open",
-      "exhibitions": "Open",
-      "commissions": "Open",
-      "collaborations": "Selective"
-    },
-    "history": [
-      "ISCP International Studio Program \u00b7 2024 \u00b7 Residency",
-      "Foundation for Contemporary Arts \u00b7 2024 \u00b7 Grant",
-      "Opus Call: New Voices in Contemporary Art \u00b7 2023 \u00b7 Open Call"
-    ],
-    "dashboardHero": {
-      "title": "Your Creative Path, Organized.",
-      "subtitle": "Stay focused on the work. KLEIO keeps your applications, materials, and opportunities in view.",
-      "visualTheme": "light-installation",
-      "accentColor": "lavender"
-    }
-  },
-  {
-    "username": "mei-lin-zhang",
-    "displayName": "Mei Lin Zhang",
-    "role": "Multimedia Artist",
-    "location": "Seattle, USA",
-    "nativeOnKleio": true,
-    "profileBadge": "Creative Passport",
-    "portrait": "/profile-assets/artists/mei-lin-zhang/portrait.png",
-    "heroImage": "/profile-assets/artists/mei-lin-zhang/hero-paper-forms.png",
-    "visualTheme": "paper-forms",
-    "accentColor": "blue",
-    "website": "meilinstudio.com",
-    "instagram": "@meilin_zhang_studio",
-    "email": "meilin@meilinstudio.com",
-    "practiceTags": [
-      "Paper",
-      "Sculpture",
-      "Process",
-      "Materiality",
-      "Fragility"
-    ],
-    "shortBio": "Mei Lin Zhang works with paper, shadow, and fragile materials to examine transformation, cultural memory, and the quiet pressure of time.",
-    "artistStatement": "I work with paper and ephemeral materials to examine transformation, impermanence, and cultural memory. My process is slow, meditative, and rooted in observation.",
-    "selectedWorks": [
-      {
-        "title": "Unfolding Quiet",
-        "year": "2024",
-        "medium": "Paper",
-        "details": "Sculptural paper forms",
-        "image": "/profile-assets/artists/mei-lin-zhang/work-unfolding-quiet.png"
-      },
-      {
-        "title": "Residue Maps",
-        "year": "2023",
-        "medium": "Mixed Media",
-        "details": "Paper, pigment, found text",
-        "image": "/profile-assets/artists/mei-lin-zhang/work-residue-maps.png"
-      },
-      {
-        "title": "Liminal Pages",
-        "year": "2023",
-        "medium": "Installation",
-        "details": "Paper and shadow",
-        "image": "/profile-assets/artists/mei-lin-zhang/work-liminal-pages.png"
-      }
-    ],
-    "materialsReady": {
-      "bio": true,
-      "artistStatement": true,
-      "cvResume": true,
-      "portfolio": true,
-      "workSamples": true,
-      "references": true
-    },
-    "themes": [
-      "Transformation",
-      "Impermanence",
-      "Memory",
-      "Culture",
-      "Material"
-    ],
-    "availability": {
-      "residencies": "Open",
-      "exhibitions": "Open",
-      "commissions": "Selective",
-      "collaborations": "Open"
-    },
-    "history": [
-      "Northwest Material Lab \u00b7 2024 \u00b7 Residency",
-      "Paper Futures Biennial \u00b7 2023 \u00b7 Exhibition",
-      "Seattle Office of Arts & Culture \u00b7 2023 \u00b7 Grant"
-    ],
-    "dashboardHero": {
-      "title": "Your Materials, Made Reusable.",
-      "subtitle": "Keep your practice language, portfolio, and applications organized without flattening the work.",
-      "visualTheme": "paper-forms",
-      "accentColor": "blue"
-    }
-  },
-  {
-    "username": "sofia-karim",
-    "displayName": "Sofia Karim",
-    "role": "New Media Artist",
-    "location": "Toronto, Canada",
-    "nativeOnKleio": true,
-    "profileBadge": "Creative Passport",
-    "portrait": "/profile-assets/artists/sofia-karim/portrait.png",
-    "heroImage": "/profile-assets/artists/sofia-karim/hero-archive-projection.png",
-    "visualTheme": "archive-field",
-    "accentColor": "green",
-    "website": "sofiakarim.com",
-    "instagram": "@sofia.karim.art",
-    "email": "studio@sofiakarim.com",
-    "practiceTags": [
-      "Video",
-      "Sound",
-      "Storytelling",
-      "Archives",
-      "Identity"
-    ],
-    "shortBio": "Sofia Karim creates video and sound works that explore identity, language, migration, and inherited narratives through immersive environments.",
-    "artistStatement": "I create video and sound works that explore identity, language, and inherited narratives. I build immersive environments where personal and collective histories intersect.",
-    "selectedWorks": [
-      {
-        "title": "Echoes in Transit",
-        "year": "2024",
-        "medium": "Video",
-        "details": "Two-channel video",
-        "image": "/profile-assets/artists/sofia-karim/work-echoes-in-transit.png"
-      },
-      {
-        "title": "Archive of Whispers",
-        "year": "2023",
-        "medium": "Sound",
-        "details": "Audio installation",
-        "image": "/profile-assets/artists/sofia-karim/work-archive-of-whispers.png"
-      },
-      {
-        "title": "Soft Borders",
-        "year": "2023",
-        "medium": "Installation",
-        "details": "Projection and text",
-        "image": "/profile-assets/artists/sofia-karim/work-soft-borders.png"
-      }
-    ],
-    "materialsReady": {
-      "bio": true,
-      "artistStatement": true,
-      "cvResume": true,
-      "portfolio": true,
-      "workSamples": true,
-      "references": true
-    },
-    "themes": [
-      "Identity",
-      "Language",
-      "Archives",
-      "Migration",
-      "Memory"
-    ],
-    "availability": {
-      "residencies": "Selective",
-      "exhibitions": "Open",
-      "commissions": "Open",
-      "collaborations": "Open"
-    },
-    "history": [
-      "InterAccess Media Arts Residency \u00b7 2024 \u00b7 Residency",
-      "Images Festival Lab \u00b7 2023 \u00b7 Exhibition",
-      "Ontario Arts Council \u00b7 2023 \u00b7 Grant"
-    ],
-    "dashboardHero": {
-      "title": "Your Practice, In Context.",
-      "subtitle": "Track materials, opportunities, and application status without losing the story behind the work.",
-      "visualTheme": "archive-field",
-      "accentColor": "green"
-    }
-  }
-] as const
+export type KleioSyntheticArtistProfile = {
+  username: string
+  displayName: string
+  role: string
+  location: string
+  nativeOnKleio: boolean
+  profileBadge: string
+  portrait: string
+  heroImage: string
+  visualTheme: string
+  accentColor: string
+  website: string
+  instagram: string
+  email: string
+  practiceTags: string[]
+  shortBio: string
+  artistStatement: string
+  selectedWorks: Array<{
+    title: string
+    year: string
+    medium: string
+    details: string
+    image: string
+  }>
+  materialsReady: Record<"bio" | "artistStatement" | "cvResume" | "portfolio" | "workSamples" | "references", boolean>
+  themes: string[]
+  availability: Record<"residencies" | "exhibitions" | "commissions" | "collaborations", "Open" | "Selective" | "Limited" | "Closed">
+  history: string[]
+  dashboardHero: NonNullable<Artist["dashboardHero"]>
+}
 
-export const kleioSyntheticInstitutionProfiles = [
-  {
-    "username": "kleio-arthouse",
-    "displayName": "KLEIO Arthouse",
-    "institutionType": "Independent Arts Institution",
-    "location": "Cairo, Egypt",
-    "nativeOnKleio": true,
-    "profileSource": "native",
-    "coverImage": "/profile-assets/institutions/kleio-arthouse/cover.png",
-    "website": "kleioarthouse.com",
-    "shortDescription": "A platform for experimental exhibitions, artist research, and public programs that bring together art, ecology, and cultural memory.",
-    "tags": [
-      "Exhibitions",
-      "Open Calls",
-      "Residencies",
-      "Research",
-      "Archives"
-    ],
-    "publicSignals": {
-      "activePrograms": 7,
-      "applicationsInReview": 182,
-      "reviewers": 12,
-      "reportsInProgress": 5
-    },
-    "activePrograms": [
-      {
-        "title": "Light Forms Open Call",
-        "type": "Open Call",
-        "deadline": "Aug 15, 2026",
-        "status": "Open",
-        "description": "A call for artists working with light, installation, and perceptual space."
-      },
-      {
-        "title": "Archive Futures Residency",
-        "type": "Residency",
-        "deadline": "Sep 2, 2026",
-        "status": "Open",
-        "description": "A residency for artists using archival material and public memory."
-      }
-    ]
-  },
-  {
-    "username": "lumen-residency",
-    "displayName": "Lumen Residency",
-    "institutionType": "Residency Program",
-    "location": "Washington, USA",
-    "nativeOnKleio": true,
-    "profileSource": "native",
-    "coverImage": "/profile-assets/institutions/lumen-residency/cover.png",
-    "website": "lumenresidency.org",
-    "shortDescription": "A residency for artists working in light, space, environment, and material-based practices. We support time, space, and connection.",
-    "tags": [
-      "Residencies",
-      "Mentorship",
-      "Production",
-      "Community",
-      "Nature"
-    ],
-    "publicSignals": {
-      "activePrograms": 4,
-      "applicationsInReview": 76,
-      "reviewers": 8,
-      "reportsInProgress": 3
-    },
-    "activePrograms": [
-      {
-        "title": "Lumen Arts Grant",
-        "type": "Grant",
-        "deadline": "May 28, 2025",
-        "status": "Open",
-        "description": "Support for artists building site-specific or light-responsive projects."
-      },
-      {
-        "title": "Forest Studio Residency",
-        "type": "Residency",
-        "deadline": "Jun 30, 2025",
-        "status": "Reviewing",
-        "description": "A seasonal residency for artists working with ecology and installation."
-      }
-    ]
-  },
-  {
-    "username": "casa-rivera-arts",
-    "displayName": "Casa Rivera Arts",
-    "institutionType": "Cultural Center",
-    "location": "San Juan, PR",
-    "nativeOnKleio": false,
-    "profileSource": "public-directory",
-    "coverImage": "/profile-assets/institutions/casa-rivera-arts/cover.png",
-    "website": "casariveraarts.org",
-    "shortDescription": "A community-rooted arts center supporting emerging artists through programs, exhibitions, workshops, and cultural exchange.",
-    "tags": [
-      "Exhibitions",
-      "Workshops",
-      "Community",
-      "Open Calls",
-      "Education"
-    ],
-    "publicSignals": {
-      "activePrograms": 3,
-      "applicationsInReview": 41,
-      "reviewers": 6,
-      "reportsInProgress": 0
-    },
-    "activePrograms": [
-      {
-        "title": "Caribbean Futures Fund",
-        "type": "Grant",
-        "deadline": "Jun 2, 2025",
-        "status": "Open",
-        "description": "A fund for artists working across Caribbean futures, memory, and community practice."
-      },
-      {
-        "title": "Community Archive Lab",
-        "type": "Workshop",
-        "deadline": "Jul 10, 2025",
-        "status": "Draft",
-        "description": "A workshop series around local archives and artist-led documentation."
-      }
-    ]
+export type KleioSyntheticInstitutionProfile = {
+  username: string
+  displayName: string
+  institutionType: string
+  location: string
+  nativeOnKleio: boolean
+  profileSource: "native" | "public-directory"
+  coverImage: string
+  website: string
+  shortDescription: string
+  tags: string[]
+  publicSignals: {
+    activePrograms: number
+    applicationsInReview: number
+    reviewers: number
+    reportsInProgress: number
   }
-] as const
+  activePrograms: Array<{
+    title: string
+    type: string
+    deadline: string
+    status: string
+    description: string
+  }>
+}
+
+function requireArtist(id: string) {
+  const artist = artists.find((entry) => entry.id === id)
+  if (!artist) throw new Error(`Missing canonical artist seed: ${id}`)
+  return artist
+}
+
+function formatDeadline(isoDate: string) {
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    timeZone: "UTC",
+  }).format(new Date(`${isoDate}T12:00:00Z`))
+}
+
+function programStatusForProfile(status: Program["status"]) {
+  if (status === "Open") return "Open"
+  if (status === "In Review" || status === "Final Selection") return "Reviewing"
+  return status
+}
+
+function materialsReadyForArtist(artist: Artist): KleioSyntheticArtistProfile["materialsReady"] {
+  return {
+    bio: Boolean(artist.bio),
+    artistStatement: Boolean(artist.statement),
+    cvResume: artist.cvStatus === "Complete",
+    portfolio: artist.documentStatus === "Complete",
+    workSamples: Boolean(artist.works?.length),
+    references: artist.referencesStatus === "Complete",
+  }
+}
+
+function availabilityForArtist(artist: Artist): KleioSyntheticArtistProfile["availability"] {
+  const entries = artist.availability ?? []
+  const findStatus = (label: string, fallback: "Open" | "Selective" | "Limited" | "Closed") => {
+    const found = entries.find((entry) => entry.label.toLowerCase().includes(label))
+    if (!found) return fallback
+    if (found.status === "Available" || found.status === "Actively Applying") return "Open"
+    if (found.status === "Limited") return "Limited"
+    return "Closed"
+  }
+
+  return {
+    residencies: findStatus("residenc", "Open"),
+    exhibitions: findStatus("exhibition", "Open"),
+    commissions: findStatus("commission", "Selective"),
+    collaborations: "Selective",
+  }
+}
+
+function selectedWorksForArtist(artist: Artist): KleioSyntheticArtistProfile["selectedWorks"] {
+  return (artist.works ?? []).slice(0, 3).map((work) => ({
+    title: work.title,
+    year: work.year,
+    medium: work.medium,
+    details: work.dimensions ?? work.medium,
+    image: work.image,
+  }))
+}
+
+function historyForArtist(artist: Artist) {
+  return (artist.exhibitions ?? []).slice(0, 4).map((entry) => `${entry.venue} · ${entry.year} · ${entry.type}`)
+}
+
+function artistProfile(
+  artist: Artist,
+  visual: { portrait: string; heroImage: string },
+): KleioSyntheticArtistProfile {
+  return {
+    username: artist.id,
+    displayName: artist.name,
+    role: artist.discipline,
+    location: artist.location,
+    nativeOnKleio: true,
+    profileBadge: "Creative Passport",
+    portrait: visual.portrait,
+    heroImage: visual.heroImage,
+    visualTheme: artist.dashboardHero?.visualTheme ?? "studio-portrait",
+    accentColor: artist.dashboardHero?.accentColor ?? "lavender",
+    website: artist.website ?? `${artist.id}.studio`,
+    instagram: artist.instagram ?? `@${artist.id}`,
+    email: artist.contactEmail ?? `hello@${artist.id}.studio`,
+    practiceTags: artist.tags,
+    shortBio: artist.bio,
+    artistStatement: artist.statement,
+    selectedWorks: selectedWorksForArtist(artist),
+    materialsReady: materialsReadyForArtist(artist),
+    themes: artist.themes ?? artist.tags,
+    availability: availabilityForArtist(artist),
+    history: historyForArtist(artist),
+    dashboardHero: artist.dashboardHero ?? {
+      title: "Creative Passport",
+      subtitle: "Reusable artist materials, selected works, and application context in one profile.",
+      visualTheme: "studio-portrait",
+      accentColor: "lavender",
+    },
+  }
+}
+
+const amina = requireArtist("amina-el-badri")
+const meiLin = requireArtist("mei-lin-zhang")
+const sofia = requireArtist("sofia-karim")
+
+export const kleioSyntheticArtistProfiles: KleioSyntheticArtistProfile[] = [
+  artistProfile(amina, {
+    portrait: "/profile-assets/artists/amina-el-badri/portrait.png",
+    heroImage: "/profile-assets/artists/amina-el-badri/hero-light-installation.png",
+  }),
+  artistProfile(meiLin, {
+    portrait: "/profile-assets/artists/mei-lin-zhang/portrait.png",
+    heroImage: "/profile-assets/artists/mei-lin-zhang/hero-paper-forms.png",
+  }),
+  artistProfile(sofia, {
+    portrait: "/profile-assets/artists/sofia-karim/portrait.png",
+    heroImage: "/profile-assets/artists/sofia-karim/hero-archive-projection.png",
+  }),
+]
+
+export const kleioSyntheticInstitutionProfiles: KleioSyntheticInstitutionProfile[] = [
+  {
+    username: institution.id,
+    displayName: institution.name,
+    institutionType: institution.type,
+    location: institution.location,
+    nativeOnKleio: true,
+    profileSource: "native",
+    coverImage: "/profile-assets/institutions/kleio-arthouse/cover.png",
+    website: "kleioarthouse.demo",
+    shortDescription: institution.description,
+    tags: ["Open Calls", "Residencies", "Review Workflow", "Reports", "Synthetic Demo"],
+    publicSignals: {
+      activePrograms: programs.length,
+      applicationsInReview: 64,
+      reviewers: 6,
+      reportsInProgress: 2,
+    },
+    activePrograms: programs.map((program) => ({
+      title: program.title,
+      type: program.category,
+      deadline: formatDeadline(program.deadline),
+      status: programStatusForProfile(program.status),
+      description: program.description,
+    })),
+  },
+  {
+    username: "lumen-residency",
+    displayName: "Lumen Residency",
+    institutionType: "Residency Program",
+    location: "Washington, USA",
+    nativeOnKleio: true,
+    profileSource: "native",
+    coverImage: "/profile-assets/institutions/lumen-residency/cover.png",
+    website: "lumenresidency.org",
+    shortDescription: "A residency for artists working in light, space, environment, and material-based practices. We support time, space, and connection.",
+    tags: ["Residencies", "Mentorship", "Production", "Community", "Nature"],
+    publicSignals: {
+      activePrograms: 4,
+      applicationsInReview: 76,
+      reviewers: 8,
+      reportsInProgress: 3,
+    },
+    activePrograms: [
+      {
+        title: "Lumen Arts Grant",
+        type: "Grant",
+        deadline: "Aug 14, 2026",
+        status: "Open",
+        description: "Support for artists building site-specific or light-responsive projects.",
+      },
+      {
+        title: "Forest Studio Residency",
+        type: "Residency",
+        deadline: "Sep 30, 2026",
+        status: "Reviewing",
+        description: "A seasonal residency for artists working with ecology and installation.",
+      },
+    ],
+  },
+  {
+    username: "casa-rivera-arts",
+    displayName: "Casa Rivera Arts",
+    institutionType: "Cultural Center",
+    location: "San Juan, PR",
+    nativeOnKleio: false,
+    profileSource: "public-directory",
+    coverImage: "/profile-assets/institutions/casa-rivera-arts/cover.png",
+    website: "casariveraarts.org",
+    shortDescription: "A community-rooted arts center supporting emerging artists through programs, exhibitions, workshops, and cultural exchange.",
+    tags: ["Exhibitions", "Workshops", "Community", "Open Calls", "Education"],
+    publicSignals: {
+      activePrograms: 3,
+      applicationsInReview: 41,
+      reviewers: 6,
+      reportsInProgress: 0,
+    },
+    activePrograms: [
+      {
+        title: "Caribbean Futures Fund",
+        type: "Grant",
+        deadline: "Aug 20, 2026",
+        status: "Open",
+        description: "A fund for artists working across Caribbean futures, memory, and community practice.",
+      },
+      {
+        title: "Community Archive Lab",
+        type: "Workshop",
+        deadline: "Sep 10, 2026",
+        status: "Draft",
+        description: "A workshop series around local archives and artist-led documentation.",
+      },
+    ],
+  },
+]
 
 export function getArtistProfileByUsername(username: string) {
   return kleioSyntheticArtistProfiles.find((artist) => artist.username === username)
 }
 
 export function getInstitutionProfileByUsername(username: string) {
-  return kleioSyntheticInstitutionProfiles.find((institution) => institution.username === username)
+  return kleioSyntheticInstitutionProfiles.find((profile) => profile.username === username)
 }
