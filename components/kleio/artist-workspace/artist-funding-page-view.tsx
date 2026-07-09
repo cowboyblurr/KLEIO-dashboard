@@ -1,12 +1,15 @@
 "use client"
 
 import Link from "next/link"
-import { artistDashboardProfile } from "@/lib/kleio-data"
+import {
+  artistOpportunityDirectory,
+  getArtistOpportunityFundingTotal,
+  type DirectoryOpportunity,
+} from "@/lib/kleio-opportunities"
 import {
   artistAnalytics,
   formatArtistCurrency,
   formatArtistPct,
-  isApplicationTimelineReady,
 } from "@/lib/kleio-artist-analytics"
 import { inkColor, mutedColor, lavenderSoftLine, cardStyle } from "@/lib/workspace-styles"
 import { WorkspacePageHeader } from "@/components/kleio/workspace-page-header"
@@ -14,8 +17,6 @@ import { WorkspaceMetricCard } from "@/components/kleio/workspace-metric-card"
 import { WorkflowCard } from "@/components/kleio/workflow-card"
 import { DemoStatusChip } from "@/components/kleio/demo-status-chip"
 import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
-
-const ACTIVE_STATUSES = new Set(["Draft", "Submitted", "Under Review", "Waiting", "Interview"])
 
 function ProgressBar({ value, tone = "lavender" }: { value: number; tone?: "lavender" | "green" | "amber" }) {
   const colors = { lavender: "#5B4B8A", green: "oklch(0.6 0.13 150)", amber: "oklch(0.7 0.14 70)" }
@@ -26,16 +27,17 @@ function ProgressBar({ value, tone = "lavender" }: { value: number; tone?: "lave
   )
 }
 
+function isTimelineReady(opportunity: DirectoryOpportunity) {
+  return opportunity.urgency !== "This week" && opportunity.missing.length === 0 && opportunity.deadlinePressure !== "high"
+}
+
 export function ArtistFundingPageView() {
   const { locale, t } = useKleioLocale()
   const analytics = artistAnalytics
   const { fundingReadiness } = analytics
 
-  const fundingRows = artistDashboardProfile.applications
-    .filter((app) => ACTIVE_STATUSES.has(app.status))
-    .filter((app) => typeof app.fundingAmount === "number")
-
-  const missingMaterialApps = fundingRows.filter((app) => (app.missingMaterialCount ?? 0) > 0)
+  const fundingRows = artistOpportunityDirectory.filter((opportunity) => typeof opportunity.amount === "number")
+  const missingMaterialOpportunities = fundingRows.filter((opportunity) => opportunity.missing.length > 0)
 
   return (
     <main className="h-full overflow-y-auto px-6 py-6">
@@ -49,7 +51,7 @@ export function ArtistFundingPageView() {
         />
 
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <WorkspaceMetricCard label={t("artist.workspace.funding.metric.potentialFunding")} value={formatArtistCurrency(analytics.potentialFunding, locale)} />
+          <WorkspaceMetricCard label={t("artist.workspace.funding.metric.potentialFunding")} value={formatArtistCurrency(getArtistOpportunityFundingTotal(), locale)} />
           <WorkspaceMetricCard label={t("artist.workspace.funding.metric.estimatedFit")} value={formatArtistPct(fundingReadiness.estimatedFit, locale)} />
           <WorkspaceMetricCard label={t("artist.workspace.funding.metric.completeness")} value={`${fundingReadiness.completeness}%`} />
           <WorkspaceMetricCard label={t("artist.workspace.funding.metric.timelineConfidence")} value={`${fundingReadiness.timelineConfidence}%`} />
@@ -73,24 +75,14 @@ export function ArtistFundingPageView() {
             </thead>
             <tbody>
               {fundingRows.map((row) => (
-                  <tr key={row.program} className="border-b" style={{ borderColor: lavenderSoftLine }}>
-                    <td className="px-5 py-3 font-medium" style={{ color: inkColor }}>{row.program}</td>
-                    <td className="px-3 py-3" style={{ color: inkColor }}>{formatArtistCurrency(row.fundingAmount ?? 0, locale)}</td>
-                    <td className="px-3 py-3">
-                      {row.fitScore != null ? (
-                        <div className="w-24"><ProgressBar value={row.fitScore} /></div>
-                      ) : (
-                        <DemoStatusChip label={t("status.preparedForScoring")} tone="default" />
-                      )}
-                    </td>
-                    <td className="px-3 py-3"><div className="w-24"><ProgressBar value={fundingReadiness.completeness} tone="green" /></div></td>
-                    <td className="px-3 py-3">
-                      <div className="w-24">
-                        <ProgressBar value={isApplicationTimelineReady(row) ? 100 : 0} tone="amber" />
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                <tr key={row.id} className="border-b" style={{ borderColor: lavenderSoftLine }}>
+                  <td className="px-5 py-3 font-medium" style={{ color: inkColor }}>{row.title}</td>
+                  <td className="px-3 py-3" style={{ color: inkColor }}>{formatArtistCurrency(row.amount ?? 0, locale)}</td>
+                  <td className="px-3 py-3"><div className="w-24"><ProgressBar value={row.fit} /></div></td>
+                  <td className="px-3 py-3"><div className="w-24"><ProgressBar value={row.readiness} tone="green" /></div></td>
+                  <td className="px-3 py-3"><div className="w-24"><ProgressBar value={isTimelineReady(row) ? 100 : 0} tone="amber" /></div></td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </section>
@@ -98,18 +90,18 @@ export function ArtistFundingPageView() {
         <WorkflowCard
           title={t("artist.workspace.funding.missingRisk.title")}
           body={
-            missingMaterialApps.length === 1
-              ? t("artist.workspace.funding.missingRisk.bodyOne", { count: missingMaterialApps.length })
-              : t("artist.workspace.funding.missingRisk.bodyOther", { count: missingMaterialApps.length })
+            missingMaterialOpportunities.length === 1
+              ? t("artist.workspace.funding.missingRisk.bodyOne", { count: missingMaterialOpportunities.length })
+              : t("artist.workspace.funding.missingRisk.bodyOther", { count: missingMaterialOpportunities.length })
           }
         >
           <div className="flex flex-wrap gap-2">
-            {missingMaterialApps.map((app) => (
+            {missingMaterialOpportunities.map((opportunity) => (
               <DemoStatusChip
-                key={app.program}
+                key={opportunity.id}
                 label={t("artist.workspace.funding.missingChip", {
-                  program: app.program,
-                  count: app.missingMaterialCount ?? 0,
+                  program: opportunity.title,
+                  count: opportunity.missing.length,
                 })}
                 tone="warning"
                 translate={false}
