@@ -3,6 +3,11 @@ import {
   DEMO_ARTIST_ID,
   type ArtistDashboardApplicationStatus,
 } from "@/lib/kleio-data"
+import {
+  artistApplicationRows,
+  artistOpportunityDirectory,
+  getArtistOpportunityFundingTotal,
+} from "@/lib/kleio-opportunities"
 
 import { getArtistProfileByUsername } from "@/lib/kleio-profile-data"
 import type { KleioLocale } from "@/lib/kleio-i18n"
@@ -106,10 +111,6 @@ function average(values: number[]) {
   return Math.round(valid.reduce((sum, value) => sum + value, 0) / valid.length)
 }
 
-function isClosedApplicationStatus(status: ArtistDashboardApplicationStatus) {
-  return CLOSED_APPLICATION_STATUSES.includes(status)
-}
-
 function isActiveApplicationStatus(status: ArtistDashboardApplicationStatus) {
   return ACTIVE_APPLICATION_STATUSES.includes(status)
 }
@@ -197,7 +198,7 @@ export function isApplicationTimelineReady(application: {
 }
 
 export function getArtistDeadlineEntries(): ArtistDeadlineEntry[] {
-  const activeApplicationsRows = artistDashboardProfile.applications.filter((application) =>
+  const activeApplicationsRows = artistApplicationRows.filter((application) =>
     isActiveApplicationStatus(application.status),
   )
 
@@ -228,7 +229,7 @@ export function getArtistAnalytics({
   artistId?: string
   username?: string
 } = {}): ArtistAnalytics {
-  const applications = artistDashboardProfile.applications
+  const applications = artistApplicationRows
 
   const activeApplicationsRows = applications.filter((application) =>
     isActiveApplicationStatus(application.status),
@@ -271,15 +272,9 @@ export function getArtistAnalytics({
 
   const overdueDecisions = Math.max(overdueTimelineCount, overdueApplicationCount)
 
-  const potentialFunding = activeApplicationsRows.reduce(
-    (sum, application) => sum + (application.fundingAmount ?? 0),
-    0,
-  )
+  const potentialFunding = getArtistOpportunityFundingTotal()
 
-  const opportunityCount = activeApplicationsRows.filter(
-    (application) =>
-      typeof application.fundingAmount === "number" || typeof application.fitScore === "number",
-  ).length
+  const opportunityCount = artistOpportunityDirectory.length
 
   const publicProfile = getArtistProfileByUsername(username)
   const materialValues = publicProfile ? Object.values(publicProfile.materialsReady) : []
@@ -357,55 +352,3 @@ export function getArtistAnalytics({
 }
 
 export const artistAnalytics = getArtistAnalytics()
-
-const demoAnalytics = getArtistAnalytics()
-const demoProfile = getArtistProfileByUsername("amina-el-badri")
-const demoApplications = artistDashboardProfile.applications
-const demoActiveRows = demoApplications.filter((application) =>
-  isActiveApplicationStatus(application.status),
-)
-
-const expectedFunding = demoActiveRows.reduce(
-  (sum, application) => sum + (application.fundingAmount ?? 0),
-  0,
-)
-
-const expectedStatusTotal = Object.values(demoAnalytics.applicationStatusCounts).reduce(
-  (sum, count) => sum + count,
-  0,
-)
-
-const expectedReadyCount = demoProfile
-  ? Object.values(demoProfile.materialsReady).filter(Boolean).length
-  : 0
-
-const expectedTotalMaterials = demoProfile ? Object.values(demoProfile.materialsReady).length : 0
-
-const artistIntegrityChecks = {
-  activeApplicationsMatchesRows: demoAnalytics.activeApplications === demoActiveRows.length,
-  materialsReadyCountMatchesProfile: demoAnalytics.materialsReadyCount === expectedReadyCount,
-  passportCompletenessMatchesMaterials:
-    demoAnalytics.passportCompletenessPct === pct(expectedReadyCount, expectedTotalMaterials),
-  fundingMatchesOpportunitySum: demoAnalytics.potentialFunding === expectedFunding,
-  statusCountsMatchApplications: expectedStatusTotal === demoApplications.length,
-  dueSoonWithinUpcomingDeadlines: demoAnalytics.dueSoon <= demoAnalytics.upcomingDeadlines,
-  completionRateWithinBounds:
-    demoAnalytics.applicationCompletionRate >= 0 && demoAnalytics.applicationCompletionRate <= 100,
-  readinessWithinBounds:
-    demoAnalytics.fundingReadiness.completeness >= 0 &&
-    demoAnalytics.fundingReadiness.completeness <= 100 &&
-    demoAnalytics.fundingReadiness.timelineConfidence >= 0 &&
-    demoAnalytics.fundingReadiness.timelineConfidence <= 100 &&
-    (demoAnalytics.fundingReadiness.estimatedFit == null ||
-      (demoAnalytics.fundingReadiness.estimatedFit >= 0 &&
-        demoAnalytics.fundingReadiness.estimatedFit <= 100)),
-}
-
-export const artistAnalyticsIntegrity = {
-  ...artistIntegrityChecks,
-  allChecksPass: Object.values(artistIntegrityChecks).every(Boolean),
-}
-
-if (process.env.NODE_ENV === "development" && !artistAnalyticsIntegrity.allChecksPass) {
-  console.warn("KLEIO artist analytics integrity check failed", artistAnalyticsIntegrity)
-}
