@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { artistDashboardProfile } from "@/lib/kleio-data"
+import { artistApplicationRows } from "@/lib/kleio-opportunities"
 import { artistAnalytics, formatArtistNextDeadline, formatDemoDateDisplay } from "@/lib/kleio-artist-analytics"
 import { inkColor, mutedColor, lavenderSoftLine, cardStyle } from "@/lib/workspace-styles"
 import { WorkspacePageHeader } from "@/components/kleio/workspace-page-header"
@@ -25,7 +26,7 @@ const nextActionByProgram = Object.fromEntries(
 export function ArtistApplicationsPageView() {
   const { locale, t } = useKleioLocale()
   const analytics = artistAnalytics
-  const applications = artistDashboardProfile.applications
+  const applications = artistApplicationRows
 
   return (
     <main className="h-full overflow-y-auto px-6 py-6">
