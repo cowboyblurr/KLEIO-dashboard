@@ -25,7 +25,12 @@ function workflowDelay(index: number): CSSProperties {
 }
 
 function formatDate(isoDate: string, locale: string) {
-  return new Intl.DateTimeFormat(locale === "es" ? "es-MX" : "en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }).format(new Date(`${isoDate}T12:00:00Z`))
+  return new Intl.DateTimeFormat(locale === "es" ? "es-MX" : "en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    timeZone: "UTC",
+  }).format(new Date(`${isoDate}T12:00:00Z`))
 }
 
 function reviewerStage(person: Collaborator): "Assigned" | "In Review" | "Submitted" | "Needs Discussion" {
@@ -66,7 +71,13 @@ function Card({ children, className = "" }: { children: React.ReactNode; classNa
 }
 
 function SectionHeader({ eyebrow, title, body }: { eyebrow: string; title: string; body?: string }) {
-  return <div className="border-b px-5 py-4" style={{ borderColor: lavenderSoftLine }}><p className="text-[0.62rem] font-semibold uppercase tracking-[0.16em]" style={{ color: "#A997E8" }}>{eyebrow}</p><h2 className="mt-1 font-serif text-lg font-semibold" style={{ color: inkColor }}>{title}</h2>{body && <p className="mt-1 text-sm leading-relaxed" style={{ color: mutedColor }}>{body}</p>}</div>
+  return (
+    <div className="border-b px-5 py-4" style={{ borderColor: lavenderSoftLine }}>
+      <p className="text-[0.62rem] font-semibold uppercase tracking-[0.16em]" style={{ color: "#A997E8" }}>{eyebrow}</p>
+      <h2 className="mt-1 font-serif text-lg font-semibold" style={{ color: inkColor }}>{title}</h2>
+      {body && <p className="mt-1 text-sm leading-relaxed" style={{ color: mutedColor }}>{body}</p>}
+    </div>
+  )
 }
 
 export function ReviewRoomPageView() {
@@ -74,27 +85,102 @@ export function ReviewRoomPageView() {
   const es = locale === "es"
   const shortlistCandidates = reviewSubmissions.filter((submission) => submission.status === "Shortlisted" || submission.status === "Interview" || submission.status === "Pending Vote")
   const discussionCandidates = reviewSubmissions.filter((submission) => (submission.missingMaterials?.length ?? 0) > 0 || submission.status === "Pending Info")
-  const reportStats = es
-    ? [["Convocatoria", primaryProgram.title], ["Postulantes", `${analytics.reviewQueueCount} registros activos`], ["Revisores", `${roomReviewers.length} asientos asignados`], ["Requiere atención", `${analytics.incompleteCount} registros requieren cuidado`], ["Lista corta", `${analytics.shortlistedCount} candidatos`], ["Informe", "Contexto de decisión conservado"]]
-    : [["Open call", primaryProgram.title], ["Applicants", `${analytics.reviewQueueCount} active records`], ["Reviewers", `${roomReviewers.length} assigned seats`], ["Needs attention", `${analytics.incompleteCount} records need care`], ["Shortlist", `${analytics.shortlistedCount} candidates`], ["Report", "Decision context preserved"]]
 
   return (
-    <DemoPageShell title={es ? "Sala de revisión" : "Review Room"} description={es ? "La Sala de revisión ofrece al comité un espacio más claro para discutir postulantes con el contexto necesario cerca, de modo que el trabajo prometedor pueda avanzar hacia lista corta, historial de decisiones e informes sin perder la razón de cada paso." : "The Review Room gives the committee a calmer place to discuss applicants with the right context nearby, so promising work can move from review into shortlist, decision history, and reporting without losing the reason behind each step."} actions={<><Link href="/shortlist/" className="inline-flex h-10 items-center rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90">{es ? "Lista corta del comité" : "Committee Shortlist"}</Link><Link href="/reports/" className="inline-flex h-10 items-center rounded-xl border border-border bg-card px-4 text-sm font-semibold text-foreground transition-colors hover:bg-accent/50">{es ? "Ver informe" : "View Report"}</Link></>}>
-      <div className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-4"><DemoStatRow label={es ? "Convocatoria" : "Open call"} value={es ? stageLabel(primaryProgram.status, es) : primaryProgram.status} href="/programs/" /><DemoStatRow label={es ? "Postulantes" : "Applicants"} value={analytics.reviewQueueCount} href="/review-queue/" /><DemoStatRow label={es ? "Revisores" : "Reviewers"} value={roomReviewers.length} href="/committee/" /><DemoStatRow label={es ? "Requiere atención" : "Needs attention"} value={analytics.incompleteCount} href="/review-queue/" /></div>
+    <DemoPageShell
+      title={es ? "Sala de revisión" : "Review Room"}
+      description={es ? "Revisa postulantes con el contexto del programa, materiales, progreso de revisores y próximos movimientos en una sola vista de comité." : "Review applicants with program context, materials, reviewer progress, and next actions in one committee workspace."}
+      actions={
+        <>
+          <Link href="/shortlist/" className="inline-flex h-10 items-center rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90">{es ? "Lista corta del comité" : "Committee Shortlist"}</Link>
+          <Link href="/reports/" className="inline-flex h-10 items-center rounded-xl border border-border bg-card px-4 text-sm font-semibold text-foreground transition-colors hover:bg-accent/50">{es ? "Ver informe" : "View Report"}</Link>
+        </>
+      }
+    >
+      <div className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-4">
+        <DemoStatRow label={es ? "Convocatoria" : "Open call"} value={es ? stageLabel(primaryProgram.status, es) : primaryProgram.status} href="/programs/" />
+        <DemoStatRow label={es ? "Postulantes" : "Applicants"} value={analytics.reviewQueueCount} href="/review-queue/" />
+        <DemoStatRow label={es ? "Revisores" : "Reviewers"} value={roomReviewers.length} href="/committee/" />
+        <DemoStatRow label={es ? "Requiere atención" : "Needs attention"} value={analytics.incompleteCount} href="/review-queue/" />
+      </div>
 
       <div className="grid gap-4 xl:grid-cols-[0.95fr_1.05fr]">
-        <Card><SectionHeader eyebrow={es ? "Contexto de convocatoria" : "Open call context"} title={primaryProgram.title} body={es ? "La convocatoria permanece visible durante la revisión para que el comité evalúe postulantes frente a los requisitos, fechas, materiales y rúbrica que dieron forma a la oportunidad." : "The call stays visible during review so the committee can discuss applicants against the actual requirements, dates, materials, and rubric that shaped the opportunity."} /><div className="grid gap-3 p-5 md:grid-cols-3"><Info label={es ? "Fecha límite" : "Deadline"} value={formatDate(primaryProgram.deadline, locale)} index={0} /><Info label={es ? "Inicio de revisión" : "Review starts"} value={formatDate(primaryProgram.reviewStart, locale)} index={1} /><Info label={es ? "Fecha de decisión" : "Decision date"} value={formatDate(primaryProgram.decisionDate, locale)} index={2} /></div><div className="grid gap-4 border-t p-5 md:grid-cols-2" style={{ borderColor: lavenderSoftLine }}><div><p className="text-xs font-semibold uppercase tracking-[0.16em]" style={{ color: mutedColor }}>{es ? "Materiales requeridos" : "Required materials"}</p><div className="mt-3 flex flex-wrap gap-2">{primaryProgram.requiredMaterials.map((item) => <span key={item} className="rounded-full border px-2.5 py-1 text-xs" style={{ borderColor: lavenderSoftLine, color: inkColor }}>{item}</span>)}</div></div><div><p className="text-xs font-semibold uppercase tracking-[0.16em]" style={{ color: mutedColor }}>{es ? "Criterios de revisión" : "Review criteria"}</p><div className="mt-3 flex flex-wrap gap-2">{primaryProgram.rubric.map((item) => <span key={item} className="rounded-full bg-[#F7F4FF] px-2.5 py-1 text-xs font-medium" style={{ color: lavenderDeep }}>{item}</span>)}</div></div></div></Card>
+        <Card>
+          <SectionHeader
+            eyebrow={es ? "Contexto de convocatoria" : "Open call context"}
+            title={primaryProgram.title}
+            body={es ? "Mantén requisitos, fechas, materiales y rúbrica visibles mientras el comité revisa cada postulación." : "Keep requirements, dates, materials, and rubric visible while the committee reviews each submission."}
+          />
+          <div className="grid gap-3 p-5 md:grid-cols-3">
+            <Info label={es ? "Fecha límite" : "Deadline"} value={formatDate(primaryProgram.deadline, locale)} index={0} />
+            <Info label={es ? "Inicio de revisión" : "Review starts"} value={formatDate(primaryProgram.reviewStart, locale)} index={1} />
+            <Info label={es ? "Fecha de decisión" : "Decision date"} value={formatDate(primaryProgram.decisionDate, locale)} index={2} />
+          </div>
+          <div className="grid gap-4 border-t p-5 md:grid-cols-2" style={{ borderColor: lavenderSoftLine }}>
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.16em]" style={{ color: mutedColor }}>{es ? "Materiales requeridos" : "Required materials"}</p>
+              <div className="mt-3 flex flex-wrap gap-2">{primaryProgram.requiredMaterials.map((item) => <span key={item} className="rounded-full border px-2.5 py-1 text-xs" style={{ borderColor: lavenderSoftLine, color: inkColor }}>{item}</span>)}</div>
+            </div>
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.16em]" style={{ color: mutedColor }}>{es ? "Criterios de revisión" : "Review criteria"}</p>
+              <div className="mt-3 flex flex-wrap gap-2">{primaryProgram.rubric.map((item) => <span key={item} className="rounded-full bg-[#F7F4FF] px-2.5 py-1 text-xs font-medium" style={{ color: lavenderDeep }}>{item}</span>)}</div>
+            </div>
+          </div>
+        </Card>
 
-        <Card><SectionHeader eyebrow={es ? "Contexto de postulantes" : "Applicant context"} title={es ? "Postulantes listos para conversación" : "Applicants ready for discussion"} body={es ? "Cada fila mantiene cerca el proyecto, la preparación de materiales, el avance de revisores y la próxima acción para que el comité entienda qué está listo y qué todavía requiere cuidado." : "Each applicant row keeps the project, material readiness, reviewer progress, and next action close enough for the committee to understand what is ready and what still needs care."} /><ul className="divide-y" style={{ borderColor: lavenderSoftLine }}>{reviewSubmissions.map((submission) => { const progress = getSubmissionReviewerProgress(submission.id); return <li key={submission.id} className="px-5 py-4"><div className="flex flex-wrap items-center justify-between gap-3"><div className="flex min-w-0 items-center gap-3"><InitialAvatar name={submission.artist} className="size-10 text-xs" /><div className="min-w-0"><p className="truncate font-medium" style={{ color: inkColor }}>{submission.artist}</p><p className="truncate text-sm" style={{ color: mutedColor }}>{submission.projectTitle}</p></div></div><div className="flex flex-wrap items-center gap-2"><span className="rounded-full bg-[#F7F4FF] px-2 py-0.5 text-[0.65rem] font-semibold" style={{ color: lavenderDeep }}>{submission.completeness}% {es ? "completo" : "complete"}</span><span className="rounded-full border px-2 py-0.5 text-[0.65rem] font-semibold" style={{ borderColor: lavenderSoftLine, color: mutedColor }}>{progress.completed}/{progress.total} {es ? "revisiones" : "reviews"}</span></div></div><div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs"><span style={{ color: mutedColor }}>{missingCopy(submission, es)}</span><Link href="/review-queue/" className="font-medium" style={{ color: lavenderDeep }}>{es ? "Abrir revisión del postulante →" : "Open applicant review →"}</Link></div></li> })}</ul></Card>
+        <Card>
+          <SectionHeader
+            eyebrow={es ? "Contexto de postulantes" : "Applicant context"}
+            title={es ? "Postulantes listos para conversación" : "Applicants ready for discussion"}
+            body={es ? "Cada fila muestra proyecto, preparación de materiales, avance de revisores y próxima acción." : "Each row shows project context, material readiness, reviewer progress, and next action."}
+          />
+          <ul className="divide-y" style={{ borderColor: lavenderSoftLine }}>
+            {reviewSubmissions.map((submission) => {
+              const progress = getSubmissionReviewerProgress(submission.id)
+              return (
+                <li key={submission.id} className="px-5 py-4">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="flex min-w-0 items-center gap-3"><InitialAvatar name={submission.artist} className="size-10 text-xs" /><div className="min-w-0"><p className="truncate font-medium" style={{ color: inkColor }}>{submission.artist}</p><p className="truncate text-sm" style={{ color: mutedColor }}>{submission.projectTitle}</p></div></div>
+                    <div className="flex flex-wrap items-center gap-2"><span className="rounded-full bg-[#F7F4FF] px-2 py-0.5 text-[0.65rem] font-semibold" style={{ color: lavenderDeep }}>{submission.completeness}% {es ? "completo" : "complete"}</span><span className="rounded-full border px-2 py-0.5 text-[0.65rem] font-semibold" style={{ borderColor: lavenderSoftLine, color: mutedColor }}>{progress.completed}/{progress.total} {es ? "revisiones" : "reviews"}</span></div>
+                  </div>
+                  <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs"><span style={{ color: mutedColor }}>{missingCopy(submission, es)}</span><Link href="/review-queue/" className="font-medium" style={{ color: lavenderDeep }}>{es ? "Abrir revisión del postulante →" : "Open applicant review →"}</Link></div>
+                </li>
+              )
+            })}
+          </ul>
+        </Card>
       </div>
 
       <div className="mt-4 grid gap-4 xl:grid-cols-[0.85fr_1.15fr]">
-        <Card><SectionHeader eyebrow={es ? "Avance de revisores" : "Reviewer progress"} title={es ? "Estados simples de revisión" : "Simple reviewer states"} body={es ? "El estado de cada revisor se mantiene fácil de leer para que la institución sepa si el asiento está asignado, en revisión, entregado o requiere conversación." : "Reviewer status stays intentionally easy to read, so the institution can see whether each seat is assigned, in review, submitted, or needs discussion."} /><div className="space-y-3 p-5">{roomReviewers.map((person, index) => { const stage = reviewerStage(person); return <div key={person.id} className={`${workflowMotion.step} flex items-center justify-between gap-3 rounded-2xl border p-3`} style={{ ...workflowDelay(index), borderColor: lavenderSoftLine }}><div className="flex min-w-0 items-center gap-3"><InitialAvatar name={person.name} className="size-9 text-xs" /><div className="min-w-0"><p className="truncate text-sm font-medium" style={{ color: inkColor }}>{person.name}</p><p className="truncate text-xs" style={{ color: mutedColor }}>{roleLabel(person.role, es)} · {person.reviewsCompleted}/{person.reviewsAssigned} {es ? "revisiones" : "reviews"}</p></div></div><span className={`shrink-0 rounded-full px-2 py-1 text-[0.65rem] font-semibold ${stageClass(stage)}`}>{stageLabel(stage, es)}</span></div> })}</div></Card>
+        <Card>
+          <SectionHeader eyebrow={es ? "Avance de revisores" : "Reviewer progress"} title={es ? "Estado de cada asiento" : "Reviewer seat status"} body={es ? "Consulta si cada revisor está asignado, en revisión, entregado o pendiente de conversación." : "See whether each reviewer seat is assigned, in review, submitted, or waiting on discussion."} />
+          <div className="space-y-3 p-5">{roomReviewers.map((person, index) => { const stage = reviewerStage(person); return <div key={person.id} className={`${workflowMotion.step} flex items-center justify-between gap-3 rounded-2xl border p-3`} style={{ ...workflowDelay(index), borderColor: lavenderSoftLine }}><div className="flex min-w-0 items-center gap-3"><InitialAvatar name={person.name} className="size-9 text-xs" /><div className="min-w-0"><p className="truncate text-sm font-medium" style={{ color: inkColor }}>{person.name}</p><p className="truncate text-xs" style={{ color: mutedColor }}>{roleLabel(person.role, es)} · {person.reviewsCompleted}/{person.reviewsAssigned} {es ? "revisiones" : "reviews"}</p></div></div><span className={`shrink-0 rounded-full px-2 py-1 text-[0.65rem] font-semibold ${stageClass(stage)}`}>{stageLabel(stage, es)}</span></div> })}</div>
+        </Card>
 
-        <Card><SectionHeader eyebrow={es ? "Movimiento de decisiones" : "Decision movement"} title={es ? "De conversación a lista corta" : "From discussion to shortlist"} body={es ? "Esta área ayuda al comité a separar lo que necesita más contexto de lo que está listo para avanzar, para que el informe final pueda explicar el camino con claridad." : "This area helps the committee separate what needs more context from what is ready to move forward, so the final report can explain the path clearly."} /><div className="grid gap-3 p-5 md:grid-cols-3"><DecisionLane title={es ? "Requiere conversación" : "Needs Discussion"} count={discussionCandidates.length} body={es ? "Usa esta columna para expedientes prometedores que todavía necesitan aclaración de materiales, contexto de revisores o conversación de comité." : "Use this lane for promising files that still need material clarification, reviewer context, or committee conversation."} href="/review-queue/" index={0} /><DecisionLane title={es ? "Lista corta" : "Shortlist"} count={shortlistCandidates.length || analytics.shortlistedCount} body={es ? "Usa esta columna para postulantes con suficiente contexto para comparación final o entrevista." : "Use this lane for applicants with enough context to move toward final comparison or interview."} href="/shortlist/" index={1} /><DecisionLane title={es ? "Informe" : "Report"} count={programs.length} body={es ? "Usa esta columna para ver cómo el contexto del programa, el avance de revisores, los resultados y el historial se convierten en memoria institucional." : "Use this lane to see how program context, reviewer progress, outcomes, and decision history become institutional memory."} href="/reports/" index={2} /></div></Card>
+        <Card>
+          <SectionHeader eyebrow={es ? "Movimiento de decisiones" : "Decision movement"} title={es ? "De revisión a lista corta" : "From review to shortlist"} body={es ? "Separa los expedientes que necesitan más contexto de los que ya pueden avanzar." : "Separate records that need more context from candidates ready to advance."} />
+          <div className="grid gap-3 p-5 md:grid-cols-3">
+            <DecisionLane title={es ? "Requiere conversación" : "Needs Discussion"} count={discussionCandidates.length} body={es ? "Materiales, contexto de revisor o decisión de comité pendientes." : "Material, reviewer context, or committee decision still pending."} href="/review-queue/" index={0} />
+            <DecisionLane title={es ? "Lista corta" : "Shortlist"} count={shortlistCandidates.length || analytics.shortlistedCount} body={es ? "Postulantes con contexto suficiente para comparación final o entrevista." : "Applicants with enough context for final comparison or interview."} href="/shortlist/" index={1} />
+            <DecisionLane title={es ? "Informe" : "Report"} count={programs.length} body={es ? "Resultados, avance de revisores e historial conservados para memoria institucional." : "Outcomes, reviewer progress, and history preserved for institutional memory."} href="/reports/" index={2} />
+          </div>
+        </Card>
       </div>
 
-      <Card className="mt-4 overflow-hidden"><div className="grid gap-0 xl:grid-cols-[0.95fr_1.05fr]"><div className="p-6" style={{ backgroundColor: lavenderMist }}><p className="text-[0.62rem] font-semibold uppercase tracking-[0.16em]" style={{ color: "#A997E8" }}>{es ? "Preparación del informe" : "Report readiness"}</p><h2 className="mt-2 font-serif text-2xl font-semibold" style={{ color: inkColor }}>{es ? "La razón detrás de cada decisión permanece conectada." : "The reason behind each decision stays attached."}</h2><p className="mt-3 max-w-xl text-sm leading-relaxed" style={{ color: mutedColor }}>{es ? "KLEIO debe sentirse como una sala editorial preparada, no como una hoja de cálculo fría. Mientras el comité revisa, el informe puede heredar contexto del programa, movimiento de postulantes, avance de revisores, notas de lista corta e historial de decisiones." : "KLEIO should feel like a prepared editorial room, not a cold spreadsheet. As the committee reviews, the report can inherit program context, applicant movement, reviewer progress, shortlist notes, and decision history from the workflow."}</p><div className="mt-5 flex flex-wrap gap-2"><Link href="/reports/" className="inline-flex h-10 items-center rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90">{es ? "Abrir informe" : "Open report"}</Link><Link href="/activity-log/" className="inline-flex h-10 items-center rounded-xl border border-[#D8D0F2] bg-white px-4 text-sm font-semibold transition-colors hover:bg-white/70" style={{ color: lavenderDeep }}>{es ? "Historial de decisiones" : "Decision history"}</Link></div></div><div className="grid gap-3 p-6 sm:grid-cols-2">{reportStats.map(([label, value], index) => <div key={label} className={`${workflowMotion.step} rounded-2xl border p-4`} style={{ ...workflowDelay(index), borderColor: lavenderSoftLine }}><p className="text-xs font-medium" style={{ color: mutedColor }}>{label}</p><p className="mt-1 text-sm font-semibold" style={{ color: inkColor }}>{value}</p></div>)}</div></div></Card>
+      <Card className="mt-4 overflow-hidden">
+        <div className="grid gap-0 xl:grid-cols-[0.95fr_1.05fr]">
+          <div className="p-6" style={{ backgroundColor: lavenderMist }}>
+            <p className="text-[0.62rem] font-semibold uppercase tracking-[0.16em]" style={{ color: "#A997E8" }}>{es ? "Preparación del informe" : "Report readiness"}</p>
+            <h2 className="mt-2 font-serif text-2xl font-semibold" style={{ color: inkColor }}>{es ? "El razonamiento de revisión permanece conectado al registro." : "Review rationale stays connected to the record."}</h2>
+            <p className="mt-2 max-w-xl text-sm leading-relaxed" style={{ color: mutedColor }}>{es ? "La sala de revisión conserva contexto de programa, actividad de revisores, shortlist y acciones pendientes para que el informe no tenga que reconstruirse manualmente." : "The Review Room keeps program context, reviewer activity, shortlist movement, and pending actions available so reports do not have to be rebuilt manually."}</p>
+          </div>
+          <div className="grid gap-3 p-6 md:grid-cols-3">
+            <Info label={es ? "Lista corta" : "Shortlist"} value={`${analytics.shortlistedCount}`} index={0} />
+            <Info label={es ? "Votos pendientes" : "Pending votes"} value={`${analytics.pendingVoteCount}`} index={1} />
+            <Info label={es ? "Requiere atención" : "Needs attention"} value={`${analytics.incompleteCount}`} index={2} />
+          </div>
+        </div>
+      </Card>
     </DemoPageShell>
   )
 }
