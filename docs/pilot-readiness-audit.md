@@ -27,6 +27,14 @@ Every visible page must support at least one of these outcomes:
 
 Pages that do not support those outcomes should be marked as demo-supporting or deferred for pilot one.
 
+## Static export guardrail
+
+The current GitHub Pages deployment uses Next static export. Keep GitHub Pages-compatible code on this branch until the deployment target changes.
+
+- Do not add a root `proxy.ts`, `middleware.ts`, route handlers, or server-only auth behavior to the GitHub Pages export branch.
+- Supabase can be staged with client helpers, schema, and documentation first.
+- Real Supabase SSR/proxy auth should move to a Vercel/server-capable deployment branch or a later migration when the hosting target supports it.
+
 ---
 
 ## Route audit
@@ -295,9 +303,9 @@ The next work is not visual redesign. The next work is turning pilot-critical su
 
 ## Phase 2 build order
 
-1. Add Supabase client/server/proxy foundation.
+1. Add Supabase client/schema foundation while preserving GitHub Pages static export compatibility.
 2. Create starter schema with RLS enabled.
-3. Connect `/programs/new/` first so one open call can be saved.
+3. Connect `/programs/new/` first so one open call can be saved when a server-capable deployment target is available.
 4. Connect Artist Passport so artist profile data can be saved and reused.
 5. Add `/apply/[publicSlug]/` to submit real applications.
 6. Connect `/review-queue/` to real applications.
