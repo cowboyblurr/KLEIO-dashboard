@@ -169,6 +169,13 @@ export const artistApplicationRows = artistOpportunityDirectory
     deadlinePressure: opportunity.deadlinePressure,
   }))
 
+export const artistNextActions = [
+  { program: "Lumen Arts Grant", task: "Review missing budget template", due: "Due Aug 14", tone: "due" as const },
+  { program: "Global Perspectives Residency", task: "Confirm interview availability", due: "Due Aug 18", tone: "soon" as const },
+  { program: "Caribbean Futures Fund", task: "Monitor submitted application", due: "Due Aug 20", tone: "soon" as const },
+  { program: "Harbor Foundation Grant", task: "Follow up on overdue decision", due: "Follow up", tone: "follow-up" as const },
+]
+
 export function getArtistOpportunityFundingTotal(opportunities = artistOpportunityDirectory) {
   return opportunities.reduce((sum, opportunity) => sum + (opportunity.amount ?? 0), 0)
 }
