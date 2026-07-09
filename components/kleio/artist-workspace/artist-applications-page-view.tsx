@@ -1,8 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { artistDashboardProfile } from "@/lib/kleio-data"
-import { artistApplicationRows } from "@/lib/kleio-opportunities"
+import { artistApplicationRows, artistNextActions } from "@/lib/kleio-opportunities"
 import { artistAnalytics, formatArtistNextDeadline, formatDemoDateDisplay } from "@/lib/kleio-artist-analytics"
 import { inkColor, mutedColor, lavenderSoftLine, cardStyle } from "@/lib/workspace-styles"
 import { WorkspacePageHeader } from "@/components/kleio/workspace-page-header"
@@ -20,7 +19,7 @@ function statusTone(status: ArtistDashboardApplicationStatus): "default" | "succ
 }
 
 const nextActionByProgram = Object.fromEntries(
-  artistDashboardProfile.nextActions.map((action) => [action.program, action.task]),
+  artistNextActions.map((action) => [action.program, action.task]),
 )
 
 export function ArtistApplicationsPageView() {
@@ -73,10 +72,10 @@ export function ArtistApplicationsPageView() {
         <div className="grid gap-4 md:grid-cols-2">
           <WorkflowCard
             title={t("artist.workspace.applications.nextActions.title")}
-            body={t("artist.workspace.applications.nextActions.body", { count: analytics.nextActionsCount })}
+            body={t("artist.workspace.applications.nextActions.body", { count: artistNextActions.length })}
           >
             <ul className="space-y-2 text-sm" style={{ color: mutedColor }}>
-              {artistDashboardProfile.nextActions.map((action) => (
+              {artistNextActions.map((action) => (
                 <li key={action.program}>{action.program} — {action.task}</li>
               ))}
             </ul>
