@@ -30,6 +30,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
 
       - name: Enable pnpm
         run: |
@@ -56,6 +58,8 @@ jobs:
           find out -maxdepth 2 -type f | sort | head -120
           echo "Checking for guided demo export..."
           test -f out/demo/index.html
+          echo "Checking for artist directory export..."
+          test -f out/artists/index.html
 
       - name: Upload GitHub Pages artifact
         uses: actions/upload-pages-artifact@v3
