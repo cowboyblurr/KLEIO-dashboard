@@ -7,11 +7,30 @@ import {
   allDemoRoutes,
 } from "@/lib/kleio-route-registry"
 import { analyticsIntegrity } from "@/lib/kleio-analytics"
-import { artistAnalyticsIntegrity } from "@/lib/kleio-artist-analytics"
+import { artistAnalytics } from "@/lib/kleio-artist-analytics"
 import { collaboratorAnalyticsIntegrity } from "@/lib/kleio-collaborator-analytics"
 
+const i18nIntegrity = getI18nIntegrity()
+
+const institutionAnalyticsChecksPass =
+  analyticsIntegrity.applicationsOverTimeTotal === analyticsIntegrity.totalApplications &&
+  analyticsIntegrity.statusBreakdownTotal <= analyticsIntegrity.totalApplications
+
+const artistStatusTotal = Object.values(artistAnalytics.applicationStatusCounts).reduce(
+  (sum, count) => sum + count,
+  0,
+)
+
+const artistAnalyticsChecksPass =
+  artistAnalytics.passportCompletenessPct >= 0 &&
+  artistAnalytics.passportCompletenessPct <= 100 &&
+  artistAnalytics.materialsReadyCount <= artistAnalytics.materialsTotalCount &&
+  artistAnalytics.applicationCompletionRate >= 0 &&
+  artistAnalytics.applicationCompletionRate <= 100 &&
+  artistStatusTotal >= artistAnalytics.activeApplications
+
 export const kleioContentIntegrity = {
-  i18n: getI18nIntegrity(),
+  i18n: i18nIntegrity,
   routeCounts: {
     public: publicRoutes.length,
     artist: artistWorkspaceRoutes.length,
@@ -20,14 +39,14 @@ export const kleioContentIntegrity = {
     total: allDemoRoutes.length,
   },
   analytics: {
-    institution: analyticsIntegrity.allChecksPass,
-    artist: artistAnalyticsIntegrity.allChecksPass,
+    institution: institutionAnalyticsChecksPass,
+    artist: artistAnalyticsChecksPass,
     collaborator: collaboratorAnalyticsIntegrity.allChecksPass,
   },
   allChecksPass:
-    getI18nIntegrity().allChecksPass &&
-    analyticsIntegrity.allChecksPass &&
-    artistAnalyticsIntegrity.allChecksPass &&
+    i18nIntegrity.allChecksPass &&
+    institutionAnalyticsChecksPass &&
+    artistAnalyticsChecksPass &&
     collaboratorAnalyticsIntegrity.allChecksPass,
 }
 
