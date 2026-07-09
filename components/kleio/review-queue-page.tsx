@@ -24,7 +24,8 @@ function workflowDelay(index: number): CSSProperties {
 }
 
 export function ReviewQueuePageView() {
-  const { t } = useKleioLocale()
+  const { t, locale } = useKleioLocale()
+  const es = locale === "es"
   const [activeTab, setActiveTab] = useState("priority")
   const [selectedId, setSelectedId] = useState("mei-lin-zhang")
   const [drawerOpen, setDrawerOpen] = useState(false)
@@ -39,11 +40,11 @@ export function ReviewQueuePageView() {
       <div className="min-w-[760px] flex-1 overflow-x-auto overflow-y-hidden">
         <DemoPageShell
           title={t("institution.reviewQueue.title")}
-          description="Start here to clean incomplete records, follow up with reviewers, and move ready applicants into the Review Room."
+          description={es ? "Limpia materiales incompletos, revisa el avance de revisores y mueve postulaciones listas hacia la sala de revisión." : "Clear incomplete materials, review reviewer progress, and move ready submissions into the Review Room."}
           actions={
             <>
-              <Link href="/review-room/" className="inline-flex h-10 items-center rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90">Open Review Room</Link>
-              <Link href="/reports/" className="inline-flex h-10 items-center rounded-xl border border-border bg-card px-4 text-sm font-semibold text-foreground transition-colors hover:bg-accent/50">View Report</Link>
+              <Link href="/review-room/" className="inline-flex h-10 items-center rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90">{es ? "Abrir sala de revisión" : "Open Review Room"}</Link>
+              <Link href="/reports/" className="inline-flex h-10 items-center rounded-xl border border-border bg-card px-4 text-sm font-semibold text-foreground transition-colors hover:bg-accent/50">{es ? "Ver informe" : "View Report"}</Link>
             </>
           }
         >
@@ -55,15 +56,24 @@ export function ReviewQueuePageView() {
           </div>
 
           <section className="mb-4 rounded-2xl border border-[#E7E1F7] bg-[#F7F4FF] p-4 shadow-sm">
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#A997E8]">Before committee review</p>
-            <p className="mt-1 max-w-3xl text-sm leading-relaxed text-[#6F6882]">Every applicant row now has one recommended action: request missing materials, open review, send a reviewer reminder, or move the record into the Review Room.</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#A997E8]">{es ? "Antes de la revisión del comité" : "Before committee review"}</p>
+            <p className="mt-1 max-w-3xl text-sm leading-relaxed text-[#6F6882]">{es ? "Cada registro mantiene visible la próxima acción: solicitar materiales, abrir revisión, enviar recordatorio o avanzar a la sala de revisión." : "Each record keeps the next action visible: request materials, open review, send a reminder, or advance to the Review Room."}</p>
             <div className="mt-3 grid gap-2 xl:grid-cols-4">
-              {[
-                ["Applicants", `${analytics.reviewQueueCount} records in queue`],
-                ["Incomplete", `${analytics.incompleteCount} need material cleanup`],
-                ["Reviewer follow-up", `${analytics.pendingReviewerActionsCount} actions pending`],
-                ["Next room", "Ready records move into Review Room"],
-              ].map(([title, body], index) => (
+              {(
+                es
+                  ? [
+                      ["Postulantes", `${analytics.reviewQueueCount} registros en cola`],
+                      ["Incompletas", `${analytics.incompleteCount} requieren limpieza de materiales`],
+                      ["Seguimiento", `${analytics.pendingReviewerActionsCount} acciones pendientes`],
+                      ["Siguiente sala", "Los registros listos avanzan a revisión"],
+                    ]
+                  : [
+                      ["Applicants", `${analytics.reviewQueueCount} records in queue`],
+                      ["Incomplete", `${analytics.incompleteCount} need material cleanup`],
+                      ["Reviewer follow-up", `${analytics.pendingReviewerActionsCount} actions pending`],
+                      ["Next room", "Ready records move into Review Room"],
+                    ]
+              ).map(([title, body], index) => (
                 <div key={title} className={`${workflowMotion.step} rounded-xl border border-[#E7E1F7] bg-white p-3`} style={workflowDelay(index)}>
                   <p className="font-serif text-sm font-semibold text-[#292631]">{title}</p>
                   <p className="mt-1 text-xs leading-relaxed text-[#7F7890]">{body}</p>
@@ -73,7 +83,7 @@ export function ReviewQueuePageView() {
           </section>
 
           <section className="mb-4 rounded-2xl border border-primary/15 bg-card/80 p-4 shadow-sm">
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">{t("institution.reviewQueue.scenariosEyebrow", { institution: institution.name })}</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">{es ? `Casos prioritarios · ${institution.name}` : `Priority cases · ${institution.name}`}</p>
             <div className="mt-3 grid gap-2 xl:grid-cols-3">
               {demoScenarios.map((scenario, index) => (
                 <button key={scenario.id} type="button" onClick={() => { setSelectedId(scenario.submissionId); setDrawerOpen(true) }} className={`${workflowMotion.step} rounded-xl border border-border bg-background/70 p-3 text-left transition-colors hover:bg-accent/40`} style={workflowDelay(index)}>
