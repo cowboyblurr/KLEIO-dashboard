@@ -26,6 +26,12 @@ jobs:
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+          run_install: false
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
@@ -33,10 +39,9 @@ jobs:
           cache: pnpm
           cache-dependency-path: pnpm-lock.yaml
 
-      - name: Enable pnpm
+      - name: Verify toolchain
         run: |
-          corepack enable
-          corepack prepare pnpm@10 --activate
+          node --version
           pnpm --version
 
       - name: Install dependencies
@@ -60,6 +65,12 @@ jobs:
           test -f out/demo/index.html
           echo "Checking for artist directory export..."
           test -f out/artists/index.html
+          echo "Checking for artist opportunity detail export..."
+          test -f out/artist-dashboard/opportunities/lumen-arts-grant/index.html
+          echo "Checking for submission detail export..."
+          test -f out/submissions/amina-el-badri/index.html
+          echo "Checking for program detail export..."
+          test -f out/programs/residency-2026/index.html
 
       - name: Upload GitHub Pages artifact
         uses: actions/upload-pages-artifact@v3
