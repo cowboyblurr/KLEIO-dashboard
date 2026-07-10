@@ -1,10 +1,12 @@
 "use client"
 
 import { useMemo, useState } from "react"
+import Link from "next/link"
 import { CheckCircle2, FileText, WandSparkles, X } from "lucide-react"
 import {
   artistOpportunityDirectory,
   getArtistOpportunityFundingTotal,
+  getArtistOpportunityHref,
   getDueSoonOpportunityCount,
   getReadyOpportunityCount,
   type DirectoryOpportunity,
@@ -98,7 +100,11 @@ function ApplicationDraftWizard({ opportunity, locale, onClose }: { opportunity:
       <div className="flex items-start justify-between gap-3 border-b border-[#E7E1F7] px-5 py-4">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#A997E8]">{es ? "Herramienta de borrador" : "Application draft tool"}</p>
-          <h2 className="mt-1 font-serif text-lg font-semibold" style={{ color: inkColor }}>{opportunity.title}</h2>
+          <h2 className="mt-1 font-serif text-lg font-semibold">
+            <Link href={getArtistOpportunityHref(opportunity.id)} className="transition-colors hover:text-[#5B4B8A]" style={{ color: inkColor }}>
+              {opportunity.title}
+            </Link>
+          </h2>
           <p className="mt-1 text-xs" style={{ color: mutedColor }}>{opportunity.institution} · {opportunity.fit}% {es ? "afinidad" : "match"} · {opportunity.readiness}% {es ? "listo" : "ready"}</p>
         </div>
         <button type="button" onClick={onClose} aria-label={es ? "Cerrar herramienta" : "Close draft tool"} className="grid size-8 place-items-center rounded-lg text-[#7F7890] transition-colors hover:bg-[#F7F4FF] hover:text-[#292631]"><X className="size-4" /></button>
@@ -214,11 +220,15 @@ export function ArtistOpportunitiesPageView() {
         <div className={`grid gap-4 ${selectedOpportunity ? "xl:grid-cols-[minmax(0,1fr)_390px]" : ""}`}>
           <section className="grid gap-4 md:grid-cols-2">
             {filtered.map((opportunity) => (
-              <article key={opportunity.id} className="rounded-2xl border bg-white p-5" style={cardStyle}>
+              <article key={opportunity.id} className="rounded-2xl border bg-white p-5 transition-colors hover:border-[#D8D0F2]" style={cardStyle}>
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#A997E8]">{typeLabel(opportunity.type, es)} · {opportunity.institution}</p>
-                    <h2 className="mt-1 font-serif text-xl font-semibold" style={{ color: inkColor }}>{opportunity.title}</h2>
+                    <h2 className="mt-1 font-serif text-xl font-semibold">
+                      <Link href={getArtistOpportunityHref(opportunity.id)} className="transition-colors hover:text-[#5B4B8A] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A997E8]/35" style={{ color: inkColor }}>
+                        {opportunity.title}
+                      </Link>
+                    </h2>
                     <p className="mt-1 text-sm" style={{ color: mutedColor }}>{formatDemoDateDisplay(opportunity.deadline, locale)} · {urgencyLabel(opportunity.urgency, es)} · {effortLabel(opportunity.effort, es)} {es ? "esfuerzo" : "effort"}</p>
                   </div>
                   <DemoStatusChip label={`${opportunity.fit}% ${es ? "afinidad" : "fit"}`} tone={toneForPct(opportunity.fit)} translate={false} />
@@ -248,7 +258,8 @@ export function ArtistOpportunitiesPageView() {
 
                 <div className="mt-4 flex flex-wrap gap-2">
                   <button type="button" onClick={() => setSelectedOpportunity(opportunity)} className="inline-flex h-9 items-center rounded-xl bg-primary px-3 text-xs font-semibold text-primary-foreground transition-colors hover:bg-primary/90">{t("artist.workspace.opportunities.cta.prepareDraft")}</button>
-                  <a href="/artist-dashboard/passport/" className="inline-flex h-9 items-center rounded-xl border border-[#D8D0F2] px-3 text-xs font-semibold text-[#5B4B8A] transition-colors hover:bg-[#F7F4FF]">{t("artist.workspace.opportunities.cta.reviewPassport")}</a>
+                  <Link href={getArtistOpportunityHref(opportunity.id)} className="inline-flex h-9 items-center rounded-xl border border-[#D8D0F2] px-3 text-xs font-semibold text-[#5B4B8A] transition-colors hover:bg-[#F7F4FF]">{es ? "Ver detalle" : "View details"}</Link>
+                  <Link href="/artist-dashboard/passport/" className="inline-flex h-9 items-center rounded-xl border border-[#D8D0F2] px-3 text-xs font-semibold text-[#5B4B8A] transition-colors hover:bg-[#F7F4FF]">{t("artist.workspace.opportunities.cta.reviewPassport")}</Link>
                 </div>
               </article>
             ))}
