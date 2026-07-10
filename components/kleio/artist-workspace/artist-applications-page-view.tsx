@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { artistApplicationRows, artistNextActions } from "@/lib/kleio-opportunities"
+import { artistApplicationRows, artistNextActions, getArtistOpportunityHref } from "@/lib/kleio-opportunities"
 import { artistAnalytics, formatArtistNextDeadline, formatDemoDateDisplay } from "@/lib/kleio-artist-analytics"
 import { inkColor, mutedColor, lavenderSoftLine, cardStyle } from "@/lib/workspace-styles"
 import { WorkspacePageHeader } from "@/components/kleio/workspace-page-header"
@@ -20,6 +20,10 @@ function statusTone(status: ArtistDashboardApplicationStatus): "default" | "succ
 
 const nextActionByProgram = Object.fromEntries(
   artistNextActions.map((action) => [action.program, action.task]),
+)
+
+const nextActionHrefByProgram = Object.fromEntries(
+  artistNextActions.map((action) => [action.program, getArtistOpportunityHref(action.opportunityId)]),
 )
 
 export function ArtistApplicationsPageView() {
@@ -57,12 +61,23 @@ export function ArtistApplicationsPageView() {
             </thead>
             <tbody>
               {applications.map((app) => (
-                <tr key={app.program} className="border-b" style={{ borderColor: lavenderSoftLine }}>
-                  <td className="px-5 py-3 font-medium" style={{ color: inkColor }}>{app.program}</td>
+                <tr key={app.id} className="border-b transition-colors hover:bg-[#F7F4FF]/55" style={{ borderColor: lavenderSoftLine }}>
+                  <td className="px-5 py-3">
+                    <Link href={getArtistOpportunityHref(app.id)} className="font-medium transition-colors hover:text-[#5B4B8A] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A997E8]/35" style={{ color: inkColor }}>
+                      {app.program}
+                    </Link>
+                    <p className="mt-0.5 text-xs" style={{ color: mutedColor }}>{app.institution}</p>
+                  </td>
                   <td className="px-3 py-3"><DemoStatusChip label={app.status} tone={statusTone(app.status)} /></td>
                   <td className="px-3 py-3" style={{ color: mutedColor }}>{formatDemoDateDisplay(app.dueDate, locale)}</td>
                   <td className="px-3 py-3" style={{ color: mutedColor }}>{app.updated}</td>
-                  <td className="px-3 py-3" style={{ color: inkColor }}>{nextActionByProgram[app.program] ?? "—"}</td>
+                  <td className="px-3 py-3" style={{ color: inkColor }}>
+                    {nextActionByProgram[app.program] ? (
+                      <Link href={nextActionHrefByProgram[app.program] ?? getArtistOpportunityHref(app.id)} className="font-medium transition-colors hover:text-[#5B4B8A] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A997E8]/35">
+                        {nextActionByProgram[app.program]}
+                      </Link>
+                    ) : "—"}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -76,7 +91,12 @@ export function ArtistApplicationsPageView() {
           >
             <ul className="space-y-2 text-sm" style={{ color: mutedColor }}>
               {artistNextActions.map((action) => (
-                <li key={action.program}>{action.program} — {action.task}</li>
+                <li key={action.program}>
+                  <Link href={getArtistOpportunityHref(action.opportunityId)} className="font-medium transition-colors hover:text-[#5B4B8A]" style={{ color: inkColor }}>
+                    {action.program}
+                  </Link>
+                  <span> — {action.task}</span>
+                </li>
               ))}
             </ul>
           </WorkflowCard>
