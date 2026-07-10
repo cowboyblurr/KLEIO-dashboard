@@ -155,10 +155,21 @@ export const artistOpportunityDirectory: DirectoryOpportunity[] = [
   },
 ]
 
+export function getArtistOpportunityById(id: string) {
+  return artistOpportunityDirectory.find((opportunity) => opportunity.id === id)
+}
+
+export function getArtistOpportunityHref(id: string) {
+  return `/artist-dashboard/opportunities/${id}/`
+}
+
 export const artistApplicationRows = artistOpportunityDirectory
   .filter((opportunity) => opportunity.applicationStatus)
   .map((opportunity) => ({
+    id: opportunity.id,
+    artistId: opportunity.artistId,
     program: opportunity.title,
+    institution: opportunity.institution,
     status: opportunity.applicationStatus as ArtistDashboardApplicationStatus,
     dueDate: opportunity.deadline,
     updated: opportunity.updated ?? "—",
@@ -170,10 +181,10 @@ export const artistApplicationRows = artistOpportunityDirectory
   }))
 
 export const artistNextActions = [
-  { program: "Lumen Arts Grant", task: "Review missing budget template", due: "Due Aug 14", tone: "due" as const },
-  { program: "Global Perspectives Residency", task: "Confirm interview availability", due: "Due Aug 18", tone: "soon" as const },
-  { program: "Caribbean Futures Fund", task: "Monitor submitted application", due: "Due Aug 20", tone: "soon" as const },
-  { program: "Harbor Foundation Grant", task: "Follow up on overdue decision", due: "Follow up", tone: "follow-up" as const },
+  { opportunityId: "lumen-arts-grant", program: "Lumen Arts Grant", task: "Review missing budget template", due: "Due Aug 14", tone: "due" as const },
+  { opportunityId: "global-perspectives-residency", program: "Global Perspectives Residency", task: "Confirm interview availability", due: "Due Aug 18", tone: "soon" as const },
+  { opportunityId: "caribbean-futures-fund", program: "Caribbean Futures Fund", task: "Monitor submitted application", due: "Due Aug 20", tone: "soon" as const },
+  { opportunityId: "harbor-foundation-grant", program: "Harbor Foundation Grant", task: "Follow up on overdue decision", due: "Follow up", tone: "follow-up" as const },
 ]
 
 export function getArtistOpportunityFundingTotal(opportunities = artistOpportunityDirectory) {
