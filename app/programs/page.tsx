@@ -85,7 +85,11 @@ export default function Page() {
               <section key={program.id} className="rounded-2xl border border-border bg-card shadow-sm">
                 <div className="flex flex-wrap items-start justify-between gap-3 border-b border-border px-5 py-4">
                   <div>
-                    <h2 className="font-serif text-lg font-semibold text-foreground">{program.title}</h2>
+                    <h2 className="font-serif text-lg font-semibold text-foreground">
+                      <Link href={`/programs/${program.id}/`} className="transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/25">
+                        {program.title}
+                      </Link>
+                    </h2>
                     <p className="mt-1 text-sm text-muted-foreground">{program.description}</p>
                   </div>
                   <span className="rounded-full border border-border bg-background px-2.5 py-1 text-xs font-medium text-foreground">{statusLabel(program.status, es)}</span>
@@ -101,7 +105,7 @@ export default function Page() {
                   <p className="mt-2 text-sm text-foreground">{stats.assignedReviewers.map((person) => person.name).join(" · ") || (es ? "Sin asignar" : "None assigned")}</p>
                   <p className="mt-2 text-xs text-muted-foreground">{es ? "Etapa actual" : "Current stage"}: {statusLabel(program.status, es)} · {stats.needsAttentionCount} {es ? "requieren atención" : "need attention"}</p>
                   <div className="mt-3 flex flex-wrap gap-2">
-                    <Link href="/programs/new/" className="inline-flex h-9 items-center rounded-xl border border-border bg-background px-3 text-xs font-semibold text-foreground transition-colors hover:bg-accent/50">{es ? "Ver configuración" : "View call setup"}</Link>
+                    <Link href={`/programs/${program.id}/`} className="inline-flex h-9 items-center rounded-xl border border-border bg-background px-3 text-xs font-semibold text-foreground transition-colors hover:bg-accent/50">{es ? "Ver programa" : "View program"}</Link>
                     <Link href="/review-queue/" className="inline-flex h-9 items-center rounded-xl border border-border bg-background px-3 text-xs font-semibold text-foreground transition-colors hover:bg-accent/50">{es ? "Ver postulantes" : "View applicants"}</Link>
                     <Link href="/review-room/" className="inline-flex h-9 items-center rounded-xl bg-primary px-3 text-xs font-semibold text-primary-foreground transition-colors hover:bg-primary/90">{es ? "Abrir sala de revisión" : "Open review room"}</Link>
                   </div>
