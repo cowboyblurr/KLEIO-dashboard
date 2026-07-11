@@ -3,7 +3,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import { analytics, getLatestSubmissionNote, getShortlistGroups, getSubmissionReviewerProgress } from "@/lib/kleio-analytics"
-import { artistProfileHref } from "@/lib/kleio-demo-auth"
+import { internalArtistHref, programHref, submissionHref } from "@/lib/kleio-entity-routes"
 import { DemoPageShell, DemoStatRow } from "@/components/kleio/demo-page-shell"
 import { StatusPill } from "@/components/kleio/pills"
 import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
@@ -31,9 +31,9 @@ export function ShortlistPageView() {
     <DemoPageShell title={t("institution.shortlist.title")} description={t("institution.shortlist.description")}>
       <div className="mb-4 flex flex-wrap items-center gap-3">
         <div className="grid flex-1 grid-cols-2 gap-3 md:grid-cols-3 xl:max-w-3xl">
-          <DemoStatRow label={t("institution.shortlist.stat.shortlisted")} value={analytics.shortlistedCount} />
-          <DemoStatRow label={t("institution.shortlist.stat.pendingVote")} value={analytics.pendingVoteCount} />
-          <DemoStatRow label={t("institution.shortlist.stat.finalist")} value={groups[1].submissions.length} />
+          <DemoStatRow label={t("institution.shortlist.stat.shortlisted")} value={analytics.shortlistedCount} href="/shortlist/" />
+          <DemoStatRow label={t("institution.shortlist.stat.pendingVote")} value={analytics.pendingVoteCount} href="/committee/" />
+          <DemoStatRow label={t("institution.shortlist.stat.finalist")} value={groups[1].submissions.length} href="/review-room/" />
         </div>
         <button type="button" onClick={() => setExportConfirmation(t(selectedCount === 1 ? "institution.shortlist.exportConfirmation" : "institution.shortlist.exportConfirmationOther", { count: String(selectedCount) }))} className="inline-flex h-10 items-center rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90">
           {t("institution.shortlist.cta.export")}
@@ -55,16 +55,20 @@ export function ShortlistPageView() {
                   const note = getLatestSubmissionNote(submission.id)
                   const progress = getSubmissionReviewerProgress(submission.id)
                   return (
-                    <li key={submission.id} className="px-5 py-4">
+                    <li key={submission.id} id={`submission-${submission.id}`} className="px-5 py-4 transition-colors hover:bg-accent/30">
                       <div className="flex flex-wrap items-start justify-between gap-3">
-                        <div><Link href={artistProfileHref(submission.artistId)} className="font-medium text-foreground hover:text-primary">{submission.artist}</Link><p className="text-sm text-muted-foreground">{submission.projectTitle} · {submission.program}</p></div>
-                        <StatusPill status={submission.status} />
+                        <div>
+                          <Link href={internalArtistHref(submission.artistId)} className="font-medium text-foreground hover:text-primary">{submission.artist}</Link>
+                          <p className="text-sm text-muted-foreground"><Link href={submissionHref(submission.id)} className="transition-colors hover:text-primary">{submission.projectTitle}</Link> · <Link href={programHref(submission.programId)} className="transition-colors hover:text-primary">{submission.program}</Link></p>
+                        </div>
+                        <Link href={submissionHref(submission.id)} aria-label={es ? `Abrir expediente de ${submission.artist}` : `Open ${submission.artist}'s submission record`}><StatusPill status={submission.status} /></Link>
                       </div>
                       <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                        <span>{es ? "Voto del comité" : "Committee vote"}: {progress.completed}/{progress.total} {es ? "revisiones" : "reviews"}</span>
-                        <span>{es ? "Completitud" : "Completeness"}: {submission.completeness}%</span>
+                        <Link href="/committee/" className="transition-colors hover:text-primary">{es ? "Voto del comité" : "Committee vote"}: {progress.completed}/{progress.total} {es ? "revisiones" : "reviews"}</Link>
+                        <Link href={submissionHref(submission.id)} className="transition-colors hover:text-primary">{es ? "Completitud" : "Completeness"}: {submission.completeness}%</Link>
                       </div>
                       {note && <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{note.body}</p>}
+                      <div className="mt-3 flex flex-wrap gap-2 text-xs font-medium"><Link href={submissionHref(submission.id)} className="text-primary hover:text-primary/80">{es ? "Abrir expediente →" : "Open record →"}</Link><Link href={internalArtistHref(submission.artistId)} className="text-muted-foreground hover:text-primary">{es ? "Perfil del artista" : "Artist profile"}</Link></div>
                     </li>
                   )
                 })}
