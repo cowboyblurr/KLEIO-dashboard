@@ -4,6 +4,7 @@ import type { CSSProperties } from "react"
 import Link from "next/link"
 import { analytics, getSubmissionReviewerProgress } from "@/lib/kleio-analytics"
 import { collaborators, programs, type Collaborator, type Submission } from "@/lib/kleio-data"
+import { internalArtistHref, programHref, reviewerAnchorHref, submissionHref } from "@/lib/kleio-entity-routes"
 import { DemoPageShell, DemoStatRow } from "@/components/kleio/demo-page-shell"
 import { InitialAvatar } from "@/components/kleio/initial-avatar"
 import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
@@ -70,11 +71,11 @@ function Card({ children, className = "" }: { children: React.ReactNode; classNa
   return <section className={`rounded-2xl border bg-white ${className}`} style={{ borderColor: lavenderSoftLine, boxShadow: cardShadow }}>{children}</section>
 }
 
-function SectionHeader({ eyebrow, title, body }: { eyebrow: string; title: string; body?: string }) {
+function SectionHeader({ eyebrow, title, body, href }: { eyebrow: string; title: string; body?: string; href?: string }) {
   return (
     <div className="border-b px-5 py-4" style={{ borderColor: lavenderSoftLine }}>
       <p className="text-[0.62rem] font-semibold uppercase tracking-[0.16em]" style={{ color: "#A997E8" }}>{eyebrow}</p>
-      <h2 className="mt-1 font-serif text-lg font-semibold" style={{ color: inkColor }}>{title}</h2>
+      <h2 className="mt-1 font-serif text-lg font-semibold" style={{ color: inkColor }}>{href ? <Link href={href} className="transition-colors hover:text-[#5B4B8A]">{title}</Link> : title}</h2>
       {body && <p className="mt-1 text-sm leading-relaxed" style={{ color: mutedColor }}>{body}</p>}
     </div>
   )
@@ -98,7 +99,7 @@ export function ReviewRoomPageView() {
       }
     >
       <div className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-4">
-        <DemoStatRow label={es ? "Convocatoria" : "Open call"} value={es ? stageLabel(primaryProgram.status, es) : primaryProgram.status} href="/programs/" />
+        <DemoStatRow label={es ? "Convocatoria" : "Open call"} value={es ? stageLabel(primaryProgram.status, es) : primaryProgram.status} href={programHref(primaryProgram.id)} />
         <DemoStatRow label={es ? "Postulantes" : "Applicants"} value={analytics.reviewQueueCount} href="/review-queue/" />
         <DemoStatRow label={es ? "Revisores" : "Reviewers"} value={roomReviewers.length} href="/committee/" />
         <DemoStatRow label={es ? "Requiere atención" : "Needs attention"} value={analytics.incompleteCount} href="/review-queue/" />
@@ -106,44 +107,36 @@ export function ReviewRoomPageView() {
 
       <div className="grid gap-4 xl:grid-cols-[0.95fr_1.05fr]">
         <Card>
-          <SectionHeader
-            eyebrow={es ? "Contexto de convocatoria" : "Open call context"}
-            title={primaryProgram.title}
-            body={es ? "Mantén requisitos, fechas, materiales y rúbrica visibles mientras el comité revisa cada postulación." : "Keep requirements, dates, materials, and rubric visible while the committee reviews each submission."}
-          />
+          <SectionHeader eyebrow={es ? "Contexto de convocatoria" : "Open call context"} title={primaryProgram.title} href={programHref(primaryProgram.id)} body={es ? "Mantén requisitos, fechas, materiales y rúbrica visibles mientras el comité revisa cada postulación." : "Keep requirements, dates, materials, and rubric visible while the committee reviews each submission."} />
           <div className="grid gap-3 p-5 md:grid-cols-3">
-            <Info label={es ? "Fecha límite" : "Deadline"} value={formatDate(primaryProgram.deadline, locale)} index={0} />
-            <Info label={es ? "Inicio de revisión" : "Review starts"} value={formatDate(primaryProgram.reviewStart, locale)} index={1} />
-            <Info label={es ? "Fecha de decisión" : "Decision date"} value={formatDate(primaryProgram.decisionDate, locale)} index={2} />
+            <Info label={es ? "Fecha límite" : "Deadline"} value={formatDate(primaryProgram.deadline, locale)} index={0} href={programHref(primaryProgram.id)} />
+            <Info label={es ? "Inicio de revisión" : "Review starts"} value={formatDate(primaryProgram.reviewStart, locale)} index={1} href={programHref(primaryProgram.id)} />
+            <Info label={es ? "Fecha de decisión" : "Decision date"} value={formatDate(primaryProgram.decisionDate, locale)} index={2} href={programHref(primaryProgram.id)} />
           </div>
           <div className="grid gap-4 border-t p-5 md:grid-cols-2" style={{ borderColor: lavenderSoftLine }}>
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.16em]" style={{ color: mutedColor }}>{es ? "Materiales requeridos" : "Required materials"}</p>
-              <div className="mt-3 flex flex-wrap gap-2">{primaryProgram.requiredMaterials.map((item) => <span key={item} className="rounded-full border px-2.5 py-1 text-xs" style={{ borderColor: lavenderSoftLine, color: inkColor }}>{item}</span>)}</div>
+              <div className="mt-3 flex flex-wrap gap-2">{primaryProgram.requiredMaterials.map((item) => <Link key={item} href={programHref(primaryProgram.id)} className="rounded-full border px-2.5 py-1 text-xs transition-colors hover:bg-[#F7F4FF]" style={{ borderColor: lavenderSoftLine, color: inkColor }}>{item}</Link>)}</div>
             </div>
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.16em]" style={{ color: mutedColor }}>{es ? "Criterios de revisión" : "Review criteria"}</p>
-              <div className="mt-3 flex flex-wrap gap-2">{primaryProgram.rubric.map((item) => <span key={item} className="rounded-full bg-[#F7F4FF] px-2.5 py-1 text-xs font-medium" style={{ color: lavenderDeep }}>{item}</span>)}</div>
+              <div className="mt-3 flex flex-wrap gap-2">{primaryProgram.rubric.map((item) => <Link key={item} href={programHref(primaryProgram.id)} className="rounded-full bg-[#F7F4FF] px-2.5 py-1 text-xs font-medium transition-colors hover:bg-[#F1ECFB]" style={{ color: lavenderDeep }}>{item}</Link>)}</div>
             </div>
           </div>
         </Card>
 
         <Card>
-          <SectionHeader
-            eyebrow={es ? "Contexto de postulantes" : "Applicant context"}
-            title={es ? "Postulantes listos para conversación" : "Applicants ready for discussion"}
-            body={es ? "Cada fila muestra proyecto, preparación de materiales, avance de revisores y próxima acción." : "Each row shows project context, material readiness, reviewer progress, and next action."}
-          />
+          <SectionHeader eyebrow={es ? "Contexto de postulantes" : "Applicant context"} title={es ? "Postulantes listos para conversación" : "Applicants ready for discussion"} body={es ? "Cada fila muestra proyecto, preparación de materiales, avance de revisores y próxima acción." : "Each row shows project context, material readiness, reviewer progress, and next action."} />
           <ul className="divide-y" style={{ borderColor: lavenderSoftLine }}>
             {reviewSubmissions.map((submission) => {
               const progress = getSubmissionReviewerProgress(submission.id)
               return (
-                <li key={submission.id} className="px-5 py-4">
+                <li key={submission.id} className="px-5 py-4 transition-colors hover:bg-[#FDFBFF]">
                   <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div className="flex min-w-0 items-center gap-3"><InitialAvatar name={submission.artist} className="size-10 text-xs" /><div className="min-w-0"><p className="truncate font-medium" style={{ color: inkColor }}>{submission.artist}</p><p className="truncate text-sm" style={{ color: mutedColor }}>{submission.projectTitle}</p></div></div>
-                    <div className="flex flex-wrap items-center gap-2"><span className="rounded-full bg-[#F7F4FF] px-2 py-0.5 text-[0.65rem] font-semibold" style={{ color: lavenderDeep }}>{submission.completeness}% {es ? "completo" : "complete"}</span><span className="rounded-full border px-2 py-0.5 text-[0.65rem] font-semibold" style={{ borderColor: lavenderSoftLine, color: mutedColor }}>{progress.completed}/{progress.total} {es ? "revisiones" : "reviews"}</span></div>
+                    <div className="flex min-w-0 items-center gap-3"><Link href={internalArtistHref(submission.artistId)}><InitialAvatar name={submission.artist} className="size-10 text-xs transition-opacity hover:opacity-80" /></Link><div className="min-w-0"><p className="truncate font-medium" style={{ color: inkColor }}><Link href={internalArtistHref(submission.artistId)} className="transition-colors hover:text-[#5B4B8A]">{submission.artist}</Link></p><p className="truncate text-sm"><Link href={submissionHref(submission.id)} className="transition-colors hover:text-[#5B4B8A]" style={{ color: mutedColor }}>{submission.projectTitle}</Link></p></div></div>
+                    <div className="flex flex-wrap items-center gap-2"><Link href={submissionHref(submission.id)} className="rounded-full bg-[#F7F4FF] px-2 py-0.5 text-[0.65rem] font-semibold transition-opacity hover:opacity-80" style={{ color: lavenderDeep }}>{submission.completeness}% {es ? "completo" : "complete"}</Link><Link href={`/committee/#submission-${submission.id}`} className="rounded-full border px-2 py-0.5 text-[0.65rem] font-semibold transition-colors hover:bg-[#F7F4FF]" style={{ borderColor: lavenderSoftLine, color: mutedColor }}>{progress.completed}/{progress.total} {es ? "revisiones" : "reviews"}</Link></div>
                   </div>
-                  <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs"><span style={{ color: mutedColor }}>{missingCopy(submission, es)}</span><Link href="/review-queue/" className="font-medium" style={{ color: lavenderDeep }}>{es ? "Abrir revisión del postulante →" : "Open applicant review →"}</Link></div>
+                  <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs"><span style={{ color: mutedColor }}>{missingCopy(submission, es)}</span><div className="flex flex-wrap gap-2"><Link href={submissionHref(submission.id)} className="font-medium" style={{ color: lavenderDeep }}>{es ? "Abrir expediente →" : "Open record →"}</Link><Link href="/review-queue/" className="font-medium" style={{ color: mutedColor }}>{es ? "Ver en cola" : "View in queue"}</Link></div></div>
                 </li>
               )
             })}
@@ -154,7 +147,7 @@ export function ReviewRoomPageView() {
       <div className="mt-4 grid gap-4 xl:grid-cols-[0.85fr_1.15fr]">
         <Card>
           <SectionHeader eyebrow={es ? "Avance de revisores" : "Reviewer progress"} title={es ? "Estado de cada asiento" : "Reviewer seat status"} body={es ? "Consulta si cada revisor está asignado, en revisión, entregado o pendiente de conversación." : "See whether each reviewer seat is assigned, in review, submitted, or waiting on discussion."} />
-          <div className="space-y-3 p-5">{roomReviewers.map((person, index) => { const stage = reviewerStage(person); return <div key={person.id} className={`${workflowMotion.step} flex items-center justify-between gap-3 rounded-2xl border p-3`} style={{ ...workflowDelay(index), borderColor: lavenderSoftLine }}><div className="flex min-w-0 items-center gap-3"><InitialAvatar name={person.name} className="size-9 text-xs" /><div className="min-w-0"><p className="truncate text-sm font-medium" style={{ color: inkColor }}>{person.name}</p><p className="truncate text-xs" style={{ color: mutedColor }}>{roleLabel(person.role, es)} · {person.reviewsCompleted}/{person.reviewsAssigned} {es ? "revisiones" : "reviews"}</p></div></div><span className={`shrink-0 rounded-full px-2 py-1 text-[0.65rem] font-semibold ${stageClass(stage)}`}>{stageLabel(stage, es)}</span></div> })}</div>
+          <div className="space-y-3 p-5">{roomReviewers.map((person, index) => { const stage = reviewerStage(person); return <Link key={person.id} href={reviewerAnchorHref(person.id)} className={`${workflowMotion.step} flex items-center justify-between gap-3 rounded-2xl border p-3 transition-colors hover:bg-[#F7F4FF]`} style={{ ...workflowDelay(index), borderColor: lavenderSoftLine }}><div className="flex min-w-0 items-center gap-3"><InitialAvatar name={person.name} className="size-9 text-xs" /><div className="min-w-0"><p className="truncate text-sm font-medium" style={{ color: inkColor }}>{person.name}</p><p className="truncate text-xs" style={{ color: mutedColor }}>{roleLabel(person.role, es)} · {person.reviewsCompleted}/{person.reviewsAssigned} {es ? "revisiones" : "reviews"}</p></div></div><span className={`shrink-0 rounded-full px-2 py-1 text-[0.65rem] font-semibold ${stageClass(stage)}`}>{stageLabel(stage, es)}</span></Link> })}</div>
         </Card>
 
         <Card>
@@ -175,9 +168,9 @@ export function ReviewRoomPageView() {
             <p className="mt-2 max-w-xl text-sm leading-relaxed" style={{ color: mutedColor }}>{es ? "La sala de revisión conserva contexto de programa, actividad de revisores, shortlist y acciones pendientes para que el informe no tenga que reconstruirse manualmente." : "The Review Room keeps program context, reviewer activity, shortlist movement, and pending actions available so reports do not have to be rebuilt manually."}</p>
           </div>
           <div className="grid gap-3 p-6 md:grid-cols-3">
-            <Info label={es ? "Lista corta" : "Shortlist"} value={`${analytics.shortlistedCount}`} index={0} />
-            <Info label={es ? "Votos pendientes" : "Pending votes"} value={`${analytics.pendingVoteCount}`} index={1} />
-            <Info label={es ? "Requiere atención" : "Needs attention"} value={`${analytics.incompleteCount}`} index={2} />
+            <Info label={es ? "Lista corta" : "Shortlist"} value={`${analytics.shortlistedCount}`} index={0} href="/shortlist/" />
+            <Info label={es ? "Votos pendientes" : "Pending votes"} value={`${analytics.pendingVoteCount}`} index={1} href="/committee/" />
+            <Info label={es ? "Requiere atención" : "Needs attention"} value={`${analytics.incompleteCount}`} index={2} href="/review-queue/" />
           </div>
         </div>
       </Card>
@@ -185,8 +178,10 @@ export function ReviewRoomPageView() {
   )
 }
 
-function Info({ label, value, index = 0 }: { label: string; value: string; index?: number }) {
-  return <div className={`${workflowMotion.step} rounded-xl border bg-white p-3`} style={{ ...workflowDelay(index), borderColor: lavenderSoftLine }}><p className="text-xs font-medium" style={{ color: mutedColor }}>{label}</p><p className="mt-1 text-sm font-semibold" style={{ color: inkColor }}>{value}</p></div>
+function Info({ label, value, index = 0, href }: { label: string; value: string; index?: number; href?: string }) {
+  const content = <><p className="text-xs font-medium" style={{ color: mutedColor }}>{label}</p><p className="mt-1 text-sm font-semibold" style={{ color: inkColor }}>{value}</p></>
+  if (href) return <Link href={href} className={`${workflowMotion.step} block rounded-xl border bg-white p-3 transition-colors hover:bg-[#F7F4FF]`} style={{ ...workflowDelay(index), borderColor: lavenderSoftLine }}>{content}</Link>
+  return <div className={`${workflowMotion.step} rounded-xl border bg-white p-3`} style={{ ...workflowDelay(index), borderColor: lavenderSoftLine }}>{content}</div>
 }
 
 function DecisionLane({ title, count, body, href, index = 0 }: { title: string; count: number; body: string; href: string; index?: number }) {
