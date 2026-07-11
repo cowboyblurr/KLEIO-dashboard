@@ -38,11 +38,37 @@ function RoleAccessButtons({ onSelect, mode, locale }: { onSelect: (role: DemoRo
   )
 }
 
-function dashboardLabelKey(role: DemoRole) { if (role === "artist") return "auth.dashboard.artist"; if (role === "collaborator") return "auth.dashboard.collaborator"; return "auth.dashboard.institution" }
-function switchLabelKey(role: DemoRole) { if (role === "artist") return "auth.switchTo.artist"; if (role === "collaborator") return "auth.switchTo.collaborator"; return "auth.switchTo.institution" }
-function wrongRoleDescriptionKey(sessionRole: DemoRole, requiredRole: DemoRole) { if (sessionRole === "artist") return requiredRole === "collaborator" ? "auth.wrongRole.artistToCollaborator" : "auth.wrongRole.artistToInstitution"; if (sessionRole === "collaborator") return requiredRole === "artist" ? "auth.wrongRole.collaboratorToArtist" : "auth.wrongRole.collaboratorToInstitution"; return requiredRole === "collaborator" ? "auth.wrongRole.institutionToCollaborator" : "auth.wrongRole.institutionToArtist" }
-function loggedOutHeadingKey(requiredRole?: DemoRole) { if (requiredRole === "artist") return "auth.artist.heading"; if (requiredRole === "institution") return "auth.institution.heading"; if (requiredRole === "collaborator") return "auth.collaborator.heading"; return "auth.generic.heading" }
-function loggedOutDescriptionKey(requiredRole?: DemoRole) { if (requiredRole === "artist") return "auth.artist.description"; if (requiredRole === "institution") return "auth.institution.description"; if (requiredRole === "collaborator") return "auth.collaborator.description"; return "auth.generic.description" }
+function dashboardLabel(role: DemoRole, es: boolean) {
+  if (role === "artist") return es ? "espacio de artista" : "Artist Workspace"
+  if (role === "collaborator") return es ? "asiento de revisor" : "Reviewer Seat"
+  return es ? "espacio institucional" : "Institution Workspace"
+}
+
+function switchLabel(role: DemoRole, es: boolean) {
+  if (role === "artist") return es ? "Cambiar a artista" : "Switch to Artist Preview"
+  if (role === "collaborator") return es ? "Cambiar a revisor" : "Switch to Reviewer Preview"
+  return es ? "Cambiar a institución" : "Switch to Institution Preview"
+}
+
+function accessDescription(requiredRole: DemoRole | undefined, es: boolean) {
+  if (requiredRole === "artist") return es ? "Accede al espacio de artista para gestionar el Pasaporte Creativo, materiales y postulaciones." : "Access the Artist Workspace to manage a Creative Passport, materials, and applications."
+  if (requiredRole === "institution") return es ? "Accede al espacio institucional para gestionar postulaciones, revisores, shortlist e informes." : "Access the Institution Workspace to manage submissions, reviewers, shortlist movement, and reports."
+  if (requiredRole === "collaborator") return es ? "Accede al asiento de revisor para completar revisiones asignadas con contexto limitado." : "Access the Reviewer Seat to complete assigned reviews with scoped context."
+  return es ? "Los espacios de KLEIO son privados. Usa las credenciales de vista previa para continuar." : "KLEIO workspaces are private. Use preview credentials to continue."
+}
+
+function accessHeading(requiredRole: DemoRole | undefined, es: boolean) {
+  if (requiredRole === "artist") return es ? "Entrar al espacio de artista" : "Enter the Artist Workspace"
+  if (requiredRole === "institution") return es ? "Entrar al espacio institucional" : "Enter the Institution Workspace"
+  if (requiredRole === "collaborator") return es ? "Entrar al asiento de revisor" : "Enter the Reviewer Seat"
+  return es ? "Inicia sesión para continuar" : "Sign in to continue"
+}
+
+function wrongRoleDescription(sessionRole: DemoRole, requiredRole: DemoRole, es: boolean) {
+  return es
+    ? `Actualmente estás en ${dashboardLabel(sessionRole, es)}. Cambia a ${dashboardLabel(requiredRole, es)} para ver este espacio.`
+    : `You are currently in the ${dashboardLabel(sessionRole, es)}. Switch to the ${dashboardLabel(requiredRole, es)} to view this workspace.`
+}
 
 function previewGuideState() { persistDemoGuideState({ isOpen: false, isMinimized: true, dismissed: true, activeScenarioId: null, activeStepId: null, completedScenarioId: null }) }
 function demoGuideState(role: DemoRole) { persistDemoGuideState({ isOpen: true, isMinimized: false, dismissed: false, activeScenarioId: role === "institution" ? "review-and-shortlist" : null, activeStepId: role === "institution" ? "review-and-shortlist-1" : null, completedScenarioId: null }) }
@@ -76,7 +102,10 @@ function AuthWall({ requiredRole, session, onRefresh }: { requiredRole?: DemoRol
     setKleioMode("preview")
     previewGuideState()
     const nextSession = validateDemoCredentials(email, password)
-    if (!nextSession) { setError(es ? "Las credenciales de vista previa no coinciden. Prueba institution@kleio.demo con la contraseña kleio2026." : "Those preview credentials did not match. Try institution@kleio.demo with password kleio2026."); return }
+    if (!nextSession) {
+      setError(es ? "Las credenciales de vista previa no coinciden. Prueba institution@kleio.demo con la clave kleio2026." : "Those preview credentials did not match. Try institution@kleio.demo with access key kleio2026.")
+      return
+    }
     onRefresh()
     routeForSession(nextSession.role)
   }
@@ -84,25 +113,25 @@ function AuthWall({ requiredRole, session, onRefresh }: { requiredRole?: DemoRol
   function switchToRole(role: DemoRole) { loginDemoUser(role); onRefresh(); router.push(getDashboardForRole(role)) }
 
   const wrongRole = session && requiredRole && session.role !== requiredRole
-  const loggedOutHeading = t(loggedOutHeadingKey(requiredRole))
-  const loggedOutDescription = t(loggedOutDescriptionKey(requiredRole))
-  const wrongRoleDescription = session && requiredRole ? t(wrongRoleDescriptionKey(session.role, requiredRole)) : ""
+  const loggedOutHeading = accessHeading(requiredRole, es)
+  const loggedOutDescription = accessDescription(requiredRole, es)
+  const wrongDescription = session && requiredRole ? wrongRoleDescription(session.role, requiredRole, es) : ""
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-[oklch(0.985_0.005_287)] px-5 py-12">
       <div className="w-full max-w-xl rounded-2xl border border-border bg-[oklch(0.99_0.005_287)] p-7 shadow-sm">
         <div className="mb-6 flex justify-center"><KleioWordmarkLink href="/" imageClassName="h-7 w-auto" priority /></div>
-        {wrongRole ? <><h1 className="text-center font-serif text-2xl font-semibold text-foreground">{t("auth.switchRole")}</h1><p className="mt-2 text-center text-sm leading-relaxed text-muted-foreground">{wrongRoleDescription}</p><div className="mt-6 space-y-2"><button type="button" onClick={() => router.push(getDashboardForRole(session.role))} className="inline-flex h-10 w-full items-center justify-center rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90">{t("auth.goToDashboard", { dashboard: t(dashboardLabelKey(session.role)) })}</button><button type="button" onClick={() => switchToRole(requiredRole!)} className="inline-flex h-10 w-full items-center justify-center rounded-xl border border-border bg-background px-4 text-sm font-medium text-foreground transition-colors hover:bg-accent/50">{t(switchLabelKey(requiredRole!))}</button><Link href={getPublicHomeHref()} className="inline-flex h-10 w-full items-center justify-center rounded-xl px-4 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">{t("auth.returnToKleio")}</Link></div></> : <>
+        {wrongRole ? <><h1 className="text-center font-serif text-2xl font-semibold text-foreground">{es ? "Cambiar espacio" : "Switch workspace"}</h1><p className="mt-2 text-center text-sm leading-relaxed text-muted-foreground">{wrongDescription}</p><div className="mt-6 space-y-2"><button type="button" onClick={() => router.push(getDashboardForRole(session.role))} className="inline-flex h-10 w-full items-center justify-center rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90">{es ? `Ir a ${dashboardLabel(session.role, es)}` : `Go to ${dashboardLabel(session.role, es)}`}</button><button type="button" onClick={() => switchToRole(requiredRole!)} className="inline-flex h-10 w-full items-center justify-center rounded-xl border border-border bg-background px-4 text-sm font-medium text-foreground transition-colors hover:bg-accent/50">{switchLabel(requiredRole!, es)}</button><Link href={getPublicHomeHref()} className="inline-flex h-10 w-full items-center justify-center rounded-xl px-4 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">{t("auth.returnToKleio")}</Link></div></> : <>
           <h1 className="text-center font-serif text-2xl font-semibold text-foreground">{loggedOutHeading}</h1>
           <p className="mt-2 text-center text-sm leading-relaxed text-muted-foreground">{loggedOutDescription}</p>
           <section className="mt-6 rounded-2xl border border-border bg-background p-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">{es ? "Acceso a vista previa" : "Product preview access"}</p>
-            <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{es ? "Inicia sesión para entrar a una vista más limpia del espacio KLEIO." : "Log in to the cleaner KLEIO workspace preview."}</p>
-            <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_0.7fr]"><input value={email} onChange={(event) => setEmail(event.target.value)} onKeyDown={(event) => event.key === "Enter" && handlePreviewLogin()} className="h-10 rounded-xl border border-border bg-card px-3 text-sm outline-none focus:border-primary/40 focus:ring-4 focus:ring-primary/10" placeholder="institution@kleio.demo" /><input value={password} onChange={(event) => setPassword(event.target.value)} onKeyDown={(event) => event.key === "Enter" && handlePreviewLogin()} type="password" className="h-10 rounded-xl border border-border bg-card px-3 text-sm outline-none focus:border-primary/40 focus:ring-4 focus:ring-primary/10" placeholder={es ? "Contraseña" : "Password"} /></div>
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">{es ? "Acceso a vista previa" : "Private preview access"}</p>
+            <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{es ? "Inicia sesión para entrar a una vista limpia del espacio KLEIO." : "Log in to enter the clean KLEIO workspace preview."}</p>
+            <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_0.7fr]"><input value={email} onChange={(event) => setEmail(event.target.value)} onKeyDown={(event) => event.key === "Enter" && handlePreviewLogin()} className="h-10 rounded-xl border border-border bg-card px-3 text-sm outline-none focus:border-primary/40 focus:ring-4 focus:ring-primary/10" placeholder="institution@kleio.demo" /><input value={password} onChange={(event) => setPassword(event.target.value)} onKeyDown={(event) => event.key === "Enter" && handlePreviewLogin()} type="password" className="h-10 rounded-xl border border-border bg-card px-3 text-sm outline-none focus:border-primary/40 focus:ring-4 focus:ring-primary/10" placeholder={es ? "Clave" : "Access key"} /></div>
             {error && <p className="mt-2 text-xs font-medium text-[oklch(0.45_0.14_55)]">{error}</p>}
-            <button type="button" onClick={handlePreviewLogin} className="mt-3 inline-flex h-10 w-full items-center justify-center rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90">{es ? "Entrar a la vista previa" : "Log in to Product Preview"}</button>
+            <button type="button" onClick={handlePreviewLogin} className="mt-3 inline-flex h-10 w-full items-center justify-center rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90">{es ? "Entrar a la vista previa" : "Log in to Preview"}</button>
           </section>
-          <details className="group mt-3 rounded-2xl border border-[#E7E1F7] bg-white p-4"><summary className="flex cursor-pointer list-none items-center justify-between text-sm font-semibold text-[#5B4B8A] marker:hidden"><span>{es ? "Atajos avanzados por rol" : "Advanced role shortcuts"}</span><span className="transition-transform group-open:rotate-90">›</span></summary><div className="mt-3 grid gap-3 sm:grid-cols-2"><section className="rounded-xl border border-[#E7E1F7] bg-[#F7F4FF] p-3"><p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#A997E8]">{es ? "Recorrido demo" : "Demo walkthrough"}</p><p className="mt-1 text-xs text-muted-foreground">{es ? "Registros de muestra con guía." : "Guided sample records."}</p><div className="mt-3"><RoleAccessButtons onSelect={enter} mode="demo" locale={locale} /></div></section><section className="rounded-xl border border-border bg-background p-3"><p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">{es ? "Vista previa" : "Product preview"}</p><p className="mt-1 text-xs text-muted-foreground">{es ? "Un espacio de producto más limpio." : "Cleaner workspace mode."}</p><div className="mt-3"><RoleAccessButtons onSelect={enter} mode="preview" locale={locale} /></div></section></div></details>
+          <details className="group mt-3 rounded-2xl border border-[#E7E1F7] bg-white p-4"><summary className="flex cursor-pointer list-none items-center justify-between text-sm font-semibold text-[#5B4B8A] marker:hidden"><span>{es ? "Opciones por rol" : "Workspace role options"}</span><span className="transition-transform group-open:rotate-90">›</span></summary><div className="mt-3 grid gap-3 sm:grid-cols-2"><section className="rounded-xl border border-[#E7E1F7] bg-[#F7F4FF] p-3"><p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#A997E8]">{es ? "Recorrido guiado" : "Guided walkthrough"}</p><p className="mt-1 text-xs text-muted-foreground">{es ? "Registros sintéticos con guía." : "Synthetic records with guided context."}</p><div className="mt-3"><RoleAccessButtons onSelect={enter} mode="demo" locale={locale} /></div></section><section className="rounded-xl border border-border bg-background p-3"><p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">{es ? "Vista previa" : "Clean preview"}</p><p className="mt-1 text-xs text-muted-foreground">{es ? "Un espacio de producto más limpio." : "A cleaner product workspace."}</p><div className="mt-3"><RoleAccessButtons onSelect={enter} mode="preview" locale={locale} /></div></section></div></details>
           <Link href={getPublicHomeHref()} className="mt-4 inline-flex h-10 w-full items-center justify-center rounded-xl border border-border bg-background text-sm font-medium text-foreground transition-colors hover:bg-accent/50">{t("auth.returnToKleio")}</Link>
         </>}
       </div>

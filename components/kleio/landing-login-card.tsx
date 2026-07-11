@@ -10,14 +10,19 @@ import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
 
 type Role = "artist" | "institution" | "collaborator"
 
-const previewAccess = ["institution@kleio.demo", "artist@kleio.demo", "reviewer@kleio.demo"]
+const previewAccess = [
+  { label: "Institution", email: "institution@kleio.demo" },
+  { label: "Artist", email: "artist@kleio.demo" },
+  { label: "Reviewer", email: "reviewer@kleio.demo" },
+]
 
 export function LandingLoginCard() {
   const router = useRouter()
-  const { t, locale } = useKleioLocale()
+  const { locale } = useKleioLocale()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
+  const es = locale === "es"
 
   function routeForRole(role: Role) {
     router.push(getDashboardForRole(role))
@@ -53,7 +58,7 @@ export function LandingLoginCard() {
     setPreviewGuideState()
     const session = validateDemoCredentials(email, password)
     if (!session) {
-      setError(t("landing.login.error"))
+      setError(es ? "Usa las credenciales de vista previa o elige un rol de espacio de trabajo." : "Use the preview credentials or choose a workspace role to continue.")
       return
     }
     routeForRole(session.role)
@@ -71,29 +76,29 @@ export function LandingLoginCard() {
         <div className="flex items-start gap-2.5">
           <span className="mt-0.5 grid size-8 shrink-0 place-items-center rounded-xl bg-[#F7F4FF] text-[#5B4B8A]"><KeyRound className="size-4" /></span>
           <div className="min-w-0 flex-1">
-            <p className="text-[0.62rem] font-semibold uppercase tracking-[0.16em] text-[#A997E8]">{locale === "es" ? "Acceso privado" : "Private preview access"}</p>
-            <h2 className="mt-1 font-serif text-[1rem] font-semibold text-[#292631]">{locale === "es" ? "Entrar a KLEIO Workspace" : "Log in to KLEIO Workspace"}</h2>
-            <p className="mt-1 text-[0.68rem] leading-relaxed text-[#7F7890]">{locale === "es" ? "Estas credenciales abren la vista previa limpia del producto, sin guía abierta ni recorrido demo." : "These credentials open the cleaner Product Preview workspace, without the open demo guide or walkthrough scaffolding."}</p>
+            <p className="text-[0.62rem] font-semibold uppercase tracking-[0.16em] text-[#A997E8]">{es ? "Acceso privado" : "Private preview access"}</p>
+            <h2 className="mt-1 font-serif text-[1rem] font-semibold text-[#292631]">{es ? "Entrar a KLEIO Workspace" : "Log in to KLEIO Workspace"}</h2>
+            <p className="mt-1 text-[0.68rem] leading-relaxed text-[#7F7890]">{es ? "Estas credenciales abren una vista previa limpia del producto, sin recorridos superpuestos por defecto." : "These credentials open a clean product preview workspace, without walkthrough overlays by default."}</p>
           </div>
         </div>
 
         <div className="mt-3 grid gap-2">
-          <input type="email" placeholder={t("landing.login.emailPlaceholder")} value={email} onChange={(e) => setEmail(e.target.value)} onKeyDown={(e) => e.key === "Enter" && handleLogin()} className="h-9 w-full rounded-full border bg-white px-3.5 text-[0.72rem] outline-none transition placeholder:text-[#9B94AA] focus:border-[#A997E8] focus:ring-2 focus:ring-[#A997E8]/15" style={{ borderColor: "#DCD5F3", color: "#292631" }} />
-          <input type="password" placeholder={t("landing.login.passwordPlaceholder")} value={password} onChange={(e) => setPassword(e.target.value)} onKeyDown={(e) => e.key === "Enter" && handleLogin()} className="h-9 w-full rounded-full border bg-white px-3.5 text-[0.72rem] outline-none transition placeholder:text-[#9B94AA] focus:border-[#A997E8] focus:ring-2 focus:ring-[#A997E8]/15" style={{ borderColor: "#DCD5F3", color: "#292631" }} />
+          <input type="email" placeholder={es ? "Correo de acceso" : "Access email"} value={email} onChange={(e) => setEmail(e.target.value)} onKeyDown={(e) => e.key === "Enter" && handleLogin()} className="h-9 w-full rounded-full border bg-white px-3.5 text-[0.72rem] outline-none transition placeholder:text-[#9B94AA] focus:border-[#A997E8] focus:ring-2 focus:ring-[#A997E8]/15" style={{ borderColor: "#DCD5F3", color: "#292631" }} />
+          <input type="password" placeholder={es ? "Clave de acceso" : "Access key"} value={password} onChange={(e) => setPassword(e.target.value)} onKeyDown={(e) => e.key === "Enter" && handleLogin()} className="h-9 w-full rounded-full border bg-white px-3.5 text-[0.72rem] outline-none transition placeholder:text-[#9B94AA] focus:border-[#A997E8] focus:ring-2 focus:ring-[#A997E8]/15" style={{ borderColor: "#DCD5F3", color: "#292631" }} />
         </div>
 
         <div className="mt-2 grid grid-cols-3 gap-1.5">
-          {previewAccess.map((accessEmail) => (
-            <button key={accessEmail} type="button" onClick={() => fillCredentials(accessEmail)} className="truncate rounded-full border border-[#E7E1F7] bg-[#F7F4FF]/70 px-2 py-1.5 text-[0.58rem] font-semibold text-[#5B4B8A] transition-colors hover:bg-[#F7F4FF]" title={accessEmail}>
-              {accessEmail.replace("@kleio.demo", "")}
+          {previewAccess.map((access) => (
+            <button key={access.email} type="button" onClick={() => fillCredentials(access.email)} className="truncate rounded-full border border-[#E7E1F7] bg-[#F7F4FF]/70 px-2 py-1.5 text-[0.58rem] font-semibold text-[#5B4B8A] transition-colors hover:bg-[#F7F4FF]" title={access.label}>
+              {access.label}
             </button>
           ))}
         </div>
 
         <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
-          <p className="text-[0.62rem] text-[#7F7890]">Password: <span className="font-semibold text-[#5B4B8A]">kleio2026</span></p>
+          <p className="text-[0.62rem] text-[#7F7890]">{es ? "Clave:" : "Access key:"} <span className="font-semibold text-[#5B4B8A]">kleio2026</span></p>
           <button type="button" onClick={handleLogin} className="inline-flex h-9 items-center justify-center gap-1 rounded-full bg-[#292631] px-4 text-[0.72rem] font-semibold text-white transition-opacity hover:opacity-90">
-            {locale === "es" ? "Entrar" : "Log in"}
+            {es ? "Entrar" : "Log in"}
             <ChevronRight className="size-3" />
           </button>
         </div>
@@ -102,12 +107,12 @@ export function LandingLoginCard() {
 
       <details className="group mt-3 rounded-[0.95rem] border border-[#E7E1F7] bg-white px-3 py-2.5">
         <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-[0.68rem] font-semibold text-[#5B4B8A] marker:hidden">
-          <span>{locale === "es" ? "Opciones avanzadas" : "Advanced role shortcuts"}</span>
+          <span>{es ? "Opciones de rol" : "Workspace role options"}</span>
           <ChevronRight className="size-3 transition-transform group-open:rotate-90" />
         </summary>
         <div className="mt-3 grid gap-3 sm:grid-cols-2">
           <section className="rounded-xl border border-[#E7E1F7] bg-[#F7F4FF] p-3">
-            <p className="text-[0.62rem] font-semibold uppercase tracking-[0.14em] text-[#A997E8]">Demo</p>
+            <p className="text-[0.62rem] font-semibold uppercase tracking-[0.14em] text-[#A997E8]">{es ? "Recorrido" : "Guided"}</p>
             <div className="mt-2 grid gap-1.5">
               <button type="button" onClick={() => openWorkspace("institution", "demo")} className="rounded-full border border-[#D8D0F2] bg-white px-2 py-1.5 text-[0.62rem] font-semibold text-[#5B4B8A] transition-colors hover:bg-white/75">Institution</button>
               <button type="button" onClick={() => openWorkspace("artist", "demo")} className="rounded-full border border-[#D8D0F2] bg-white px-2 py-1.5 text-[0.62rem] font-semibold text-[#5B4B8A] transition-colors hover:bg-white/75">Artist</button>
@@ -115,7 +120,7 @@ export function LandingLoginCard() {
             </div>
           </section>
           <section className="rounded-xl border border-[#E7E1F7] bg-white p-3">
-            <p className="text-[0.62rem] font-semibold uppercase tracking-[0.14em] text-[#A997E8]">Preview</p>
+            <p className="text-[0.62rem] font-semibold uppercase tracking-[0.14em] text-[#A997E8]">{es ? "Vista previa" : "Clean preview"}</p>
             <div className="mt-2 grid gap-1.5">
               <button type="button" onClick={() => openWorkspace("institution", "preview")} className="rounded-full border border-[#D8D0F2] bg-[#F7F4FF] px-2 py-1.5 text-[0.62rem] font-semibold text-[#5B4B8A] transition-colors hover:bg-white">Institution</button>
               <button type="button" onClick={() => openWorkspace("artist", "preview")} className="rounded-full border border-[#D8D0F2] bg-[#F7F4FF] px-2 py-1.5 text-[0.62rem] font-semibold text-[#5B4B8A] transition-colors hover:bg-white">Artist</button>
