@@ -9,6 +9,7 @@ import { DemoPresentationStyles } from "@/components/kleio/demo-presentation-sty
 import { GuideWalkthroughCollapser } from "@/components/kleio/guide-walkthrough-collapser"
 import { DemoClickFeedbackLayer } from "@/components/kleio/demo-click-feedback-layer"
 import { DemoGuideHighlightLayer } from "@/components/kleio/demo-guide-highlight-layer"
+import { InternalMessengerAccent } from "@/components/kleio/internal-messenger-accent"
 import { useKleioMode } from "@/components/kleio/use-kleio-mode"
 
 export function CollaboratorShell({ children }: { children: ReactNode }) {
@@ -24,6 +25,7 @@ export function CollaboratorShell({ children }: { children: ReactNode }) {
         <CollaboratorSidebar />
         <div className="min-w-[860px] flex-1 overflow-x-auto overflow-y-hidden">{children}</div>
         <DemoEnvironmentBadge compact className="pointer-events-none absolute right-5 top-5 z-30 hidden 2xl:inline-flex" />
+        <InternalMessengerAccent />
       </div>
       {isDemo && <KleioDemoGuide variant="workspace" />}
     </AuthGate>
