@@ -61,15 +61,26 @@ jobs:
           touch out/.nojekyll
           echo "Top-level exported files:"
           find out -maxdepth 2 -type f | sort | head -120
-          echo "Checking for guided demo export..."
+          echo "Checking core workspace exports..."
+          test -f out/dashboard/index.html
+          test -f out/review-queue/index.html
+          test -f out/review-room/index.html
+          test -f out/shortlist/index.html
+          test -f out/committee/index.html
+          test -f out/messages/index.html
+          test -f out/activity-log/index.html
+          test -f out/reports/index.html
+          echo "Checking profile and entity exports..."
           test -f out/demo/index.html
-          echo "Checking for artist directory export..."
           test -f out/artists/index.html
-          echo "Checking for artist opportunity detail export..."
+          test -f out/artists/amina-el-badri/index.html
+          test -f out/artist/amina-el-badri/index.html
+          test -f out/institution/kleio-arthouse/index.html
+          echo "Checking artist opportunity detail export..."
           test -f out/artist-dashboard/opportunities/lumen-arts-grant/index.html
-          echo "Checking for submission detail export..."
+          echo "Checking submission detail export..."
           test -f out/submissions/amina-el-badri/index.html
-          echo "Checking for program detail export..."
+          echo "Checking program detail export..."
           test -f out/programs/residency-2026/index.html
 
       - name: Upload GitHub Pages artifact
