@@ -4,6 +4,7 @@ import Link from "next/link"
 import { DashboardShell } from "@/components/kleio/dashboard-shell"
 import { activityLog } from "@/lib/kleio-data"
 import { getActivityLogCount } from "@/lib/kleio-analytics"
+import { activityTargetHref, internalArtistHref, submissionHref } from "@/lib/kleio-entity-routes"
 import { inkColor, mutedColor, lavenderSoftLine, cardStyle } from "@/lib/workspace-styles"
 import { WorkspacePageHeader } from "@/components/kleio/workspace-page-header"
 import { SearchFilterBar } from "@/components/kleio/search-filter-bar"
@@ -80,16 +81,23 @@ export default function Page() {
               <p className="mt-1 text-xs" style={{ color: mutedColor }}>{es ? "Conectada a postulaciones, revisores y registros de programa" : "Linked to submissions, reviewers, and program records"}</p>
             </div>
             <ul className="divide-y" style={{ borderColor: lavenderSoftLine }}>
-              {activityLog.map((entry) => (
-                <li key={entry.id} className="px-5 py-4">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <p className="text-sm" style={{ color: inkColor }}><span className="font-medium">{entry.actor}</span>{" "}<span style={{ color: mutedColor }}>{actionLabel(entry.action, es)}</span></p>
-                    <div className="flex items-center gap-2"><DemoStatusChip label={typeLabel(entry.type, es)} tone={typeTone(entry.type)} /><span className="text-xs" style={{ color: mutedColor }}>{entry.date}</span></div>
-                  </div>
-                  <p className="mt-1 text-sm" style={{ color: mutedColor }}>{entry.target}</p>
-                  {entry.submissionId && <Link href={`/artists/${entry.submissionId}/`} className="mt-2 inline-flex text-xs font-medium transition-opacity hover:opacity-75" style={{ color: "#5B4B8A" }}>{es ? "Revisar perfil →" : "Review profile →"}</Link>}
-                </li>
-              ))}
+              {activityLog.map((entry) => {
+                const targetHref = activityTargetHref(entry.type, entry.submissionId, entry.target)
+                return (
+                  <li key={entry.id} className="px-5 py-4 transition-colors hover:bg-[#FDFBFF]">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <p className="text-sm" style={{ color: inkColor }}><span className="font-medium">{entry.actor}</span>{" "}<Link href={targetHref} className="transition-colors hover:text-[#5B4B8A]" style={{ color: mutedColor }}>{actionLabel(entry.action, es)}</Link></p>
+                      <div className="flex items-center gap-2"><Link href={targetHref}><DemoStatusChip label={typeLabel(entry.type, es)} tone={typeTone(entry.type)} /></Link><span className="text-xs" style={{ color: mutedColor }}>{entry.date}</span></div>
+                    </div>
+                    <p className="mt-1 text-sm"><Link href={targetHref} className="transition-colors hover:text-[#5B4B8A]" style={{ color: mutedColor }}>{entry.target}</Link></p>
+                    <div className="mt-2 flex flex-wrap gap-3 text-xs font-medium">
+                      {entry.submissionId && <Link href={submissionHref(entry.submissionId)} className="transition-opacity hover:opacity-75" style={{ color: "#5B4B8A" }}>{es ? "Abrir expediente →" : "Open record →"}</Link>}
+                      {entry.submissionId && <Link href={internalArtistHref(entry.submissionId)} className="transition-opacity hover:opacity-75" style={{ color: mutedColor }}>{es ? "Perfil del artista" : "Artist profile"}</Link>}
+                      {!entry.submissionId && <Link href={targetHref} className="transition-opacity hover:opacity-75" style={{ color: "#5B4B8A" }}>{es ? "Abrir registro →" : "Open related record →"}</Link>}
+                    </div>
+                  </li>
+                )
+              })}
             </ul>
           </section>
 
