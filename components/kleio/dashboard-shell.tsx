@@ -10,6 +10,7 @@ import { GuideWalkthroughCollapser } from "@/components/kleio/guide-walkthrough-
 import { DemoClickFeedbackLayer } from "@/components/kleio/demo-click-feedback-layer"
 import { DemoGuideHighlightLayer } from "@/components/kleio/demo-guide-highlight-layer"
 import { DemoTrustLink } from "@/components/kleio/demo-trust-link"
+import { InternalMessengerAccent } from "@/components/kleio/internal-messenger-accent"
 import { useKleioMode } from "@/components/kleio/use-kleio-mode"
 
 export function DashboardShell({ children }: { children: ReactNode }) {
@@ -28,6 +29,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
           <TopBar />
           <div className="min-h-0 flex-1 overflow-x-auto overflow-y-hidden">{children}</div>
         </div>
+        <InternalMessengerAccent />
       </div>
       {isDemo && <KleioDemoGuide variant="workspace" />}
     </AuthGate>
