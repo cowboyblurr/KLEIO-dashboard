@@ -5,6 +5,8 @@ export type KleioDemoSession = {
   email: string
   createdAt: string
   collaboratorId?: string
+  source?: "preview" | "supabase"
+  userId?: string
 }
 
 const STORAGE_KEY = "kleio-demo-session"
@@ -17,11 +19,14 @@ const STORAGE_KEY = "kleio-demo-session"
  *   `/landing/` — legacy duplicate of `/` for old links
  *   `/signup/*` — signup flows
  *
- * Private workspaces (client-side demo auth):
+ * Private workspaces:
  *   `/dashboard/` — institution overview
  *   `/artist-dashboard/` — artist overview
  *   `/collaborator-dashboard/` — collaborator review seat
  *   `/programs/`, `/review-queue/`, etc. — institution workspace pages
+ *
+ * Supabase-backed sessions are mirrored into this lightweight browser session so
+ * the existing static-export workspace can keep its role-aware navigation.
  */
 
 const DEMO_CREDENTIALS = {
@@ -89,6 +94,7 @@ export function loginDemoUser(role: "artist" | "institution" | "collaborator"): 
     name: creds.name,
     email: creds.email,
     createdAt: new Date().toISOString(),
+    source: "preview",
     ...(role === "collaborator" && "collaboratorId" in creds
       ? { collaboratorId: creds.collaboratorId }
       : {}),
@@ -165,4 +171,4 @@ export function artistProfileHref(artistId: string): string {
 }
 
 export const DEMO_LOGIN_HINT =
-  "Demo access: institution@kleio.demo, artist@kleio.demo, or reviewer@kleio.demo · password kleio2026"
+  "Preview access: institution@kleio.demo, artist@kleio.demo, or reviewer@kleio.demo · password kleio2026"
