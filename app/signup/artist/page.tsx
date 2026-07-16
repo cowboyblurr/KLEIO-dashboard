@@ -1,5 +1,5 @@
-import { ArtistOnboarding } from "@/components/kleio/signup/artist-onboarding"
+import { LiveSignup } from "@/components/kleio/signup/live-signup"
 
 export default function Page() {
-  return <ArtistOnboarding />
+  return <LiveSignup role="artist" />
 }
