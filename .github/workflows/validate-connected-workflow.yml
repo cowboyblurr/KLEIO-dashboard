@@ -49,7 +49,9 @@ jobs:
 
       - name: Check for committed secrets
         run: |
-          if grep -R --line-number --exclude='.env.example' --exclude-dir='.git' --exclude-dir='node_modules' -E 'service_role|SUPABASE_SERVICE_ROLE|eyJ[a-zA-Z0-9_-]{80,}' .; then
+          if git grep -n -E 'service_role|SUPABASE_SERVICE_ROLE|eyJ[a-zA-Z0-9_-]{80,}' -- \
+            ':!.env.example' \
+            ':!.github/workflows/validate-connected-workflow.yml'; then
             echo "Potential secret detected. Review the matched lines."
             exit 1
           fi
