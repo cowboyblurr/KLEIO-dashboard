@@ -32,10 +32,10 @@ const navSections: NavSection[] = [
     headingEs: "Flujo principal",
     items: [
       { href: "/artist-dashboard/", label: "Overview", icon: LayoutDashboard },
-      { href: "/artist-dashboard/passport/", label: "Creative Passport", icon: Sparkles, activeMatch: "/artist-dashboard/passport" },
+      { href: "/artist-dashboard/passport/connected/", label: "Creative Passport", icon: Sparkles, activeMatch: "/artist-dashboard/passport" },
       { href: "/artist-dashboard/calls/", label: "Open Calls", icon: Briefcase, activeMatch: "/artist-dashboard/calls" },
       { href: "/artist-dashboard/applications/connected/", label: "Applications", icon: FileText, activeMatch: "/artist-dashboard/applications" },
-      { href: "/artist-dashboard/portfolio/", label: "Portfolio", icon: FolderOpen, activeMatch: "/artist-dashboard/portfolio" },
+      { href: "/artist-dashboard/portfolio/connected/", label: "Portfolio", icon: FolderOpen, activeMatch: "/artist-dashboard/portfolio" },
       { href: "/artist-dashboard/funding/", label: "Funding", icon: DollarSign, activeMatch: "/artist-dashboard/funding" },
     ],
   },
@@ -83,7 +83,11 @@ export function ArtistSidebar() {
                     ? (locale === "es" ? "Convocatorias" : "Open Calls")
                     : item.href === "/artist-dashboard/applications/connected/"
                       ? (locale === "es" ? "Postulaciones" : "Applications")
-                      : t(artistNavLabelKeys[item.href] ?? item.label)
+                      : item.href === "/artist-dashboard/passport/connected/"
+                        ? (locale === "es" ? "Pasaporte Creativo" : "Creative Passport")
+                        : item.href === "/artist-dashboard/portfolio/connected/"
+                          ? (locale === "es" ? "Portafolio" : "Portfolio")
+                          : t(artistNavLabelKeys[item.href] ?? item.label)
 
                 return (
                   <li key={item.label}>
