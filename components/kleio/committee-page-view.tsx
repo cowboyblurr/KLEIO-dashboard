@@ -30,6 +30,14 @@ function recommendationLabel(value: string | undefined, es: boolean) {
   return labels[value] ?? value
 }
 
+function openInstitutionMessenger() {
+  window.dispatchEvent(new CustomEvent("kleio:open-institution-messenger"))
+  const launcher = document.querySelector<HTMLButtonElement>(
+    '[aria-label="Open institution messenger"], [aria-label="Abrir mensajería institucional"], [aria-label="Open demo internal threads"], [aria-label="Abrir hilos internos demo"]',
+  )
+  launcher?.click()
+}
+
 export function CommitteePageView() {
   const { t, locale } = useKleioLocale()
   const es = locale === "es"
@@ -62,7 +70,7 @@ export function CommitteePageView() {
 
         <section id="reviewer-progress" className="rounded-2xl border border-border bg-card shadow-sm"><div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-5 py-4"><h2 className="font-serif text-lg font-semibold text-foreground">{t("institution.workspace.committee.section.reviewerProgress")}</h2><Link href="/collaborator-dashboard/" className="text-xs font-medium text-primary hover:text-primary/80">{reviewerSeatCta}</Link></div><ul className="divide-y divide-border">{reviewerProgress.map((reviewer) => <li id={`reviewer-${reviewer.reviewerId}`} key={reviewer.reviewerId} className="flex items-center gap-3 px-5 py-4 transition-colors hover:bg-accent/30"><Link href="/collaborator-dashboard/"><InitialAvatar name={reviewer.name} className="size-9 text-xs transition-opacity hover:opacity-80" /></Link><div className="min-w-0 flex-1"><Link href="/collaborator-dashboard/" className="font-medium text-foreground transition-colors hover:text-primary">{reviewer.name}</Link><p className="text-xs text-muted-foreground">{roleLabel(reviewer.role, es)}</p><div className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted"><div className="h-full rounded-full bg-primary" style={{ width: `${Math.round(reviewer.rate * 100)}%` }} /></div></div><div className="text-right"><Link href={reviewerAnchorHref(reviewer.reviewerId)} className="text-sm font-medium text-foreground tabular-nums transition-colors hover:text-primary">{reviewer.completed}/{reviewer.assigned}</Link>{reviewer.reviewerId === "celeste-rowan" && <Link href="/collaborator-dashboard/" className="mt-1 block text-[0.65rem] font-medium text-primary hover:text-primary/80">{reviewerSeatCta}</Link>}</div></li>)}</ul></section></div>
 
-      <p className="mt-4 text-xs text-muted-foreground">{analytics.pendingReviewerActionsCount === 1 ? t("institution.workspace.committee.footer.assignmentsOne", { count: analytics.pendingReviewerActionsCount }) : t("institution.workspace.committee.footer.assignmentsOther", { count: analytics.pendingReviewerActionsCount })}{" "}<Link href="/messages/" className="font-medium text-primary hover:text-primary/80">{t("institution.workspace.committee.cta.messagePendingReviewers")}</Link></p>
+      <p className="mt-4 text-xs text-muted-foreground">{analytics.pendingReviewerActionsCount === 1 ? t("institution.workspace.committee.footer.assignmentsOne", { count: analytics.pendingReviewerActionsCount }) : t("institution.workspace.committee.footer.assignmentsOther", { count: analytics.pendingReviewerActionsCount })}{" "}<button type="button" onClick={openInstitutionMessenger} className="font-medium text-primary hover:text-primary/80">{t("institution.workspace.committee.cta.messagePendingReviewers")}</button></p>
     </DemoPageShell>
   )
 }
