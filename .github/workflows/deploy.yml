@@ -51,6 +51,8 @@ jobs:
         env:
           GITHUB_ACTIONS: "true"
           NEXT_PUBLIC_BASE_PATH: /KLEIO-dashboard
+          NEXT_PUBLIC_SUPABASE_URL: https://trekynurdgxgtaaqqtyq.supabase.co
+          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_XdYXvd0fQm3IJKxNrFXgUQ_M4RgDj1M
         run: pnpm run build
 
       - name: Verify static export output
@@ -61,8 +63,12 @@ jobs:
           touch out/.nojekyll
           echo "Top-level exported files:"
           find out -maxdepth 2 -type f | sort | head -120
+          echo "Checking signup exports..."
+          test -f out/signup/artist/index.html
+          test -f out/signup/institution/index.html
           echo "Checking core workspace exports..."
           test -f out/dashboard/index.html
+          test -f out/artist-dashboard/index.html
           test -f out/review-queue/index.html
           test -f out/review-room/index.html
           test -f out/shortlist/index.html
