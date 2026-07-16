@@ -1,5 +1,6 @@
 import {
   clearDemoSession,
+  clearPreviewAccountData,
   getDemoSession,
   setDemoSession,
   validateDemoCredentials,
@@ -38,12 +39,12 @@ async function loadProfile(userId: string) {
   return rows[0] ?? null
 }
 
-function toKleioSession(input: {
-  id: string
-  role: KleioPlatformRole
-  name: string
-  email: string
-}): KleioDemoSession {
+function assertSupportedRole(role: KleioPlatformRole): asserts role is "artist" | "institution" | "collaborator" {
+  if (role !== "artist" && role !== "institution" && role !== "collaborator") throw new Error("This account does not have a supported KLEIO role.")
+}
+
+function toKleioSession(input: { id: string; role: KleioPlatformRole; name: string; email: string; onboardingCompleted: boolean }): KleioDemoSession {
+  assertSupportedRole(input.role)
   return {
     isAuthenticated: true,
     role: input.role,
@@ -52,79 +53,63 @@ function toKleioSession(input: {
     createdAt: new Date().toISOString(),
     source: "supabase",
     userId: input.id,
+    profileExists: true,
+    onboardingCompleted: input.onboardingCompleted,
   }
 }
 
 export async function resolveKleioSession(): Promise<KleioDemoSession | null> {
-  const config = getSupabaseConfig()
-  if (!config.configured) return getDemoSession()
-
+  if (!getSupabaseConfig().configured) return getDemoSession()
   const authSession = await getValidSupabaseSession()
-  if (!authSession) {
-    const localSession = getDemoSession()
-    if (localSession?.source === "supabase") clearDemoSession()
-    return localSession?.source === "preview" ? localSession : null
-  }
+  if (!authSession) { clearDemoSession(); return null }
 
   const profile = await loadProfile(authSession.user.id)
-  const metadata = authSession.user.user_metadata ?? {}
-  const role = profile?.role ?? metadata.role
-  if (role !== "artist" && role !== "institution" && role !== "collaborator") {
-    await signOutSupabase()
+  if (!profile) {
     clearDemoSession()
-    throw new Error("This account does not have a valid KLEIO role.")
+    throw new Error("Your authenticated account is missing its KLEIO profile record. Return to signup or contact support.")
   }
 
   const session = toKleioSession({
     id: authSession.user.id,
-    role,
-    name: profile?.display_name ?? String(metadata.display_name ?? authSession.user.email ?? "KLEIO user"),
-    email: profile?.email ?? authSession.user.email ?? "",
+    role: profile.role,
+    name: profile.display_name?.trim() || authSession.user.email || "KLEIO user",
+    email: profile.email ?? authSession.user.email ?? "",
+    onboardingCompleted: Boolean(profile.onboarding_completed),
   })
   setDemoSession(session)
   return session
 }
 
 export async function signInKleio(email: string, password: string): Promise<KleioAuthResult> {
-  const config = getSupabaseConfig()
-
-  if (!config.configured) {
+  if (!getSupabaseConfig().configured) {
     const previewSession = validateDemoCredentials(email, password)
     if (!previewSession) throw new Error("Those preview credentials did not match.")
-    const session = { ...previewSession, source: "preview" as const }
-    setDemoSession(session)
-    return { session, source: "preview" }
+    return { session: previewSession, source: "preview" }
   }
 
+  clearDemoSession()
+  clearPreviewAccountData()
   const authSession = await signInWithSupabase(email, password)
   const profile = await loadProfile(authSession.user.id)
-  const metadata = authSession.user.user_metadata ?? {}
-  const role = profile?.role ?? metadata.role
-
-  if (role !== "artist" && role !== "institution" && role !== "collaborator") {
+  if (!profile) {
     await signOutSupabase()
-    throw new Error("Your KLEIO account is missing a valid role. Complete account setup in Supabase before continuing.")
+    throw new Error("This account was authenticated, but its KLEIO profile record is missing.")
   }
 
   const session = toKleioSession({
     id: authSession.user.id,
-    role,
-    name: profile?.display_name ?? String(metadata.display_name ?? authSession.user.email ?? "KLEIO user"),
-    email: profile?.email ?? authSession.user.email ?? email,
+    role: profile.role,
+    name: profile.display_name?.trim() || authSession.user.email || "KLEIO user",
+    email: profile.email ?? authSession.user.email ?? email,
+    onboardingCompleted: Boolean(profile.onboarding_completed),
   })
   setDemoSession(session)
   return { session, source: "supabase" }
 }
 
-export async function signUpKleio(input: {
-  email: string
-  password: string
-  role: Exclude<KleioPlatformRole, "collaborator">
-  displayName: string
-}): Promise<KleioAuthResult> {
-  const config = getSupabaseConfig()
-
-  if (!config.configured) {
+export async function signUpKleio(input: { email: string; password: string; role: Exclude<KleioPlatformRole, "collaborator">; displayName: string }): Promise<KleioAuthResult> {
+  if (!getSupabaseConfig().configured) {
+    clearPreviewAccountData()
     const session: KleioDemoSession = {
       isAuthenticated: true,
       role: input.role,
@@ -133,38 +118,58 @@ export async function signUpKleio(input: {
       createdAt: new Date().toISOString(),
       source: "preview",
       userId: `preview-${input.role}-${Date.now()}`,
+      profileExists: true,
+      onboardingCompleted: false,
     }
     setDemoSession(session)
     return { session, source: "preview" }
   }
 
+  clearDemoSession()
+  clearPreviewAccountData()
   const result = await signUpWithSupabase(input)
   if (!result.user) throw new Error("Supabase did not create an account.")
+  if (!result.session) return { session: null, source: "supabase", needsEmailConfirmation: result.needsEmailConfirmation }
 
-  if (!result.session) {
-    return {
-      session: null,
-      source: "supabase",
-      needsEmailConfirmation: result.needsEmailConfirmation,
-    }
+  const profile = await loadProfile(result.user.id)
+  if (!profile) {
+    await signOutSupabase()
+    throw new Error("The account was created, but KLEIO could not create its profile record.")
+  }
+  if (profile.role !== input.role) {
+    await signOutSupabase()
+    throw new Error("The created account role does not match the selected signup flow.")
   }
 
   const session = toKleioSession({
     id: result.user.id,
-    role: input.role,
-    name: input.displayName.trim(),
-    email: input.email.trim().toLowerCase(),
+    role: profile.role,
+    name: profile.display_name?.trim() || input.displayName.trim(),
+    email: profile.email ?? input.email.trim().toLowerCase(),
+    onboardingCompleted: Boolean(profile.onboarding_completed),
   })
   setDemoSession(session)
   return { session, source: "supabase" }
 }
 
-export async function signOutKleio() {
-  const session = getDemoSession()
-  if (session?.source === "supabase") await signOutSupabase()
-  clearDemoSession()
+export async function completeKleioOnboarding() {
+  const session = await resolveKleioSession()
+  if (!session?.userId || session.source !== "supabase") {
+    if (session) setDemoSession({ ...session, onboardingCompleted: true })
+    return
+  }
+  await supabaseRest(`profiles?id=eq.${encodeURIComponent(session.userId)}`, {
+    method: "PATCH",
+    prefer: "return=minimal",
+    body: JSON.stringify({ onboarding_completed: true }),
+  })
+  setDemoSession({ ...session, onboardingCompleted: true })
 }
 
-export function getKleioAuthMode() {
-  return getSupabaseConfig().configured ? "supabase" as const : "preview" as const
+export async function signOutKleio() {
+  if (getSupabaseConfig().configured) await signOutSupabase()
+  clearDemoSession()
+  clearPreviewAccountData()
 }
+
+export function getKleioAuthMode() { return getSupabaseConfig().configured ? "supabase" as const : "preview" as const }
