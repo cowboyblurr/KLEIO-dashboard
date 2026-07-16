@@ -37,7 +37,6 @@ type RealtimeState = "connecting" | "connected" | "reconnecting" | "disconnected
 type MessageDelivery = "sending" | "failed" | "confirmed"
 type DisplayMessage = InstitutionMessage & { delivery?: MessageDelivery }
 type MessengerState = "loading" | "ready" | "no-membership" | "unauthorized" | "error"
-
 type OpenMessengerDetail = { userId?: string }
 
 function formatTimestamp(value: string | null, locale: string) {
@@ -104,9 +103,9 @@ export function InstitutionMessengerLive({ account }: { account: KleioAccount })
     [conversations],
   )
 
-  const refreshConversations = useCallback(async (institutionId?: string) => {
+  const refreshConversations = useCallback(async (institutionId?: string): Promise<InstitutionConversationSummary[] | null> => {
     const resolvedInstitutionId = institutionId ?? context?.institution_id
-    if (!resolvedInstitutionId) return []
+    if (!resolvedInstitutionId) return null
     try {
       const rows = await loadInstitutionConversations(resolvedInstitutionId)
       if (!mountedRef.current) return rows
@@ -120,8 +119,11 @@ export function InstitutionMessengerLive({ account }: { account: KleioAccount })
     } catch (error) {
       const message = errorMessage(error, es ? "No se pudieron cargar las conversaciones." : "Unable to load conversations.")
       if (/access|permission|denied|membership/i.test(message)) setState("unauthorized")
-      else setLoadError(message)
-      return []
+      else {
+        setLoadError(message)
+        setState("error")
+      }
+      return null
     }
   }, [context?.institution_id, es])
 
@@ -139,8 +141,8 @@ export function InstitutionMessengerLive({ account }: { account: KleioAccount })
         return
       }
       setContext(firstContext)
-      await refreshConversations(firstContext.institution_id)
-      if (mountedRef.current) setState("ready")
+      const rows = await refreshConversations(firstContext.institution_id)
+      if (mountedRef.current && rows !== null) setState("ready")
     } catch (error) {
       if (!mountedRef.current) return
       setLoadError(errorMessage(error, es ? "No se pudo abrir la mensajería institucional." : "Unable to open institution messaging."))
@@ -165,6 +167,7 @@ export function InstitutionMessengerLive({ account }: { account: KleioAccount })
     setComposeOpen(false)
     setDraft("")
     setSendError(null)
+    setLoadError(null)
     setLoadingMessages(true)
     try {
       const rows = await loadInstitutionMessages(conversationId)
@@ -220,9 +223,11 @@ export function InstitutionMessengerLive({ account }: { account: KleioAccount })
     setMembersError(null)
     try {
       const conversationId = await getOrCreateDirectInstitutionConversation(context.institution_id, userId)
-      await refreshConversations(context.institution_id)
+      const rows = await refreshConversations(context.institution_id)
+      if (rows === null) return
       setOpen(true)
       setComposeOpen(false)
+      selectedConversationRef.current = conversationId
       setSelectedConversationId(conversationId)
     } catch (error) {
       setMembersError(errorMessage(error, es ? "No se pudo abrir la conversación." : "Unable to open the conversation."))
@@ -270,7 +275,10 @@ export function InstitutionMessengerLive({ account }: { account: KleioAccount })
           if (incoming.conversation_id === activeConversationId) {
             setMessages((current) => mergeMessage(current, { ...incoming, delivery: "confirmed" }))
             if (incoming.sender_user_id !== account.user.id) {
-              void markInstitutionConversationRead(incoming.conversation_id).catch(() => undefined)
+              void markInstitutionConversationRead(incoming.conversation_id)
+                .then(() => refreshConversations())
+                .catch(() => refreshConversations())
+              return
             }
           }
           void refreshConversations()
@@ -394,7 +402,7 @@ export function InstitutionMessengerLive({ account }: { account: KleioAccount })
                     {loadError && <p className="mb-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-[0.68rem] font-medium text-red-700">{loadError}</p>}
                     {sendError && <p className="mb-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-[0.68rem] font-medium text-red-700">{sendError}</p>}
                     <p className="mb-2 text-[0.62rem] leading-relaxed text-[#7F7890]">{es ? "Mensajes persistentes, visibles solo para participantes autorizados de esta institución." : "Persistent messages visible only to authorized participants in this institution."}</p>
-                    <div className="flex items-end gap-2"><textarea value={draft} onChange={(event) => setDraft(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); void submitMessage() } }} rows={2} maxLength={4000} placeholder={es ? "Escribe un mensaje interno…" : "Write an internal message…"} aria-label={es ? "Mensaje interno" : "Internal message"} className="min-h-16 flex-1 resize-none rounded-2xl border border-[#E7E1F7] bg-[#FDFBFF] px-3 py-2 text-xs text-[#292631] outline-none transition-colors placeholder:text-[#9B94AA] focus:border-[#A997E8] focus:ring-4 focus:ring-[#A997E8]/15" /><button type="button" onClick={() => void submitMessage()} disabled={!draft.trim() || sending || realtimeState === "disconnected"} className="grid size-10 place-items-center rounded-2xl bg-[#5B4B8A] text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-45" aria-label={es ? "Enviar mensaje" : "Send message"}>{sending ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}</button></div>
+                    <div className="flex items-end gap-2"><textarea value={draft} onChange={(event) => setDraft(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); void submitMessage() } }} rows={2} maxLength={4000} placeholder={es ? "Escribe un mensaje interno…" : "Write an internal message…"} aria-label={es ? "Mensaje interno" : "Internal message"} className="min-h-16 flex-1 resize-none rounded-2xl border border-[#E7E1F7] bg-[#FDFBFF] px-3 py-2 text-xs text-[#292631] outline-none transition-colors placeholder:text-[#9B94AA] focus:border-[#A997E8] focus:ring-4 focus:ring-[#A997E8]/15" /><button type="button" onClick={() => void submitMessage()} disabled={!draft.trim() || sending} className="grid size-10 place-items-center rounded-2xl bg-[#5B4B8A] text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-45" aria-label={es ? "Enviar mensaje" : "Send message"}>{sending ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}</button></div>
                   </div>
                 </>}
               </div>
