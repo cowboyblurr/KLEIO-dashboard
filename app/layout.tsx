@@ -18,9 +18,9 @@ const playfair = Playfair_Display({
 
 export const metadata: Metadata = {
   title: 'KLEIO Arthouse',
+  applicationName: 'KLEIO Arthouse',
   description:
     'A shared workspace for artists and institutions to manage submissions, reviews, opportunities, and cultural records with clarity.',
-  generator: 'v0.app',
   icons: {
     icon: [
       {
@@ -59,7 +59,15 @@ export default function RootLayout({
       className={`light ${geistSans.variable} ${geistMono.variable} ${playfair.variable} bg-background`}
     >
       <body className="font-sans antialiased">
-        <KleioLocaleProvider>{children}</KleioLocaleProvider>
+        <KleioLocaleProvider>
+          <a
+            href="#main-content"
+            className="sr-only fixed left-4 top-4 z-[100] rounded-full bg-[#292631] px-4 py-2 text-sm font-semibold text-white shadow-lg focus:not-sr-only"
+          >
+            Skip to content
+          </a>
+          {children}
+        </KleioLocaleProvider>
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
     </html>

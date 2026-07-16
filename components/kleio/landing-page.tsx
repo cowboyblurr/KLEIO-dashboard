@@ -71,15 +71,21 @@ export function LandingPage() {
     { label: isSpanish ? "Notas de campo" : "Field Notes", href: "/journal/" },
   ] as const
 
+  const footerLinks = [
+    { href: "/privacy/", label: isSpanish ? "Privacidad" : "Privacy" },
+    { href: "/terms/", label: isSpanish ? "Términos de vista previa" : "Preview terms" },
+    { href: "/contact/", label: isSpanish ? "Contacto" : "Contact" },
+  ] as const
+
   return (
-    <main className="relative min-h-dvh w-full overflow-x-hidden bg-white text-[#292631]">
+    <main id="main-content" tabIndex={-1} className="relative min-h-dvh w-full overflow-x-hidden bg-white text-[#292631] outline-none">
       <header className="relative z-30 h-[96px] w-full">
         <div className="relative mx-auto h-full w-full max-w-[1280px] px-8 max-md:px-5">
-          <nav className="absolute left-8 top-1/2 flex -translate-y-1/2 items-center gap-8 max-md:left-5 max-md:gap-4">
-            {navLinks.map(({ label, href }) => <Link key={href} href={href} className="text-[0.78rem] font-medium tracking-wide hover:opacity-70" style={navLinkStyle}>{label}</Link>)}
+          <nav aria-label={isSpanish ? "Navegación pública" : "Public navigation"} className="absolute left-8 top-1/2 flex -translate-y-1/2 items-center gap-8 max-md:left-5 max-md:gap-4">
+            {navLinks.map(({ label, href }) => <Link key={href} href={href} className="text-[0.78rem] font-medium tracking-wide hover:opacity-70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A997E8] focus-visible:ring-offset-4" style={navLinkStyle}>{label}</Link>)}
           </nav>
           <div className="absolute left-1/2 top-[62px] -translate-x-1/2 -translate-y-1/2"><KleioWordmarkLink href="/" imageClassName="h-[clamp(2rem,2.75vw,3rem)] w-auto" imageStyle={{ filter: "brightness(0) saturate(100%) invert(16%) sepia(5%) saturate(800%) hue-rotate(220deg)" }} priority /></div>
-          <nav className="absolute right-8 top-1/2 flex -translate-y-1/2 items-center gap-7 max-md:right-5 max-md:gap-4"><Link href="/demo/" className="text-[0.78rem] font-medium tracking-wide hover:opacity-70 max-md:hidden" style={navLinkStyle}>{isSpanish ? "Demo guiado" : "Guided Demo"}</Link><KleioLocaleToggle /></nav>
+          <nav aria-label={isSpanish ? "Herramientas públicas" : "Public tools"} className="absolute right-8 top-1/2 flex -translate-y-1/2 items-center gap-7 max-md:right-5 max-md:gap-4"><Link href="/demo/" className="text-[0.78rem] font-medium tracking-wide hover:opacity-70 max-md:hidden" style={navLinkStyle}>{isSpanish ? "Demo guiado" : "Guided Demo"}</Link><KleioLocaleToggle /></nav>
         </div>
       </header>
 
@@ -113,11 +119,11 @@ export function LandingPage() {
               <h2 className="mt-1 font-serif text-[0.98rem] font-semibold text-[#292631]">{isSpanish ? "Prueba el flujo institucional" : "Try the institution flow"}</h2>
               <p className="mt-1 text-[0.68rem] leading-relaxed text-[#7F7890]">{isSpanish ? "Usa datos de muestra y guía para ver el recorrido completo de revisión." : "Use sample records and guidance to see the full review story."}</p>
               <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                <button type="button" onClick={startInstitutionDemo} className="inline-flex h-9 items-center justify-center gap-1 rounded-full bg-[#5B4B8A] px-4 text-[0.7rem] font-semibold text-white shadow-[0_10px_24px_rgba(82,64,130,0.16)] transition-opacity hover:opacity-90">
+                <button type="button" onClick={startInstitutionDemo} className="inline-flex h-9 items-center justify-center gap-1 rounded-full bg-[#5B4B8A] px-4 text-[0.7rem] font-semibold text-white shadow-[0_10px_24px_rgba(82,64,130,0.16)] transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A997E8] focus-visible:ring-offset-2">
                   {isSpanish ? "Empezar demo" : "Start demo flow"}
                   <ChevronRight className="size-3" />
                 </button>
-                <button type="button" onClick={startGuidedDemo} className="inline-flex h-9 items-center justify-center gap-1 rounded-full border border-[#D8D0F2] bg-white px-4 text-[0.7rem] font-semibold text-[#5B4B8A] transition-colors hover:bg-white/75">
+                <button type="button" onClick={startGuidedDemo} className="inline-flex h-9 items-center justify-center gap-1 rounded-full border border-[#D8D0F2] bg-white px-4 text-[0.7rem] font-semibold text-[#5B4B8A] transition-colors hover:bg-white/75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A997E8] focus-visible:ring-offset-2">
                   {t("demoGuide.startGuidedDemo")}
                   <ChevronRight className="size-3" />
                 </button>
@@ -129,7 +135,22 @@ export function LandingPage() {
         <div className="landing-quote flex flex-col items-center justify-center text-center font-serif text-[10px] italic leading-tight" style={{ color: mutedColor }}>&ldquo;{t("landing.quote.line1")}<br />{t("landing.quote.line2")}&rdquo;<div className="mx-auto mt-1 h-[2px] w-9 rounded-full" style={{ backgroundColor: lavenderAccent }} /></div>
       </section>
 
-      <footer className="pointer-events-none relative z-30 px-5 pb-4 pt-2 text-center text-[8px] tracking-[0.15em]" style={{ color: "#B2A9C9" }}>© 2026 KLEIO ARTHOUSE</footer>
+      <footer className="relative z-30 border-t border-[#E7E1F7] px-5 pb-5 pt-4">
+        <div className="mx-auto flex max-w-[1040px] flex-col items-center justify-between gap-3 sm:flex-row">
+          <p className="text-[8px] tracking-[0.15em] text-[#B2A9C9]">© 2026 KLEIO ARTHOUSE</p>
+          <nav aria-label={isSpanish ? "Información y políticas" : "Information and policies"}>
+            <ul className="flex flex-wrap items-center justify-center gap-4">
+              {footerLinks.map((item) => (
+                <li key={item.href}>
+                  <Link href={item.href} className="text-[0.65rem] font-medium text-[#7F7890] transition-colors hover:text-[#5B4B8A] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A997E8] focus-visible:ring-offset-4">
+                    {item.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        </div>
+      </footer>
       <KleioDemoGuide variant="landing" />
     </main>
   )

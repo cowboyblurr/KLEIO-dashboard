@@ -56,18 +56,18 @@ function openPageGuide() {
   persistDemoGuideState({ isOpen: true, isMinimized: false, dismissed: false, activeScenarioId: null, activeStepId: null, completedScenarioId: null })
 }
 
-export function ArtistSidebar() {
+export function ArtistSidebar({ className }: { className?: string }) {
   const pathname = usePathname()
   const artist = getArtistById(DEMO_ARTIST_ID)
   const { t, locale } = useKleioLocale()
 
   return (
-    <aside className="flex h-full w-[220px] shrink-0 flex-col border-r border-[#E7E1F7] bg-white">
-      <div className="flex items-center justify-between px-6 pt-6 pb-5">
+    <aside className={cn("flex h-full w-[220px] shrink-0 flex-col border-r border-[#E7E1F7] bg-white", className)}>
+      <div className="flex items-center justify-between px-6 pb-5 pt-6">
         <KleioWordmarkLink href="/" className="rounded-md bg-white px-2.5 py-1.5 shadow-sm ring-1 ring-border" />
       </div>
 
-      <nav className="flex-1 overflow-y-auto px-3 pb-4">
+      <nav className="flex-1 overflow-y-auto px-3 pb-4" aria-label={locale === "es" ? "Navegación del artista" : "Artist workspace navigation"}>
         {navSections.map((section) => (
           <div key={section.heading} className="mb-5">
             <p className="px-3 pb-2 text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground/80">
@@ -86,11 +86,11 @@ export function ArtistSidebar() {
                       onClick={openPageGuide}
                       aria-current={active ? "page" : undefined}
                       className={cn(
-                        "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                        "group flex min-h-10 items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
                         active ? "bg-sidebar-accent text-sidebar-accent-foreground" : "text-foreground/70 hover:bg-accent/60 hover:text-foreground",
                       )}
                     >
-                      <Icon className={cn("size-4 shrink-0", active ? "text-primary" : "text-muted-foreground")} />
+                      <Icon className={cn("size-4 shrink-0", active ? "text-primary" : "text-muted-foreground")} aria-hidden="true" />
                       <span className="flex-1">{label}</span>
                       {item.comingSoon && <span className="rounded-full bg-[#F7F4FF] px-1.5 py-0.5 text-[0.55rem] font-semibold uppercase tracking-wide text-[#7F7890]">{locale === "es" ? "Pronto" : "Soon"}</span>}
                     </Link>
@@ -109,13 +109,17 @@ export function ArtistSidebar() {
           <div className="mt-3 h-0.5 w-10 rounded-full bg-[#A997E8]" />
         </div>
         {artist && (
-          <div className="mt-3 flex items-center gap-3 rounded-xl border border-[#E7E1F7] bg-white p-3">
+          <Link
+            href="/artist-dashboard/passport/"
+            className="mt-3 flex items-center gap-3 rounded-xl border border-[#E7E1F7] bg-white p-3 transition-colors hover:border-[#A997E8] hover:bg-[#F7F4FF]/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A997E8]"
+            aria-label={locale === "es" ? `Abrir Pasaporte Creativo de ${artist.name}` : `Open ${artist.name}'s Creative Passport`}
+          >
             <InitialAvatar name={artist.name} className="size-9 text-xs" />
             <div className="min-w-0">
               <p className="truncate text-sm font-medium text-foreground">{artist.name}</p>
               <p className="truncate text-xs text-muted-foreground">{artist.discipline}</p>
             </div>
-          </div>
+          </Link>
         )}
       </div>
     </aside>

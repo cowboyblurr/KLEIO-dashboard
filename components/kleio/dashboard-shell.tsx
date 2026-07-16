@@ -11,6 +11,7 @@ import { DemoClickFeedbackLayer } from "@/components/kleio/demo-click-feedback-l
 import { DemoGuideHighlightLayer } from "@/components/kleio/demo-guide-highlight-layer"
 import { DemoTrustLink } from "@/components/kleio/demo-trust-link"
 import { InternalMessengerAccent } from "@/components/kleio/internal-messenger-accent"
+import { WorkspaceMobileNav } from "@/components/kleio/workspace-mobile-nav"
 import { useKleioMode } from "@/components/kleio/use-kleio-mode"
 
 export function DashboardShell({ children }: { children: ReactNode }) {
@@ -23,11 +24,16 @@ export function DashboardShell({ children }: { children: ReactNode }) {
       {isDemo && <DemoClickFeedbackLayer />}
       {isDemo && <DemoGuideHighlightLayer />}
       {isDemo && <DemoTrustLink className="fixed bottom-4 left-4 z-40 max-lg:hidden" />}
-      <div className="flex h-screen overflow-x-auto overflow-y-hidden bg-background text-foreground">
-        <Sidebar />
-        <div className="flex min-w-[920px] flex-1 flex-col overflow-hidden">
-          <TopBar />
-          <div className="min-h-0 flex-1 overflow-x-auto overflow-y-hidden">{children}</div>
+      <div className="flex h-dvh overflow-hidden bg-background text-foreground">
+        <Sidebar className="max-lg:hidden" />
+        <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+          <WorkspaceMobileNav variant="institution" />
+          <div className="max-lg:hidden">
+            <TopBar />
+          </div>
+          <div id="main-content" tabIndex={-1} className="min-h-0 min-w-0 flex-1 overflow-auto outline-none">
+            {children}
+          </div>
         </div>
         <InternalMessengerAccent />
       </div>

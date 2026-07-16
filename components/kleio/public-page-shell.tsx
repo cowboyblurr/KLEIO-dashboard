@@ -32,19 +32,27 @@ export function PublicPageShell({
     return t(key)
   }
 
+  const footerLinks = [
+    { href: "/about/", label: isSpanish ? "Acerca de" : "About" },
+    { href: "/privacy/", label: isSpanish ? "Privacidad" : "Privacy" },
+    { href: "/terms/", label: isSpanish ? "Términos de vista previa" : "Preview terms" },
+    { href: "/contact/", label: isSpanish ? "Contacto" : "Contact" },
+  ]
+
   return (
     <div className="min-h-screen bg-white text-[#292631]">
       <header className="border-b border-[#E7E1F7]">
         <div className="relative mx-auto flex h-[88px] max-w-[1120px] items-center px-6 max-md:px-5">
-          <nav className="flex items-center gap-7 max-md:gap-4">
+          <nav className="flex items-center gap-7 max-md:gap-4" aria-label={isSpanish ? "Navegación pública" : "Public navigation"}>
             {navItems.map((item) => {
               const isActive = active && item.href === `/${active}/`
               return (
                 <Link
                   key={item.key}
                   href={item.href}
+                  aria-current={isActive ? "page" : undefined}
                   className={cn(
-                    "text-[0.78rem] font-medium tracking-wide transition-opacity hover:opacity-70",
+                    "text-[0.78rem] font-medium tracking-wide transition-opacity hover:opacity-70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A997E8] focus-visible:ring-offset-4",
                     isActive ? "text-[#5B4B8A]" : "text-[#6F6882]",
                   )}
                 >
@@ -67,10 +75,25 @@ export function PublicPageShell({
         </div>
       </header>
 
-      <main className="mx-auto max-w-[1120px] px-6 py-16 max-md:px-5 max-md:py-12">{children}</main>
+      <main id="main-content" tabIndex={-1} className="mx-auto max-w-[1120px] px-6 py-16 outline-none max-md:px-5 max-md:py-12">
+        {children}
+      </main>
 
       <footer className="border-t border-[#E7E1F7] py-8">
-        <p className="text-center text-[0.7rem] tracking-[0.15em] text-[#B2A9C9]">{t("common.copyright")}</p>
+        <div className="mx-auto flex max-w-[1120px] flex-col items-center justify-between gap-5 px-6 sm:flex-row max-md:px-5">
+          <p className="text-[0.7rem] tracking-[0.15em] text-[#B2A9C9]">{t("common.copyright")}</p>
+          <nav aria-label={isSpanish ? "Información y políticas" : "Information and policies"}>
+            <ul className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
+              {footerLinks.map((item) => (
+                <li key={item.href}>
+                  <Link href={item.href} className="text-xs font-medium text-[#6F6882] transition-colors hover:text-[#5B4B8A] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A997E8] focus-visible:ring-offset-4">
+                    {item.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        </div>
       </footer>
     </div>
   )
