@@ -51,6 +51,8 @@ jobs:
         env:
           GITHUB_ACTIONS: "true"
           NEXT_PUBLIC_BASE_PATH: /KLEIO-dashboard
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
         run: pnpm run build
 
       - name: Verify static export output
@@ -70,6 +72,12 @@ jobs:
           test -f out/messages/index.html
           test -f out/activity-log/index.html
           test -f out/reports/index.html
+          echo "Checking connected workflow exports..."
+          test -f out/programs/connected/index.html
+          test -f out/programs/new/index.html
+          test -f out/applications/connected/index.html
+          test -f out/artist-dashboard/calls/index.html
+          test -f out/artist-dashboard/applications/connected/index.html
           echo "Checking profile and entity exports..."
           test -f out/demo/index.html
           test -f out/artists/index.html
