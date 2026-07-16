@@ -1,0 +1,61 @@
+name: Validate KLEIO Connected Workflow
+
+on:
+  pull_request:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+          run_install: false
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Build static preview
+        env:
+          GITHUB_ACTIONS: "true"
+          NEXT_PUBLIC_BASE_PATH: /KLEIO-dashboard
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+        run: pnpm run build
+
+      - name: Verify connected route exports
+        run: |
+          test -f out/programs/connected/index.html
+          test -f out/programs/new/index.html
+          test -f out/applications/connected/index.html
+          test -f out/settings/connected/index.html
+          test -f out/artist-dashboard/calls/index.html
+          test -f out/artist-dashboard/applications/connected/index.html
+          test -f out/artist-dashboard/passport/connected/index.html
+          test -f out/artist-dashboard/portfolio/connected/index.html
+          test -f out/demo/reset-connected/index.html
+
+      - name: Check for committed secrets
+        run: |
+          if git grep -n -E 'service_role|SUPABASE_SERVICE_ROLE|eyJ[a-zA-Z0-9_-]{80,}' -- \
+            ':!.env.example' \
+            ':!.github/workflows/validate-connected-workflow.yml'; then
+            echo "Potential secret detected. Review the matched lines."
+            exit 1
+          fi

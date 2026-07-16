@@ -5,65 +5,29 @@ export type KleioDemoSession = {
   email: string
   createdAt: string
   collaboratorId?: string
+  source?: "preview" | "supabase"
+  userId?: string
+  profileExists?: boolean
+  onboardingCompleted?: boolean
 }
 
 const STORAGE_KEY = "kleio-demo-session"
-
-/**
- * KLEIO route architecture (demo):
- *
- * Public:
- *   `/` — marketing homepage / landing page
- *   `/landing/` — legacy duplicate of `/` for old links
- *   `/signup/*` — signup flows
- *
- * Private workspaces (client-side demo auth):
- *   `/dashboard/` — institution overview
- *   `/artist-dashboard/` — artist overview
- *   `/collaborator-dashboard/` — collaborator review seat
- *   `/programs/`, `/review-queue/`, etc. — institution workspace pages
- */
+const PREVIEW_DATA_KEY = "kleio-connected-preview-v1"
 
 const DEMO_CREDENTIALS = {
-  institution: {
-    email: "institution@kleio.demo",
-    password: "kleio2026",
-    role: "institution" as const,
-    name: "KLEIO Arthouse",
-  },
-  artist: {
-    email: "artist@kleio.demo",
-    password: "kleio2026",
-    role: "artist" as const,
-    name: "Amina El Badri",
-  },
-  collaborator: {
-    email: "reviewer@kleio.demo",
-    password: "kleio2026",
-    role: "collaborator" as const,
-    name: "Celeste Rowan",
-    collaboratorId: "celeste-rowan",
-  },
+  institution: { email: "institution@kleio.demo", password: "kleio2026", role: "institution" as const, name: "KLEIO Arthouse" },
+  artist: { email: "artist@kleio.demo", password: "kleio2026", role: "artist" as const, name: "Amina El Badri" },
+  collaborator: { email: "reviewer@kleio.demo", password: "kleio2026", role: "collaborator" as const, name: "Celeste Rowan", collaboratorId: "celeste-rowan" },
 }
 
-function isBrowser() {
-  return typeof window !== "undefined"
-}
+function isBrowser() { return typeof window !== "undefined" }
 
 function parseSession(raw: string | null): KleioDemoSession | null {
   if (!raw) return null
   try {
     const parsed = JSON.parse(raw) as KleioDemoSession
-    if (
-      parsed?.isAuthenticated &&
-      (parsed.role === "artist" || parsed.role === "institution" || parsed.role === "collaborator")
-    ) {
-      return parsed
-    }
-    return null
-  } catch {
-    return null
-  }
+    return parsed?.isAuthenticated && (parsed.role === "artist" || parsed.role === "institution" || parsed.role === "collaborator") ? parsed : null
+  } catch { return null }
 }
 
 export function getDemoSession(): KleioDemoSession | null {
@@ -72,26 +36,32 @@ export function getDemoSession(): KleioDemoSession | null {
 }
 
 export function setDemoSession(session: KleioDemoSession): void {
-  if (!isBrowser()) return
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(session))
+  if (isBrowser()) window.localStorage.setItem(STORAGE_KEY, JSON.stringify(session))
 }
 
 export function clearDemoSession(): void {
-  if (!isBrowser()) return
-  window.localStorage.removeItem(STORAGE_KEY)
+  if (isBrowser()) window.localStorage.removeItem(STORAGE_KEY)
+}
+
+export function clearPreviewAccountData(): void {
+  if (isBrowser()) window.localStorage.removeItem(PREVIEW_DATA_KEY)
 }
 
 export function loginDemoUser(role: "artist" | "institution" | "collaborator"): KleioDemoSession {
   const creds = DEMO_CREDENTIALS[role]
+  clearDemoSession()
+  clearPreviewAccountData()
   const session: KleioDemoSession = {
     isAuthenticated: true,
     role: creds.role,
     name: creds.name,
     email: creds.email,
     createdAt: new Date().toISOString(),
-    ...(role === "collaborator" && "collaboratorId" in creds
-      ? { collaboratorId: creds.collaboratorId }
-      : {}),
+    source: "preview",
+    userId: `preview-${role}`,
+    profileExists: true,
+    onboardingCompleted: true,
+    ...(role === "collaborator" && "collaboratorId" in creds ? { collaboratorId: creds.collaboratorId } : {}),
   }
   setDemoSession(session)
   return session
@@ -100,69 +70,20 @@ export function loginDemoUser(role: "artist" | "institution" | "collaborator"): 
 export function validateDemoCredentials(email: string, password: string): KleioDemoSession | null {
   const normalizedEmail = email.trim().toLowerCase()
   const normalizedPassword = password.trim()
-
-  if (
-    normalizedEmail === DEMO_CREDENTIALS.institution.email &&
-    normalizedPassword === DEMO_CREDENTIALS.institution.password
-  ) {
-    return loginDemoUser("institution")
-  }
-
-  if (
-    normalizedEmail === DEMO_CREDENTIALS.artist.email &&
-    normalizedPassword === DEMO_CREDENTIALS.artist.password
-  ) {
-    return loginDemoUser("artist")
-  }
-
-  if (
-    normalizedEmail === DEMO_CREDENTIALS.collaborator.email &&
-    normalizedPassword === DEMO_CREDENTIALS.collaborator.password
-  ) {
-    return loginDemoUser("collaborator")
-  }
-
+  if (normalizedEmail === DEMO_CREDENTIALS.institution.email && normalizedPassword === DEMO_CREDENTIALS.institution.password) return loginDemoUser("institution")
+  if (normalizedEmail === DEMO_CREDENTIALS.artist.email && normalizedPassword === DEMO_CREDENTIALS.artist.password) return loginDemoUser("artist")
+  if (normalizedEmail === DEMO_CREDENTIALS.collaborator.email && normalizedPassword === DEMO_CREDENTIALS.collaborator.password) return loginDemoUser("collaborator")
   return null
 }
 
 export function getDashboardForRole(role: "artist" | "institution" | "collaborator"): string {
-  if (role === "artist") return "/artist-dashboard/"
+  if (role === "artist") return "/artist-dashboard/connected/"
   if (role === "collaborator") return "/collaborator-dashboard/"
-  return "/dashboard/"
+  return "/dashboard/connected/"
 }
 
-/** Public marketing homepage (`/`) — not a workspace route. */
-export function getPublicHomeHref(): string {
-  return "/"
-}
-
-/** KLEIO wordmark: public homepage when logged out, workspace overview when signed in. */
-export function getHomeHrefForSession(): string {
-  const session = getDemoSession()
-
-  if (!session) return "/"
-  if (session.role === "institution") return "/dashboard/"
-  if (session.role === "artist") return "/artist-dashboard/"
-  if (session.role === "collaborator") return "/collaborator-dashboard/"
-
-  return "/"
-}
-
-/** Explore Arthouse: institution workspace entry (AuthGate when logged out). */
-export function getExploreArthouseHref(): string {
-  const session = getDemoSession()
-
-  if (!session) return "/dashboard/"
-  if (session.role === "institution") return "/dashboard/"
-  if (session.role === "artist") return "/artist-dashboard/"
-  if (session.role === "collaborator") return "/collaborator-dashboard/"
-
-  return "/dashboard/"
-}
-
-export function artistProfileHref(artistId: string): string {
-  return `/artists/${artistId}/`
-}
-
-export const DEMO_LOGIN_HINT =
-  "Demo access: institution@kleio.demo, artist@kleio.demo, or reviewer@kleio.demo · password kleio2026"
+export function getPublicHomeHref(): string { return "/" }
+export function getHomeHrefForSession(): string { const session = getDemoSession(); return session ? getDashboardForRole(session.role) : "/" }
+export function getExploreArthouseHref(): string { const session = getDemoSession(); return session ? getDashboardForRole(session.role) : "/dashboard/connected/" }
+export function artistProfileHref(artistId: string): string { return `/artists/${artistId}/` }
+export const DEMO_LOGIN_HINT = "Preview access: institution@kleio.demo, artist@kleio.demo, or reviewer@kleio.demo · password kleio2026"

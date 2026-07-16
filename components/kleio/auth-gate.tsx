@@ -3,15 +3,8 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import {
-  clearDemoSession,
-  getDashboardForRole,
-  getDemoSession,
-  getPublicHomeHref,
-  loginDemoUser,
-  validateDemoCredentials,
-  type KleioDemoSession,
-} from "@/lib/kleio-demo-auth"
+import { getDashboardForRole, getPublicHomeHref, loginDemoUser, type KleioDemoSession } from "@/lib/kleio-demo-auth"
+import { getKleioAuthMode, resolveKleioSession, signInKleio, signOutKleio } from "@/lib/kleio-auth"
 import { clearKleioMode, setKleioMode, type KleioMode } from "@/lib/kleio-mode"
 import { persistDemoGuideState } from "@/components/kleio/use-demo-guide"
 import { KleioWordmarkLink } from "@/components/kleio/kleio-wordmark-link"
@@ -19,108 +12,68 @@ import { KleioAssistObject } from "@/components/kleio/kleio-assist-object"
 import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
 
 type DemoRole = "artist" | "institution" | "collaborator"
-
 type AuthGateProps = { requiredRole?: DemoRole; children: React.ReactNode }
 
-function roleLabel(role: DemoRole, es: boolean) {
-  if (!es) return role === "institution" ? "Institution" : role === "artist" ? "Artist" : "Reviewer"
-  return role === "institution" ? "Institución" : role === "artist" ? "Artista" : "Revisor"
+function onboardingHref(role: DemoRole) {
+  if (role === "artist") return "/signup/artist/"
+  if (role === "institution") return "/signup/institution/"
+  return "/collaborator-dashboard/"
 }
-
-function RoleAccessButtons({ onSelect, mode, locale }: { onSelect: (role: DemoRole, mode: KleioMode) => void; mode: KleioMode; locale: string }) {
-  const es = locale === "es"
-  return (
-    <div className="grid gap-2">
-      <button type="button" onClick={() => onSelect("institution", mode)} className="inline-flex h-9 items-center justify-center rounded-xl border border-primary/25 bg-primary/10 px-3 text-xs font-semibold text-primary transition-colors hover:bg-primary/15">{roleLabel("institution", es)}</button>
-      <button type="button" onClick={() => onSelect("artist", mode)} className="inline-flex h-9 items-center justify-center rounded-xl border border-border bg-background px-3 text-xs font-semibold text-foreground transition-colors hover:bg-accent/50">{roleLabel("artist", es)}</button>
-      <button type="button" onClick={() => onSelect("collaborator", mode)} className="inline-flex h-9 items-center justify-center rounded-xl border border-border bg-background px-3 text-xs font-semibold text-foreground transition-colors hover:bg-accent/50">{roleLabel("collaborator", es)}</button>
-    </div>
-  )
-}
-
-function dashboardLabelKey(role: DemoRole) { if (role === "artist") return "auth.dashboard.artist"; if (role === "collaborator") return "auth.dashboard.collaborator"; return "auth.dashboard.institution" }
-function switchLabelKey(role: DemoRole) { if (role === "artist") return "auth.switchTo.artist"; if (role === "collaborator") return "auth.switchTo.collaborator"; return "auth.switchTo.institution" }
-function wrongRoleDescriptionKey(sessionRole: DemoRole, requiredRole: DemoRole) { if (sessionRole === "artist") return requiredRole === "collaborator" ? "auth.wrongRole.artistToCollaborator" : "auth.wrongRole.artistToInstitution"; if (sessionRole === "collaborator") return requiredRole === "artist" ? "auth.wrongRole.collaboratorToArtist" : "auth.wrongRole.collaboratorToInstitution"; return requiredRole === "collaborator" ? "auth.wrongRole.institutionToCollaborator" : "auth.wrongRole.institutionToArtist" }
-function loggedOutHeadingKey(requiredRole?: DemoRole) { if (requiredRole === "artist") return "auth.artist.heading"; if (requiredRole === "institution") return "auth.institution.heading"; if (requiredRole === "collaborator") return "auth.collaborator.heading"; return "auth.generic.heading" }
-function loggedOutDescriptionKey(requiredRole?: DemoRole) { if (requiredRole === "artist") return "auth.artist.description"; if (requiredRole === "institution") return "auth.institution.description"; if (requiredRole === "collaborator") return "auth.collaborator.description"; return "auth.generic.description" }
 
 function previewGuideState() { persistDemoGuideState({ isOpen: false, isMinimized: true, dismissed: true, activeScenarioId: null, activeStepId: null, completedScenarioId: null }) }
 function demoGuideState(role: DemoRole) { persistDemoGuideState({ isOpen: true, isMinimized: false, dismissed: false, activeScenarioId: role === "institution" ? "review-and-shortlist" : null, activeStepId: role === "institution" ? "review-and-shortlist-1" : null, completedScenarioId: null }) }
 
-function AuthWall({ requiredRole, session, onRefresh }: { requiredRole?: DemoRole; session: KleioDemoSession | null; onRefresh: () => void }) {
+function AuthWall({ requiredRole, session, onRefresh }: { requiredRole?: DemoRole; session: KleioDemoSession | null; onRefresh: () => Promise<void> }) {
   const router = useRouter()
   const pathname = usePathname()
-  const { t, locale } = useKleioLocale()
+  const { locale } = useKleioLocale()
   const es = locale === "es"
-  const [email, setEmail] = useState(requiredRole === "artist" ? "artist@kleio.demo" : requiredRole === "collaborator" ? "reviewer@kleio.demo" : "institution@kleio.demo")
-  const [password, setPassword] = useState("kleio2026")
+  const connected = getKleioAuthMode() === "supabase"
+  const [email, setEmail] = useState(connected ? "" : requiredRole === "artist" ? "artist@kleio.demo" : requiredRole === "collaborator" ? "reviewer@kleio.demo" : "institution@kleio.demo")
+  const [password, setPassword] = useState(connected ? "" : "kleio2026")
   const [error, setError] = useState("")
+  const [submitting, setSubmitting] = useState(false)
 
-  function routeForSession(role: DemoRole) {
-    if (requiredRole === role && pathname) { router.push(pathname); return }
-    router.push(getDashboardForRole(role))
+  function route(next: KleioDemoSession) {
+    if (connected && !next.onboardingCompleted) { router.replace(onboardingHref(next.role)); return }
+    if (requiredRole === next.role && pathname) { router.replace(pathname); return }
+    router.replace(getDashboardForRole(next.role))
   }
 
-  function enter(role: DemoRole, mode: KleioMode) {
-    setError("")
+  async function login() {
+    if (!email.trim() || !password) { setError(es ? "Ingresa el correo y la contraseña." : "Enter an email and password."); return }
+    setSubmitting(true); setError("")
+    try { const result = await signInKleio(email, password); if (!result.session) throw new Error("No session was returned."); await onRefresh(); route(result.session) }
+    catch (loginError) { setError(loginError instanceof Error ? loginError.message : (es ? "No se pudo iniciar sesión." : "Unable to sign in.")) }
+    finally { setSubmitting(false) }
+  }
+
+  async function enterPreview(role: DemoRole, mode: KleioMode) {
+    if (connected) return
     setKleioMode(mode)
-    loginDemoUser(role)
-    if (mode === "demo") demoGuideState(role)
-    else previewGuideState()
-    onRefresh()
-    routeForSession(role)
+    const next = loginDemoUser(role)
+    if (mode === "demo") demoGuideState(role); else previewGuideState()
+    await onRefresh(); route(next)
   }
 
-  function handlePreviewLogin() {
-    setError("")
-    setKleioMode("preview")
-    previewGuideState()
-    const nextSession = validateDemoCredentials(email, password)
-    if (!nextSession) { setError(es ? "Las credenciales de vista previa no coinciden. Prueba institution@kleio.demo con la contraseña kleio2026." : "Those preview credentials did not match. Try institution@kleio.demo with password kleio2026."); return }
-    onRefresh()
-    routeForSession(nextSession.role)
-  }
-
-  function switchToRole(role: DemoRole) { loginDemoUser(role); onRefresh(); router.push(getDashboardForRole(role)) }
-
+  async function logout() { await signOutKleio(); clearKleioMode(); await onRefresh(); router.replace(getPublicHomeHref()) }
   const wrongRole = session && requiredRole && session.role !== requiredRole
-  const loggedOutHeading = t(loggedOutHeadingKey(requiredRole))
-  const loggedOutDescription = t(loggedOutDescriptionKey(requiredRole))
-  const wrongRoleDescription = session && requiredRole ? t(wrongRoleDescriptionKey(session.role, requiredRole)) : ""
 
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-[oklch(0.985_0.005_287)] px-5 py-12">
-      <div className="w-full max-w-xl rounded-2xl border border-border bg-[oklch(0.99_0.005_287)] p-7 shadow-sm">
-        <div className="mb-6 flex justify-center"><KleioWordmarkLink href="/" imageClassName="h-7 w-auto" priority /></div>
-        {wrongRole ? <><h1 className="text-center font-serif text-2xl font-semibold text-foreground">{t("auth.switchRole")}</h1><p className="mt-2 text-center text-sm leading-relaxed text-muted-foreground">{wrongRoleDescription}</p><div className="mt-6 space-y-2"><button type="button" onClick={() => router.push(getDashboardForRole(session.role))} className="inline-flex h-10 w-full items-center justify-center rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90">{t("auth.goToDashboard", { dashboard: t(dashboardLabelKey(session.role)) })}</button><button type="button" onClick={() => switchToRole(requiredRole!)} className="inline-flex h-10 w-full items-center justify-center rounded-xl border border-border bg-background px-4 text-sm font-medium text-foreground transition-colors hover:bg-accent/50">{t(switchLabelKey(requiredRole!))}</button><Link href={getPublicHomeHref()} className="inline-flex h-10 w-full items-center justify-center rounded-xl px-4 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">{t("auth.returnToKleio")}</Link></div></> : <>
-          <h1 className="text-center font-serif text-2xl font-semibold text-foreground">{loggedOutHeading}</h1>
-          <p className="mt-2 text-center text-sm leading-relaxed text-muted-foreground">{loggedOutDescription}</p>
-          <section className="mt-6 rounded-2xl border border-border bg-background p-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">{es ? "Acceso a vista previa" : "Product preview access"}</p>
-            <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{es ? "Inicia sesión para entrar a una vista más limpia del espacio KLEIO." : "Log in to the cleaner KLEIO workspace preview."}</p>
-            <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_0.7fr]"><input value={email} onChange={(event) => setEmail(event.target.value)} onKeyDown={(event) => event.key === "Enter" && handlePreviewLogin()} className="h-10 rounded-xl border border-border bg-card px-3 text-sm outline-none focus:border-primary/40 focus:ring-4 focus:ring-primary/10" placeholder="institution@kleio.demo" /><input value={password} onChange={(event) => setPassword(event.target.value)} onKeyDown={(event) => event.key === "Enter" && handlePreviewLogin()} type="password" className="h-10 rounded-xl border border-border bg-card px-3 text-sm outline-none focus:border-primary/40 focus:ring-4 focus:ring-primary/10" placeholder={es ? "Contraseña" : "Password"} /></div>
-            {error && <p className="mt-2 text-xs font-medium text-[oklch(0.45_0.14_55)]">{error}</p>}
-            <button type="button" onClick={handlePreviewLogin} className="mt-3 inline-flex h-10 w-full items-center justify-center rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90">{es ? "Entrar a la vista previa" : "Log in to Product Preview"}</button>
-          </section>
-          <details className="group mt-3 rounded-2xl border border-[#E7E1F7] bg-white p-4"><summary className="flex cursor-pointer list-none items-center justify-between text-sm font-semibold text-[#5B4B8A] marker:hidden"><span>{es ? "Atajos avanzados por rol" : "Advanced role shortcuts"}</span><span className="transition-transform group-open:rotate-90">›</span></summary><div className="mt-3 grid gap-3 sm:grid-cols-2"><section className="rounded-xl border border-[#E7E1F7] bg-[#F7F4FF] p-3"><p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#A997E8]">{es ? "Recorrido demo" : "Demo walkthrough"}</p><p className="mt-1 text-xs text-muted-foreground">{es ? "Registros de muestra con guía." : "Guided sample records."}</p><div className="mt-3"><RoleAccessButtons onSelect={enter} mode="demo" locale={locale} /></div></section><section className="rounded-xl border border-border bg-background p-3"><p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">{es ? "Vista previa" : "Product preview"}</p><p className="mt-1 text-xs text-muted-foreground">{es ? "Un espacio de producto más limpio." : "Cleaner workspace mode."}</p><div className="mt-3"><RoleAccessButtons onSelect={enter} mode="preview" locale={locale} /></div></section></div></details>
-          <Link href={getPublicHomeHref()} className="mt-4 inline-flex h-10 w-full items-center justify-center rounded-xl border border-border bg-background text-sm font-medium text-foreground transition-colors hover:bg-accent/50">{t("auth.returnToKleio")}</Link>
-        </>}
-      </div>
-    </div>
-  )
+  return <div className="flex min-h-screen items-center justify-center bg-[oklch(0.985_0.005_287)] px-5 py-12"><div className="w-full max-w-xl rounded-2xl border border-border bg-[oklch(0.99_0.005_287)] p-7 shadow-sm"><div className="mb-6 flex justify-center"><KleioWordmarkLink href="/" imageClassName="h-7 w-auto" priority /></div>
+    {wrongRole ? <><h1 className="text-center font-serif text-2xl font-semibold">{es ? "Esta cuenta usa otro espacio" : "This account uses a different workspace"}</h1><p className="mt-2 text-center text-sm text-muted-foreground">{es ? "El rol conectado no coincide con esta ruta privada." : "The connected role does not match this private route."}</p><div className="mt-6 space-y-2"><button onClick={() => router.replace(getDashboardForRole(session.role))} className="h-10 w-full rounded-xl bg-primary text-sm font-semibold text-primary-foreground">{es ? "Ir a mi espacio" : "Go to my workspace"}</button><button onClick={() => void logout()} className="h-10 w-full rounded-xl border border-border bg-background text-sm font-medium">{es ? "Cerrar sesión" : "Sign out"}</button></div></> : <><h1 className="text-center font-serif text-2xl font-semibold">{requiredRole === "artist" ? (es ? "Acceso de artista" : "Artist access") : requiredRole === "institution" ? (es ? "Acceso institucional" : "Institution access") : "KLEIO access"}</h1><p className="mt-2 text-center text-sm text-muted-foreground">{connected ? (es ? "Inicia sesión con tu cuenta Supabase." : "Sign in with your Supabase account.") : (es ? "Entorno sintético de vista previa." : "Clearly labeled synthetic preview environment.")}</p><section className="mt-6 rounded-2xl border border-border bg-background p-4"><div className="grid gap-2 sm:grid-cols-[1fr_0.7fr]"><input aria-label="Email" value={email} onChange={(e) => setEmail(e.target.value)} className="h-10 rounded-xl border border-border bg-card px-3 text-sm" placeholder="name@example.com" /><input aria-label="Password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} onKeyDown={(e) => e.key === "Enter" && void login()} className="h-10 rounded-xl border border-border bg-card px-3 text-sm" placeholder={es ? "Contraseña" : "Password"} /></div>{error && <p className="mt-2 text-xs font-medium text-[oklch(0.45_0.14_55)]">{error}</p>}<button onClick={() => void login()} disabled={submitting} className="mt-3 h-10 w-full rounded-xl bg-primary text-sm font-semibold text-primary-foreground disabled:opacity-55">{submitting ? (es ? "Conectando…" : "Connecting…") : (es ? "Iniciar sesión" : "Sign in")}</button></section>{!connected && <details className="mt-3 rounded-2xl border border-[#E7E1F7] bg-white p-4"><summary className="cursor-pointer text-sm font-semibold text-[#5B4B8A]">{es ? "Atajos sintéticos" : "Synthetic shortcuts"}</summary><div className="mt-3 grid gap-2 sm:grid-cols-2">{(["artist", "institution", "collaborator"] as DemoRole[]).map((role) => <button key={role} onClick={() => void enterPreview(role, "preview")} className="h-9 rounded-xl border border-border text-xs font-semibold">{role}</button>)}</div></details>}<Link href="/" className="mt-4 inline-flex h-10 w-full items-center justify-center rounded-xl border border-border bg-background text-sm font-medium">{es ? "Volver a KLEIO" : "Return to KLEIO"}</Link></>}
+  </div></div>
 }
 
 export function AuthGate({ requiredRole, children }: AuthGateProps) {
   const [session, setSession] = useState<KleioDemoSession | null | undefined>(undefined)
-  const { t } = useKleioLocale()
-  useEffect(() => { setSession(getDemoSession()) }, [])
-  if (session === undefined) return <div className="flex min-h-screen items-center justify-center bg-[oklch(0.985_0.005_287)] px-6"><div className="max-w-sm"><KleioAssistObject mode="reviewing" title={t("assist.object.complete.title")} description={t("assist.object.complete.description")} size="sm" compact /></div></div>
-  if (!session) return <AuthWall requiredRole={requiredRole} session={null} onRefresh={() => setSession(getDemoSession())} />
-  if (requiredRole && session.role !== requiredRole) return <AuthWall requiredRole={requiredRole} session={session} onRefresh={() => setSession(getDemoSession())} />
+  const [error, setError] = useState("")
+  const router = useRouter()
+  async function refresh() { try { setError(""); const next = await resolveKleioSession(); setSession(next); if (next?.source === "supabase" && !next.onboardingCompleted) router.replace(onboardingHref(next.role)) } catch (loadError) { setError(loadError instanceof Error ? loadError.message : "Unable to load the current account."); setSession(null) } }
+  useEffect(() => { void refresh() }, [])
+  if (session === undefined) return <div className="flex min-h-screen items-center justify-center bg-[oklch(0.985_0.005_287)] px-6"><KleioAssistObject mode="reviewing" title="Loading account" description="Verifying the active session." size="sm" compact /></div>
+  if (error && !session) return <div><div className="mx-auto mt-6 max-w-xl rounded-xl border border-[oklch(0.85_0.08_45)] bg-[oklch(0.97_0.03_45)] px-4 py-3 text-sm">{error}</div><AuthWall requiredRole={requiredRole} session={null} onRefresh={refresh} /></div>
+  if (!session || (requiredRole && session.role !== requiredRole)) return <AuthWall requiredRole={requiredRole} session={session ?? null} onRefresh={refresh} />
   return <>{children}</>
 }
 
-export function useDemoSignOut() {
-  const router = useRouter()
-  return () => { clearDemoSession(); clearKleioMode(); router.push("/") }
-}
+export function useDemoSignOut() { const router = useRouter(); return () => { void signOutKleio().finally(() => { clearKleioMode(); router.replace("/") }) } }

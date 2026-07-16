@@ -36,8 +36,8 @@ export const navSections: NavSection[] = [
   {
     heading: "Core Review Flow",
     items: [
-      { label: "Programs", href: "/programs/", icon: FolderOpen },
-      { label: "Submissions", href: "/submissions/", icon: FileStack },
+      { label: "Programs", href: "/programs/connected/", icon: FolderOpen },
+      { label: "Submissions", href: "/applications/connected/", icon: FileStack },
       { label: "Artist Records", href: "/artists/", icon: Users },
       { label: "Review Queue", href: "/review-queue/", icon: ListChecks, badge: analytics.reviewQueueCount },
       { label: "Review Room", href: "/review-room/", icon: Vote, badge: analytics.pendingVoteCount },
@@ -60,7 +60,7 @@ export const navSections: NavSection[] = [
     items: [
       { label: "Activity Log", href: "/activity-log/", icon: History },
       { label: "Templates", href: "/templates/", icon: LayoutTemplate },
-      { label: "Settings", href: "/settings/", icon: Settings },
+      { label: "Settings", href: "/settings/connected/", icon: Settings },
     ],
   },
 ]
