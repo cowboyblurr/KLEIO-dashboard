@@ -101,9 +101,11 @@ export function ProductionInfoPageView({ variant }: { variant: InfoVariant }) {
         ))}
       </div>
 
-      <PublicCard>
-        <p className="text-sm font-semibold text-[#5B4B8A]">{page.notice}</p>
-      </PublicCard>
+      <div className="mt-10">
+        <PublicCard>
+          <p className="text-sm font-semibold text-[#5B4B8A]">{page.notice}</p>
+        </PublicCard>
+      </div>
 
       {variant === "contact" && (
         <div className="mt-8 flex flex-wrap gap-3">
