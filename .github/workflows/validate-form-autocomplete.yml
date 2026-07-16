@@ -34,10 +34,10 @@ jobs:
       - name: TypeScript check
         run: pnpm exec tsc --noEmit
 
-      - name: Build static preview without provider token
+      - name: Build static preview without provider credentials
         env:
-          NEXT_PUBLIC_SUPABASE_URL: https://trekynurdgxgtaaqqtyq.supabase.co
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: sb_publishable_XdYXvd0fQm3IJKxNrFXgUQ_M4RgDj1M
+          NEXT_PUBLIC_SUPABASE_URL: ""
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ""
           NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN: ""
         run: pnpm build
 
