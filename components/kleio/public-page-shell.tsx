@@ -122,7 +122,7 @@ export function PublicHero({ title, subtitle }: { title: string; subtitle: strin
 export function PublicCard({ children }: { children: React.ReactNode }) {
   return (
     <div
-      className="mt-10 rounded-2xl border border-[#E7E1F7] bg-white p-6"
+      className="rounded-2xl border border-[#E7E1F7] bg-white p-6"
       style={{ boxShadow: "0 18px 48px rgba(82, 64, 130, 0.06)" }}
     >
       {children}
