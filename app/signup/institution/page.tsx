@@ -1,5 +1,5 @@
-import { InstitutionOnboarding } from "@/components/kleio/signup/institution-onboarding"
+import { LiveSignup } from "@/components/kleio/signup/live-signup"
 
 export default function Page() {
-  return <InstitutionOnboarding />
+  return <LiveSignup role="institution" />
 }
