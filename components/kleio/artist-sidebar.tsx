@@ -33,8 +33,8 @@ const navSections: NavSection[] = [
     items: [
       { href: "/artist-dashboard/", label: "Overview", icon: LayoutDashboard },
       { href: "/artist-dashboard/passport/", label: "Creative Passport", icon: Sparkles, activeMatch: "/artist-dashboard/passport" },
-      { href: "/artist-dashboard/opportunities/", label: "Opportunities", icon: Briefcase, activeMatch: "/artist-dashboard/opportunities" },
-      { href: "/artist-dashboard/applications/", label: "Applications", icon: FileText, activeMatch: "/artist-dashboard/applications" },
+      { href: "/artist-dashboard/calls/", label: "Open Calls", icon: Briefcase, activeMatch: "/artist-dashboard/calls" },
+      { href: "/artist-dashboard/applications/connected/", label: "Applications", icon: FileText, activeMatch: "/artist-dashboard/applications" },
       { href: "/artist-dashboard/portfolio/", label: "Portfolio", icon: FolderOpen, activeMatch: "/artist-dashboard/portfolio" },
       { href: "/artist-dashboard/funding/", label: "Funding", icon: DollarSign, activeMatch: "/artist-dashboard/funding" },
     ],
@@ -77,7 +77,13 @@ export function ArtistSidebar() {
               {section.items.map((item) => {
                 const active = item.activeMatch ? pathname.startsWith(item.activeMatch) : pathname === item.href || `${pathname}/` === item.href
                 const Icon = item.icon
-                const label = item.href === "/artist-dashboard/collaborators/" ? (locale === "es" ? "Coincidencias de artistas" : "Artist Matches") : t(artistNavLabelKeys[item.href] ?? item.label)
+                const label = item.href === "/artist-dashboard/collaborators/"
+                  ? (locale === "es" ? "Coincidencias de artistas" : "Artist Matches")
+                  : item.href === "/artist-dashboard/calls/"
+                    ? (locale === "es" ? "Convocatorias" : "Open Calls")
+                    : item.href === "/artist-dashboard/applications/connected/"
+                      ? (locale === "es" ? "Postulaciones" : "Applications")
+                      : t(artistNavLabelKeys[item.href] ?? item.label)
 
                 return (
                   <li key={item.label}>
