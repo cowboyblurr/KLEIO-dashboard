@@ -32,15 +32,42 @@ jobs:
         run: pnpm install --no-frozen-lockfile
 
       - name: Typecheck
-        run: pnpm run typecheck
+        id: typecheck
+        continue-on-error: true
+        run: pnpm run typecheck 2>&1 | tee typecheck.log
 
       - name: Lint
-        run: pnpm run lint
+        id: lint
+        continue-on-error: true
+        run: pnpm run lint 2>&1 | tee lint.log
 
       - name: Build static export
+        id: build
+        continue-on-error: true
         env:
           GITHUB_ACTIONS: "true"
           NEXT_PUBLIC_BASE_PATH: /KLEIO-dashboard
           NEXT_PUBLIC_SUPABASE_URL: https://trekynurdgxgtaaqqtyq.supabase.co
           NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_XdYXvd0fQm3IJKxNrFXgUQ_M4RgDj1M
-        run: pnpm run build
+        run: pnpm run build 2>&1 | tee build.log
+
+      - name: Upload verification logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: verification-logs
+          path: |
+            typecheck.log
+            lint.log
+            build.log
+          if-no-files-found: warn
+
+      - name: Enforce verification result
+        if: always()
+        run: |
+          echo "typecheck=${{ steps.typecheck.outcome }}"
+          echo "lint=${{ steps.lint.outcome }}"
+          echo "build=${{ steps.build.outcome }}"
+          test "${{ steps.typecheck.outcome }}" = "success"
+          test "${{ steps.lint.outcome }}" = "success"
+          test "${{ steps.build.outcome }}" = "success"
