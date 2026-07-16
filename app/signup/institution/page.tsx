@@ -1,5 +1,5 @@
-import { InstitutionOnboarding } from "@/components/kleio/signup/institution-onboarding"
+import { ConnectedInstitutionOnboarding } from "@/components/kleio/signup/connected-institution-onboarding"
 
 export default function Page() {
-  return <InstitutionOnboarding />
+  return <ConnectedInstitutionOnboarding />
 }
