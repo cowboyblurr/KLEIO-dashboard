@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useMemo, useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
@@ -62,8 +62,6 @@ export function WorkspaceMobileNav({ variant }: { variant: WorkspaceVariant }) {
   const { t, locale } = useKleioLocale()
   const [open, setOpen] = useState(false)
   const es = locale === "es"
-
-  useEffect(() => setOpen(false), [pathname])
 
   const items = useMemo<MobileNavItem[]>(() => {
     if (variant === "artist") return artistItems
@@ -143,6 +141,7 @@ export function WorkspaceMobileNav({ variant }: { variant: WorkspaceVariant }) {
                   <li key={item.href}>
                     <Link
                       href={item.href}
+                      onClick={() => setOpen(false)}
                       aria-current={active ? "page" : undefined}
                       className={cn(
                         "flex min-h-11 items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors",
