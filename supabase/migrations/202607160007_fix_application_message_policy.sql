@@ -44,6 +44,9 @@ $$;
 
 revoke all on function private.can_send_application_message(uuid, uuid, uuid)
 from public, anon, authenticated;
+grant usage on schema private to authenticated;
+grant execute on function private.can_send_application_message(uuid, uuid, uuid)
+to authenticated;
 
 drop policy if exists messages_participant_insert on public.messages;
 create policy messages_participant_insert on public.messages
