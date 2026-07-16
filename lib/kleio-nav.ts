@@ -60,7 +60,7 @@ export const navSections: NavSection[] = [
     items: [
       { label: "Activity Log", href: "/activity-log/", icon: History },
       { label: "Templates", href: "/templates/", icon: LayoutTemplate },
-      { label: "Settings", href: "/settings/", icon: Settings },
+      { label: "Settings", href: "/settings/connected/", icon: Settings },
     ],
   },
 ]
