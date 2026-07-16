@@ -59,7 +59,7 @@ export function ConnectedArtistOnboarding() {
         education: form.education.trim(), exhibition_history: form.exhibitions.trim(), awards: form.awards.trim(),
         cv_file_path: null, profile_completion: location ? 82 : 76,
       })
-      await saveArtistLocationData(auth.session.user.id, location)
+      await saveArtistLocationData(auth.session.userId, location)
       await Promise.all(workTitles.slice(0, 3).map((title, index) => savePortfolioWork({ title, year: "2026", medium: optionLabel(MEDIUMS, mediums[0] || "mixed_media"), dimensions: "Variable", description: "Added during KLEIO Creative Passport onboarding. Edit this record from the portfolio workspace.", series: "Creative Passport selection", tags: disciplines.slice(0, 4), image_path: null, sort_order: index })))
       router.push(getDashboardForRole("artist"))
     } catch (submitError) { setError(submitError instanceof Error ? submitError.message : (es ? "No se pudo crear la cuenta." : "Unable to create the account.")) }
