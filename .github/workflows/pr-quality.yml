@@ -1,0 +1,60 @@
+name: KLEIO pull request quality
+
+on:
+  pull_request:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: "quality-${{ github.event.pull_request.number || github.ref }}"
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Lint, type-check, and static export
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+          run_install: false
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Lint
+        run: pnpm run lint
+
+      - name: Type-check
+        run: pnpm exec tsc --noEmit
+
+      - name: Build static export
+        env:
+          GITHUB_ACTIONS: "true"
+          NEXT_PUBLIC_BASE_PATH: /KLEIO-dashboard
+        run: pnpm run build
+
+      - name: Verify production entry points
+        run: |
+          test -f out/index.html
+          test -f out/privacy/index.html
+          test -f out/terms/index.html
+          test -f out/contact/index.html
+          test -f out/dashboard/index.html
+          test -f out/artist-dashboard/index.html
+          test -f out/demo/index.html
