@@ -63,9 +63,11 @@ jobs:
           touch out/.nojekyll
           echo "Top-level exported files:"
           find out -maxdepth 2 -type f | sort | head -120
-          echo "Checking signup exports..."
+          echo "Checking signup and recovery exports..."
           test -f out/signup/artist/index.html
           test -f out/signup/institution/index.html
+          test -f out/auth/forgot-password/index.html
+          test -f out/auth/update-password/index.html
           echo "Checking core workspace exports..."
           test -f out/dashboard/index.html
           test -f out/artist-dashboard/index.html
@@ -88,6 +90,9 @@ jobs:
           test -f out/submissions/amina-el-badri/index.html
           echo "Checking program detail export..."
           test -f out/programs/residency-2026/index.html
+
+      - name: Audit internal navigation
+        run: pnpm run audit:navigation
 
       - name: Upload GitHub Pages artifact
         uses: actions/upload-pages-artifact@v3
