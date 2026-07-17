@@ -22,6 +22,10 @@ const iconMap: Record<string, LucideIcon> = {
   file: FileWarning,
 }
 
+function translationParams(params: object): Record<string, string | number> {
+  return Object.fromEntries(Object.entries(params).map(([key, value]) => [key, String(value)]))
+}
+
 export function KpiCards() {
   const { t } = useKleioLocale()
 
@@ -59,7 +63,7 @@ export function KpiCards() {
                     : ""
                 }
               >
-                {t(kpi.deltaKey, kpi.deltaParams as Record<string, string | number>)}
+                {t(kpi.deltaKey, translationParams(kpi.deltaParams))}
               </span>
             </p>
           </div>
