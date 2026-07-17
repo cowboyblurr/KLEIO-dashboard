@@ -34,22 +34,31 @@ jobs:
       - name: Typecheck
         id: typecheck
         continue-on-error: true
-        run: pnpm run typecheck 2>&1 | tee typecheck.log
+        shell: bash
+        run: |
+          set -o pipefail
+          pnpm run typecheck 2>&1 | tee typecheck.log
 
       - name: Lint
         id: lint
         continue-on-error: true
-        run: pnpm run lint 2>&1 | tee lint.log
+        shell: bash
+        run: |
+          set -o pipefail
+          pnpm run lint 2>&1 | tee lint.log
 
       - name: Build static export
         id: build
         continue-on-error: true
+        shell: bash
         env:
           GITHUB_ACTIONS: "true"
           NEXT_PUBLIC_BASE_PATH: /KLEIO-dashboard
           NEXT_PUBLIC_SUPABASE_URL: https://trekynurdgxgtaaqqtyq.supabase.co
           NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_XdYXvd0fQm3IJKxNrFXgUQ_M4RgDj1M
-        run: pnpm run build 2>&1 | tee build.log
+        run: |
+          set -o pipefail
+          pnpm run build 2>&1 | tee build.log
 
       - name: Verify critical auth and workspace exports
         id: routes
@@ -68,7 +77,10 @@ jobs:
       - name: Audit internal navigation
         id: navigation
         continue-on-error: true
-        run: pnpm run audit:navigation 2>&1 | tee navigation.log
+        shell: bash
+        run: |
+          set -o pipefail
+          pnpm run audit:navigation 2>&1 | tee navigation.log
 
       - name: Upload verification logs
         if: always()
