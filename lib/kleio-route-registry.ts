@@ -3,8 +3,12 @@ export const publicRoutes = [
   "/about/",
   "/manifesto/",
   "/journal/",
+  "/signup/",
   "/signup/artist/",
   "/signup/institution/",
+  "/auth/forgot-password/",
+  "/auth/update-password/",
+  "/landing/",
 ] as const
 
 export const artistWorkspaceRoutes = [
@@ -28,6 +32,7 @@ export const institutionWorkspaceRoutes = [
   "/submissions/",
   "/artists/",
   "/review-queue/",
+  "/review-room/",
   "/shortlist/",
   "/committee/",
   "/messages/",
@@ -53,17 +58,20 @@ export const publicProfileRoutePatterns = [
   "/institution/[username]/",
 ] as const
 
-/** Additional public routes outside workspace nav (still part of demo surface). */
+/** Additional public or generated routes outside the primary workspace navigation. */
 export const supplementalPublicRoutes = [
-  "/signup/",
-  "/landing/",
-  "/artists/",
   "/artists/[artistId]/",
+  "/submissions/[submissionId]/",
+  "/programs/[programId]/",
+  "/artist-dashboard/opportunities/[opportunityId]/",
 ] as const
 
-export const allDemoRoutes = [
+export const allStaticWorkspaceRoutes = [
   ...publicRoutes,
   ...artistWorkspaceRoutes,
   ...institutionWorkspaceRoutes,
   ...collaboratorWorkspaceRoutes,
 ] as const
+
+/** Backwards-compatible alias used by existing demo tooling. */
+export const allDemoRoutes = allStaticWorkspaceRoutes
