@@ -51,16 +51,24 @@ jobs:
           NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_XdYXvd0fQm3IJKxNrFXgUQ_M4RgDj1M
         run: pnpm run build 2>&1 | tee build.log
 
-      - name: Verify critical route exports
+      - name: Verify critical auth and workspace exports
         id: routes
         continue-on-error: true
         run: |
           test -f out/index.html
           test -f out/signup/artist/index.html
           test -f out/signup/institution/index.html
+          test -f out/auth/forgot-password/index.html
+          test -f out/auth/update-password/index.html
           test -f out/dashboard/index.html
           test -f out/artist-dashboard/index.html
+          test -f out/review-room/index.html
           test -f out/messages/index.html
+
+      - name: Audit internal navigation
+        id: navigation
+        continue-on-error: true
+        run: pnpm run audit:navigation 2>&1 | tee navigation.log
 
       - name: Upload verification logs
         if: always()
@@ -71,6 +79,7 @@ jobs:
             typecheck.log
             lint.log
             build.log
+            navigation.log
           if-no-files-found: warn
 
       - name: Enforce verification result
@@ -80,7 +89,9 @@ jobs:
           echo "lint=${{ steps.lint.outcome }}"
           echo "build=${{ steps.build.outcome }}"
           echo "routes=${{ steps.routes.outcome }}"
+          echo "navigation=${{ steps.navigation.outcome }}"
           test "${{ steps.typecheck.outcome }}" = "success"
           test "${{ steps.lint.outcome }}" = "success"
           test "${{ steps.build.outcome }}" = "success"
           test "${{ steps.routes.outcome }}" = "success"
+          test "${{ steps.navigation.outcome }}" = "success"

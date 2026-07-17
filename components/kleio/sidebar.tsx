@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { ChevronDown, ChevronsUpDown } from "lucide-react"
+import { ChevronsUpDown } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { navSections } from "@/lib/kleio-nav"
 import { institutionNavLabelKeys, institutionSectionKeys } from "@/lib/kleio-nav-i18n"
@@ -35,14 +35,12 @@ export function Sidebar() {
   const pathname = usePathname()
   const { t, locale } = useKleioLocale()
   const programDirector = collaborators.find((person) => person.role === "Program Director") ?? collaborators[0]
+  const es = locale === "es"
 
   return (
     <aside className="flex h-full w-64 shrink-0 flex-col border-r border-border bg-sidebar">
-      <div className="flex items-center justify-between px-6 pt-6 pb-5">
+      <div className="flex items-center px-6 pb-5 pt-6">
         <KleioWordmarkLink href="/" className="rounded-md bg-white px-2.5 py-1.5 shadow-sm ring-1 ring-border" />
-        <button type="button" className="grid size-7 place-items-center rounded-md border border-border text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground" aria-label="Collapse sidebar">
-          <ChevronDown className="size-4 -rotate-90" />
-        </button>
       </div>
 
       <nav className="flex-1 overflow-y-auto px-3 pb-4">
@@ -79,22 +77,22 @@ export function Sidebar() {
       </nav>
 
       <div className="border-t border-border p-3">
-        <button type="button" className="flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left transition-colors hover:bg-accent/60">
+        <Link href="/settings/" className="flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left transition-colors hover:bg-accent/60" aria-label={es ? "Abrir configuración de la cuenta" : "Open account settings"}>
           <InitialAvatar name={programDirector.name} className="size-9 text-xs" />
           <span className="min-w-0 flex-1">
             <span className="block truncate text-sm font-medium text-foreground">{programDirector.name}</span>
             <span className="block truncate text-xs text-muted-foreground">{programDirector.role}</span>
           </span>
           <ChevronsUpDown className="size-4 text-muted-foreground" />
-        </button>
+        </Link>
 
-        <button type="button" className="mt-1 flex w-full items-center gap-3 rounded-lg border border-border bg-card px-2 py-2 text-left transition-colors hover:bg-accent/40">
+        <button type="button" disabled aria-disabled="true" title={es ? "El cambio entre organizaciones estará disponible en una fase posterior." : "Organization switching will be available in a later phase."} className="mt-1 flex w-full cursor-not-allowed items-center gap-3 rounded-lg border border-border bg-card px-2 py-2 text-left opacity-70">
           <span className="grid size-9 shrink-0 place-items-center rounded-md bg-primary text-[0.6rem] font-bold tracking-wide text-primary-foreground">{institution.initials}</span>
           <span className="min-w-0 flex-1">
             <span className="block truncate text-sm font-medium text-foreground">{institution.name}</span>
-            <span className="block truncate text-xs text-muted-foreground">{institution.location}</span>
+            <span className="block truncate text-xs text-muted-foreground">{es ? "Un solo espacio institucional" : "Single institution workspace"}</span>
           </span>
-          <ChevronsUpDown className="size-4 text-muted-foreground" />
+          <span className="rounded-full bg-muted px-2 py-0.5 text-[0.55rem] font-semibold uppercase tracking-wide text-muted-foreground">{es ? "Pronto" : "Soon"}</span>
         </button>
       </div>
     </aside>

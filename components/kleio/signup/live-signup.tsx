@@ -1,8 +1,9 @@
 "use client"
 
-import { useEffect, useMemo, useState, type FormEvent } from "react"
+import { useEffect, useId, useMemo, useState, type FormEvent } from "react"
+import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { CheckCircle2, Loader2, ShieldCheck } from "lucide-react"
+import { CheckCircle2, Eye, EyeOff, Loader2, ShieldCheck } from "lucide-react"
 import { ArtistOnboarding } from "@/components/kleio/signup/artist-onboarding"
 import { InstitutionOnboarding } from "@/components/kleio/signup/institution-onboarding"
 import { EntityAutocomplete } from "@/components/kleio/signup/entity-autocomplete"
@@ -21,6 +22,7 @@ import {
   type InstitutionOnboardingPayload,
 } from "@/lib/kleio-live-onboarding"
 import { clearKleioMode } from "@/lib/kleio-mode"
+import { getKleioAuthErrorMessage, resendKleioSignupConfirmation } from "@/lib/kleio-auth"
 
 const inputClassName = "h-11 w-full rounded-xl border border-border bg-background px-3 text-sm text-foreground outline-none transition-colors focus:border-primary/40 focus:ring-4 focus:ring-primary/10"
 
@@ -43,15 +45,17 @@ function Field({ label, value, onChange, type = "text", placeholder, required, a
   label: string
   value: string
   onChange: (value: string) => void
-  type?: "text" | "email" | "password" | "url"
+  type?: "text" | "email" | "url"
   placeholder?: string
   required?: boolean
   autoComplete?: string
 }) {
+  const id = useId()
   return (
-    <label className="block">
-      <span className="mb-1.5 block text-xs font-medium text-muted-foreground">{label}{required ? " *" : ""}</span>
+    <div>
+      <label htmlFor={id} className="mb-1.5 block text-xs font-medium text-muted-foreground">{label}{required ? " *" : ""}</label>
       <input
+        id={id}
         type={type}
         value={value}
         onChange={(event) => onChange(event.target.value)}
@@ -60,19 +64,40 @@ function Field({ label, value, onChange, type = "text", placeholder, required, a
         autoComplete={autoComplete}
         className={inputClassName}
       />
-    </label>
+    </div>
+  )
+}
+
+function PasswordField({ label, value, onChange, placeholder, es }: {
+  label: string
+  value: string
+  onChange: (value: string) => void
+  placeholder?: string
+  es: boolean
+}) {
+  const id = useId()
+  const [visible, setVisible] = useState(false)
+  return (
+    <div>
+      <label htmlFor={id} className="mb-1.5 block text-xs font-medium text-muted-foreground">{label} *</label>
+      <div className="relative">
+        <input id={id} type={visible ? "text" : "password"} value={value} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} required minLength={8} autoComplete="new-password" className={`${inputClassName} pr-11`} />
+        <button type="button" onClick={() => setVisible((current) => !current)} className="absolute right-2 top-1/2 grid size-8 -translate-y-1/2 place-items-center rounded-lg text-muted-foreground hover:bg-accent/50 hover:text-foreground" aria-label={visible ? (es ? "Ocultar contraseña" : "Hide password") : (es ? "Mostrar contraseña" : "Show password")}>{visible ? <EyeOff className="size-4" /> : <Eye className="size-4" />}</button>
+      </div>
+    </div>
   )
 }
 
 function InstitutionTypeField({ value, onChange, es }: { value: string; onChange: (value: string) => void; es: boolean }) {
+  const id = useId()
   return (
-    <label className="block">
-      <span className="mb-1.5 block text-xs font-medium text-muted-foreground">{es ? "Tipo de institución" : "Institution type"} *</span>
-      <select value={value} onChange={(event) => onChange(event.target.value)} required className={inputClassName}>
+    <div>
+      <label htmlFor={id} className="mb-1.5 block text-xs font-medium text-muted-foreground">{es ? "Tipo de institución" : "Institution type"} *</label>
+      <select id={id} value={value} onChange={(event) => onChange(event.target.value)} required className={inputClassName}>
         <option value="">{es ? "Selecciona un tipo" : "Select a type"}</option>
         {INSTITUTION_TYPES.map(([key, en, spanish]) => <option key={key} value={key}>{es ? spanish : en}</option>)}
       </select>
-    </label>
+    </div>
   )
 }
 
@@ -84,6 +109,8 @@ export function LiveSignup({ role }: { role: "artist" | "institution" }) {
   const [submitting, setSubmitting] = useState(false)
   const [resuming, setResuming] = useState(true)
   const [confirmationEmail, setConfirmationEmail] = useState("")
+  const [resending, setResending] = useState(false)
+  const [confirmationStatus, setConfirmationStatus] = useState("")
   const [error, setError] = useState("")
 
   const [displayName, setDisplayName] = useState("")
@@ -132,7 +159,7 @@ export function LiveSignup({ role }: { role: "artist" | "institution" }) {
         const completed = await resumePendingKleioOnboarding(role)
         if (!cancelled && completed) routeToWorkspace()
       } catch (resumeError) {
-        if (!cancelled) setError(resumeError instanceof Error ? resumeError.message : "Unable to finish account setup.")
+        if (!cancelled) setError(getKleioAuthErrorMessage(resumeError, es ? "es" : "en"))
       } finally {
         if (!cancelled) setResuming(false)
       }
@@ -147,39 +174,16 @@ export function LiveSignup({ role }: { role: "artist" | "institution" }) {
       cancelled = true
       subscription.unsubscribe()
     }
-  // The role is stable for each route; including routeToWorkspace would resubscribe on every render.
+  // The role and locale are stable enough for this route; re-subscribing during data entry would interrupt recovery.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [role])
 
   function buildPayload(): ArtistOnboardingPayload | InstitutionOnboardingPayload {
     if (role === "artist") {
-      return {
-        role,
-        email,
-        displayName,
-        location,
-        selectedLocation,
-        discipline,
-        website,
-        shortBio,
-        artistStatement,
-        mediums,
-      }
+      return { role, email, displayName, location, selectedLocation, discipline, website, shortBio, artistStatement, mediums }
     }
 
-    return {
-      role,
-      email,
-      displayName,
-      institutionName,
-      selectedInstitution,
-      institutionType,
-      location,
-      selectedLocation,
-      website,
-      publicDescription,
-      missionStatement,
-    }
+    return { role, email, displayName, institutionName, selectedInstitution, institutionType, location, selectedLocation, website, publicDescription, missionStatement }
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -206,9 +210,23 @@ export function LiveSignup({ role }: { role: "artist" | "institution" }) {
       routeToWorkspace()
     } catch (submitError) {
       clearPendingKleioOnboarding()
-      setError(submitError instanceof Error ? submitError.message : (es ? "No se pudo crear la cuenta." : "Unable to create the account."))
+      setError(getKleioAuthErrorMessage(submitError, es ? "es" : "en"))
     } finally {
       setSubmitting(false)
+    }
+  }
+
+  async function resendConfirmation() {
+    if (resending || !confirmationEmail) return
+    setConfirmationStatus("")
+    setResending(true)
+    try {
+      await resendKleioSignupConfirmation(confirmationEmail, role)
+      setConfirmationStatus(es ? "Enviamos un enlace nuevo. Revisa tu correo y la carpeta de no deseados." : "A new link was sent. Check your inbox and spam folder.")
+    } catch (resendError) {
+      setConfirmationStatus(getKleioAuthErrorMessage(resendError, es ? "es" : "en"))
+    } finally {
+      setResending(false)
     }
   }
 
@@ -228,7 +246,7 @@ export function LiveSignup({ role }: { role: "artist" | "institution" }) {
   if (confirmationEmail) {
     return (
       <SignupShell title={title} subtitle={subtitle}>
-        <div className="mx-auto max-w-lg rounded-2xl border border-[#D9D0F2] bg-card p-7 shadow-sm">
+        <div className="mx-auto max-w-lg rounded-2xl border border-[#D9D0F2] bg-card p-7 shadow-sm" aria-live="polite">
           <CheckCircle2 className="size-9 text-emerald-600" />
           <h2 className="mt-4 font-serif text-2xl font-semibold text-foreground">{es ? "Confirma tu correo" : "Confirm your email"}</h2>
           <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
@@ -236,9 +254,13 @@ export function LiveSignup({ role }: { role: "artist" | "institution" }) {
               ? `Enviamos un enlace a ${confirmationEmail}. Ábrelo para confirmar tu cuenta; KLEIO terminará de guardar tu perfil al regresar.`
               : `We sent a link to ${confirmationEmail}. Open it to confirm your account; KLEIO will finish saving your profile when you return.`}
           </p>
-          <button type="button" onClick={() => setConfirmationEmail("")} className="mt-5 rounded-xl border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-accent/50">
-            {es ? "Corregir correo o volver" : "Correct email or go back"}
-          </button>
+          {confirmationStatus && <p role="status" className="mt-3 rounded-xl border border-border bg-background px-3 py-2 text-xs text-muted-foreground">{confirmationStatus}</p>}
+          <div className="mt-5 flex flex-wrap gap-3">
+            <button type="button" onClick={() => void resendConfirmation()} disabled={resending} className="inline-flex h-10 items-center justify-center rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50">{resending && <Loader2 className="mr-2 size-4 animate-spin" />}{resending ? (es ? "Enviando…" : "Sending…") : (es ? "Reenviar enlace" : "Resend link")}</button>
+            <button type="button" onClick={() => { setConfirmationEmail(""); setConfirmationStatus("") }} className="inline-flex h-10 items-center justify-center rounded-xl border border-border px-4 text-sm font-medium text-foreground hover:bg-accent/50">
+              {es ? "Corregir correo o volver" : "Correct email or go back"}
+            </button>
+          </div>
         </div>
       </SignupShell>
     )
@@ -256,14 +278,15 @@ export function LiveSignup({ role }: { role: "artist" | "institution" }) {
         </button>
       </div>
 
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} noValidate>
         <SignupStepCard>
           <div className="grid gap-5 sm:grid-cols-2">
             <Field label={role === "artist" ? (es ? "Nombre profesional" : "Professional name") : (es ? "Tu nombre" : "Your name")} value={displayName} onChange={setDisplayName} required autoComplete="name" />
             <Field label={es ? "Correo" : "Email"} value={email} onChange={setEmail} type="email" required autoComplete="email" />
-            <Field label={es ? "Contraseña" : "Password"} value={password} onChange={setPassword} type="password" required autoComplete="new-password" placeholder={es ? "Mínimo 8 caracteres" : "At least 8 characters"} />
-            <Field label={es ? "Confirmar contraseña" : "Confirm password"} value={confirmPassword} onChange={setConfirmPassword} type="password" required autoComplete="new-password" />
+            <PasswordField label={es ? "Contraseña" : "Password"} value={password} onChange={setPassword} es={es} placeholder={es ? "Mínimo 8 caracteres" : "At least 8 characters"} />
+            <PasswordField label={es ? "Confirmar contraseña" : "Confirm password"} value={confirmPassword} onChange={setConfirmPassword} es={es} />
           </div>
+          <p className="mt-2 text-[0.68rem] leading-relaxed text-muted-foreground">{es ? "Usa al menos 8 caracteres. Para mayor seguridad, combina palabras, números o símbolos y evita reutilizar otra contraseña." : "Use at least 8 characters. For stronger security, combine words, numbers, or symbols and avoid reusing another password."}</p>
 
           <div className="my-6 border-t border-border" />
 
@@ -322,9 +345,10 @@ export function LiveSignup({ role }: { role: "artist" | "institution" }) {
           {error && <p role="alert" className="mt-5 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
 
           <div className="mt-6 flex flex-col gap-3 border-t border-border pt-5 sm:flex-row sm:items-center sm:justify-between">
-            <p className="max-w-md text-xs leading-relaxed text-muted-foreground">
-              {es ? "Los campos sugeridos nunca se vuelven oficiales hasta que eliges un resultado y envías el formulario." : "Suggested fields never become official until you choose a result and submit the form."}
-            </p>
+            <div className="max-w-md text-xs leading-relaxed text-muted-foreground">
+              <p>{es ? "Los campos sugeridos nunca se vuelven oficiales hasta que eliges un resultado y envías el formulario." : "Suggested fields never become official until you choose a result and submit the form."}</p>
+              <Link href="/#login" className="mt-2 inline-flex font-semibold text-primary hover:underline">{es ? "¿Ya tienes una cuenta? Inicia sesión" : "Already have an account? Sign in"}</Link>
+            </div>
             <button type="submit" disabled={submitting || !requiredReady} className="inline-flex h-11 min-w-40 items-center justify-center rounded-xl bg-primary px-5 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50">
               {submitting && <Loader2 className="mr-2 size-4 animate-spin" />}
               {submitting ? (es ? "Creando…" : "Creating…") : role === "artist" ? (es ? "Crear Pasaporte" : "Create Passport") : (es ? "Crear espacio" : "Create workspace")}

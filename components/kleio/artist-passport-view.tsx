@@ -129,7 +129,7 @@ function ReviewContextPanel({ submission }: { submission: Submission | undefined
                     <span
                       className={cn(
                         "text-[0.65rem] font-medium",
-                        r.status === "Completed" ? "text-[oklch(0.4_0.13_150)]" : "text-muted-foreground",
+                        r.status === "Complete" ? "text-[oklch(0.4_0.13_150)]" : "text-muted-foreground",
                       )}
                     >
                       {r.status}
