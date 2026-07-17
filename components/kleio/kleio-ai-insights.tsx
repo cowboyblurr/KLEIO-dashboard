@@ -25,15 +25,14 @@ export function KleioAiInsights() {
       </div>
 
       <div className="mt-3 grid gap-2 xl:grid-cols-3">
-        {kleioAssistInsights.map((item, index) => {
+        {kleioAssistInsights.map((insight, index) => {
           const Icon = insightIcons[index] ?? AlertCircle
           return (
-            <div key={item.id} className="rounded-xl border border-border bg-background/70 p-3">
-              <div className="flex items-center gap-2 text-xs font-semibold text-foreground">
-                <Icon className="size-3.5 text-primary" />
-                {item.label}
+            <div key={`${index}-${insight}`} className="rounded-xl border border-border bg-background/70 p-3">
+              <div className="flex items-start gap-2 text-xs leading-relaxed text-muted-foreground">
+                <Icon className="mt-0.5 size-3.5 shrink-0 text-primary" />
+                <span>{insight}</span>
               </div>
-              <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">{item.body}</p>
             </div>
           )
         })}
@@ -43,7 +42,7 @@ export function KleioAiInsights() {
         <p className="text-xs text-muted-foreground">
           Suggested walkthrough: {demoScenarios.map((scenario) => scenario.title).join(" → ")}.
         </p>
-        <button type="button" className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:text-primary/80">
+        <button type="button" disabled aria-disabled="true" title="Scenario launching is available from the guided demo controls." className="inline-flex cursor-not-allowed items-center gap-1 text-xs font-semibold text-muted-foreground opacity-70">
           View scenario path
           <ArrowRight className="size-3.5" />
         </button>
