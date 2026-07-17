@@ -15,7 +15,6 @@ import {
 import {
   getSupabaseBrowserClient,
   loadKleioAccount,
-  signInKleioAccount,
   signOutKleioAccount,
   type KleioAccount,
   type KleioAccountRole,
@@ -25,6 +24,7 @@ import { persistDemoGuideState } from "@/components/kleio/use-demo-guide"
 import { KleioWordmarkLink } from "@/components/kleio/kleio-wordmark-link"
 import { KleioAssistObject } from "@/components/kleio/kleio-assist-object"
 import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
+import { RealLoginForm } from "@/components/kleio/auth/real-login-form"
 
 type WorkspaceRole = "artist" | "institution" | "collaborator"
 type AuthGateProps = { requiredRole?: WorkspaceRole; children: React.ReactNode }
@@ -75,37 +75,21 @@ function AuthWall({ requiredRole, auth, onRefresh }: { requiredRole?: WorkspaceR
   const { t, locale } = useKleioLocale()
   const es = locale === "es"
   const activeRole = accountRole(auth.account) ?? auth.demoSession?.role ?? null
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [accountError, setAccountError] = useState("")
-  const [accountLoading, setAccountLoading] = useState(false)
   const [previewEmail, setPreviewEmail] = useState(requiredRole === "artist" ? "artist@kleio.demo" : requiredRole === "collaborator" ? "reviewer@kleio.demo" : "institution@kleio.demo")
   const [previewPassword, setPreviewPassword] = useState("kleio2026")
   const [previewError, setPreviewError] = useState("")
 
   function routeForRole(role: WorkspaceRole) {
     if (requiredRole === role && pathname) {
-      router.push(pathname)
+      router.replace(pathname)
       return
     }
-    router.push(getDashboardForRole(role))
+    router.replace(getDashboardForRole(role))
   }
 
-  async function handleAccountLogin() {
-    if (accountLoading) return
-    setAccountError("")
-    setAccountLoading(true)
-    try {
-      const account = await signInKleioAccount(email, password)
-      clearDemoSession()
-      clearKleioMode()
-      await onRefresh()
-      routeForRole(account.profile.role)
-    } catch (error) {
-      setAccountError(error instanceof Error ? error.message : (es ? "No se pudo iniciar sesión." : "Unable to sign in."))
-    } finally {
-      setAccountLoading(false)
-    }
+  async function handleAuthenticatedLogin(account: KleioAccount) {
+    await onRefresh()
+    routeForRole(account.profile.role)
   }
 
   function enterDemo(role: WorkspaceRole, mode: KleioMode) {
@@ -132,7 +116,7 @@ function AuthWall({ requiredRole, auth, onRefresh }: { requiredRole?: WorkspaceR
   async function handleRealSignOut() {
     await signOutKleioAccount().catch(() => undefined)
     await onRefresh()
-    router.push(getPublicHomeHref())
+    router.replace(getPublicHomeHref())
   }
 
   const wrongRole = Boolean(activeRole && requiredRole && activeRole !== requiredRole)
@@ -147,7 +131,7 @@ function AuthWall({ requiredRole, auth, onRefresh }: { requiredRole?: WorkspaceR
             <h1 className="text-center font-serif text-2xl font-semibold text-foreground">{es ? "Este espacio usa otro rol" : "This workspace uses another role"}</h1>
             <p className="mt-2 text-center text-sm leading-relaxed text-muted-foreground">{es ? `Tu sesión actual es ${roleLabel(activeRole, es)}.` : `Your current session is ${roleLabel(activeRole, es)}.`}</p>
             <div className="mt-6 space-y-2">
-              <button type="button" onClick={() => router.push(getDashboardForRole(activeRole))} className="inline-flex h-10 w-full items-center justify-center rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90">{es ? "Ir a mi espacio" : "Go to my workspace"}</button>
+              <button type="button" onClick={() => router.replace(getDashboardForRole(activeRole))} className="inline-flex h-10 w-full items-center justify-center rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90">{es ? "Ir a mi espacio" : "Go to my workspace"}</button>
               {auth.account ? <button type="button" onClick={() => void handleRealSignOut()} className="inline-flex h-10 w-full items-center justify-center rounded-xl border border-border bg-background px-4 text-sm font-medium text-foreground transition-colors hover:bg-accent/50">{es ? "Cerrar sesión" : "Sign out"}</button> : requiredRole && <button type="button" onClick={() => enterDemo(requiredRole, "preview")} className="inline-flex h-10 w-full items-center justify-center rounded-xl border border-border bg-background px-4 text-sm font-medium text-foreground transition-colors hover:bg-accent/50">{es ? "Cambiar vista previa" : "Switch preview role"}</button>}
             </div>
           </>
@@ -157,22 +141,18 @@ function AuthWall({ requiredRole, auth, onRefresh }: { requiredRole?: WorkspaceR
             <p className="mt-2 text-center text-sm leading-relaxed text-muted-foreground">{es ? "Usa una cuenta autenticada para el espacio real o abre la vista previa con datos sintéticos." : "Use an authenticated account for the real workspace, or open the synthetic-data preview."}</p>
 
             <section className="mt-6 rounded-2xl border border-primary/20 bg-primary/[0.035] p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">{es ? "Cuenta autenticada" : "Authenticated workspace"}</p>
-              <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{es ? "Esta sesión conecta perfiles, membresías institucionales y mensajería persistente de Supabase." : "This session connects Supabase profiles, institution memberships, and persistent messaging."}</p>
-              <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_0.7fr]">
-                <input value={email} onChange={(event) => setEmail(event.target.value)} onKeyDown={(event) => event.key === "Enter" && void handleAccountLogin()} type="email" autoComplete="email" className="h-10 rounded-xl border border-border bg-card px-3 text-sm outline-none focus:border-primary/40 focus:ring-4 focus:ring-primary/10" placeholder={es ? "Correo electrónico" : "Email address"} />
-                <input value={password} onChange={(event) => setPassword(event.target.value)} onKeyDown={(event) => event.key === "Enter" && void handleAccountLogin()} type="password" autoComplete="current-password" className="h-10 rounded-xl border border-border bg-card px-3 text-sm outline-none focus:border-primary/40 focus:ring-4 focus:ring-primary/10" placeholder={es ? "Contraseña" : "Password"} />
-              </div>
-              {accountError && <p className="mt-2 text-xs font-medium text-[oklch(0.45_0.14_30)]">{accountError}</p>}
-              <button type="button" onClick={() => void handleAccountLogin()} disabled={accountLoading || !email.trim() || !password} className="mt-3 inline-flex h-10 w-full items-center justify-center rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50">{accountLoading ? (es ? "Verificando…" : "Verifying…") : (es ? "Iniciar sesión" : "Sign in")}</button>
+              <RealLoginForm onSuccess={handleAuthenticatedLogin} />
             </section>
 
             <details className="group mt-3 rounded-2xl border border-[#E7E1F7] bg-white p-4">
               <summary className="flex cursor-pointer list-none items-center justify-between text-sm font-semibold text-[#5B4B8A] marker:hidden"><span>{es ? "Vista previa con datos sintéticos" : "Synthetic-data product preview"}</span><span className="transition-transform group-open:rotate-90">›</span></summary>
               <div className="mt-3">
                 <p className="text-xs leading-relaxed text-muted-foreground">{es ? "La vista previa conserva los registros demo existentes y no envía mensajes reales." : "Preview mode preserves the existing demo records and does not send real messages."}</p>
-                <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_0.7fr]"><input value={previewEmail} onChange={(event) => setPreviewEmail(event.target.value)} className="h-10 rounded-xl border border-border bg-card px-3 text-sm outline-none" /><input value={previewPassword} onChange={(event) => setPreviewPassword(event.target.value)} type="password" className="h-10 rounded-xl border border-border bg-card px-3 text-sm outline-none" /></div>
-                {previewError && <p className="mt-2 text-xs font-medium text-[oklch(0.45_0.14_55)]">{previewError}</p>}
+                <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_0.7fr]">
+                  <label className="grid gap-1 text-xs font-medium text-muted-foreground"><span>{es ? "Correo demo" : "Demo email"}</span><input value={previewEmail} onChange={(event) => setPreviewEmail(event.target.value)} autoComplete="off" className="h-10 rounded-xl border border-border bg-card px-3 text-sm text-foreground outline-none focus:border-primary/40" /></label>
+                  <label className="grid gap-1 text-xs font-medium text-muted-foreground"><span>{es ? "Contraseña demo" : "Demo password"}</span><input value={previewPassword} onChange={(event) => setPreviewPassword(event.target.value)} type="password" autoComplete="off" className="h-10 rounded-xl border border-border bg-card px-3 text-sm text-foreground outline-none focus:border-primary/40" /></label>
+                </div>
+                {previewError && <p role="alert" className="mt-2 text-xs font-medium text-[oklch(0.45_0.14_55)]">{previewError}</p>}
                 <button type="button" onClick={handlePreviewLogin} className="mt-3 inline-flex h-10 w-full items-center justify-center rounded-xl border border-primary/30 bg-primary/10 px-4 text-sm font-semibold text-primary transition-colors hover:bg-primary/15">{es ? "Entrar a la vista previa" : "Enter product preview"}</button>
                 <div className="mt-3 grid gap-3 sm:grid-cols-2"><section className="rounded-xl border border-[#E7E1F7] bg-[#F7F4FF] p-3"><p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#A997E8]">{es ? "Recorrido demo" : "Demo walkthrough"}</p><div className="mt-3"><RoleAccessButtons onSelect={enterDemo} mode="demo" locale={locale} /></div></section><section className="rounded-xl border border-border bg-background p-3"><p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">{es ? "Vista previa" : "Product preview"}</p><div className="mt-3"><RoleAccessButtons onSelect={enterDemo} mode="preview" locale={locale} /></div></section></div>
               </div>
@@ -223,7 +203,7 @@ export function useDemoSignOut() {
     await signOutKleioAccount().catch(() => undefined)
     clearDemoSession()
     clearKleioMode()
-    router.push("/")
+    router.replace("/")
   }
 }
 
