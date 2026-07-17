@@ -171,23 +171,14 @@ async function completeInstitutionOnboarding(userId: string, payload: Institutio
     location_data: locationData(selectedLocation, resolvedLocation),
   }
 
-  const { data: existing, error: existingError } = await supabase
+  const { error: institutionError } = await supabase
     .from("institutions")
-    .select("id")
-    .eq("owner_user_id", userId)
-    .limit(1)
-    .maybeSingle()
-  if (existingError) throw existingError
-
-  const institutionQuery = existing?.id
-    ? supabase.from("institutions").update(institutionRecord).eq("id", existing.id)
-    : supabase.from("institutions").insert(institutionRecord)
-  const { error: institutionError } = await institutionQuery
+    .upsert(institutionRecord, { onConflict: "owner_user_id" })
   if (institutionError) throw institutionError
 
   const { error: profileError } = await supabase
     .from("profiles")
-    .update({ display_name: payload.displayName.trim() })
+    .update({ display_name: payload.displayName.trim(), onboarding_completed: true })
     .eq("id", userId)
   if (profileError) throw profileError
 }
