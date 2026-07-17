@@ -92,6 +92,7 @@ jobs:
             lint.log
             build.log
             navigation.log
+            pnpm-lock.yaml
           if-no-files-found: warn
 
       - name: Enforce verification result
