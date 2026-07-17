@@ -7,7 +7,6 @@ import {
   institution,
   messageThreads,
   notes,
-  opportunities,
   programs,
   reviews,
   type ActivityLogEntry,
