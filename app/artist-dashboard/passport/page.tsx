@@ -1,6 +1,8 @@
 import type { Metadata } from "next"
 import { ArtistShell } from "@/components/kleio/artist-shell"
 import { ArtistPassportPageView } from "@/components/kleio/artist-workspace/artist-passport-page-view"
+import { LiveModeView } from "@/components/kleio/live-mode-view"
+import { LiveArtistPassport } from "@/components/kleio/live-artist-workspace"
 
 export const metadata: Metadata = {
   title: "KLEIO — Creative Passport",
@@ -10,7 +12,7 @@ export const metadata: Metadata = {
 export default function Page() {
   return (
     <ArtistShell>
-      <ArtistPassportPageView />
+      <LiveModeView live={<LiveArtistPassport />} preview={<ArtistPassportPageView />} />
     </ArtistShell>
   )
 }

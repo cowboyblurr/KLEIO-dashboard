@@ -13,15 +13,15 @@ export function DemoEnvironmentBadge({ className, compact = false, showInPreview
   const label = isLive
     ? liveContext === "registration"
       ? locale === "es"
-        ? "Registro real · Espacio de escenario"
-        : "Live registration · Scenario workspace"
+        ? "Registro real · Espacio autenticado"
+        : "Live registration · Authenticated workspace"
       : locale === "es"
       ? compact
-        ? "Cuenta autenticada · Registros de escenario"
-        : "Cuenta autenticada · El perfil se guarda · Los registros del espacio son escenarios sintéticos"
+        ? "Cuenta autenticada · Registros principales reales"
+        : "Cuenta autenticada · Los flujos principales se guardan · Algunas vistas secundarias siguen siendo sintéticas"
       : compact
-        ? "Authenticated account · Scenario records"
-        : "Authenticated account · Profile persists · Workspace records are synthetic scenarios"
+        ? "Authenticated · Live core records"
+        : "Authenticated account · Core workflows persist · Some secondary views remain synthetic"
     : isPreview
     ? locale === "es"
       ? "Vista previa privada"

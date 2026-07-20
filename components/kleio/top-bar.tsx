@@ -4,7 +4,7 @@ import { useMemo, useState } from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { Bell, Bookmark, ChevronDown, LogOut, Mail, Plus, Search, Send, SlidersHorizontal, Vote, X } from "lucide-react"
-import { analytics, getDemoMessageForThread, isSubmissionMessagePending } from "@/lib/kleio-analytics"
+import { getDemoMessageForThread, isSubmissionMessagePending } from "@/lib/kleio-analytics"
 import { messageThreads, type MessageThread } from "@/lib/kleio-data"
 import { getGlobalSearchResults, type KleioSearchResult } from "@/lib/kleio-search"
 import { useDemoSignOut } from "@/components/kleio/auth-gate"
@@ -13,13 +13,14 @@ import { useKleioMode } from "@/components/kleio/use-kleio-mode"
 import { DemoEnvironmentBadge } from "@/components/kleio/demo-environment-badge"
 import { DemoSafeAction } from "@/components/kleio/demo-safe-action"
 import { InitialAvatar } from "@/components/kleio/initial-avatar"
+import { LiveNotificationsPanel } from "@/components/kleio/live-institution-workspace"
 
-function getPrimaryAction(pathname: string, locale: string, isPreview: boolean) {
+function getPrimaryAction(pathname: string, locale: string) {
   const es = locale === "es"
   if (pathname.startsWith("/submissions")) return { label: es ? "Filtrar postulaciones" : "Filter Submissions", href: "/submissions/", icon: SlidersHorizontal }
   if (pathname.startsWith("/review-queue")) return { label: es ? "Asignar revisores" : "Assign Reviewers", href: "/committee/", icon: Plus }
   if (pathname.startsWith("/shortlist")) return { label: es ? "Preparar informe" : "Prepare Report", href: "/reports/", icon: Plus }
-  if (pathname.startsWith("/reports")) return { label: es ? "Exportar informe" : isPreview ? "Export Report" : "Export Demo Report", href: null, icon: Plus }
+  if (pathname.startsWith("/reports")) return { label: es ? "Exportar informe" : "Export Report", href: "/reports/", icon: Plus }
   if (pathname.startsWith("/templates")) return { label: es ? "Crear plantilla" : "Create Template", href: null, icon: Plus }
   if (pathname.startsWith("/programs")) return { label: es ? "Nuevo programa" : "New Program", href: "/programs/new/", icon: Plus }
   return { label: es ? "Crear convocatoria" : "Create Open Call", href: "/programs/new/", icon: Plus }
@@ -56,7 +57,7 @@ export function TopBar() {
   const [notificationsOpen, setNotificationsOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
-  const primaryAction = getPrimaryAction(pathname, locale, isPreview)
+  const primaryAction = getPrimaryAction(pathname, locale)
   const PrimaryIcon = primaryAction.icon
   const es = locale === "es"
   const demoMessage = isLive
@@ -129,7 +130,7 @@ export function TopBar() {
         <Link href="/submissions/" className="hidden h-10 items-center gap-2 rounded-xl border border-border bg-card px-3.5 text-sm font-medium text-foreground shadow-sm transition-colors hover:bg-accent/50 lg:flex"><SlidersHorizontal className="size-4 text-muted-foreground" />{t("institution.topBar.filterSubmissions")}</Link>
         <Link href="/shortlist/" aria-label={t("institution.shortlist.title")} className="grid size-10 place-items-center rounded-xl border border-border bg-card text-muted-foreground shadow-sm transition-colors hover:bg-accent/50 hover:text-foreground"><Bookmark className="size-4" /></Link>
 
-        <div className="relative">
+        {isLive ? <LiveNotificationsPanel /> : <div className="relative">
           <button type="button" onClick={() => setNotificationsOpen((open) => !open)} aria-expanded={notificationsOpen} aria-label={es ? "Ver tareas pendientes" : "View pending tasks"} className="relative grid size-10 place-items-center rounded-xl border border-border bg-card text-muted-foreground shadow-sm transition-colors hover:bg-accent/50 hover:text-foreground"><Bell className="size-4" /><span className="absolute -right-1 -top-1 grid size-5 place-items-center rounded-full bg-primary text-[0.65rem] font-semibold text-primary-foreground ring-2 ring-background">{notificationThreads.length}</span></button>
 
           {notificationsOpen && (
@@ -139,7 +140,7 @@ export function TopBar() {
               <div className="border-t border-border p-3"><Link href="/messages/" onClick={() => setNotificationsOpen(false)} className="inline-flex h-9 w-full items-center justify-center rounded-xl bg-primary text-xs font-semibold text-primary-foreground transition-colors hover:bg-primary/90">{es ? "Abrir centro de mensajes" : "Open full message center"}</Link></div>
             </div>
           )}
-        </div>
+        </div>}
 
         <div className="ml-1 flex items-center overflow-visible rounded-xl shadow-sm">
           {primaryAction.href ? <Link href={primaryAction.href} className="flex h-10 items-center gap-2 rounded-l-xl bg-primary px-4 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"><PrimaryIcon className="size-4" />{primaryAction.label}</Link> : <DemoSafeAction message={demoMessage} className="flex h-10 items-center gap-2 rounded-l-xl bg-primary px-4 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"><PrimaryIcon className="size-4" />{primaryAction.label}</DemoSafeAction>}

@@ -1,6 +1,8 @@
 import type { Metadata } from "next"
 import { DashboardShell } from "@/components/kleio/dashboard-shell"
 import { ReviewRoomPageView } from "@/components/kleio/review-room-page-view"
+import { LiveModeView } from "@/components/kleio/live-mode-view"
+import { LiveInstitutionSubmissions } from "@/components/kleio/live-institution-workspace"
 
 export const metadata: Metadata = {
   title: "KLEIO — Review Room",
@@ -11,7 +13,7 @@ export const metadata: Metadata = {
 export default function Page() {
   return (
     <DashboardShell>
-      <ReviewRoomPageView />
+      <LiveModeView live={<LiveInstitutionSubmissions mode="room" />} preview={<ReviewRoomPageView />} />
     </DashboardShell>
   )
 }

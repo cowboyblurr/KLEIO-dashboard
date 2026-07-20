@@ -12,6 +12,8 @@ import { SearchFilterBar } from "@/components/kleio/search-filter-bar"
 import { StatusPill } from "@/components/kleio/pills"
 import { DemoStatusChip } from "@/components/kleio/demo-status-chip"
 import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
+import { useKleioMode } from "@/components/kleio/use-kleio-mode"
+import { LiveInstitutionSubmissions } from "@/components/kleio/live-institution-workspace"
 
 function filterChips(es: boolean) {
   return es ? ["Todos los programas", "Todos los estados", "Preparación de materiales", "Etapa de revisión"] : ["All Programs", "All Statuses", "Material Readiness", "Review Stage"]
@@ -19,6 +21,7 @@ function filterChips(es: boolean) {
 
 export default function SubmissionsPage() {
   const { t, locale } = useKleioLocale()
+  const { isLive } = useKleioMode()
   const es = locale === "es"
   const [query, setQuery] = useState("")
   const suggestions = useMemo(() => getSubmissionSearchSuggestions(query, 7), [query])
@@ -27,6 +30,10 @@ export default function SubmissionsPage() {
     if (!normalized || normalized === "material" || normalized === "review" || normalized.includes("program") || normalized.includes("estado")) return allSubmissions
     return allSubmissions.filter((submission) => [submission.artist, submission.location, submission.program, submission.projectTitle, submission.status, submission.medium, submission.priority, submission.reviewer, submission.missingMaterials?.join(" ") ?? ""].join(" ").toLowerCase().includes(normalized))
   }, [query])
+
+  if (isLive) {
+    return <DashboardShell><LiveInstitutionSubmissions mode="submissions" /></DashboardShell>
+  }
 
   return (
     <DashboardShell>

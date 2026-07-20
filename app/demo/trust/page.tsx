@@ -26,7 +26,7 @@ export default function DemoTrustPage() {
             The names are fictional. The mechanics are real.
           </h1>
           <p className="mt-4 max-w-3xl text-sm leading-relaxed text-[#6F6882]">
-            KLEIO currently uses synthetic names, institutions, universities, applications, reviewers, and opportunities inside the product walkthrough. Real artist and institution account registration, authentication, onboarding profiles, and institution-scoped internal messaging are connected to Supabase; the broader workspace scenario records remain synthetic.
+            Preview and demo mode use clearly identified synthetic names, institutions, universities, applications, reviewers, and opportunities. Authenticated mode connects registration, onboarding, Creative Passports, portfolio assets, calls, saved opportunities, applications, status history, reviews, shortlists, messages, notifications, invitations, and report exports to Supabase.
           </p>
         </section>
 
@@ -51,7 +51,7 @@ export default function DemoTrustPage() {
         <section className="mt-6 rounded-[1.5rem] border border-[#E7E1F7] bg-white p-5 shadow-[0_18px_48px_rgba(82,64,130,0.08)]">
           <h2 className="font-serif text-2xl font-semibold tracking-[-0.02em] text-[#292631]">Current boundary</h2>
           <p className="mt-2 max-w-3xl text-sm leading-relaxed text-[#6F6882]">
-            Authentication and onboarding profile persistence are live. The walkthrough dashboards still use controlled synthetic records for calls, submissions, reviews, opportunity matches, and reports. Those scenario controls must not be presented as persisted production workflows until each page is connected to the authenticated Supabase records.
+            Core artist and institution workflows persist in authenticated mode. Preview-only discovery analytics, matching scores, global search results, and some secondary dashboard metrics still use controlled synthetic records and should be presented as product scenarios rather than live usage analytics.
           </p>
           <Link href="/demo/infrastructure/" className="mt-4 inline-flex h-10 items-center rounded-full bg-[#5B4B8A] px-4 text-xs font-semibold text-white transition-opacity hover:opacity-90">
             View infrastructure audit
