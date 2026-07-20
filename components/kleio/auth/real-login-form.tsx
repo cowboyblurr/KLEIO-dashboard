@@ -5,7 +5,7 @@ import Link from "next/link"
 import { Eye, EyeOff, Loader2, ShieldCheck } from "lucide-react"
 import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
 import { clearDemoSession } from "@/lib/kleio-demo-auth"
-import { clearKleioMode } from "@/lib/kleio-mode"
+import { setKleioMode } from "@/lib/kleio-mode"
 import { getKleioAuthErrorMessage } from "@/lib/kleio-auth"
 import { signInKleioAccount, type KleioAccount } from "@/lib/kleio-supabase"
 import { cn } from "@/lib/utils"
@@ -37,7 +37,7 @@ export function RealLoginForm({
     try {
       const account = await signInKleioAccount(email, password)
       clearDemoSession()
-      clearKleioMode()
+      setKleioMode("live")
       await onSuccess(account)
     } catch (loginError) {
       setError(getKleioAuthErrorMessage(loginError, es ? "es" : "en"))

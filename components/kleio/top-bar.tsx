@@ -52,20 +52,24 @@ export function TopBar() {
   const pathname = usePathname()
   const router = useRouter()
   const { t, locale } = useKleioLocale()
-  const { isPreview } = useKleioMode()
+  const { isLive, isPreview } = useKleioMode()
   const [notificationsOpen, setNotificationsOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
   const primaryAction = getPrimaryAction(pathname, locale, isPreview)
   const PrimaryIcon = primaryAction.icon
   const es = locale === "es"
-  const demoMessage = isPreview
+  const demoMessage = isLive
+    ? es ? "Este control del escenario todavía no modifica los datos de tu cuenta autenticada." : "This scenario control does not yet modify your authenticated account data."
+    : isPreview
     ? es ? "Acción de vista previa. El backend de producción todavía no está conectado." : "Preview action. Production backend export is not connected yet."
     : es ? "Acción de demostración. Este prototipo no modifica datos reales." : "Demo action. This prototype does not change live data."
 
   const notificationThreads = useMemo(() => messageThreads.filter((thread) => thread.unread || isSubmissionMessagePending(thread.submissionId)).slice(0, 3), [])
   const searchResults = useMemo(() => getGlobalSearchResults(searchQuery, searchQuery.trim() ? 9 : 6), [searchQuery])
-  const searchPlaceholder = isPreview
+  const searchPlaceholder = isLive
+    ? es ? "Buscar registros del escenario…" : "Search workspace scenario records…"
+    : isPreview
     ? es ? "Buscar en el espacio KLEIO…" : "Search KLEIO Workspace…"
     : es ? "Buscar en el demo institucional…" : "Search the institution demo…"
 

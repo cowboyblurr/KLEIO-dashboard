@@ -111,6 +111,13 @@ export async function signUpKleioAccount(input: {
 
   if (error) throw error
   if (!data.user) throw new Error("KLEIO could not create the account.")
+  // With email confirmation enabled, Supabase deliberately returns an
+  // obfuscated user object for an existing email. An empty identities array is
+  // the supported signal; without this check the UI falsely claims that a new
+  // confirmation email was sent.
+  if (Array.isArray(data.user.identities) && data.user.identities.length === 0) {
+    throw new Error("A user has already been registered with this email.")
+  }
   return { userId: data.user.id, confirmationRequired: !data.session }
 }
 

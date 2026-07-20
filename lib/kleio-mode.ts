@@ -1,4 +1,4 @@
-export type KleioMode = "demo" | "preview"
+export type KleioMode = "demo" | "preview" | "live"
 
 const MODE_STORAGE_KEY = "kleio-mode"
 
@@ -7,9 +7,10 @@ function isBrowser() {
 }
 
 export function getKleioMode(): KleioMode {
-  if (!isBrowser()) return "demo"
+  if (!isBrowser()) return "live"
   const stored = window.localStorage.getItem(MODE_STORAGE_KEY)
-  return stored === "preview" ? "preview" : "demo"
+  if (stored === "demo" || stored === "preview") return stored
+  return "live"
 }
 
 export function setKleioMode(mode: KleioMode): void {
@@ -28,4 +29,8 @@ export function isDemoMode() {
 
 export function isPreviewMode() {
   return getKleioMode() === "preview"
+}
+
+export function isLiveMode() {
+  return getKleioMode() === "live"
 }

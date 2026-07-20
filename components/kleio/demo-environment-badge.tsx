@@ -6,11 +6,19 @@ import { cn } from "@/lib/utils"
 
 export function DemoEnvironmentBadge({ className, compact = false, showInPreview = false }: { className?: string; compact?: boolean; showInPreview?: boolean }) {
   const { locale } = useKleioLocale()
-  const { isPreview } = useKleioMode()
+  const { isLive, isPreview } = useKleioMode()
 
   if (isPreview && !showInPreview) return null
 
-  const label = isPreview
+  const label = isLive
+    ? locale === "es"
+      ? compact
+        ? "Cuenta autenticada · Registros de escenario"
+        : "Cuenta autenticada · El perfil se guarda · Los registros del espacio son escenarios sintéticos"
+      : compact
+        ? "Authenticated account · Scenario records"
+        : "Authenticated account · Profile persists · Workspace records are synthetic scenarios"
+    : isPreview
     ? locale === "es"
       ? "Vista previa privada"
       : "Product preview"
@@ -20,7 +28,7 @@ export function DemoEnvironmentBadge({ className, compact = false, showInPreview
         : "Demo de trabajo · Registros de muestra · Sin cuentas o postulaciones reales"
       : compact
         ? "Working demo · Sample records"
-        : "Working demo · Sample records · No real accounts or live submissions"
+        : "Working demo · Sample records · No live submissions"
 
   return (
     <span className={cn("inline-flex items-center gap-2 rounded-full border border-[#E7E1F7] bg-white/85 px-3 py-1 text-[0.58rem] font-semibold uppercase tracking-[0.12em] text-[#7F7890] shadow-[0_8px_24px_rgba(82,64,130,0.05)] backdrop-blur-sm", className)} aria-label={label}>

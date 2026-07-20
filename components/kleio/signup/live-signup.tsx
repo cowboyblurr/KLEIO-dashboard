@@ -21,7 +21,7 @@ import {
   type ArtistOnboardingPayload,
   type InstitutionOnboardingPayload,
 } from "@/lib/kleio-live-onboarding"
-import { clearKleioMode } from "@/lib/kleio-mode"
+import { setKleioMode } from "@/lib/kleio-mode"
 import { getKleioAuthErrorMessage, resendKleioSignupConfirmation } from "@/lib/kleio-auth"
 
 const inputClassName = "h-11 w-full rounded-xl border border-border bg-background px-3 text-sm text-foreground outline-none transition-colors focus:border-primary/40 focus:ring-4 focus:ring-primary/10"
@@ -147,7 +147,7 @@ export function LiveSignup({ role }: { role: "artist" | "institution" }) {
 
   function routeToWorkspace() {
     clearDemoSession()
-    clearKleioMode()
+    setKleioMode("live")
     router.replace(getDashboardForRole(role))
   }
 

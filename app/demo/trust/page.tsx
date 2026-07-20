@@ -26,7 +26,7 @@ export default function DemoTrustPage() {
             The names are fictional. The mechanics are real.
           </h1>
           <p className="mt-4 max-w-3xl text-sm leading-relaxed text-[#6F6882]">
-            KLEIO currently uses synthetic names, institutions, universities, applications, reviewers, and opportunities because there are no live users or verified institutional records yet. The workflow, dashboard mechanics, calculations, review states, readiness logic, and analytics are built to run from structured records.
+            KLEIO currently uses synthetic names, institutions, universities, applications, reviewers, and opportunities inside the product walkthrough. Real artist and institution account registration, authentication, onboarding profiles, and institution-scoped internal messaging are connected to Supabase; the broader workspace scenario records remain synthetic.
           </p>
         </section>
 
@@ -51,7 +51,7 @@ export default function DemoTrustPage() {
         <section className="mt-6 rounded-[1.5rem] border border-[#E7E1F7] bg-white p-5 shadow-[0_18px_48px_rgba(82,64,130,0.08)]">
           <h2 className="font-serif text-2xl font-semibold tracking-[-0.02em] text-[#292631]">Current boundary</h2>
           <p className="mt-2 max-w-3xl text-sm leading-relaxed text-[#6F6882]">
-            This is not yet a live production account system. Live users, verified institutions, real submissions, production authentication, and connected opportunity sources come next. The demo proves the product mechanics with controlled seed data first.
+            Authentication and onboarding profile persistence are live. The walkthrough dashboards still use controlled synthetic records for calls, submissions, reviews, opportunity matches, and reports. Those scenario controls must not be presented as persisted production workflows until each page is connected to the authenticated Supabase records.
           </p>
           <Link href="/demo/infrastructure/" className="mt-4 inline-flex h-10 items-center rounded-full bg-[#5B4B8A] px-4 text-xs font-semibold text-white transition-opacity hover:opacity-90">
             View infrastructure audit
