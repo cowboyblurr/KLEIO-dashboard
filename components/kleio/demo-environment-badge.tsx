@@ -4,14 +4,18 @@ import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
 import { useKleioMode } from "@/components/kleio/use-kleio-mode"
 import { cn } from "@/lib/utils"
 
-export function DemoEnvironmentBadge({ className, compact = false, showInPreview = false }: { className?: string; compact?: boolean; showInPreview?: boolean }) {
+export function DemoEnvironmentBadge({ className, compact = false, showInPreview = false, liveContext = "workspace" }: { className?: string; compact?: boolean; showInPreview?: boolean; liveContext?: "workspace" | "registration" }) {
   const { locale } = useKleioLocale()
   const { isLive, isPreview } = useKleioMode()
 
   if (isPreview && !showInPreview) return null
 
   const label = isLive
-    ? locale === "es"
+    ? liveContext === "registration"
+      ? locale === "es"
+        ? "Registro real · Espacio de escenario"
+        : "Live registration · Scenario workspace"
+      : locale === "es"
       ? compact
         ? "Cuenta autenticada · Registros de escenario"
         : "Cuenta autenticada · El perfil se guarda · Los registros del espacio son escenarios sintéticos"
