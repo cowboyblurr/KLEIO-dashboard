@@ -61,8 +61,16 @@ export function ArtistSidebar() {
   const artist = getArtistById(DEMO_ARTIST_ID)
   const { t, locale } = useKleioLocale()
 
+  const mobileItems = navSections.flatMap((section) => section.items)
   return (
-    <aside className="flex h-full w-[220px] shrink-0 flex-col border-r border-[#E7E1F7] bg-white">
+    <>
+    <div className="fixed inset-x-0 top-0 z-40 flex h-14 items-center gap-3 border-b border-[#E7E1F7] bg-white px-3 md:hidden">
+      <KleioWordmarkLink href="/" className="shrink-0 rounded-md bg-white px-2 py-1 shadow-sm ring-1 ring-border" />
+      <nav aria-label="Artist workspace" className="flex min-w-0 flex-1 gap-1 overflow-x-auto">
+        {mobileItems.map((item) => { const active = item.activeMatch ? pathname.startsWith(item.activeMatch) : pathname === item.href || `${pathname}/` === item.href; const Icon = item.icon; return <Link key={item.href} href={item.href} aria-current={active ? "page" : undefined} aria-label={item.label} className={cn("grid size-10 shrink-0 place-items-center rounded-lg", active ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-accent/60")}><Icon className="size-4" /></Link> })}
+      </nav>
+    </div>
+    <aside className="hidden h-full w-[220px] shrink-0 flex-col border-r border-[#E7E1F7] bg-white md:flex">
       <div className="flex items-center justify-between px-6 pt-6 pb-5">
         <KleioWordmarkLink href="/" className="rounded-md bg-white px-2.5 py-1.5 shadow-sm ring-1 ring-border" />
       </div>
@@ -119,5 +127,6 @@ export function ArtistSidebar() {
         )}
       </div>
     </aside>
+    </>
   )
 }

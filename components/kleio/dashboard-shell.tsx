@@ -23,9 +23,9 @@ export function DashboardShell({ children }: { children: ReactNode }) {
       {isDemo && <DemoClickFeedbackLayer />}
       {isDemo && <DemoGuideHighlightLayer />}
       {isDemo && <DemoTrustLink className="fixed bottom-4 left-4 z-40 max-lg:hidden" />}
-      <div className="flex h-screen overflow-x-auto overflow-y-hidden bg-background text-foreground">
+      <div className="flex h-dvh min-w-0 overflow-hidden bg-background pt-14 text-foreground md:pt-0">
         <Sidebar />
-        <div className="flex min-w-[920px] flex-1 flex-col overflow-hidden">
+        <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
           <TopBar />
           <div className="min-h-0 flex-1 overflow-x-auto overflow-y-hidden">{children}</div>
         </div>

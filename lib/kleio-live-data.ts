@@ -112,6 +112,20 @@ export type InstitutionContextRecord = {
   member_status: string
 }
 
+export type InstitutionProfileRecord = {
+  id: string
+  owner_user_id: string
+  name: string
+  display_name: string
+  organization_type: string
+  description: string
+  location: string
+  website_url: string
+  contact_name: string
+  contact_email: string
+  updated_at: string
+}
+
 function splitList(value: string) {
   return value.split(/[,;\n]/).map((item) => item.trim()).filter(Boolean)
 }
@@ -222,6 +236,16 @@ export async function createPortfolioWork(input: { title: string; year: string; 
   return data as PortfolioWorkRecord
 }
 
+export async function updatePortfolioWork(workId: string, input: { title: string; year: string; medium: string; dimensions: string; description: string; series: string; tags: string }) {
+  const supabase = getSupabaseBrowserClient()
+  const { data, error } = await supabase.from("portfolio_works").update({
+    title: input.title.trim(), year: input.year.trim(), medium: input.medium.trim(), dimensions: input.dimensions.trim(),
+    description: input.description.trim(), series: input.series.trim(), tags: splitList(input.tags), updated_at: new Date().toISOString(),
+  }).eq("id", workId).select("*").single()
+  if (error) throw error
+  return data as PortfolioWorkRecord
+}
+
 export async function deletePortfolioWork(work: PortfolioWorkRecord) {
   const supabase = getSupabaseBrowserClient()
   const { error } = await supabase.from("portfolio_works").delete().eq("id", work.id)
@@ -257,7 +281,7 @@ export async function setOpportunitySaved(callId: string, saved: boolean) {
 export async function getOrCreateApplicationDraft(call: OpenCallRecord): Promise<ApplicationRecord> {
   const account = await requireAccount()
   const supabase = getSupabaseBrowserClient()
-  const { data: existing, error: existingError } = await supabase.from("applications").select("*").eq("call_id", call.id).eq("artist_user_id", account.user.id).maybeSingle()
+  const { data: existing, error: existingError } = await supabase.from("applications").select("*, application_answers(*), application_works(portfolio_work_id, sort_order)").eq("call_id", call.id).eq("artist_user_id", account.user.id).maybeSingle()
   if (existingError) throw existingError
   if (existing) return existing as ApplicationRecord
   const passport = await loadArtistPassport()
@@ -320,6 +344,27 @@ export async function loadInstitutionOpenCalls(): Promise<OpenCallRecord[]> {
   return (data ?? []) as OpenCallRecord[]
 }
 
+export async function loadInstitutionProfile(): Promise<InstitutionProfileRecord> {
+  const context = await loadInstitutionContext()
+  const supabase = getSupabaseBrowserClient()
+  const { data, error } = await supabase.from("institutions").select("id, owner_user_id, name, display_name, organization_type, description, location, website_url, contact_name, contact_email, updated_at").eq("id", context.institution_id).single()
+  if (error) throw error
+  return data as InstitutionProfileRecord
+}
+
+export async function saveInstitutionProfile(input: InstitutionProfileRecord) {
+  const context = await loadInstitutionContext()
+  const supabase = getSupabaseBrowserClient()
+  const record = {
+    name: input.name.trim(), display_name: input.display_name.trim() || input.name.trim(), organization_type: input.organization_type.trim(),
+    description: input.description.trim(), location: input.location.trim(), website_url: input.website_url.trim(), contact_name: input.contact_name.trim(),
+    contact_email: input.contact_email.trim().toLowerCase(), updated_at: new Date().toISOString(), user_adjusted: true,
+  }
+  const { data, error } = await supabase.from("institutions").update(record).eq("id", context.institution_id).select("id, owner_user_id, name, display_name, organization_type, description, location, website_url, contact_name, contact_email, updated_at").single()
+  if (error) throw error
+  return data as InstitutionProfileRecord
+}
+
 export async function saveInstitutionOpenCall(input: Partial<OpenCallRecord> & { title: string; publish: boolean }) {
   const account = await requireAccount()
   const context = await loadInstitutionContext()
@@ -352,6 +397,15 @@ export async function saveInstitutionOpenCall(input: Partial<OpenCallRecord> & {
     ? supabase.from("open_calls").update(record).eq("id", input.id).select("*").single()
     : supabase.from("open_calls").insert(record).select("*").single()
   const { data, error } = await query
+  if (error) throw error
+  return data as OpenCallRecord
+}
+
+export async function setInstitutionOpenCallStatus(callId: string, status: OpenCallRecord["status"]) {
+  const context = await loadInstitutionContext()
+  const supabase = getSupabaseBrowserClient()
+  const now = new Date().toISOString()
+  const { data, error } = await supabase.from("open_calls").update({ status, published_at: status === "open" ? now : undefined, updated_at: now }).eq("id", callId).eq("institution_id", context.institution_id).select("*").single()
   if (error) throw error
   return data as OpenCallRecord
 }

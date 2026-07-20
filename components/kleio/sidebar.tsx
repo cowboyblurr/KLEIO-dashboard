@@ -37,8 +37,16 @@ export function Sidebar() {
   const programDirector = collaborators.find((person) => person.role === "Program Director") ?? collaborators[0]
   const es = locale === "es"
 
+  const mobileItems = navSections.flatMap((section) => section.items)
   return (
-    <aside className="flex h-full w-64 shrink-0 flex-col border-r border-border bg-sidebar">
+    <>
+    <div className="fixed inset-x-0 top-0 z-40 flex h-14 items-center gap-3 border-b border-border bg-sidebar px-3 md:hidden">
+      <KleioWordmarkLink href="/" className="shrink-0 rounded-md bg-white px-2 py-1 shadow-sm ring-1 ring-border" />
+      <nav aria-label="Institution workspace" className="flex min-w-0 flex-1 gap-1 overflow-x-auto">
+        {mobileItems.map((item) => { const active = pathname === item.href; const Icon = item.icon; return <Link key={item.href} href={item.href} aria-current={active ? "page" : undefined} aria-label={itemLabel(item.href, item.label, locale, t)} className={cn("grid size-10 shrink-0 place-items-center rounded-lg", active ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-accent/60")}><Icon className="size-4" /></Link> })}
+      </nav>
+    </div>
+    <aside className="hidden h-full w-64 shrink-0 flex-col border-r border-border bg-sidebar md:flex">
       <div className="flex items-center px-6 pb-5 pt-6">
         <KleioWordmarkLink href="/" className="rounded-md bg-white px-2.5 py-1.5 shadow-sm ring-1 ring-border" />
       </div>
@@ -96,5 +104,6 @@ export function Sidebar() {
         </button>
       </div>
     </aside>
+    </>
   )
 }
