@@ -67,7 +67,7 @@ export function ForgotPasswordForm() {
       <div className="flex items-start gap-3 rounded-xl border border-[#E7E1F7] bg-[#F7F4FF] p-4">
         <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-white text-[#5B4B8A]"><Mail className="size-4" /></span>
         <p className="text-xs leading-relaxed text-[#6F6882]">
-          {es ? "Usaremos el flujo seguro de recuperación de Supabase. KLEIO no confirmará públicamente si el correo pertenece a una cuenta." : "KLEIO uses Supabase's secure recovery flow and will not publicly reveal whether an email belongs to an account."}
+          {es ? "KLEIO usa un proceso seguro de recuperación y no revelará si un correo pertenece a una cuenta." : "KLEIO uses a secure recovery process and will not reveal whether an email belongs to an account."}
         </p>
       </div>
       <label htmlFor={emailId} className="mt-5 block text-xs font-medium text-muted-foreground">{es ? "Correo electrónico" : "Email address"}</label>
