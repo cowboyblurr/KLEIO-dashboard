@@ -5,7 +5,7 @@ import { LandingPage } from "@/components/kleio/landing-page"
 export const metadata: Metadata = {
   title: "KLEIO Arthouse",
   description:
-    "A shared workspace for artists and institutions to manage submissions, reviews, opportunities, and cultural records with clarity.",
+    "Artist applications and institutional review, brought together in one structured workspace.",
 }
 
 export default function Page() {
