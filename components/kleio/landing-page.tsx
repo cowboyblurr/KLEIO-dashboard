@@ -193,6 +193,16 @@ export function LandingPage() {
           </section>
         </div>
 
+        <div className="flex items-center justify-center">
+          <Link
+            href="/demo/"
+            className="group inline-flex items-center gap-1.5 rounded-full border border-[#DED5F1] bg-white/82 px-4 py-2 text-[0.68rem] font-semibold tracking-[0.02em] text-[#5B4B8A] shadow-[0_10px_28px_rgba(82,64,130,0.06)] transition-all hover:-translate-y-px hover:border-[#A997E8] hover:bg-[#F8F5FF] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#A997E8]/20"
+          >
+            {es ? "Recorrer el demo guiado" : "Take the Guided Tour"}
+            <ChevronRight className="size-3.5 transition-transform group-hover:translate-x-0.5" aria-hidden />
+          </Link>
+        </div>
+
         <div className="landing-quote flex flex-col items-center justify-center text-center font-serif text-[10px] italic leading-tight text-[#7F7890]">
           &ldquo;{t("landing.quote.line1")}
           <br />
