@@ -1,7 +1,7 @@
 import { LiveSignup } from "@/components/kleio/signup/live-signup"
-import { ArtistOnboarding } from "@/components/kleio/signup/artist-onboarding"
+import { GuidedSignup } from "@/components/kleio/signup/guided-signup"
 import { LiveModeView } from "@/components/kleio/live-mode-view"
 
 export default function Page() {
-  return <LiveModeView live={<LiveSignup role="artist" />} preview={<ArtistOnboarding />} />
+  return <LiveModeView live={<LiveSignup role="artist" />} preview={<GuidedSignup role="artist" />} />
 }
