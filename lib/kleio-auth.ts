@@ -25,8 +25,16 @@ export function getKleioAuthErrorMessage(error: unknown, locale: "en" | "es" = "
   if (message.includes("user already registered") || message.includes("already been registered")) {
     return es ? "Ya existe una cuenta con este correo. Inicia sesión o restablece la contraseña." : "An account already exists for this email. Sign in or reset the password."
   }
+  if (message.includes("email address") && message.includes("invalid")) {
+    return es ? "Ingresa una dirección de correo válida." : "Enter a valid email address."
+  }
   if (message.includes("password") && (message.includes("weak") || message.includes("least"))) {
     return es ? "Usa una contraseña más segura de al menos 8 caracteres." : "Use a stronger password with at least 8 characters."
+  }
+  if (message.includes("email rate limit") || message.includes("over_email_send_rate_limit")) {
+    return es
+      ? "KLEIO no puede enviar otro correo de confirmación todavía. Espera unos minutos antes de volver a intentarlo y revisa también tu bandeja de entrada y correo no deseado."
+      : "KLEIO cannot send another confirmation email yet. Wait a few minutes before trying again, and check your inbox and spam folder first."
   }
   if (status === 429 || message.includes("rate limit") || message.includes("too many")) {
     return es ? "Se hicieron demasiados intentos. Espera un momento y vuelve a intentarlo." : "Too many attempts were made. Please wait a moment and try again."
