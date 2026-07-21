@@ -160,7 +160,7 @@ export function EntityAutocomplete({
             </li>
           ))}
           <li className="px-3 pb-1 pt-2 text-[0.6rem] text-muted-foreground">
-            {locale === "es" ? "Datos de ubicación: OpenStreetMap, búsqueda por Photon." : "Location data: OpenStreetMap, search by Photon."}
+            {locale === "es" ? "Datos de ubicación © colaboradores de OpenStreetMap." : "Location data © OpenStreetMap contributors."}
           </li>
         </ul>
       )}
