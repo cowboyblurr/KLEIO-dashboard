@@ -26,7 +26,7 @@ export function SignupShell({ children, title, subtitle, stepLabel }: { children
         <div className="mx-auto flex max-w-3xl items-center justify-between gap-3 px-5 py-4">
           <KleioWordmarkLink href="/" className="rounded-md bg-white px-2.5 py-1.5 shadow-sm ring-1 ring-border" />
           <div className="flex items-center gap-3">
-            <DemoEnvironmentBadge compact liveContext="registration" className="hidden sm:inline-flex" />
+            {isDemo && <DemoEnvironmentBadge compact className="hidden sm:inline-flex" />}
             {stepLabel && <p className="text-xs font-medium text-muted-foreground">{stepLabel}</p>}
           </div>
         </div>
@@ -38,7 +38,7 @@ export function SignupShell({ children, title, subtitle, stepLabel }: { children
 
         {title && (
           <div className="mb-8">
-            <div className="mb-3 sm:hidden"><DemoEnvironmentBadge compact liveContext="registration" /></div>
+            {isDemo && <div className="mb-3 sm:hidden"><DemoEnvironmentBadge compact /></div>}
             <h1 className="font-serif text-3xl font-semibold text-foreground">{title}</h1>
             {subtitle && <p className="mt-2 max-w-xl text-sm leading-relaxed text-muted-foreground">{subtitle}</p>}
           </div>
