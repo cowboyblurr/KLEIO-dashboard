@@ -61,17 +61,20 @@ export function TopBar() {
   const PrimaryIcon = primaryAction.icon
   const es = locale === "es"
   const demoMessage = isLive
-    ? es ? "Este control del escenario todavía no modifica los datos de tu cuenta autenticada." : "This scenario control does not yet modify your authenticated account data."
+    ? es ? "Esta acción todavía no está disponible." : "This action is not available yet."
     : isPreview
-    ? es ? "Acción de vista previa. El backend de producción todavía no está conectado." : "Preview action. Production backend export is not connected yet."
-    : es ? "Acción de demostración. Este prototipo no modifica datos reales." : "Demo action. This prototype does not change live data."
+    ? es ? "Esta acción no está disponible en la vista previa." : "This action is not available in the preview."
+    : es ? "Acción de demostración. Los datos de muestra no se modificarán." : "Demo action. Sample data will not be changed."
 
   const notificationThreads = useMemo(() => messageThreads.filter((thread) => thread.unread || isSubmissionMessagePending(thread.submissionId)).slice(0, 3), [])
-  const searchResults = useMemo(() => getGlobalSearchResults(searchQuery, searchQuery.trim() ? 9 : 6), [searchQuery])
+  const searchResults = useMemo(() => {
+    const results = getGlobalSearchResults(searchQuery, searchQuery.trim() ? 9 : 6)
+    return isLive ? results.filter((result) => result.id.startsWith("page-")) : results
+  }, [isLive, searchQuery])
   const searchPlaceholder = isLive
-    ? es ? "Buscar registros del escenario…" : "Search workspace scenario records…"
+    ? es ? "Buscar páginas del espacio…" : "Search workspace pages…"
     : isPreview
-    ? es ? "Buscar en el espacio KLEIO…" : "Search KLEIO Workspace…"
+    ? es ? "Buscar en la vista previa…" : "Search the workspace preview…"
     : es ? "Buscar en el demo institucional…" : "Search the institution demo…"
 
   function openResult(href: string) {
@@ -104,7 +107,7 @@ export function TopBar() {
             <div className="flex items-center justify-between border-b border-border px-4 py-3">
               <div>
                 <p className="text-sm font-semibold text-foreground">{searchQuery.trim() ? (es ? "Resultados de búsqueda" : "Search results") : (es ? "Rutas sugeridas del espacio" : "Suggested workspace paths")}</p>
-                <p className="text-xs text-muted-foreground">{es ? "Postulantes, artistas, programas, revisores, mensajes e informes." : "Applicants, artists, programs, reviewers, messages, and reports."}</p>
+                <p className="text-xs text-muted-foreground">{isLive ? (es ? "Páginas y herramientas disponibles en tu espacio." : "Pages and tools available in your workspace.") : (es ? "Postulantes, artistas, programas, revisores, mensajes e informes de muestra." : "Sample applicants, artists, programs, reviewers, messages, and reports.")}</p>
               </div>
               <button type="button" onClick={() => setSearchOpen(false)} className="grid size-7 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground" aria-label={es ? "Cerrar búsqueda" : "Close search"}><X className="size-4" /></button>
             </div>
@@ -117,13 +120,13 @@ export function TopBar() {
                     <span className="min-w-0 flex-1"><span className="flex items-center justify-between gap-2"><span className="truncate text-sm font-semibold text-foreground">{result.title}</span><span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[0.58rem] font-semibold uppercase tracking-wide text-muted-foreground">{translatedCategory}</span></span><span className="mt-0.5 block text-xs leading-snug text-muted-foreground">{result.subtitle}</span></span>
                   </button>
                 )
-              }) : <p className="px-3 py-6 text-center text-sm text-muted-foreground">{es ? "Sin resultados todavía. Prueba “Amina”, “Informe”, “Cola de revisión” o “materiales faltantes”." : "No results yet. Try “Amina,” “Report,” “Review Queue,” or “missing materials.”"}</p>}
+              }) : <p className="px-3 py-6 text-center text-sm text-muted-foreground">{isLive ? (es ? "No hay páginas que coincidan. Prueba “Postulaciones”, “Cola de revisión” o “Informes”." : "No matching pages. Try “Submissions,” “Review Queue,” or “Reports.”") : (es ? "Sin resultados todavía. Prueba “Amina”, “Informe”, “Cola de revisión” o “materiales faltantes”." : "No results yet. Try “Amina,” “Report,” “Review Queue,” or “missing materials.”")}</p>}
             </div>
           </div>
         )}
       </div>
 
-      <DemoEnvironmentBadge compact className="hidden xl:inline-flex" />
+      {!isLive && <DemoEnvironmentBadge compact className="hidden xl:inline-flex" />}
       {isPreview && <span className="hidden rounded-full border border-border bg-card px-3 py-1 text-[0.62rem] font-semibold uppercase tracking-[0.12em] text-muted-foreground xl:inline-flex">{es ? "Vista previa" : "Workspace Preview"}</span>}
 
       <div className="ml-auto flex shrink-0 items-center gap-2">
