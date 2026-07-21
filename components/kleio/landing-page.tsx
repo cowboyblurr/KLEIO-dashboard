@@ -65,7 +65,7 @@ export function LandingPage() {
       className="relative min-h-dvh w-full overflow-x-hidden text-[#292631]"
       style={{
         background:
-          "radial-gradient(ellipse at 50% 36%, rgba(146, 126, 190, 0.10) 0%, rgba(170, 151, 211, 0.045) 30%, rgba(255, 255, 255, 0) 62%), linear-gradient(180deg, #FFFFFF 0%, #FEFCFF 58%, #FFFFFF 100%)",
+          "radial-gradient(ellipse at 50% 67%, rgba(149,130,194,0.105) 0%, rgba(188,173,222,0.052) 31%, rgba(255,255,255,0) 62%), #FFFFFF",
       }}
     >
       <header className="relative z-30 h-[96px] w-full">
@@ -121,10 +121,9 @@ export function LandingPage() {
           </p>
         </div>
 
-        <div className="relative flex h-full items-center justify-center" aria-hidden>
-          <div className="pointer-events-none absolute left-1/2 top-1/2 h-[150px] w-[390px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(ellipse_at_center,rgba(178,157,222,0.20)_0%,rgba(206,193,235,0.10)_38%,transparent_72%)] blur-2xl" />
+        <div className="flex h-full items-center justify-center bg-white" aria-hidden>
           <video
-            className="kleio-transparent-center-video relative z-10 h-auto max-h-[170px] w-[clamp(300px,26vw,430px)] object-contain"
+            className="kleio-transparent-center-video h-auto max-h-[170px] w-[clamp(300px,26vw,430px)] object-contain"
             style={{ filter: "saturate(0.82) contrast(0.96) hue-rotate(3deg)" }}
             autoPlay
             muted
