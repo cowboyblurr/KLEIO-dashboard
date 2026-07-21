@@ -6,6 +6,7 @@ import { KleioWordmarkLink } from "@/components/kleio/kleio-wordmark-link"
 import { KleioDemoGuide } from "@/components/kleio/kleio-demo-guide"
 import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
 import { DemoEnvironmentBadge } from "@/components/kleio/demo-environment-badge"
+import { useKleioMode } from "@/components/kleio/use-kleio-mode"
 
 function cleanSignupLabel(label: string) {
   return label
@@ -17,6 +18,7 @@ function cleanSignupLabel(label: string) {
 
 export function SignupShell({ children, title, subtitle, stepLabel }: { children: React.ReactNode; title?: string; subtitle?: string; stepLabel?: string }) {
   const { t } = useKleioLocale()
+  const { isDemo } = useKleioMode()
 
   return (
     <div className="min-h-screen bg-[oklch(0.985_0.005_287)]">
@@ -43,7 +45,7 @@ export function SignupShell({ children, title, subtitle, stepLabel }: { children
         )}
         {children}
       </main>
-      <KleioDemoGuide variant="workspace" />
+      {isDemo && <KleioDemoGuide variant="workspace" />}
     </div>
   )
 }

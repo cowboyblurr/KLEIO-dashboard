@@ -4,8 +4,6 @@ import { useEffect, useId, useMemo, useState, type FormEvent } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { CheckCircle2, Eye, EyeOff, Loader2, ShieldCheck } from "lucide-react"
-import { ArtistOnboarding } from "@/components/kleio/signup/artist-onboarding"
-import { InstitutionOnboarding } from "@/components/kleio/signup/institution-onboarding"
 import { EntityAutocomplete } from "@/components/kleio/signup/entity-autocomplete"
 import { SignupShell, SignupStepCard, SignupTextArea } from "@/components/kleio/signup/signup-shell"
 import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
@@ -105,7 +103,6 @@ export function LiveSignup({ role }: { role: "artist" | "institution" }) {
   const router = useRouter()
   const { locale } = useKleioLocale()
   const es = locale === "es"
-  const [previewMode, setPreviewMode] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [resuming, setResuming] = useState(true)
   const [confirmationEmail, setConfirmationEmail] = useState("")
@@ -230,8 +227,6 @@ export function LiveSignup({ role }: { role: "artist" | "institution" }) {
     }
   }
 
-  if (previewMode) return role === "artist" ? <ArtistOnboarding /> : <InstitutionOnboarding />
-
   if (resuming) {
     return (
       <SignupShell title={title} subtitle={subtitle}>
@@ -273,9 +268,9 @@ export function LiveSignup({ role }: { role: "artist" | "institution" }) {
           <p className="flex items-center gap-2 text-sm font-semibold text-[#43386B]"><ShieldCheck className="size-4" />{es ? "Registro real y persistente" : "Real, persistent registration"}</p>
           <p className="mt-1 text-xs leading-relaxed text-[#6F6882]">{es ? "La cuenta y el perfil se guardan en Supabase. Los resultados de ubicación se revisan antes de guardarse." : "Your account and profile are saved in Supabase. Location results are reviewed before they are saved."}</p>
         </div>
-        <button type="button" onClick={() => setPreviewMode(true)} className="shrink-0 rounded-xl border border-[#D8D0F2] bg-white px-3 py-2 text-xs font-semibold text-[#5B4B8A] hover:bg-white/70">
-          {es ? "Abrir recorrido demo" : "Open demo walkthrough"}
-        </button>
+        <Link href="/demo/" className="shrink-0 rounded-xl border border-[#D8D0F2] bg-white px-3 py-2 text-xs font-semibold text-[#5B4B8A] hover:bg-white/70">
+          {es ? "Prefiero explorar el demo" : "Explore the guided demo instead"}
+        </Link>
       </div>
 
       <form onSubmit={handleSubmit} noValidate>

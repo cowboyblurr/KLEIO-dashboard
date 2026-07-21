@@ -1,6 +1,7 @@
 export type KleioMode = "demo" | "preview" | "live"
 
 const MODE_STORAGE_KEY = "kleio-mode"
+export const KLEIO_MODE_CHANGE_EVENT = "kleio-mode-change"
 
 function isBrowser() {
   return typeof window !== "undefined"
@@ -16,11 +17,13 @@ export function getKleioMode(): KleioMode {
 export function setKleioMode(mode: KleioMode): void {
   if (!isBrowser()) return
   window.localStorage.setItem(MODE_STORAGE_KEY, mode)
+  window.dispatchEvent(new Event(KLEIO_MODE_CHANGE_EVENT))
 }
 
 export function clearKleioMode(): void {
   if (!isBrowser()) return
   window.localStorage.removeItem(MODE_STORAGE_KEY)
+  window.dispatchEvent(new Event(KLEIO_MODE_CHANGE_EVENT))
 }
 
 export function isDemoMode() {
