@@ -34,6 +34,7 @@ function InstitutionIcon() {
 
 const navLinkStyle = { color: "#6F6882", letterSpacing: "0.04em" } as const
 const wordmarkStyle = { filter: "brightness(0) saturate(100%) invert(16%) sepia(5%) saturate(800%) hue-rotate(220deg)" } as const
+const landingBackgroundStyle = { backgroundColor: "#FAFAFA" } as const
 
 export function LandingPage() {
   const router = useRouter()
@@ -61,8 +62,8 @@ export function LandingPage() {
   ] as const
 
   return (
-    <main className="relative min-h-dvh w-full overflow-x-hidden bg-white text-[#292631]">
-      <header className="relative z-30 h-[96px] w-full bg-white">
+    <main className="relative min-h-dvh w-full overflow-x-hidden text-[#292631]" style={landingBackgroundStyle}>
+      <header className="relative z-30 h-[96px] w-full" style={landingBackgroundStyle}>
         <div className="relative mx-auto h-full w-full max-w-[1280px] px-8 max-md:px-5">
           <nav
             className="absolute left-8 top-1/2 flex -translate-y-1/2 items-center gap-8 max-md:left-5 max-md:hidden"
@@ -98,8 +99,8 @@ export function LandingPage() {
       </header>
 
       <section
-        className="landing-stage relative z-10 mx-auto grid w-full max-w-[1280px] bg-white px-8 pb-16 pt-2 max-md:px-5"
-        style={{ gridTemplateRows: "auto auto auto auto", rowGap: "clamp(12px, 2vh, 20px)" }}
+        className="landing-stage relative z-10 mx-auto grid w-full max-w-[1280px] px-8 pb-16 pt-2 max-md:px-5"
+        style={{ ...landingBackgroundStyle, gridTemplateRows: "auto auto auto auto", rowGap: "clamp(12px, 2vh, 20px)" }}
       >
         <div className="flex h-full flex-col items-center justify-start text-center">
           <h1
@@ -122,7 +123,7 @@ export function LandingPage() {
           </p>
         </div>
 
-        <div className="flex h-full items-center justify-center bg-white" aria-hidden>
+        <div className="flex h-full items-center justify-center" style={landingBackgroundStyle} aria-hidden>
           <video
             className="kleio-transparent-center-video h-auto max-h-[170px] w-[clamp(300px,26vw,430px)] object-contain"
             style={{ filter: "saturate(0.82) contrast(0.96) hue-rotate(3deg)" }}
@@ -202,7 +203,7 @@ export function LandingPage() {
         </div>
       </section>
 
-      <footer className="pointer-events-none relative z-30 bg-white px-5 pb-4 pt-2 text-center text-[8px] tracking-[0.15em] text-[#AAA0C1]">
+      <footer className="pointer-events-none relative z-30 px-5 pb-4 pt-2 text-center text-[8px] tracking-[0.15em] text-[#AAA0C1]" style={landingBackgroundStyle}>
         © 2026 KLEIO ARTHOUSE
       </footer>
     </main>
