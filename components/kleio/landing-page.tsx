@@ -61,14 +61,8 @@ export function LandingPage() {
   ] as const
 
   return (
-    <main
-      className="relative min-h-dvh w-full overflow-x-hidden text-[#292631]"
-      style={{
-        background:
-          "radial-gradient(ellipse at 50% 67%, rgba(149,130,194,0.105) 0%, rgba(188,173,222,0.052) 31%, rgba(255,255,255,0) 62%), #FFFFFF",
-      }}
-    >
-      <header className="relative z-30 h-[96px] w-full">
+    <main className="relative min-h-dvh w-full overflow-x-hidden bg-white text-[#292631]">
+      <header className="relative z-30 h-[96px] w-full bg-white">
         <div className="relative mx-auto h-full w-full max-w-[1280px] px-8 max-md:px-5">
           <nav
             className="absolute left-8 top-1/2 flex -translate-y-1/2 items-center gap-8 max-md:left-5 max-md:hidden"
@@ -90,15 +84,22 @@ export function LandingPage() {
             />
           </div>
 
-          <div className="absolute right-8 top-1/2 -translate-y-1/2 max-md:right-5">
+          <nav className="absolute right-8 top-1/2 flex -translate-y-1/2 items-center gap-7 max-md:right-5 max-md:gap-3" aria-label={es ? "Acciones de página" : "Page actions"}>
+            <Link
+              href="/demo/"
+              className="text-[0.78rem] font-medium tracking-wide transition-opacity hover:opacity-70 max-sm:text-[0.68rem]"
+              style={navLinkStyle}
+            >
+              {es ? "Demo guiado" : "Guided Demo"}
+            </Link>
             <KleioLocaleToggle />
-          </div>
+          </nav>
         </div>
       </header>
 
       <section
-        className="landing-stage relative z-10 mx-auto grid w-full max-w-[1280px] px-8 pb-16 pt-2 max-md:px-5"
-        style={{ gridTemplateRows: "auto auto auto auto auto", rowGap: "clamp(12px, 2vh, 20px)" }}
+        className="landing-stage relative z-10 mx-auto grid w-full max-w-[1280px] bg-white px-8 pb-16 pt-2 max-md:px-5"
+        style={{ gridTemplateRows: "auto auto auto auto", rowGap: "clamp(12px, 2vh, 20px)" }}
       >
         <div className="flex h-full flex-col items-center justify-start text-center">
           <h1
@@ -193,16 +194,6 @@ export function LandingPage() {
           </section>
         </div>
 
-        <div className="flex items-center justify-center">
-          <Link
-            href="/demo/"
-            className="group inline-flex items-center gap-1.5 rounded-full border border-[#DED5F1] bg-white/82 px-4 py-2 text-[0.68rem] font-semibold tracking-[0.02em] text-[#5B4B8A] shadow-[0_10px_28px_rgba(82,64,130,0.06)] transition-all hover:-translate-y-px hover:border-[#A997E8] hover:bg-[#F8F5FF] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#A997E8]/20"
-          >
-            {es ? "Recorrer el demo guiado" : "Take the Guided Tour"}
-            <ChevronRight className="size-3.5 transition-transform group-hover:translate-x-0.5" aria-hidden />
-          </Link>
-        </div>
-
         <div className="landing-quote flex flex-col items-center justify-center text-center font-serif text-[10px] italic leading-tight text-[#7F7890]">
           &ldquo;{t("landing.quote.line1")}
           <br />
@@ -211,7 +202,7 @@ export function LandingPage() {
         </div>
       </section>
 
-      <footer className="pointer-events-none relative z-30 px-5 pb-4 pt-2 text-center text-[8px] tracking-[0.15em] text-[#AAA0C1]">
+      <footer className="pointer-events-none relative z-30 bg-white px-5 pb-4 pt-2 text-center text-[8px] tracking-[0.15em] text-[#AAA0C1]">
         © 2026 KLEIO ARTHOUSE
       </footer>
     </main>
