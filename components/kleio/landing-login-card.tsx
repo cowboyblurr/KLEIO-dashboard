@@ -14,11 +14,8 @@ export function LandingLoginCard() {
     <section
       id="login"
       aria-labelledby="login-heading"
-      className="landing-login-card relative scroll-mt-6 overflow-hidden rounded-[1.1rem] border border-[#E3DCF5] bg-[radial-gradient(circle_at_12%_0%,rgba(222,213,251,0.46),transparent_42%),linear-gradient(145deg,#FFFFFF_0%,#FCFAFF_58%,#F8F4FF_100%)] p-4 shadow-[0_18px_48px_rgba(82,64,130,0.09)]"
+      className="landing-login-card relative scroll-mt-6 overflow-hidden rounded-[1.1rem] border border-[#E2DAF2] bg-[radial-gradient(circle_at_14%_0%,rgba(226,217,248,0.30),transparent_46%),linear-gradient(145deg,rgba(255,255,255,0.98)_0%,rgba(252,250,255,0.98)_60%,rgba(249,246,253,0.98)_100%)] p-4 shadow-[0_18px_48px_rgba(82,64,130,0.09)]"
     >
-      <div className="pointer-events-none absolute -left-10 -top-14 size-36 rounded-full bg-[#DCD1FA]/30 blur-3xl" aria-hidden />
-      <div className="pointer-events-none absolute -bottom-16 right-2 size-32 rounded-full bg-[#EEE8FF]/45 blur-3xl" aria-hidden />
-
       <div className="relative z-10">
         <h2 id="login-heading" className="font-serif text-[0.98rem] font-semibold tracking-[-0.01em] text-[#292631]">
           {es ? "Entra a tu espacio KLEIO" : "Enter your KLEIO workspace"}
