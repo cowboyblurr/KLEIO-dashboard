@@ -3,7 +3,7 @@
 import { useEffect, useId, useMemo, useState, type FormEvent } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { CheckCircle2, Eye, EyeOff, Loader2, ShieldCheck } from "lucide-react"
+import { CheckCircle2, Eye, EyeOff, Loader2 } from "lucide-react"
 import { EntityAutocomplete } from "@/components/kleio/signup/entity-autocomplete"
 import { SignupShell, SignupStepCard, SignupTextArea } from "@/components/kleio/signup/signup-shell"
 import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
@@ -134,7 +134,7 @@ export function LiveSignup({ role }: { role: "artist" | "institution" }) {
     : (es ? "Crea tu cuenta institucional" : "Create your institution account")
   const subtitle = role === "artist"
     ? (es ? "Guarda un perfil reutilizable y mantén el control de tus materiales." : "Save a reusable profile while keeping control of your materials.")
-    : (es ? "Prepara un espacio seguro para convocatorias, revisión y colaboración." : "Prepare a secure workspace for calls, review, and collaboration.")
+    : (es ? "Configura el espacio de tu institución para convocatorias, revisión y colaboración." : "Set up your institution workspace for calls, review, and collaboration.")
 
   const requiredReady = useMemo(() => {
     const common = displayName.trim() && email.trim() && password.length >= 8 && password === confirmPassword && location.trim()
@@ -263,16 +263,6 @@ export function LiveSignup({ role }: { role: "artist" | "institution" }) {
 
   return (
     <SignupShell title={title} subtitle={subtitle}>
-      <div className="mb-5 flex flex-col gap-3 rounded-2xl border border-[#E7E1F7] bg-[#F7F4FF] p-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <p className="flex items-center gap-2 text-sm font-semibold text-[#43386B]"><ShieldCheck className="size-4" />{es ? "Registro real y persistente" : "Real, persistent registration"}</p>
-          <p className="mt-1 text-xs leading-relaxed text-[#6F6882]">{es ? "La cuenta y el perfil se guardan en Supabase. Los resultados de ubicación se revisan antes de guardarse." : "Your account and profile are saved in Supabase. Location results are reviewed before they are saved."}</p>
-        </div>
-        <Link href="/demo/" className="shrink-0 rounded-xl border border-[#D8D0F2] bg-white px-3 py-2 text-xs font-semibold text-[#5B4B8A] hover:bg-white/70">
-          {es ? "Prefiero explorar el demo" : "Explore the guided demo instead"}
-        </Link>
-      </div>
-
       <form onSubmit={handleSubmit} noValidate>
         <SignupStepCard>
           <div className="grid gap-5 sm:grid-cols-2">
@@ -341,7 +331,7 @@ export function LiveSignup({ role }: { role: "artist" | "institution" }) {
 
           <div className="mt-6 flex flex-col gap-3 border-t border-border pt-5 sm:flex-row sm:items-center sm:justify-between">
             <div className="max-w-md text-xs leading-relaxed text-muted-foreground">
-              <p>{es ? "Los campos sugeridos nunca se vuelven oficiales hasta que eliges un resultado y envías el formulario." : "Suggested fields never become official until you choose a result and submit the form."}</p>
+              <p>{es ? "Las sugerencias solo se añaden cuando eliges un resultado. Puedes revisar toda la información antes de crear la cuenta." : "Suggestions are added only when you choose a result. You can review all information before creating the account."}</p>
               <Link href="/#login" className="mt-2 inline-flex font-semibold text-primary hover:underline">{es ? "¿Ya tienes una cuenta? Inicia sesión" : "Already have an account? Sign in"}</Link>
             </div>
             <button type="submit" disabled={submitting} className="inline-flex h-11 min-w-40 items-center justify-center rounded-xl bg-primary px-5 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50">
