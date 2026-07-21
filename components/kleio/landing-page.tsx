@@ -61,7 +61,13 @@ export function LandingPage() {
   ] as const
 
   return (
-    <main className="relative min-h-dvh w-full overflow-x-hidden bg-white text-[#292631]">
+    <main
+      className="relative min-h-dvh w-full overflow-x-hidden text-[#292631]"
+      style={{
+        background:
+          "radial-gradient(ellipse at 50% 36%, rgba(146, 126, 190, 0.10) 0%, rgba(170, 151, 211, 0.045) 30%, rgba(255, 255, 255, 0) 62%), linear-gradient(180deg, #FFFFFF 0%, #FEFCFF 58%, #FFFFFF 100%)",
+      }}
+    >
       <header className="relative z-30 h-[96px] w-full">
         <div className="relative mx-auto h-full w-full max-w-[1280px] px-8 max-md:px-5">
           <nav
@@ -69,7 +75,7 @@ export function LandingPage() {
             aria-label={es ? "Navegación principal" : "Primary navigation"}
           >
             {navLinks.map(({ label, href }) => (
-              <Link key={href} href={href} className="text-[0.78rem] font-medium tracking-wide hover:opacity-70" style={navLinkStyle}>
+              <Link key={href} href={href} className="text-[0.78rem] font-medium tracking-wide transition-opacity hover:opacity-70" style={navLinkStyle}>
                 {label}
               </Link>
             ))}
@@ -115,9 +121,11 @@ export function LandingPage() {
           </p>
         </div>
 
-        <div className="flex h-full items-center justify-center" aria-hidden>
+        <div className="relative flex h-full items-center justify-center" aria-hidden>
+          <div className="pointer-events-none absolute left-1/2 top-1/2 h-[150px] w-[390px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(ellipse_at_center,rgba(178,157,222,0.20)_0%,rgba(206,193,235,0.10)_38%,transparent_72%)] blur-2xl" />
           <video
-            className="kleio-transparent-center-video h-auto max-h-[170px] w-[clamp(300px,26vw,430px)] object-contain"
+            className="kleio-transparent-center-video relative z-10 h-auto max-h-[170px] w-[clamp(300px,26vw,430px)] object-contain"
+            style={{ filter: "saturate(0.82) contrast(0.96) hue-rotate(3deg)" }}
             autoPlay
             muted
             loop
@@ -139,7 +147,10 @@ export function LandingPage() {
             </div>
           </div>
 
-          <section className="landing-choice-card flex flex-col rounded-[1.1rem] border border-[#E7E1F7] bg-white p-4 shadow-[0_18px_48px_rgba(82,64,130,0.08)]" aria-labelledby="choose-path-title">
+          <section
+            className="landing-choice-card flex flex-col rounded-[1.1rem] border border-[#E2DAF2] bg-[radial-gradient(circle_at_88%_0%,rgba(226,217,248,0.28),transparent_45%),linear-gradient(145deg,rgba(255,255,255,0.98)_0%,rgba(252,250,255,0.98)_60%,rgba(249,246,253,0.98)_100%)] p-4 shadow-[0_18px_48px_rgba(82,64,130,0.09)]"
+            aria-labelledby="choose-path-title"
+          >
             <h2 id="choose-path-title" className="font-serif text-[0.98rem] font-semibold tracking-[-0.01em] text-[#292631]">
               {t("landing.choosePath.title")}
             </h2>
@@ -149,14 +160,14 @@ export function LandingPage() {
               <button
                 type="button"
                 onClick={() => openRealSignup("artist")}
-                className="group flex h-[82px] flex-col justify-between rounded-[0.85rem] border border-[#D8D0F2] bg-white p-2.5 text-left transition-colors hover:border-[#A997E8] hover:bg-[#F7F4FF] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#A997E8]/25"
+                className="group flex h-[82px] flex-col justify-between rounded-[0.85rem] border border-[#D8D0F2] bg-white/80 p-2.5 text-left shadow-[inset_0_1px_0_rgba(255,255,255,0.9)] transition-all hover:-translate-y-px hover:border-[#A997E8] hover:bg-[#F8F5FF] hover:shadow-[0_8px_20px_rgba(82,64,130,0.08)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#A997E8]/20"
               >
-                <span className="grid size-6 place-items-center rounded-md bg-[#F7F4FF] text-[#5B4B8A]"><ArtistIcon /></span>
+                <span className="grid size-6 place-items-center rounded-md bg-[#F2EDFC] text-[#5B4B8A]"><ArtistIcon /></span>
                 <span>
                   <span className="block text-[0.62rem] text-[#7F7890]">{t("landing.choosePath.iAmArtist")}</span>
                   <span className="flex items-center justify-between font-serif text-[0.78rem] font-semibold text-[#292631]">
                     {t("landing.choosePath.passport")}
-                    <ChevronRight className="size-3 text-[#A997E8] transition-transform group-hover:translate-x-0.5" />
+                    <ChevronRight className="size-3 text-[#927DCE] transition-transform group-hover:translate-x-0.5" />
                   </span>
                 </span>
               </button>
@@ -164,20 +175,20 @@ export function LandingPage() {
               <button
                 type="button"
                 onClick={() => openRealSignup("institution")}
-                className="group flex h-[82px] flex-col justify-between rounded-[0.85rem] border border-[#D8D0F2] bg-white p-2.5 text-left transition-colors hover:border-[#A997E8] hover:bg-[#F7F4FF] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#A997E8]/25"
+                className="group flex h-[82px] flex-col justify-between rounded-[0.85rem] border border-[#D8D0F2] bg-white/80 p-2.5 text-left shadow-[inset_0_1px_0_rgba(255,255,255,0.9)] transition-all hover:-translate-y-px hover:border-[#A997E8] hover:bg-[#F8F5FF] hover:shadow-[0_8px_20px_rgba(82,64,130,0.08)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#A997E8]/20"
               >
-                <span className="grid size-6 place-items-center rounded-md bg-[#F7F4FF] text-[#5B4B8A]"><InstitutionIcon /></span>
+                <span className="grid size-6 place-items-center rounded-md bg-[#F2EDFC] text-[#5B4B8A]"><InstitutionIcon /></span>
                 <span>
                   <span className="block text-[0.62rem] text-[#7F7890]">{t("landing.choosePath.iRepresentInstitution")}</span>
                   <span className="flex items-center justify-between font-serif text-[0.78rem] font-semibold text-[#292631]">
                     {t("landing.choosePath.workspace")}
-                    <ChevronRight className="size-3 text-[#A997E8] transition-transform group-hover:translate-x-0.5" />
+                    <ChevronRight className="size-3 text-[#927DCE] transition-transform group-hover:translate-x-0.5" />
                   </span>
                 </span>
               </button>
             </div>
 
-            <p className="mt-3 text-center font-serif text-[0.64rem] italic leading-relaxed text-[#8A829B]">
+            <p className="mt-3 text-center font-serif text-[0.64rem] italic leading-relaxed text-[#837A94]">
               {t("landing.importAssist.note")}
             </p>
           </section>
@@ -187,11 +198,11 @@ export function LandingPage() {
           &ldquo;{t("landing.quote.line1")}
           <br />
           {t("landing.quote.line2")}&rdquo;
-          <div className="mx-auto mt-1 h-[2px] w-9 rounded-full bg-[#A997E8]" />
+          <div className="mx-auto mt-1 h-[2px] w-9 rounded-full bg-[#927DCE]" />
         </div>
       </section>
 
-      <footer className="pointer-events-none relative z-30 px-5 pb-4 pt-2 text-center text-[8px] tracking-[0.15em] text-[#B2A9C9]">
+      <footer className="pointer-events-none relative z-30 px-5 pb-4 pt-2 text-center text-[8px] tracking-[0.15em] text-[#AAA0C1]">
         © 2026 KLEIO ARTHOUSE
       </footer>
     </main>
