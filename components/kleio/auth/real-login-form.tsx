@@ -52,7 +52,7 @@ export function RealLoginForm({
   const inputClassName = cn(
     "w-full border bg-card text-foreground outline-none transition-colors focus:border-primary/40 focus:ring-4 focus:ring-primary/10",
     landing
-      ? "h-9 rounded-full border-[#D8D0F2] px-4 text-[0.72rem] placeholder:text-[#9A93A8]"
+      ? "h-9 rounded-full border-[#D8D0F2] bg-white/85 px-4 text-[0.72rem] placeholder:text-[#9A93A8] focus:border-[#9E8BD2] focus:ring-[#A997E8]/15"
       : cn("rounded-xl border-border px-3 text-sm", compact ? "h-9" : "h-10"),
   )
 
@@ -106,13 +106,13 @@ export function RealLoginForm({
               className={`${inputClassName} pr-11`}
               aria-invalid={Boolean(error)}
             />
-            <button type="button" onClick={() => setShowPassword((visible) => !visible)} className="absolute right-2 top-1/2 grid size-8 -translate-y-1/2 place-items-center rounded-lg text-muted-foreground hover:bg-accent/50 hover:text-foreground" aria-label={showPassword ? (es ? "Ocultar contraseña" : "Hide password") : (es ? "Mostrar contraseña" : "Show password")}>{showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}</button>
+            <button type="button" onClick={() => setShowPassword((visible) => !visible)} className="absolute right-2 top-1/2 grid size-8 -translate-y-1/2 place-items-center rounded-lg text-[#756B84] hover:bg-[#F2EDFC] hover:text-[#4D435C]" aria-label={showPassword ? (es ? "Ocultar contraseña" : "Hide password") : (es ? "Mostrar contraseña" : "Show password")}>{showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}</button>
           </div>
         </div>
       </div>
 
       {landing && (
-        <Link href="/auth/forgot-password/" className="mt-2 self-end text-[0.62rem] font-medium text-[#6F6882] hover:underline">
+        <Link href="/auth/forgot-password/" className="mt-2 self-end text-[0.62rem] font-medium text-[#6F6882] transition-colors hover:text-[#514665] hover:underline">
           {es ? "¿Olvidaste tu contraseña?" : "Forgot password?"}
         </Link>
       )}
@@ -122,10 +122,10 @@ export function RealLoginForm({
         type="submit"
         disabled={submitting || !email.trim() || !password}
         className={cn(
-          "inline-flex items-center justify-center font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50",
+          "inline-flex items-center justify-center font-semibold transition-all disabled:cursor-not-allowed",
           landing
-            ? "mt-3 h-9 self-end rounded-full bg-[#292631] px-5 text-[0.7rem] text-white hover:bg-[#3A3544]"
-            : cn("w-full rounded-xl bg-primary px-4 text-primary-foreground hover:bg-primary/90", compact ? "mt-3 h-9 text-xs" : "mt-4 h-10 text-sm"),
+            ? "mt-3 h-9 self-end rounded-full bg-[#5D506F] px-5 text-[0.7rem] text-white shadow-[0_8px_18px_rgba(69,56,86,0.16)] hover:-translate-y-px hover:bg-[#4B405D] hover:shadow-[0_10px_22px_rgba(69,56,86,0.20)] disabled:translate-y-0 disabled:bg-[#8D8498] disabled:opacity-70 disabled:shadow-none"
+            : cn("w-full rounded-xl bg-primary px-4 text-primary-foreground hover:bg-primary/90 disabled:opacity-50", compact ? "mt-3 h-9 text-xs" : "mt-4 h-10 text-sm"),
         )}
       >
         {submitting && <Loader2 className="mr-2 size-4 animate-spin" />}
