@@ -344,7 +344,7 @@ export function LiveSignup({ role }: { role: "artist" | "institution" }) {
               <p>{es ? "Los campos sugeridos nunca se vuelven oficiales hasta que eliges un resultado y envías el formulario." : "Suggested fields never become official until you choose a result and submit the form."}</p>
               <Link href="/#login" className="mt-2 inline-flex font-semibold text-primary hover:underline">{es ? "¿Ya tienes una cuenta? Inicia sesión" : "Already have an account? Sign in"}</Link>
             </div>
-            <button type="submit" disabled={submitting || !requiredReady} className="inline-flex h-11 min-w-40 items-center justify-center rounded-xl bg-primary px-5 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50">
+            <button type="submit" disabled={submitting} className="inline-flex h-11 min-w-40 items-center justify-center rounded-xl bg-primary px-5 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50">
               {submitting && <Loader2 className="mr-2 size-4 animate-spin" />}
               {submitting ? (es ? "Creando…" : "Creating…") : role === "artist" ? (es ? "Crear Pasaporte" : "Create Passport") : (es ? "Crear espacio" : "Create workspace")}
             </button>
