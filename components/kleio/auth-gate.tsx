@@ -84,8 +84,8 @@ function AuthWall({ requiredRole, auth, onRefresh }: { requiredRole?: WorkspaceR
           </>
         ) : (
           <>
-            <h1 className="text-center font-serif text-2xl font-semibold text-foreground">{es ? "Accede a KLEIO" : "Access KLEIO"}</h1>
-            <p className="mt-2 text-center text-sm leading-relaxed text-muted-foreground">{es ? "Usa tu cuenta autenticada para continuar en el espacio real." : "Use your authenticated account to continue to the real workspace."}</p>
+            <h1 className="text-center font-serif text-2xl font-semibold text-foreground">{es ? "Inicia sesión en KLEIO" : "Sign in to KLEIO"}</h1>
+            <p className="mt-2 text-center text-sm leading-relaxed text-muted-foreground">{es ? "Continúa a tu espacio de artista, institución o revisor." : "Continue to your artist, institution, or reviewer workspace."}</p>
 
             <section className="mt-6 rounded-2xl border border-primary/20 bg-primary/[0.035] p-4">
               <RealLoginForm onSuccess={handleAuthenticatedLogin} />
