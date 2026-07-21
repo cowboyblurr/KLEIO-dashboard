@@ -37,7 +37,7 @@ const wordmarkStyle = { filter: "brightness(0) saturate(100%) invert(16%) sepia(
 
 export function LandingPage() {
   const router = useRouter()
-  const { locale } = useKleioLocale()
+  const { t, locale } = useKleioLocale()
   const es = locale === "es"
 
   function openRealSignup(role: "artist" | "institution") {
@@ -55,16 +55,19 @@ export function LandingPage() {
   }
 
   const navLinks = [
-    { label: es ? "Acerca de" : "About", href: "/about/" },
-    { label: es ? "Manifiesto" : "Manifesto", href: "/manifesto/" },
-    { label: es ? "Notas de campo" : "Field Notes", href: "/journal/" },
+    { label: t("nav.about"), href: "/about/" },
+    { label: t("nav.manifesto"), href: "/manifesto/" },
+    { label: es ? "Notas de campo" : "Journal", href: "/journal/" },
   ] as const
 
   return (
     <main className="relative min-h-dvh w-full overflow-x-hidden bg-white text-[#292631]">
       <header className="relative z-30 h-[96px] w-full">
         <div className="relative mx-auto h-full w-full max-w-[1280px] px-8 max-md:px-5">
-          <nav className="absolute left-8 top-1/2 flex -translate-y-1/2 items-center gap-8 max-md:left-5 max-md:hidden" aria-label={es ? "Navegación principal" : "Primary navigation"}>
+          <nav
+            className="absolute left-8 top-1/2 flex -translate-y-1/2 items-center gap-8 max-md:left-5 max-md:hidden"
+            aria-label={es ? "Navegación principal" : "Primary navigation"}
+          >
             {navLinks.map(({ label, href }) => (
               <Link key={href} href={href} className="text-[0.78rem] font-medium tracking-wide hover:opacity-70" style={navLinkStyle}>
                 {label}
@@ -89,29 +92,27 @@ export function LandingPage() {
 
       <section
         className="landing-stage relative z-10 mx-auto grid w-full max-w-[1280px] px-8 pb-16 pt-2 max-md:px-5"
-        style={{ gridTemplateRows: "auto auto auto auto", rowGap: "clamp(12px, 2vh, 20px)" }}
+        style={{ gridTemplateRows: "auto auto auto auto auto", rowGap: "clamp(12px, 2vh, 20px)" }}
       >
         <div className="flex h-full flex-col items-center justify-start text-center">
-          <p className="text-[0.62rem] font-semibold uppercase tracking-[0.2em] text-[#A997E8]">
-            {es ? "Para artistas e instituciones" : "For artists and institutions"}
-          </p>
           <h1
-            className="mt-2 max-w-[760px] font-serif font-semibold tracking-[-0.035em]"
-            style={{ color: "#292631", fontSize: "clamp(1.8rem, 2.65vw, 2.8rem)", lineHeight: 1.02 }}
+            className="font-serif tracking-tight"
+            style={{ color: "#292631", fontSize: "clamp(1.45rem, 1.95vw, 2.05rem)", lineHeight: 0.98 }}
           >
-            {es ? "Postulaciones de artistas y revisión institucional, reunidas." : "Artist applications and institutional review, brought together."}
+            {t("landing.hero.line1")}
+            <br />
+            <em style={{ fontStyle: "italic", fontWeight: 400 }}>{t("landing.hero.line2Italic")}</em>
           </h1>
-        </div>
-
-        <div className="mx-auto flex max-w-[760px] flex-wrap items-center justify-center gap-2 rounded-full border border-[#E7E1F7] bg-white/85 px-4 py-2 text-center shadow-[0_12px_34px_rgba(82,64,130,0.06)] backdrop-blur-sm">
-          <span className="text-[0.62rem] font-semibold uppercase tracking-[0.14em] text-[#A997E8]">
-            {es ? "Qué es" : "What it is"}
-          </span>
-          <span className="text-[0.72rem] leading-relaxed text-[#6F6882]">
-            {es
-              ? "Los artistas mantienen su obra una sola vez y la reutilizan en distintas oportunidades. Las instituciones gestionan postulaciones, comités, evaluaciones y decisiones en un flujo estructurado."
-              : "Artists maintain their work once and reuse it across opportunities. Institutions manage submissions, committees, evaluations, and decisions in one structured workflow."}
-          </span>
+          <p
+            className="mx-auto mt-2.5 max-w-[520px]"
+            style={{ color: "#7F7890", fontSize: "clamp(0.5rem, 0.62vw, 0.6rem)", letterSpacing: "0.20em", textTransform: "uppercase", lineHeight: 1.42 }}
+          >
+            {t("landing.tagline.line1")}
+            <br />
+            {t("landing.tagline.line2")}
+            <br />
+            {t("landing.tagline.line3")}
+          </p>
         </div>
 
         <div className="flex h-full items-center justify-center" aria-hidden>
@@ -133,38 +134,29 @@ export function LandingPage() {
           <div className="landing-or-divider flex items-center justify-center max-lg:hidden" aria-hidden>
             <div className="flex flex-col items-center justify-center">
               <div className="h-6 w-px bg-[#D8D0F2]" />
-              <span className="my-1.5 font-serif text-[0.8rem] italic text-[#7F7890]">{es ? "o" : "or"}</span>
+              <span className="my-1.5 font-serif text-[0.8rem] italic text-[#7F7890]">{t("nav.or")}</span>
               <div className="h-6 w-px bg-[#D8D0F2]" />
             </div>
           </div>
 
-          <section className="landing-choice-card flex flex-col rounded-[1.1rem] border border-[#E7E1F7] bg-white p-4 shadow-[0_18px_48px_rgba(82,64,130,0.08)]" aria-labelledby="create-account-title">
-            <p className="text-[0.62rem] font-semibold uppercase tracking-[0.16em] text-[#A997E8]">
-              {es ? "Crear una cuenta" : "Create an account"}
-            </p>
-            <h2 id="create-account-title" className="mt-1 font-serif text-[1.05rem] font-semibold tracking-[-0.01em] text-[#292631]">
-              {es ? "Elige cómo usarás KLEIO" : "Choose how you’ll use KLEIO"}
+          <section className="landing-choice-card flex flex-col rounded-[1.1rem] border border-[#E7E1F7] bg-white p-4 shadow-[0_18px_48px_rgba(82,64,130,0.08)]" aria-labelledby="choose-path-title">
+            <h2 id="choose-path-title" className="font-serif text-[0.98rem] font-semibold tracking-[-0.01em] text-[#292631]">
+              {t("landing.choosePath.title")}
             </h2>
-            <p className="mt-1 text-[0.7rem] leading-relaxed text-[#7F7890]">
-              {es ? "Comienza con el tipo de cuenta que corresponde a tu función." : "Start with the account type that matches your role."}
-            </p>
+            <p className="mt-1 text-[0.68rem] leading-relaxed text-[#7F7890]">{t("landing.choosePath.subtitle")}</p>
 
-            <div className="mt-4 grid gap-3">
+            <div className="mt-3 grid grid-cols-2 gap-2.5">
               <button
                 type="button"
                 onClick={() => openRealSignup("artist")}
-                className="group flex min-h-[88px] items-center gap-3 rounded-[0.9rem] border border-[#D8D0F2] bg-white p-3 text-left transition-colors hover:border-[#A997E8] hover:bg-[#F7F4FF] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#A997E8]/25"
+                className="group flex h-[82px] flex-col justify-between rounded-[0.85rem] border border-[#D8D0F2] bg-white p-2.5 text-left transition-colors hover:border-[#A997E8] hover:bg-[#F7F4FF] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#A997E8]/25"
               >
-                <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-[#F7F4FF] text-[#5B4B8A]">
-                  <ArtistIcon />
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="flex items-center justify-between gap-3 font-serif text-[0.86rem] font-semibold text-[#292631]">
-                    {es ? "Crear cuenta de artista" : "Create Artist Account"}
-                    <ChevronRight className="size-3.5 shrink-0 text-[#A997E8] transition-transform group-hover:translate-x-0.5" />
-                  </span>
-                  <span className="mt-1 block text-[0.66rem] leading-relaxed text-[#7F7890]">
-                    {es ? "Crea un Pasaporte Creativo reutilizable para tu obra y tus postulaciones." : "Build a reusable Creative Passport for your work and applications."}
+                <span className="grid size-6 place-items-center rounded-md bg-[#F7F4FF] text-[#5B4B8A]"><ArtistIcon /></span>
+                <span>
+                  <span className="block text-[0.62rem] text-[#7F7890]">{t("landing.choosePath.iAmArtist")}</span>
+                  <span className="flex items-center justify-between font-serif text-[0.78rem] font-semibold text-[#292631]">
+                    {t("landing.choosePath.passport")}
+                    <ChevronRight className="size-3 text-[#A997E8] transition-transform group-hover:translate-x-0.5" />
                   </span>
                 </span>
               </button>
@@ -172,27 +164,34 @@ export function LandingPage() {
               <button
                 type="button"
                 onClick={() => openRealSignup("institution")}
-                className="group flex min-h-[88px] items-center gap-3 rounded-[0.9rem] border border-[#D8D0F2] bg-white p-3 text-left transition-colors hover:border-[#A997E8] hover:bg-[#F7F4FF] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#A997E8]/25"
+                className="group flex h-[82px] flex-col justify-between rounded-[0.85rem] border border-[#D8D0F2] bg-white p-2.5 text-left transition-colors hover:border-[#A997E8] hover:bg-[#F7F4FF] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#A997E8]/25"
               >
-                <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-[#F7F4FF] text-[#5B4B8A]">
-                  <InstitutionIcon />
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="flex items-center justify-between gap-3 font-serif text-[0.86rem] font-semibold text-[#292631]">
-                    {es ? "Crear cuenta institucional" : "Create Institution Account"}
-                    <ChevronRight className="size-3.5 shrink-0 text-[#A997E8] transition-transform group-hover:translate-x-0.5" />
-                  </span>
-                  <span className="mt-1 block text-[0.66rem] leading-relaxed text-[#7F7890]">
-                    {es ? "Organiza convocatorias, postulaciones, comités, evaluaciones y decisiones." : "Organize open calls, submissions, committees, evaluations, and decisions."}
+                <span className="grid size-6 place-items-center rounded-md bg-[#F7F4FF] text-[#5B4B8A]"><InstitutionIcon /></span>
+                <span>
+                  <span className="block text-[0.62rem] text-[#7F7890]">{t("landing.choosePath.iRepresentInstitution")}</span>
+                  <span className="flex items-center justify-between font-serif text-[0.78rem] font-semibold text-[#292631]">
+                    {t("landing.choosePath.workspace")}
+                    <ChevronRight className="size-3 text-[#A997E8] transition-transform group-hover:translate-x-0.5" />
                   </span>
                 </span>
               </button>
             </div>
+
+            <p className="mt-3 text-center font-serif text-[0.64rem] italic leading-relaxed text-[#8A829B]">
+              {t("landing.importAssist.note")}
+            </p>
           </section>
+        </div>
+
+        <div className="landing-quote flex flex-col items-center justify-center text-center font-serif text-[10px] italic leading-tight text-[#7F7890]">
+          &ldquo;{t("landing.quote.line1")}
+          <br />
+          {t("landing.quote.line2")}&rdquo;
+          <div className="mx-auto mt-1 h-[2px] w-9 rounded-full bg-[#A997E8]" />
         </div>
       </section>
 
-      <footer className="relative z-30 px-5 pb-4 pt-2 text-center text-[8px] tracking-[0.15em] text-[#B2A9C9]">
+      <footer className="pointer-events-none relative z-30 px-5 pb-4 pt-2 text-center text-[8px] tracking-[0.15em] text-[#B2A9C9]">
         © 2026 KLEIO ARTHOUSE
       </footer>
     </main>
