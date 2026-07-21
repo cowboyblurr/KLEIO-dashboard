@@ -33,8 +33,8 @@ export function getKleioAuthErrorMessage(error: unknown, locale: "en" | "es" = "
   }
   if (message.includes("email rate limit") || message.includes("over_email_send_rate_limit")) {
     return es
-      ? "KLEIO no puede enviar otro correo de confirmación todavía. Espera unos minutos antes de volver a intentarlo y revisa también tu bandeja de entrada y correo no deseado."
-      : "KLEIO cannot send another confirmation email yet. Wait a few minutes before trying again, and check your inbox and spam folder first."
+      ? "KLEIO no puede enviar otro correo de confirmación todavía. Revisa tu bandeja de entrada y correo no deseado antes de volver a intentarlo. El límite de correo puede tardar hasta una hora en restablecerse."
+      : "KLEIO cannot send another confirmation email yet. Check your inbox and spam folder before trying again. The email limit may take up to an hour to reset."
   }
   if (status === 429 || message.includes("rate limit") || message.includes("too many")) {
     return es ? "Se hicieron demasiados intentos. Espera un momento y vuelve a intentarlo." : "Too many attempts were made. Please wait a moment and try again."
