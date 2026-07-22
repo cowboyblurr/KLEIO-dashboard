@@ -17,10 +17,10 @@ import { useKleioMode } from "@/components/kleio/use-kleio-mode"
 
 function liveRouteFallback(pathname: string) {
   if (pathname === "/activity-log" || pathname === "/activity-log/") {
-    return <LiveInstitutionUnavailable title="Activity log" description="A verified institution activity history requires a dedicated live event model. Guided-demo activity is not shown in authenticated workspaces." />
+    return <LiveInstitutionUnavailable title="Activity log" description="Review a clear history of important workspace activity, including updates to programs, submissions, reviewer assignments, and decisions." />
   }
   if (pathname === "/templates" || pathname === "/templates/" || pathname.startsWith("/templates/")) {
-    return <LiveInstitutionUnavailable title="Templates" description="Persistent institution templates are not implemented in the current live schema. Guided-demo templates remain isolated to preview mode." />
+    return <LiveInstitutionUnavailable title="Templates" description="Create reusable starting points for open calls, application questions, review criteria, applicant messages, and recurring program workflows." />
   }
   return null
 }
