@@ -30,10 +30,10 @@ const items = [
 
 export function ArtistProfileContextBar({
   active,
-  showCleoStatus = false,
+  showKleioAssistStatus = false,
 }: {
   active: (typeof items)[number]["id"]
-  showCleoStatus?: boolean
+  showKleioAssistStatus?: boolean
 }) {
   return (
     <section className="rounded-2xl border border-[#E7E1F7] bg-white p-3 shadow-[0_12px_36px_rgba(82,64,130,0.05)]">
@@ -66,15 +66,15 @@ export function ArtistProfileContextBar({
         })}
       </div>
 
-      {showCleoStatus && (
+      {showKleioAssistStatus && (
         <div className="mt-3 flex items-start gap-3 rounded-xl border border-[#E7E1F7] bg-[#FDFBFF] px-3 py-3">
           <span className="grid size-8 shrink-0 place-items-center rounded-full bg-[#F1ECFB] text-[#5B4B8A]">
             <Sparkles className="size-4" />
           </span>
           <div>
-            <p className="text-sm font-semibold text-[#292631]">Cleo Assist</p>
+            <p className="text-sm font-semibold text-[#292631]">KLEIO Assist</p>
             <p className="mt-0.5 text-xs leading-relaxed text-[#7F7890]">
-              Cleo is a review-first drafting layer. It is not active in this connected screen yet, and KLEIO does not automatically rewrite, publish, or replace your saved information.
+              KLEIO Assist is a review-first drafting layer. It is not active in this connected screen yet, and KLEIO does not automatically rewrite, publish, or replace your saved information.
             </p>
           </div>
         </div>

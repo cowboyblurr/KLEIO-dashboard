@@ -59,7 +59,7 @@ export function LiveArtistProfilePreview() {
   return (
     <main className="h-full overflow-y-auto bg-white px-4 py-5 text-[#292631] sm:px-6 sm:py-6">
       <div className="mx-auto max-w-[1180px] space-y-5">
-        <ArtistProfileContextBar active="profile" showCleoStatus />
+        <ArtistProfileContextBar active="profile" showKleioAssistStatus />
         <WorkspacePageHeader
           eyebrow="Artist profile preview"
           title={passport?.professional_name?.trim() || "Your artist profile"}
@@ -220,9 +220,9 @@ export function LiveArtistProfilePreview() {
                       <Sparkles className="size-4" />
                     </span>
                     <div>
-                      <h2 className="font-serif text-lg font-semibold">Cleo Assist boundaries</h2>
+                      <h2 className="font-serif text-lg font-semibold">KLEIO Assist boundaries</h2>
                       <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                        Cleo may eventually help draft or organize profile language, but suggestions must remain editable and require your approval. Cleo is not active on this connected profile screen and does not publish, verify, or overwrite your information.
+                        KLEIO Assist may eventually help draft or organize profile language, but suggestions must remain editable and require your approval. KLEIO Assist is not active on this connected profile screen and does not publish, verify, or overwrite your information.
                       </p>
                     </div>
                   </div>
