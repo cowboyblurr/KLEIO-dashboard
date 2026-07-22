@@ -40,6 +40,14 @@ function accountRole(account: KleioAccount | null): WorkspaceRole | null {
   return account?.profile.role ?? null
 }
 
+function onboardingDestination(account: KleioAccount | null) {
+  if (!account || account.profile.onboarding_completed) return null
+  if (account.profile.role === "artist" || account.profile.role === "institution") {
+    return `/signup/${account.profile.role}/`
+  }
+  return null
+}
+
 function AuthWall({ requiredRole, auth, onRefresh }: { requiredRole?: WorkspaceRole; auth: ResolvedAuth; onRefresh: () => Promise<void> }) {
   const router = useRouter()
   const pathname = usePathname()
@@ -57,6 +65,11 @@ function AuthWall({ requiredRole, auth, onRefresh }: { requiredRole?: WorkspaceR
 
   async function handleAuthenticatedLogin(account: KleioAccount) {
     await onRefresh()
+    const onboarding = onboardingDestination(account)
+    if (onboarding) {
+      router.replace(onboarding)
+      return
+    }
     routeForRole(account.profile.role)
   }
 
@@ -105,6 +118,7 @@ function AuthWall({ requiredRole, auth, onRefresh }: { requiredRole?: WorkspaceR
 export function AuthGate({ requiredRole, children }: AuthGateProps) {
   const [auth, setAuth] = useState<ResolvedAuth | null>(null)
   const { t } = useKleioLocale()
+  const router = useRouter()
 
   const refreshAuth = useCallback(async () => {
     if (getKleioMode() !== "live") {
@@ -130,7 +144,12 @@ export function AuthGate({ requiredRole, children }: AuthGateProps) {
     }
   }, [refreshAuth])
 
-  if (!auth) return <div className="flex min-h-screen items-center justify-center bg-[oklch(0.985_0.005_287)] px-6"><div className="max-w-sm"><KleioAssistObject mode="reviewing" title={t("assist.object.complete.title")} description={t("assist.object.complete.description")} size="sm" compact /></div></div>
+  const onboarding = onboardingDestination(auth?.account ?? null)
+  useEffect(() => {
+    if (onboarding) router.replace(onboarding)
+  }, [onboarding, router])
+
+  if (!auth || onboarding) return <div className="flex min-h-screen items-center justify-center bg-[oklch(0.985_0.005_287)] px-6"><div className="max-w-sm"><KleioAssistObject mode="reviewing" title={t("assist.object.complete.title")} description={t("assist.object.complete.description")} size="sm" compact /></div></div>
 
   const role = accountRole(auth.account) ?? auth.demoSession?.role ?? null
   if (!role || (requiredRole && role !== requiredRole)) return <AuthWall requiredRole={requiredRole} auth={auth} onRefresh={refreshAuth} />
