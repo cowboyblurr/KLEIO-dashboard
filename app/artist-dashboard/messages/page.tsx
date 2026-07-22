@@ -2,17 +2,17 @@ import type { Metadata } from "next"
 import { ArtistShell } from "@/components/kleio/artist-shell"
 import { ArtistMessagesPageView } from "@/components/kleio/artist-workspace/artist-messages-page-view"
 import { LiveModeView } from "@/components/kleio/live-mode-view"
-import { LiveArtistMessages } from "@/components/kleio/live-artist-workspace"
+import { LiveArtistCrossRoleMessages } from "@/components/kleio/live-opportunity-workspace"
 
 export const metadata: Metadata = {
   title: "KLEIO — Messages",
-  description: "Keep applicant communication, missing-material requests, and collaborator notes in context.",
+  description: "Keep opportunity inquiries, applicant communication, and missing-material requests in context.",
 }
 
 export default function Page() {
   return (
     <ArtistShell>
-      <LiveModeView live={<LiveArtistMessages />} preview={<ArtistMessagesPageView />} />
+      <LiveModeView live={<LiveArtistCrossRoleMessages />} preview={<ArtistMessagesPageView />} />
     </ArtistShell>
   )
 }
