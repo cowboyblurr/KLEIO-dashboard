@@ -116,17 +116,43 @@ function meaningfulDescription(value: string) {
     && !/for more information\.?$/i.test(value);
 }
 
+function stripLeadingHeading(value: string) {
+  return value.replace(
+    /^(?:project background,? goals,? and objectives|project background|program background|background|description|synopsis)\s*/i,
+    "",
+  ).trim();
+}
+
 function splitSentences(value: string) {
-  return value
-    .replace(/\n+/g, " ")
+  const marker = "\uE000";
+  const protectedValue = value
+    .replace(/\b([A-Z])\.([A-Z])\./g, `$1${marker}$2${marker}`)
+    .replace(/\b(Mr|Mrs|Ms|Dr|Prof|St|No|vs)\./gi, `$1${marker}`)
+    .replace(/\n+/g, " ");
+
+  return protectedValue
     .match(/[^.!?]+(?:[.!?]+(?=\s|$)|$)/g)
-    ?.map((sentence) => sentence.trim())
+    ?.map((sentence) => sentence.replaceAll(marker, ".").trim())
     .filter(Boolean) ?? [];
 }
 
+function conciseApplicantLabel(value: string) {
+  const normalized = value.toLowerCase();
+  if (/\bindividuals?\b/.test(normalized)) return "individuals";
+  if (/non[- ]?profit|not[- ]for[- ]profit|501\(c\)\(3\)/.test(normalized)) return "nonprofit organizations";
+  if (/higher education|educational institution|universit|college/.test(normalized)) return "educational institutions";
+  if (/tribal/.test(normalized)) return "tribal governments or organizations";
+  if (/school district/.test(normalized)) return "school districts";
+  if (/small business/.test(normalized)) return "small businesses";
+  if (/government|state controlled|county|city|township/.test(normalized)) return "government entities";
+  if (/alumni association/.test(normalized)) return "alumni associations";
+  return value;
+}
+
 function compactList(values: string[], maxItems = 4) {
-  if (values.length <= maxItems) return values.join(", ");
-  return `${values.slice(0, maxItems).join(", ")}, and other eligible applicants`;
+  const concise = unique(values.map(conciseApplicantLabel));
+  if (concise.length <= maxItems) return concise.join(", ");
+  return `${concise.slice(0, maxItems).join(", ")}, and other eligible applicants`;
 }
 
 function moneyRange(minimum: number | null, maximum: number | null, currency: string) {
@@ -134,6 +160,15 @@ function moneyRange(minimum: number | null, maximum: number | null, currency: st
   if (minimum !== null && maximum !== null && minimum !== maximum) return `${currency} ${format(minimum)}–${format(maximum)}`;
   const value = maximum ?? minimum;
   return value === null ? "" : `${currency} ${format(value)}`;
+}
+
+function fitSynopsis(parts: string[]) {
+  return parts.reduce((current, part) => {
+    const normalized = part.trim();
+    if (!normalized) return current;
+    const next = current ? `${current} ${normalized}` : normalized;
+    return next.length <= MAX_SYNOPSIS_LENGTH ? next : current;
+  }, "");
 }
 
 function buildSynopsis(input: {
@@ -147,37 +182,27 @@ function buildSynopsis(input: {
   deadlineAt: string | null;
   rolling: boolean;
 }) {
-  const sentences = meaningfulDescription(input.description) ? splitSentences(input.description) : [];
-  let summary = "";
+  const description = stripLeadingHeading(input.description);
+  const firstSourceSentence = meaningfulDescription(description)
+    ? splitSentences(description).find((sentence) => sentence.length >= 60 && sentence.length <= 300) ?? ""
+    : "";
+  const parts: string[] = [
+    firstSourceSentence || `${input.provider} offers this ${input.instrument.toLowerCase() || "funding opportunity"}.`,
+  ];
 
-  for (const sentence of sentences) {
-    const next = summary ? `${summary} ${sentence}` : sentence;
-    if (next.length > MAX_SYNOPSIS_LENGTH) break;
-    summary = next;
-    if (summary.length >= 180 || splitSentences(summary).length >= 2) break;
-  }
-
-  if (summary.length >= 80) return summary;
-
-  const parts = [`${input.provider} offers this ${input.instrument.toLowerCase() || "funding opportunity"}.`];
   if (input.applicantDescriptions.length) {
     parts.push(`Eligible applicants include ${compactList(input.applicantDescriptions)}.`);
   }
   const award = moneyRange(input.awardMin, input.awardMax, input.currency);
-  if (award) parts.push(`The stated award value is ${award}.`);
+  if (award) parts.push(`Awards are stated at ${award}.`);
   if (input.rolling) parts.push("The official source uses a rolling or placeholder deadline; confirm timing before applying.");
   else if (input.deadlineAt) {
     parts.push(`The stated deadline is ${new Intl.DateTimeFormat("en-US", { year: "numeric", month: "long", day: "numeric", timeZone: "UTC" }).format(new Date(input.deadlineAt))}.`);
   }
-  parts.push("Review the official listing for program-specific requirements.");
 
-  const generated = parts.join(" ");
-  if (generated.length <= MAX_SYNOPSIS_LENGTH) return generated;
-  const fitting = splitSentences(generated).reduce((current, sentence) => {
-    const next = current ? `${current} ${sentence}` : sentence;
-    return next.length <= MAX_SYNOPSIS_LENGTH ? next : current;
-  }, "");
-  return fitting || "Review the official listing for verified eligibility, funding, and application requirements.";
+  const generated = fitSynopsis(parts);
+  if (generated.length >= 80) return generated;
+  return "Review the official listing for verified eligibility, funding, deadline, and application requirements.";
 }
 
 function applicantKey(description: string) {
@@ -206,7 +231,8 @@ function additionalApplicantDescriptions(value: unknown) {
   const descriptions: string[] = [];
   if (/not[- ]for[- ]profit|non[- ]?profit/i.test(eligibility)) descriptions.push("Nonprofit organizations");
   if (/educational institutions?|higher education|universit(?:y|ies)|colleges?/i.test(eligibility)) descriptions.push("Educational institutions");
-  if (/\bindividuals?\b/i.test(eligibility) && !/individuals?.{0,40}(?:not|ineligible)/i.test(eligibility)) descriptions.push("Individuals");
+  if (/\bindividuals?\b/i.test(eligibility) && !/\bindividuals?\s+(?:are|is)\s+(?:not eligible|ineligible)/i.test(eligibility)) descriptions.push("Individuals");
+  if (/alumni associations?/i.test(eligibility)) descriptions.push("Alumni associations");
   if (/tribal/i.test(eligibility)) descriptions.push("Tribal organizations");
   if (/state|county|city|township|local government/i.test(eligibility)) descriptions.push("Government entities");
   return unique(descriptions);
@@ -302,9 +328,11 @@ async function syncGrantsGov(supabase: SupabaseClient) {
             || singleLine(body.agencyName)
             || "United States federal agency";
 
+          const additionalApplicantTypes = additionalApplicantDescriptions(body.applicantEligibilityDesc);
+          const officialApplicantTypes = descriptionList(body.applicantTypes);
           const applicantDescriptions = unique([
-            ...descriptionList(body.applicantTypes),
-            ...additionalApplicantDescriptions(body.applicantEligibilityDesc),
+            ...officialApplicantTypes.filter((description) => !/^others?\s*\(/i.test(description) || !additionalApplicantTypes.length),
+            ...additionalApplicantTypes,
           ]);
           const applicantTypes = unique(applicantDescriptions.map(applicantKey));
           const categories = descriptionList(body.fundingActivityCategories);
@@ -403,7 +431,7 @@ async function syncGrantsGov(supabase: SupabaseClient) {
           await supabase.from("opportunity_eligibility_rules")
             .delete().eq("opportunity_id", opportunityId).eq("extraction_method", "official_api_field");
           if (applicantTypes.length) {
-            const ambiguous = applicantTypes.some((value) => value.startsWith("others_see_")) && !additionalApplicantDescriptions(body.applicantEligibilityDesc).length;
+            const ambiguous = applicantTypes.some((value) => value.startsWith("others_see_")) && !additionalApplicantTypes.length;
             const { error: ruleError } = await supabase.from("opportunity_eligibility_rules").insert({
               opportunity_id: opportunityId,
               rule_type: "applicant_type",
