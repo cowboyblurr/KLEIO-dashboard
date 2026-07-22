@@ -13,13 +13,13 @@ function settingsGroups(es: boolean) {
         { title: "Perfil institucional", icon: Building2, items: ["Espacio KLEIO Arthouse", "Cairo, Egypt", "Perfil público activo"] },
         { title: "Roles del equipo", icon: Users, items: ["12 revisores", "3 líderes de comité", "2 administradores de programa"] },
         { title: "Valores de revisión", icon: FileCheck2, items: ["Revisión por etapas activada", "Materiales faltantes señalados automáticamente", "La lista corta requiere voto de comité"] },
-        { title: "Ajustes demo", icon: Lock, items: ["Datos sintéticos estáticos", "Sin correo saliente", "Espacio institucional demo"] },
+        { title: "Seguridad y acceso", icon: Lock, items: ["Gestionar la visibilidad del espacio de trabajo", "Controlar invitaciones y acceso de miembros", "Revisar preferencias de notificaciones y cuenta"] },
       ]
     : [
         { title: "Institution profile", icon: Building2, items: ["KLEIO Arthouse workspace", "Cairo, Egypt", "Public profile active"] },
         { title: "Team roles", icon: Users, items: ["12 reviewers", "3 committee leads", "2 program administrators"] },
         { title: "Review defaults", icon: FileCheck2, items: ["Multi-stage review enabled", "Missing materials flagged automatically", "Shortlist requires committee vote"] },
-        { title: "Demo settings", icon: Lock, items: ["Static synthetic data", "No outbound email", "Demo institution workspace"] },
+        { title: "Security & access", icon: Lock, items: ["Manage workspace visibility", "Control invitations and member access", "Review notification and account preferences"] },
       ]
 }
 
@@ -49,7 +49,7 @@ export function InstitutionSettingsPageView() {
           })}
         </div>
         <section className="rounded-2xl border bg-[#F7F4FF] p-5" style={{ ...cardStyle, borderColor: lavenderSoftLine }}>
-          <p className="text-sm" style={{ color: mutedColor }}>{es ? "Los ajustes de este demo son controles base estáticos. La edición completa del equipo y las preferencias se agregará en una etapa posterior del producto." : "Workspace settings in this demo are static foundation controls. Full team and preference editing will be added in a later build pass."}</p>
+          <p className="text-sm" style={{ color: mutedColor }}>{es ? "Próximamente: edita los datos del perfil institucional, los permisos del equipo, los valores de revisión y las preferencias de la cuenta directamente desde esta página." : "Coming soon: edit institution profile details, team permissions, review defaults, and account preferences directly from this page."}</p>
           <Link href="/committee/" className="mt-3 inline-flex text-xs font-medium transition-opacity hover:opacity-75" style={{ color: "#5B4B8A" }}>{es ? "Gestionar comité →" : "Manage committee →"}</Link>
         </section>
       </div>
