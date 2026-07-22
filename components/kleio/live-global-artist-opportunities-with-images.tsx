@@ -48,7 +48,13 @@ const textarea = "w-full rounded-xl border border-[#E7E1F7] bg-white px-3 py-2 t
 const primary = "inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground disabled:opacity-50"
 const secondary = "inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-[#D8D0F2] bg-white px-4 text-sm font-semibold text-[#5B4B8A] disabled:opacity-50"
 
-type VisualOpportunity = OpportunityDirectoryItem & OpportunityImageMetadata
+type VisualOpportunity = OpportunityDirectoryItem & OpportunityImageMetadata & {
+  funding_display_text?: string
+  funding_amount_type?: string
+  funding_source_url?: string
+  funding_source_note?: string
+  funding_verified_at?: string | null
+}
 
 function LiveShell({ children }: { children: React.ReactNode }) {
   return <main className="h-full overflow-y-auto px-4 py-5 sm:px-6 sm:py-6"><div className="mx-auto max-w-[1180px] space-y-5"><WorkspacePageHeader eyebrow="Artist workspace" title="Opportunities" description="Discover sourced grants and creative opportunities from the United States, Spain, Mexico, and the wider Ibero-American region, with clear deadlines, funding, eligibility, fees, and application requirements. Source facts, KLEIO presentation summaries, and artist-specific analysis remain visibly separate." />{children}</div></main>
@@ -77,7 +83,8 @@ function formatDeadline(item: OpportunityDirectoryItem) {
   return formatDate(item.deadline_at, item.status === "forecasted" ? "Forecast date not confirmed" : "Deadline not stated")
 }
 
-function formatAmount(item: OpportunityDirectoryItem) {
+function formatAmount(item: VisualOpportunity) {
+  if (item.funding_display_text?.trim()) return item.funding_display_text.trim()
   if (item.award_min === null && item.award_max === null) return "Not stated by source"
   const currency = item.currency || "Currency not stated"
   const format = (value: number) => new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 }).format(value)
@@ -282,7 +289,7 @@ export function LiveGlobalArtistOpportunitiesWithImages() {
       <label className="flex h-10 items-center gap-2 rounded-xl border border-[#E7E1F7] px-3 text-sm"><input type="checkbox" checked={noFeeOnly} onChange={(event) => setNoFeeOnly(event.target.checked)} />Confirmed no application fee</label>
     </section>
 
-    <div className="rounded-xl border border-[#E7E1F7] bg-[#FDFBFF] px-4 py-3 text-xs leading-relaxed text-muted-foreground">KLEIO includes selected English- and Spanish-language records from official and reviewed sources. Country participation can vary by call, and the official guidelines remain controlling. Source facts, KLEIO source-based synopses, and artist-specific analysis are shown separately.</div>
+    <div className="rounded-xl border border-[#E7E1F7] bg-[#FDFBFF] px-4 py-3 text-xs leading-relaxed text-muted-foreground">KLEIO includes selected English- and Spanish-language records from official and reviewed sources. Funding labels distinguish fixed awards, ranges, category-specific ceilings, reimbursements, prize pools, and country-dependent currencies. Official listing images appear when they are source-specific and reusable; otherwise KLEIO shows a clearly labeled category cover.</div>
     <StateNotice loading={loading} error={error} empty={!loading && !items.length ? "No approved opportunities match these filters. Unknown fees do not count as no-fee, and KLEIO will not substitute demo records." : undefined} />
 
     <div className="space-y-4">{items.map((rawItem) => {
@@ -294,13 +301,14 @@ export function LiveGlobalArtistOpportunitiesWithImages() {
       const canonicalUrl = safeOpportunityUrl(item.canonical_url)
       const applicationUrl = safeOpportunityUrl(item.application_url)
       const guidelinesUrl = safeOpportunityUrl(item.guidelines_url)
+      const fundingSourceUrl = safeOpportunityUrl(item.funding_source_url || "")
       const externalUrl = applicationUrl || canonicalUrl
       const hasDirectApplication = Boolean(applicationUrl && canonicalUrl && applicationUrl !== canonicalUrl)
       const detailsId = `opportunity-details-${item.id}`
 
-      return <article key={item.id} className={card} aria-labelledby={`opportunity-title-${item.id}`}>
-        <div className="grid gap-5 md:grid-cols-[220px_minmax(0,1fr)]">
-          <OpportunityPreviewImage opportunity={item} />
+      return <article key={item.id} className={`${card} overflow-hidden`} aria-labelledby={`opportunity-title-${item.id}`}>
+        <div className="grid min-w-0 gap-5 lg:grid-cols-[minmax(190px,240px)_minmax(0,1fr)]">
+          <OpportunityPreviewImage opportunity={item} className="self-start" />
           <div className="min-w-0">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div className="min-w-0 flex-1">
@@ -313,11 +321,11 @@ export function LiveGlobalArtistOpportunitiesWithImages() {
               <button type="button" className={secondary} disabled={actionId === item.id} onClick={() => void toggleSaved(item)}><Bookmark className={`size-4 ${item.saved ? "fill-current" : ""}`} />{item.saved ? "Saved" : "Save"}</button>
             </div>
 
-            <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
-              <div className="rounded-xl bg-[#F7F4FF] p-3"><p className="text-[0.68rem] font-semibold uppercase tracking-wide text-muted-foreground">Funding</p><p className="mt-1 text-sm font-semibold">{formatAmount(item)}</p></div>
+            <div className="mt-4 grid gap-3 sm:grid-cols-2 2xl:grid-cols-5">
+              <div className="min-w-0 rounded-xl bg-[#F7F4FF] p-3"><p className="text-[0.68rem] font-semibold uppercase tracking-wide text-muted-foreground">Funding</p><p className="mt-1 break-words text-sm font-semibold leading-snug">{formatAmount(item)}</p></div>
               <div className="rounded-xl bg-[#F7F4FF] p-3"><p className="text-[0.68rem] font-semibold uppercase tracking-wide text-muted-foreground">Deadline</p><p className="mt-1 text-sm font-semibold">{formatDeadline(item)}</p></div>
-              <div className="rounded-xl bg-[#F7F4FF] p-3"><p className="text-[0.68rem] font-semibold uppercase tracking-wide text-muted-foreground">Location / format</p><p className="mt-1 text-sm font-semibold">{locationAndFormatCopy(item)}</p></div>
-              <div className="rounded-xl bg-[#F7F4FF] p-3"><p className="text-[0.68rem] font-semibold uppercase tracking-wide text-muted-foreground">Applicant type</p><p className="mt-1 line-clamp-3 text-sm font-semibold">{item.eligible_applicant_types.length ? item.eligible_applicant_types.map(cleanLabel).join(", ") : "Not fully structured"}</p></div>
+              <div className="min-w-0 rounded-xl bg-[#F7F4FF] p-3"><p className="text-[0.68rem] font-semibold uppercase tracking-wide text-muted-foreground">Location / format</p><p className="mt-1 break-words text-sm font-semibold leading-snug">{locationAndFormatCopy(item)}</p></div>
+              <div className="min-w-0 rounded-xl bg-[#F7F4FF] p-3"><p className="text-[0.68rem] font-semibold uppercase tracking-wide text-muted-foreground">Applicant type</p><p className="mt-1 line-clamp-3 break-words text-sm font-semibold leading-snug">{item.eligible_applicant_types.length ? item.eligible_applicant_types.map(cleanLabel).join(", ") : "Not fully structured"}</p></div>
               <div className="rounded-xl bg-[#F7F4FF] p-3"><p className="text-[0.68rem] font-semibold uppercase tracking-wide text-muted-foreground">Application fee</p><p className="mt-1 text-sm font-semibold">{formatFee(item)}</p></div>
             </div>
           </div>
@@ -347,7 +355,7 @@ export function LiveGlobalArtistOpportunitiesWithImages() {
 
             <section><h3 className="flex items-center gap-2 text-sm font-semibold"><FileText className="size-4 text-primary" />Application readiness</h3>{readiness.unknown ? <p className="mt-3 text-sm text-muted-foreground">Required materials are not stated in a structured source field. Review the official guidelines before preparing an application.</p> : <div className="mt-3 space-y-3"><div><p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">Ready</p><ul className="mt-1 space-y-1 text-sm text-muted-foreground">{readiness.ready.length ? readiness.ready.map((label) => <li key={label}>✓ {label}</li>) : <li>No assessable materials are confirmed ready yet.</li>}</ul></div><div><p className="text-xs font-semibold uppercase tracking-wide text-red-700">Missing</p><ul className="mt-1 space-y-1 text-sm text-muted-foreground">{readiness.missing.length ? readiness.missing.map((label) => <li key={label}>• {label}</li>) : <li>No assessable materials are confirmed missing.</li>}</ul></div>{readiness.manualReview.length > 0 && <div><p className="text-xs font-semibold uppercase tracking-wide text-amber-700">Verify manually</p><ul className="mt-1 space-y-1 text-sm text-muted-foreground">{readiness.manualReview.map((label) => <li key={label}>? {label}</li>)}</ul></div>}</div>}</section>
 
-            <section><h3 className="text-sm font-semibold">Verified source facts</h3><dl className="mt-3 space-y-3 text-sm"><div><dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Official source</dt><dd>{canonicalUrl ? <a className="font-medium text-primary underline-offset-4 hover:underline" href={canonicalUrl} target="_blank" rel="noreferrer">{item.source?.name || item.provider_name}<ExternalLink className="ml-1 inline size-3" /></a> : "Source link not provided"}</dd></div><div><dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Last checked</dt><dd>{formatDate(item.last_verified_at, "Not confirmed")}</dd></div><div><dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Status</dt><dd>{statusCopy(item.status)}</dd></div><div><dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Opens</dt><dd>{formatDate(item.opens_at)}</dd></div><div><dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Deadline</dt><dd>{formatDeadline(item)}</dd></div><div><dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Application fee</dt><dd>{formatFee(item)}</dd></div><div><dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Location / participation</dt><dd>{locationAndFormatCopy(item)}</dd></div><div><dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Eligible countries / regions</dt><dd>{[...item.eligible_countries, ...item.eligible_regions].length ? [...item.eligible_countries, ...item.eligible_regions].join(", ") : "Not stated in structured source data"}</dd></div><div><dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Disciplines</dt><dd>{item.disciplines.length ? item.disciplines.join(", ") : "Not stated in structured source data"}</dd></div><div><dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Image provenance</dt><dd>{imageRightsCopy(item)}</dd></div></dl></section>
+            <section><h3 className="text-sm font-semibold">Verified source facts</h3><dl className="mt-3 space-y-3 text-sm"><div><dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Official source</dt><dd>{canonicalUrl ? <a className="font-medium text-primary underline-offset-4 hover:underline" href={canonicalUrl} target="_blank" rel="noreferrer">{item.source?.name || item.provider_name}<ExternalLink className="ml-1 inline size-3" /></a> : "Source link not provided"}</dd></div><div><dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Funding</dt><dd className="mt-1 leading-relaxed">{formatAmount(item)}{fundingSourceUrl && <> · <a className="font-medium text-primary underline-offset-2 hover:underline" href={fundingSourceUrl} target="_blank" rel="noreferrer">Funding source</a></>}</dd>{item.funding_source_note && <dd className="mt-1 text-xs leading-relaxed text-muted-foreground">{item.funding_source_note}</dd>}</div><div><dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Funding checked</dt><dd>{formatDate(item.funding_verified_at ?? null, "Not separately confirmed")}</dd></div><div><dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Last checked</dt><dd>{formatDate(item.last_verified_at, "Not confirmed")}</dd></div><div><dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Status</dt><dd>{statusCopy(item.status)}</dd></div><div><dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Opens</dt><dd>{formatDate(item.opens_at)}</dd></div><div><dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Deadline</dt><dd>{formatDeadline(item)}</dd></div><div><dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Application fee</dt><dd>{formatFee(item)}</dd></div><div><dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Location / participation</dt><dd>{locationAndFormatCopy(item)}</dd></div><div><dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Eligible countries / regions</dt><dd>{[...item.eligible_countries, ...item.eligible_regions].length ? [...item.eligible_countries, ...item.eligible_regions].join(", ") : "Not stated in structured source data"}</dd></div><div><dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Disciplines</dt><dd>{item.disciplines.length ? item.disciplines.join(", ") : "Not stated in structured source data"}</dd></div><div><dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Image provenance</dt><dd>{imageRightsCopy(item)}</dd></div></dl></section>
           </div>
 
           <section className="mt-5 rounded-xl border border-[#E7E1F7] p-4"><h3 className="text-sm font-semibold">Full source description</h3><p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">{item.description || "The source did not provide a reusable full description. Continue to the official listing."}</p></section>
