@@ -59,29 +59,34 @@ export function OpportunityPreviewImage({
   const typeKey = opportunity.opportunity_type?.toLowerCase().replace(/[^a-z]+/g, "_").replace(/^_|_$/g, "") || "other"
   const visual = visualByType[typeKey] || visualByType.other
   const Icon = visual.icon
-  const sizeClass = variant === "hero" ? "aspect-[16/7] min-h-56" : variant === "editor" ? "aspect-video min-h-48" : "aspect-video min-h-40"
+  const sizeClass = variant === "hero"
+    ? "aspect-[16/7] min-h-56"
+    : variant === "editor"
+      ? "aspect-video min-h-48"
+      : "aspect-[4/3] min-h-0"
   const alt = opportunity.preview_image_alt_text?.trim() || `${opportunity.title} opportunity preview image`
   const caption = opportunity.preview_image_attribution?.trim()
 
-  return <figure className={className}>
-    <div className={`relative overflow-hidden rounded-2xl border border-white/70 bg-gradient-to-br shadow-[0_18px_44px_rgba(70,54,114,0.10)] ${sizeClass} ${visual.classes}`}>
+  return <figure className={`min-w-0 w-full ${className}`}>
+    <div className={`relative w-full overflow-hidden rounded-2xl border border-white/70 bg-gradient-to-br shadow-[0_18px_44px_rgba(70,54,114,0.10)] ${sizeClass} ${visual.classes}`}>
       {hasImage ? <img
         src={imageUrl}
         alt={alt}
         loading={variant === "hero" ? "eager" : "lazy"}
-        className="absolute inset-0 size-full object-cover"
+        referrerPolicy="no-referrer"
+        className="absolute inset-0 block size-full object-cover"
         onError={() => setFailed(true)}
-      /> : <div className="absolute inset-0 flex flex-col justify-between p-5">
+      /> : <div className="absolute inset-0 flex min-w-0 flex-col justify-between p-4 sm:p-5">
         <div className="flex items-start justify-between gap-3">
           <span className="rounded-full border border-white/70 bg-white/70 px-3 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.14em] backdrop-blur">{visual.label}</span>
-          <div className="rounded-2xl border border-white/80 bg-white/65 p-3 backdrop-blur"><Icon className="size-6" /></div>
+          <div className="shrink-0 rounded-2xl border border-white/80 bg-white/65 p-3 backdrop-blur"><Icon className="size-6" /></div>
         </div>
-        <div>
-          <p className="max-w-[90%] font-serif text-xl font-semibold leading-tight">{opportunity.title}</p>
-          <p className="mt-2 text-xs font-semibold uppercase tracking-[0.12em] opacity-70">{opportunity.provider_name || "KLEIO opportunity directory"}</p>
+        <div className="min-w-0 pr-8">
+          <p className="font-serif text-lg font-semibold leading-tight">{visual.label} opportunity</p>
+          <p className="mt-2 line-clamp-2 break-words text-[0.68rem] font-semibold uppercase tracking-[0.1em] opacity-70">{opportunity.provider_name || "KLEIO opportunity directory"}</p>
         </div>
       </div>}
-      <div className="absolute bottom-3 right-3 rounded-full border border-white/70 bg-white/80 px-2.5 py-1 text-[0.62rem] font-semibold text-[#5B4B8A] shadow-sm backdrop-blur">
+      <div className="absolute bottom-3 right-3 max-w-[75%] truncate rounded-full border border-white/70 bg-white/85 px-2.5 py-1 text-[0.62rem] font-semibold text-[#5B4B8A] shadow-sm backdrop-blur">
         {originLabel(opportunity.preview_image_origin, hasImage)}
       </div>
     </div>
