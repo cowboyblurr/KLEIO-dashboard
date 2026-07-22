@@ -1,8 +1,10 @@
 import type { AuthChangeEvent, Session } from "@supabase/supabase-js"
 import { getSupabaseBrowserClient, type KleioAccountRole } from "@/lib/kleio-supabase"
 import type { KleioEntitySuggestion, KleioLocationData } from "@/lib/kleio-entity-search"
+import { getKleioAuthCallbackUrl } from "@/lib/kleio-url"
 
-const PENDING_ONBOARDING_KEY = "kleio-pending-live-onboarding"
+const PENDING_ONBOARDING_KEY = "kleio:auth:pending-onboarding:v2"
+const LEGACY_PENDING_ONBOARDING_KEY = "kleio-pending-live-onboarding"
 
 export type ArtistOnboardingPayload = {
   role: "artist"
@@ -42,6 +44,10 @@ function isBrowser() {
   return typeof window !== "undefined"
 }
 
+function normalizeEmail(value: string) {
+  return value.trim().toLowerCase()
+}
+
 function splitList(value: string) {
   return value
     .split(/[,;\n]/)
@@ -61,33 +67,36 @@ function locationData(selection: KleioEntitySuggestion | null, fallback: string)
   return { formatted_address: fallback.trim() }
 }
 
-function readPendingPayload(): KleioOnboardingPayload | null {
+export function readPendingKleioOnboarding(): KleioOnboardingPayload | null {
   if (!isBrowser()) return null
-  const raw = window.localStorage.getItem(PENDING_ONBOARDING_KEY)
+  const raw = window.localStorage.getItem(PENDING_ONBOARDING_KEY) ?? window.localStorage.getItem(LEGACY_PENDING_ONBOARDING_KEY)
   if (!raw) return null
   try {
     const parsed = JSON.parse(raw) as KleioOnboardingPayload
-    if (parsed?.role === "artist" || parsed?.role === "institution") return parsed
+    if (parsed?.role === "artist" || parsed?.role === "institution") {
+      return { ...parsed, email: normalizeEmail(parsed.email) }
+    }
   } catch {
-    window.localStorage.removeItem(PENDING_ONBOARDING_KEY)
+    clearPendingKleioOnboarding()
   }
   return null
 }
 
 export function savePendingKleioOnboarding(payload: KleioOnboardingPayload) {
   if (!isBrowser()) return
-  window.localStorage.setItem(PENDING_ONBOARDING_KEY, JSON.stringify(payload))
+  const normalized = { ...payload, email: normalizeEmail(payload.email) }
+  window.localStorage.setItem(PENDING_ONBOARDING_KEY, JSON.stringify(normalized))
+  window.localStorage.removeItem(LEGACY_PENDING_ONBOARDING_KEY)
 }
 
 export function clearPendingKleioOnboarding() {
   if (!isBrowser()) return
   window.localStorage.removeItem(PENDING_ONBOARDING_KEY)
+  window.localStorage.removeItem(LEGACY_PENDING_ONBOARDING_KEY)
 }
 
 export function getKleioSignupRedirect(role: Extract<KleioAccountRole, "artist" | "institution">) {
-  if (!isBrowser()) return undefined
-  const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? ""
-  return `${window.location.origin}${basePath}/signup/${role}/`
+  return getKleioAuthCallbackUrl(role)
 }
 
 export async function signUpKleioAccount(input: {
@@ -98,7 +107,7 @@ export async function signUpKleioAccount(input: {
 }): Promise<KleioSignupResult> {
   const supabase = getSupabaseBrowserClient()
   const { data, error } = await supabase.auth.signUp({
-    email: input.email.trim().toLowerCase(),
+    email: normalizeEmail(input.email),
     password: input.password,
     options: {
       data: {
@@ -111,10 +120,6 @@ export async function signUpKleioAccount(input: {
 
   if (error) throw error
   if (!data.user) throw new Error("KLEIO could not create the account.")
-  // With email confirmation enabled, Supabase deliberately returns an
-  // obfuscated user object for an existing email. An empty identities array is
-  // the supported signal; without this check the UI falsely claims that a new
-  // confirmation email was sent.
   if (Array.isArray(data.user.identities) && data.user.identities.length === 0) {
     throw new Error("A user has already been registered with this email.")
   }
@@ -170,7 +175,7 @@ async function completeInstitutionOnboarding(userId: string, payload: Institutio
     location: resolvedLocation,
     website_url: normalizedUrl(payload.website),
     contact_name: payload.displayName.trim(),
-    contact_email: payload.email.trim().toLowerCase(),
+    contact_email: normalizeEmail(payload.email),
     provider: entitySelection?.provider ?? null,
     provider_place_id: entitySelection?.providerPlaceId ?? null,
     source_mode: entitySelection ? "external_provider" : "manual",
@@ -197,12 +202,18 @@ export async function completeKleioOnboarding(userId: string, payload: KleioOnbo
 }
 
 export async function resumePendingKleioOnboarding(expectedRole?: "artist" | "institution") {
-  const payload = readPendingPayload()
+  const payload = readPendingKleioOnboarding()
   if (!payload || (expectedRole && payload.role !== expectedRole)) return false
 
   const supabase = getSupabaseBrowserClient()
   const { data, error } = await supabase.auth.getUser()
   if (error || !data.user) return false
+  if (!data.user.email_confirmed_at) return false
+  if (normalizeEmail(data.user.email ?? "") !== normalizeEmail(payload.email)) {
+    clearPendingKleioOnboarding()
+    return false
+  }
+
   await completeKleioOnboarding(data.user.id, payload)
   return true
 }
