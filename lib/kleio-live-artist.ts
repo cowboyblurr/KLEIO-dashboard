@@ -83,7 +83,7 @@ export async function loadLiveArtistWorkspace(): Promise<LiveArtistWorkspace> {
   const [{ data: profileData, error: profileError }, { data: artistData, error: artistError }, { data: worksData, error: worksError }, { data: applicationData, error: applicationsError }] = await Promise.all([
     supabase.from("profiles").select("display_name, email, onboarding_completed").eq("id", user.id).single(),
     supabase.from("artist_profiles").select("professional_name, location, bio, artist_statement, practice_description, website_url, instagram_url, disciplines, mediums, cv_file_path, profile_completion").eq("user_id", user.id).maybeSingle(),
-    supabase.from("portfolio_works").select("id, title, year, medium, dimensions, image_url, is_featured").eq("artist_user_id", user.id).order("display_order", { ascending: true }),
+    supabase.from("portfolio_works").select("id, title, year, medium, dimensions, image_path").eq("artist_user_id", user.id).order("sort_order", { ascending: true }),
     supabase.from("applications").select("status, submitted_at, updated_at, open_calls(title, deadline_at, notification_date)").eq("artist_user_id", user.id).order("updated_at", { ascending: false }),
   ])
 
@@ -96,7 +96,7 @@ export async function loadLiveArtistWorkspace(): Promise<LiveArtistWorkspace> {
 
   const artistRow = artistData as ArtistProfileRow
   const rows = (applicationData ?? []) as ApplicationRow[]
-  const works = (worksData ?? []) as Array<{ id: string; title: string; year: string | number | null; medium: string | null; dimensions: string | null; image_url: string | null }>
+  const works = (worksData ?? []) as Array<{ id: string; title: string; year: string | number | null; medium: string | null; dimensions: string | null; image_path: string | null }>
   const displayName = artistRow.professional_name?.trim() || profileData.display_name?.trim() || user.email?.split("@")[0] || "KLEIO Artist"
   const disciplines = artistRow.disciplines ?? []
   const mediums = artistRow.mediums ?? []
@@ -145,7 +145,7 @@ export async function loadLiveArtistWorkspace(): Promise<LiveArtistWorkspace> {
     bio: artistRow.bio ?? "",
     statement: artistRow.artist_statement ?? "",
     tags: [...disciplines, ...mediums],
-    portfolioImage: works.find((work) => work.image_url)?.image_url ?? "",
+    portfolioImage: works.find((work) => work.image_path)?.image_path ?? "",
     cvStatus: artistRow.cv_file_path ? "Complete" : "Incomplete",
     documentStatus: artistRow.bio && artistRow.artist_statement ? "Complete" : "Incomplete",
     referencesStatus: "Pending",
@@ -156,7 +156,7 @@ export async function loadLiveArtistWorkspace(): Promise<LiveArtistWorkspace> {
       year: work.year ? String(work.year) : "",
       medium: work.medium ?? "",
       dimensions: work.dimensions ?? undefined,
-      image: work.image_url ?? "",
+      image: work.image_path ?? "",
     })),
     website: artistRow.website_url ?? undefined,
     instagram: artistRow.instagram_url ?? undefined,
