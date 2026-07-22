@@ -72,9 +72,9 @@ export function ArtistProfileContextBar({
             <Sparkles className="size-4" />
           </span>
           <div>
-            <p className="text-sm font-semibold text-[#292631]">KLEIO Assist</p>
+            <p className="text-sm font-semibold text-[#292631]">Coming soon: KLEIO Assist</p>
             <p className="mt-0.5 text-xs leading-relaxed text-[#7F7890]">
-              KLEIO Assist is a review-first drafting layer. It is not active in this connected screen yet, and KLEIO does not automatically rewrite, publish, or replace your saved information.
+              KLEIO Assist will help you prepare and refine artist materials while keeping every suggestion editable and under your approval. Your saved information will never be changed or published automatically.
             </p>
           </div>
         </div>
