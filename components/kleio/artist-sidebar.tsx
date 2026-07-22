@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
@@ -18,10 +19,12 @@ import {
 import { cn } from "@/lib/utils"
 import { DEMO_ARTIST_ID, getArtistById } from "@/lib/kleio-data"
 import { artistNavLabelKeys } from "@/lib/kleio-nav-i18n"
+import { loadKleioAccount } from "@/lib/kleio-supabase"
 import { InitialAvatar } from "@/components/kleio/initial-avatar"
 import { KleioWordmarkLink } from "@/components/kleio/kleio-wordmark-link"
 import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
 import { persistDemoGuideState } from "@/components/kleio/use-demo-guide"
+import { useKleioMode } from "@/components/kleio/use-kleio-mode"
 
 type NavItem = { href: string; label: string; icon: typeof LayoutDashboard; activeMatch?: string; comingSoon?: boolean }
 type NavSection = { heading: string; headingEs: string; items: NavItem[] }
@@ -58,9 +61,33 @@ function openPageGuide() {
 
 export function ArtistSidebar() {
   const pathname = usePathname()
-  const artist = getArtistById(DEMO_ARTIST_ID)
+  const { isLive } = useKleioMode()
+  const demoArtist = getArtistById(DEMO_ARTIST_ID)
+  const [liveArtist, setLiveArtist] = useState<{ name: string; discipline: string } | null>(null)
   const { t, locale } = useKleioLocale()
 
+  useEffect(() => {
+    let active = true
+    if (!isLive) {
+      setLiveArtist(null)
+      return () => {
+        active = false
+      }
+    }
+    loadKleioAccount()
+      .then((account) => {
+        if (!active || !account) return
+        setLiveArtist({ name: account.profile.display_name || account.user.email?.split("@")[0] || "KLEIO Artist", discipline: "Artist" })
+      })
+      .catch(() => {
+        if (active) setLiveArtist(null)
+      })
+    return () => {
+      active = false
+    }
+  }, [isLive])
+
+  const artist = isLive ? liveArtist : demoArtist ? { name: demoArtist.name, discipline: demoArtist.discipline } : null
   const mobileItems = navSections.flatMap((section) => section.items)
   return (
     <>
@@ -91,7 +118,7 @@ export function ArtistSidebar() {
                   <li key={item.label}>
                     <Link
                       href={item.href}
-                      onClick={openPageGuide}
+                      onClick={isLive ? undefined : openPageGuide}
                       aria-current={active ? "page" : undefined}
                       className={cn(
                         "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",

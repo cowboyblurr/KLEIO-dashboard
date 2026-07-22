@@ -5,6 +5,8 @@ import Link from "next/link"
 import { DashboardShell } from "@/components/kleio/dashboard-shell"
 import { DemoPageShell } from "@/components/kleio/demo-page-shell"
 import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
+import { useKleioMode } from "@/components/kleio/use-kleio-mode"
+import { LiveInstitutionCalls } from "@/components/kleio/live-institution-workspace"
 import { analytics, getProgramStats } from "@/lib/kleio-analytics"
 import { programs } from "@/lib/kleio-data"
 import workflowMotion from "@/components/kleio/workflow-motion.module.css"
@@ -37,6 +39,7 @@ function statusLabel(status: string, es: boolean) {
 
 export default function Page() {
   const { locale } = useKleioLocale()
+  const { isLive } = useKleioMode()
   const es = locale === "es"
   const workflowSteps = es
     ? [
@@ -53,6 +56,14 @@ export default function Page() {
         ["04", "Committee review", "/review-room/"],
         ["05", "Prepare report", "/reports/"],
       ]
+
+  if (isLive) {
+    return (
+      <DashboardShell>
+        <LiveInstitutionCalls />
+      </DashboardShell>
+    )
+  }
 
   return (
     <DashboardShell>

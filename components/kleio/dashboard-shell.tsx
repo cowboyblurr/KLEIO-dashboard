@@ -1,6 +1,7 @@
 "use client"
 
 import type { ReactNode } from "react"
+import { usePathname } from "next/navigation"
 import { AuthGate } from "@/components/kleio/auth-gate"
 import { KleioDemoGuide } from "@/components/kleio/kleio-demo-guide"
 import { Sidebar } from "@/components/kleio/sidebar"
@@ -11,10 +12,23 @@ import { DemoClickFeedbackLayer } from "@/components/kleio/demo-click-feedback-l
 import { DemoGuideHighlightLayer } from "@/components/kleio/demo-guide-highlight-layer"
 import { DemoTrustLink } from "@/components/kleio/demo-trust-link"
 import { InternalMessengerAccent } from "@/components/kleio/internal-messenger-accent"
+import { LiveInstitutionUnavailable } from "@/components/kleio/live-institution-unavailable"
 import { useKleioMode } from "@/components/kleio/use-kleio-mode"
 
+function liveRouteFallback(pathname: string) {
+  if (pathname === "/activity-log" || pathname === "/activity-log/") {
+    return <LiveInstitutionUnavailable title="Activity log" description="A verified institution activity history requires a dedicated live event model. Guided-demo activity is not shown in authenticated workspaces." />
+  }
+  if (pathname === "/templates" || pathname === "/templates/" || pathname.startsWith("/templates/")) {
+    return <LiveInstitutionUnavailable title="Templates" description="Persistent institution templates are not implemented in the current live schema. Guided-demo templates remain isolated to preview mode." />
+  }
+  return null
+}
+
 export function DashboardShell({ children }: { children: ReactNode }) {
-  const { isDemo } = useKleioMode()
+  const { isDemo, isLive } = useKleioMode()
+  const pathname = usePathname()
+  const fallback = isLive ? liveRouteFallback(pathname) : null
 
   return (
     <AuthGate requiredRole="institution">
@@ -27,7 +41,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
         <Sidebar />
         <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
           <TopBar />
-          <div className="min-h-0 flex-1 overflow-x-auto overflow-y-hidden">{children}</div>
+          <div className="min-h-0 flex-1 overflow-x-auto overflow-y-hidden">{fallback ?? children}</div>
         </div>
         <InternalMessengerAccent />
       </div>

@@ -51,6 +51,7 @@ jobs:
         env:
           GITHUB_ACTIONS: "true"
           NEXT_PUBLIC_BASE_PATH: /KLEIO-dashboard
+          NEXT_PUBLIC_SITE_URL: https://cowboyblurr.github.io/KLEIO-dashboard
           NEXT_PUBLIC_SUPABASE_URL: https://trekynurdgxgtaaqqtyq.supabase.co
           NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_XdYXvd0fQm3IJKxNrFXgUQ_M4RgDj1M
         run: pnpm run build
@@ -66,6 +67,7 @@ jobs:
           echo "Checking signup and recovery exports..."
           test -f out/signup/artist/index.html
           test -f out/signup/institution/index.html
+          test -f out/auth/callback/index.html
           test -f out/auth/forgot-password/index.html
           test -f out/auth/update-password/index.html
           echo "Checking core workspace exports..."

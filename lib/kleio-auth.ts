@@ -1,15 +1,8 @@
 import type { AuthError, User } from "@supabase/supabase-js"
 import { getSupabaseBrowserClient } from "@/lib/kleio-supabase"
+import { getKleioAbsoluteUrl, getKleioAuthCallbackUrl } from "@/lib/kleio-url"
 
-function ensureLeadingSlash(path: string) {
-  return path.startsWith("/") ? path : `/${path}`
-}
-
-export function getKleioAbsoluteUrl(path: string) {
-  if (typeof window === "undefined") return undefined
-  const basePath = (process.env.NEXT_PUBLIC_BASE_PATH ?? "").replace(/\/$/, "")
-  return `${window.location.origin}${basePath}${ensureLeadingSlash(path)}`
-}
+export { getKleioAbsoluteUrl }
 
 export function getKleioAuthErrorMessage(error: unknown, locale: "en" | "es" = "en") {
   const message = error instanceof Error ? error.message.toLowerCase() : ""
@@ -84,7 +77,7 @@ export async function resendKleioSignupConfirmation(email: string, role: "artist
     type: "signup",
     email: email.trim().toLowerCase(),
     options: {
-      emailRedirectTo: getKleioAbsoluteUrl(`/signup/${role}/`),
+      emailRedirectTo: getKleioAuthCallbackUrl(role),
     },
   })
   if (error) throw error

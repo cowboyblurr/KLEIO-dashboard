@@ -1,6 +1,6 @@
 import type { Metadata } from "next"
 import { DashboardShell } from "@/components/kleio/dashboard-shell"
-import { Overview } from "@/components/kleio/overview"
+import { InstitutionDashboardOverview } from "@/components/kleio/institution-dashboard-overview"
 
 /** Institution dashboard overview — private workspace, not the public homepage. */
 export const metadata: Metadata = {
@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 export default function Page() {
   return (
     <DashboardShell>
-      <Overview />
+      <InstitutionDashboardOverview />
     </DashboardShell>
   )
 }
