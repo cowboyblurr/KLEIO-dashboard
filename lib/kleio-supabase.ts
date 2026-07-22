@@ -62,6 +62,10 @@ export type InstitutionMessage = {
   created_at: string
 }
 
+export function isKleioEmailConfirmed(user: User) {
+  return Boolean(user.email_confirmed_at ?? user.confirmed_at)
+}
+
 export function getSupabaseBrowserClient(): SupabaseClient {
   if (typeof window === "undefined") {
     throw new Error("The KLEIO Supabase client is only available in the browser.")
@@ -90,6 +94,10 @@ export async function loadKleioAccount(): Promise<KleioAccount | null> {
   const { data: userData, error: userError } = await supabase.auth.getUser()
 
   if (userError || !userData.user) return null
+  if (!isKleioEmailConfirmed(userData.user)) {
+    await supabase.auth.signOut()
+    return null
+  }
 
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
@@ -108,12 +116,16 @@ export async function loadKleioAccount(): Promise<KleioAccount | null> {
 
 export async function signInKleioAccount(email: string, password: string): Promise<KleioAccount> {
   const supabase = getSupabaseBrowserClient()
-  const { error } = await supabase.auth.signInWithPassword({
-    email: email.trim(),
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email: email.trim().toLowerCase(),
     password,
   })
 
   if (error) throw error
+  if (!data.user || !isKleioEmailConfirmed(data.user)) {
+    await supabase.auth.signOut()
+    throw new Error("Email not confirmed.")
+  }
 
   const account = await loadKleioAccount()
   if (!account) {
