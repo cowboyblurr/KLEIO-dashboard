@@ -103,12 +103,12 @@ export function AuthCallbackClient() {
         <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{message}</p>
         {status === "error" && (
           <div className="mt-6 grid gap-2 sm:grid-cols-2">
-            <Link href="/login/" className="inline-flex h-10 items-center justify-center rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground">
-              Return to login
+            <Link href="/" className="inline-flex h-10 items-center justify-center rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground">
+              Return to KLEIO
             </Link>
-            <Link href="/signup/artist/" className="inline-flex h-10 items-center justify-center rounded-xl border border-border px-4 text-sm font-medium text-foreground">
+            <Link href="/signup/" className="inline-flex h-10 items-center justify-center rounded-xl border border-border px-4 text-sm font-medium text-foreground">
               <MailCheck className="mr-2 size-4" />
-              Resend confirmation
+              Account options
             </Link>
           </div>
         )}
