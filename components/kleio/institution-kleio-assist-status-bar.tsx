@@ -10,9 +10,9 @@ export function InstitutionKleioAssistStatusBar() {
           <Sparkles className="size-4" />
         </span>
         <div>
-          <p className="text-sm font-semibold text-[#292631]">KLEIO Assist for open-call preparation</p>
+          <p className="text-sm font-semibold text-[#292631]">Coming soon: KLEIO Assist for open calls</p>
           <p className="mt-1 text-xs leading-relaxed text-[#7F7890]">
-            KLEIO Assist may eventually help prepare reviewable drafts for descriptions, eligibility language, application questions, rubrics, and applicant communications. It is not active in this connected editor yet, and KLEIO does not generate, approve, publish, or change institutional criteria automatically.
+            KLEIO Assist will help teams prepare reviewable drafts for descriptions, eligibility language, application questions, rubrics, and applicant communications. Institutional criteria and published content will remain under your team’s approval.
           </p>
         </div>
       </div>
