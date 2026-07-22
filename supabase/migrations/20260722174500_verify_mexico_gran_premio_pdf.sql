@@ -33,7 +33,7 @@ begin
 
   delete from public.opportunity_eligibility_rules
   where opportunity_id = opportunity_uuid
-    and extraction_method = 'manual_pdf_verification'
+    and extraction_method = 'manual_review'
     and rule_type = 'age';
 
   insert into public.opportunity_eligibility_rules (
@@ -58,7 +58,7 @@ begin
     'The official guidelines state that participants must be adult Mexican artisans.',
     official_pdf,
     'Base primera: personas participantes',
-    'manual_pdf_verification',
+    'manual_review',
     'confirmed',
     now(),
     20
@@ -66,7 +66,7 @@ begin
 
   delete from public.opportunity_requirements
   where opportunity_id = opportunity_uuid
-    and extraction_method = 'manual_pdf_verification';
+    and extraction_method = 'manual_review';
 
   insert into public.opportunity_requirements (
     opportunity_id,
@@ -80,11 +80,11 @@ begin
     last_verified_at,
     sort_order
   ) values
-    (opportunity_uuid, 'artwork_marked_gp26', 'Artwork in acceptable condition and marked GP26', true, 'The work must be in acceptable condition and marked GP26 in a discreet location.', official_pdf, 'manual_pdf_verification', 'confirmed', now(), 10),
-    (opportunity_uuid, 'official_identification', 'Official identification', true, 'A legible copy of current official identification is required.', official_pdf, 'manual_pdf_verification', 'confirmed', now(), 20),
-    (opportunity_uuid, 'curp', 'Certified CURP', true, 'A certified and current copy of the CURP is required.', official_pdf, 'manual_pdf_verification', 'confirmed', now(), 30),
-    (opportunity_uuid, 'proof_of_address', 'Proof of address', true, 'Proof of address or residence issued within the stated period is required.', official_pdf, 'manual_pdf_verification', 'confirmed', now(), 40),
-    (opportunity_uuid, 'artwork_photograph', 'Color photograph of the artwork', true, 'A printed and digital color photograph of the work is required.', official_pdf, 'manual_pdf_verification', 'confirmed', now(), 50),
-    (opportunity_uuid, 'technical_data_sheet', 'Technical data sheet for the artwork', true, 'A technical data sheet describing the work, authorship, materials, process, dimensions, and relevant cultural information is required.', official_pdf, 'manual_pdf_verification', 'confirmed', now(), 60);
+    (opportunity_uuid, 'artwork_marked_gp26', 'Artwork in acceptable condition and marked GP26', true, 'The work must be in acceptable condition and marked GP26 in a discreet location.', official_pdf, 'manual_review', 'confirmed', now(), 10),
+    (opportunity_uuid, 'official_identification', 'Official identification', true, 'A legible copy of current official identification is required.', official_pdf, 'manual_review', 'confirmed', now(), 20),
+    (opportunity_uuid, 'curp', 'Certified CURP', true, 'A certified and current copy of the CURP is required.', official_pdf, 'manual_review', 'confirmed', now(), 30),
+    (opportunity_uuid, 'proof_of_address', 'Proof of address', true, 'Proof of address or residence issued within the stated period is required.', official_pdf, 'manual_review', 'confirmed', now(), 40),
+    (opportunity_uuid, 'artwork_photograph', 'Color photograph of the artwork', true, 'A printed and digital color photograph of the work is required.', official_pdf, 'manual_review', 'confirmed', now(), 50),
+    (opportunity_uuid, 'technical_data_sheet', 'Technical data sheet for the artwork', true, 'A technical data sheet describing the work, authorship, materials, process, dimensions, and relevant cultural information is required.', official_pdf, 'manual_review', 'confirmed', now(), 60);
 end
 $$;
