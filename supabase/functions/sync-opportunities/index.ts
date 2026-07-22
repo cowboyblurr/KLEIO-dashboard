@@ -226,7 +226,7 @@ function descriptionList(value: unknown): string[] {
 }
 
 function additionalApplicantDescriptions(value: unknown) {
-  const eligibility = singleLine(value);
+  const eligibility = singleLine(value).replace(/([a-z])([A-Z])/g, "$1 $2");
   if (!eligibility) return [];
   const descriptions: string[] = [];
   if (/not[- ]for[- ]profit|non[- ]?profit/i.test(eligibility)) descriptions.push("Nonprofit organizations");
