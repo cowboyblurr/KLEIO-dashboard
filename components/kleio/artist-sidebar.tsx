@@ -14,6 +14,7 @@ import {
   MessageSquare,
   Settings,
   Sparkles,
+  UserRound,
   UsersRound,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -36,6 +37,7 @@ const navSections: NavSection[] = [
     items: [
       { href: "/artist-dashboard/", label: "Overview", icon: LayoutDashboard },
       { href: "/artist-dashboard/passport/", label: "Creative Passport", icon: Sparkles, activeMatch: "/artist-dashboard/passport" },
+      { href: "/artist-dashboard/profile/", label: "Artist Profile", icon: UserRound, activeMatch: "/artist-dashboard/profile" },
       { href: "/artist-dashboard/opportunities/", label: "Opportunities", icon: Briefcase, activeMatch: "/artist-dashboard/opportunities" },
       { href: "/artist-dashboard/applications/", label: "Applications", icon: FileText, activeMatch: "/artist-dashboard/applications" },
       { href: "/artist-dashboard/portfolio/", label: "Portfolio", icon: FolderOpen, activeMatch: "/artist-dashboard/portfolio" },
@@ -112,7 +114,11 @@ export function ArtistSidebar() {
               {section.items.map((item) => {
                 const active = item.activeMatch ? pathname.startsWith(item.activeMatch) : pathname === item.href || `${pathname}/` === item.href
                 const Icon = item.icon
-                const label = item.href === "/artist-dashboard/collaborators/" ? (locale === "es" ? "Coincidencias de artistas" : "Artist Matches") : t(artistNavLabelKeys[item.href] ?? item.label)
+                const label = item.href === "/artist-dashboard/collaborators/"
+                  ? (locale === "es" ? "Coincidencias de artistas" : "Artist Matches")
+                  : item.href === "/artist-dashboard/profile/"
+                    ? (locale === "es" ? "Perfil de artista" : "Artist Profile")
+                    : t(artistNavLabelKeys[item.href] ?? item.label)
 
                 return (
                   <li key={item.label}>
@@ -144,13 +150,14 @@ export function ArtistSidebar() {
           <div className="mt-3 h-0.5 w-10 rounded-full bg-[#A997E8]" />
         </div>
         {artist && (
-          <div className="mt-3 flex items-center gap-3 rounded-xl border border-[#E7E1F7] bg-white p-3">
+          <Link href="/artist-dashboard/profile/" className="mt-3 flex items-center gap-3 rounded-xl border border-[#E7E1F7] bg-white p-3 transition-colors hover:bg-[#FDFBFF]">
             <InitialAvatar name={artist.name} className="size-9 text-xs" />
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-medium text-foreground">{artist.name}</p>
               <p className="truncate text-xs text-muted-foreground">{artist.discipline}</p>
+              <p className="mt-1 text-[0.65rem] font-semibold text-[#5B4B8A]">{locale === "es" ? "Ver perfil" : "View profile"}</p>
             </div>
-          </div>
+          </Link>
         )}
       </div>
     </aside>
