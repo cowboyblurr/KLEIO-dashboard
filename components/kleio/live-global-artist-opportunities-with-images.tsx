@@ -44,7 +44,13 @@ const textarea = "w-full rounded-xl border border-[#E7E1F7] bg-white px-3 py-2 t
 const primary = "inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground disabled:opacity-50"
 const secondary = "inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-[#D8D0F2] bg-white px-4 text-sm font-semibold text-[#5B4B8A] disabled:opacity-50"
 
-type VisualOpportunity = OpportunityDirectoryItem & OpportunityImageMetadata
+type VisualOpportunity = OpportunityDirectoryItem & OpportunityImageMetadata & {
+  funding_display_text?: string
+  funding_amount_type?: string
+  funding_source_url?: string
+  funding_source_note?: string
+  funding_verified_at?: string | null
+}
 
 function LiveShell({ children }: { children: React.ReactNode }) {
   return <main className="h-full overflow-y-auto px-4 py-5 sm:px-6 sm:py-6"><div className="mx-auto max-w-[1180px] space-y-5"><WorkspacePageHeader eyebrow="Artist workspace" title="Opportunities" description="Discover sourced grants and creative opportunities from the United States, Spain, Mexico, and the wider Ibero-American region. Authentic source images appear when available; otherwise KLEIO shows a clearly labeled category cover." />{children}</div></main>
@@ -68,8 +74,9 @@ function formatDate(value: string | null) {
   return new Intl.DateTimeFormat("en-US", { year: "numeric", month: "short", day: "numeric" }).format(parsed)
 }
 
-function formatAmount(item: OpportunityDirectoryItem) {
-  if (item.award_min === null && item.award_max === null) return "Amount not stated"
+function formatAmount(item: VisualOpportunity) {
+  if (item.funding_display_text?.trim()) return item.funding_display_text.trim()
+  if (item.award_min === null && item.award_max === null) return "Amount not stated in the official source"
   const currency = item.currency || "Currency not stated"
   const format = (value: number) => new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 }).format(value)
   if (item.award_min !== null && item.award_max !== null && item.award_min !== item.award_max) return `${currency} ${format(item.award_min)}–${format(item.award_max)}`
@@ -235,7 +242,7 @@ export function LiveGlobalArtistOpportunitiesWithImages() {
       <label className="flex h-10 items-center gap-2 rounded-xl border border-[#E7E1F7] px-3 text-sm"><input type="checkbox" checked={noFeeOnly} onChange={(event) => setNoFeeOnly(event.target.checked)} />No stated fee</label>
     </section>
 
-    <div className="rounded-xl border border-[#E7E1F7] bg-[#FDFBFF] px-4 py-3 text-xs leading-relaxed text-muted-foreground">KLEIO now includes selected Spanish-language opportunities from official Spain and Mexico sources and current Ibermúsicas programs. Country participation can vary by call, and the official guidelines remain controlling. Preview images are shown only when supplied by an institution, provider, or official source; otherwise KLEIO uses a clearly labeled category cover.</div>
+    <div className="rounded-xl border border-[#E7E1F7] bg-[#FDFBFF] px-4 py-3 text-xs leading-relaxed text-muted-foreground">KLEIO includes selected Spanish-language opportunities from official Spain and Mexico sources and current Ibermúsicas programs. Funding labels distinguish fixed awards, ranges, category-specific ceilings, reimbursements, and country-dependent currencies. Preview images appear only when supplied by an institution, provider, or official listing; otherwise KLEIO uses a clearly labeled category cover.</div>
     <StateNotice loading={loading} error={error} empty={!loading && !items.length ? "No approved opportunities match these filters. Try broadening the search; KLEIO will not substitute demo records." : undefined} />
 
     <div className="space-y-4">{items.map((rawItem) => {
@@ -243,9 +250,9 @@ export function LiveGlobalArtistOpportunitiesWithImages() {
       const evaluation = evaluateOpportunity(item, directory?.passport ?? null, directory?.portfolioWorks ?? [])
       const isExpanded = expanded === item.id
       const canMessage = item.application_mode === "internal" && Boolean(item.internal_call)
-      return <article key={item.id} className={card}>
-        <div className="grid gap-5 md:grid-cols-[220px_minmax(0,1fr)]">
-          <OpportunityPreviewImage opportunity={item} />
+      return <article key={item.id} className={`${card} overflow-hidden`}>
+        <div className="grid min-w-0 gap-5 lg:grid-cols-[minmax(190px,240px)_minmax(0,1fr)]">
+          <OpportunityPreviewImage opportunity={item} className="self-start" />
           <div className="min-w-0">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div className="min-w-0 flex-1">
@@ -256,11 +263,11 @@ export function LiveGlobalArtistOpportunitiesWithImages() {
               <button className={secondary} disabled={actionId === item.id} onClick={() => void toggleSaved(item)}><Bookmark className={`size-4 ${item.saved ? "fill-current" : ""}`} />{item.saved ? "Saved" : "Save"}</button>
             </div>
 
-            <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-              <div className="rounded-xl bg-[#F7F4FF] p-3"><p className="text-[0.68rem] font-semibold uppercase tracking-wide text-muted-foreground">Funding</p><p className="mt-1 text-sm font-semibold">{formatAmount(item)}</p></div>
+            <div className="mt-4 grid gap-3 sm:grid-cols-2 2xl:grid-cols-4">
+              <div className="min-w-0 rounded-xl bg-[#F7F4FF] p-3"><p className="text-[0.68rem] font-semibold uppercase tracking-wide text-muted-foreground">Funding</p><p className="mt-1 break-words text-sm font-semibold leading-snug">{formatAmount(item)}</p></div>
               <div className="rounded-xl bg-[#F7F4FF] p-3"><p className="text-[0.68rem] font-semibold uppercase tracking-wide text-muted-foreground">Deadline</p><p className="mt-1 text-sm font-semibold">{formatDate(item.deadline_at)}</p></div>
-              <div className="rounded-xl bg-[#F7F4FF] p-3"><p className="text-[0.68rem] font-semibold uppercase tracking-wide text-muted-foreground">Applicant type</p><p className="mt-1 text-sm font-semibold">{item.eligible_applicant_types.length ? item.eligible_applicant_types.map(cleanLabel).join(", ") : "Eligibility details incomplete"}</p></div>
-              <div className="rounded-xl bg-[#F7F4FF] p-3"><p className="text-[0.68rem] font-semibold uppercase tracking-wide text-muted-foreground">Source</p><p className="mt-1 text-sm font-semibold">{sourceCopy(item)}</p></div>
+              <div className="min-w-0 rounded-xl bg-[#F7F4FF] p-3"><p className="text-[0.68rem] font-semibold uppercase tracking-wide text-muted-foreground">Applicant type</p><p className="mt-1 break-words text-sm font-semibold leading-snug">{item.eligible_applicant_types.length ? item.eligible_applicant_types.map(cleanLabel).join(", ") : "Eligibility details incomplete"}</p></div>
+              <div className="min-w-0 rounded-xl bg-[#F7F4FF] p-3"><p className="text-[0.68rem] font-semibold uppercase tracking-wide text-muted-foreground">Source</p><p className="mt-1 break-words text-sm font-semibold leading-snug">{sourceCopy(item)}</p></div>
             </div>
           </div>
         </div>
@@ -284,7 +291,7 @@ export function LiveGlobalArtistOpportunitiesWithImages() {
           <div className="mt-5 grid gap-5 lg:grid-cols-3">
             <section><h3 className="flex items-center gap-2 text-sm font-semibold"><ShieldCheck className="size-4 text-primary" />Eligibility evidence</h3><div className="mt-3 space-y-2">{evaluation.ruleResults.length ? evaluation.ruleResults.map((result) => <div key={result.rule_id} className="rounded-xl border border-[#E7E1F7] p-3 text-sm"><p className="flex items-center gap-2 font-semibold">{result.status === "passed" ? <CheckCircle2 className="size-4 text-emerald-600" /> : result.status === "failed" ? <XCircle className="size-4 text-red-600" /> : <CircleHelp className="size-4 text-amber-600" />}{result.label}</p><p className="mt-1 text-xs leading-relaxed text-muted-foreground">{result.explanation}</p></div>) : <p className="text-sm text-muted-foreground">The source does not yet provide enough structured evidence for a formal eligibility decision.</p>}</div></section>
             <section><h3 className="flex items-center gap-2 text-sm font-semibold"><FileText className="size-4 text-primary" />Application readiness</h3>{evaluation.readiness.unknown ? <p className="mt-3 text-sm text-muted-foreground">Required materials are not stated in a structured source field. Review the official guidelines before preparing an application.</p> : <div className="mt-3 space-y-3"><div><p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">Ready</p><ul className="mt-1 space-y-1 text-sm text-muted-foreground">{evaluation.readiness.ready.length ? evaluation.readiness.ready.map((label) => <li key={label}>✓ {label}</li>) : <li>No required materials are confirmed ready yet.</li>}</ul></div><div><p className="text-xs font-semibold uppercase tracking-wide text-red-700">Missing</p><ul className="mt-1 space-y-1 text-sm text-muted-foreground">{evaluation.readiness.missing.length ? evaluation.readiness.missing.map((label) => <li key={label}>• {label}</li>) : <li>No confirmed materials are missing.</li>}</ul></div></div>}</section>
-            <section><h3 className="text-sm font-semibold">Source and details</h3><dl className="mt-3 space-y-3 text-sm"><div><dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Image provenance</dt><dd>{imageRightsCopy(item)}</dd></div><div><dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Last checked</dt><dd>{item.last_verified_at ? new Date(item.last_verified_at).toLocaleString() : "Not confirmed"}</dd></div><div><dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Application fee</dt><dd>{item.application_fee === null ? "Application fee not stated" : `${item.currency || ""} ${item.application_fee}`.trim()}</dd></div><div><dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Location</dt><dd>{item.locations.length ? item.locations.join(", ") : "Location not stated"}</dd></div><div><dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Full description</dt><dd className="mt-1 whitespace-pre-wrap leading-relaxed text-muted-foreground">{item.description || "The source did not provide a reusable full description. Continue to the official listing."}</dd></div></dl></section>
+            <section><h3 className="text-sm font-semibold">Source and details</h3><dl className="mt-3 space-y-3 text-sm"><div><dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Funding evidence</dt><dd className="mt-1 leading-relaxed">{formatAmount(item)}{item.funding_source_url && <> · <a className="font-medium text-primary underline-offset-2 hover:underline" href={item.funding_source_url} target="_blank" rel="noreferrer">Funding source</a></>}</dd>{item.funding_source_note && <dd className="mt-1 text-xs leading-relaxed text-muted-foreground">{item.funding_source_note}</dd>}</div><div><dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Image provenance</dt><dd>{imageRightsCopy(item)}</dd></div><div><dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Last checked</dt><dd>{item.last_verified_at ? new Date(item.last_verified_at).toLocaleString() : "Not confirmed"}</dd></div><div><dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Application fee</dt><dd>{item.application_fee === null ? "Application fee not stated" : `${item.currency || ""} ${item.application_fee}`.trim()}</dd></div><div><dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Location</dt><dd>{item.locations.length ? item.locations.join(", ") : "Location not stated"}</dd></div><div><dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Full description</dt><dd className="mt-1 whitespace-pre-wrap leading-relaxed text-muted-foreground">{item.description || "The source did not provide a reusable full description. Continue to the official listing."}</dd></div></dl></section>
           </div>
         </div>}
       </article>
