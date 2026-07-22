@@ -93,6 +93,20 @@ jobs:
           echo "Checking program detail export..."
           test -f out/programs/residency-2026/index.html
 
+      - name: Verify production and demo separation
+        run: |
+          echo "Checking that the public homepage contains the live authentication gateway..."
+          grep -Fq "Enter your KLEIO workspace" out/index.html
+
+          echo "Checking that demo credentials and synthetic-product labels are absent from the public homepage..."
+          if grep -Eq "institution@kleio\.demo|artist@kleio\.demo|reviewer@kleio\.demo|kleio2026|Prototype · Synthetic data" out/index.html; then
+            echo "The public homepage contains demo-only content. Refusing to deploy."
+            exit 1
+          fi
+
+          echo "Checking that the guided demo remains available as a separate destination..."
+          test -f out/demo/index.html
+
       - name: Audit internal navigation
         run: pnpm run audit:navigation
 
