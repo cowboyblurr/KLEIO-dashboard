@@ -8,6 +8,7 @@ import { getArtistAnalytics } from "@/lib/kleio-artist-analytics"
 import { loadLiveArtistWorkspace, type LiveArtistWorkspace } from "@/lib/kleio-live-artist"
 import { getArtistProfileByUsername } from "@/lib/kleio-profile-data"
 import { ArtistDashboardOverview } from "@/components/kleio/artist-dashboard/artist-dashboard-overview"
+import { ArtistProfileContextBar } from "@/components/kleio/artist-profile-context-bar"
 import { useKleioMode } from "@/components/kleio/use-kleio-mode"
 
 function LiveArtistDashboard() {
@@ -48,7 +49,7 @@ function LiveArtistDashboard() {
       <main className="flex h-full items-center justify-center bg-white">
         <div className="flex items-center gap-3 text-sm text-muted-foreground">
           <Loader2 className="size-4 animate-spin" />
-          Loading your Creative Passport…
+          Loading your Artist Workspace…
         </div>
       </main>
     )
@@ -56,6 +57,9 @@ function LiveArtistDashboard() {
 
   return (
     <main className="kleio-artist-dashboard-main h-full overflow-y-auto bg-white text-[#292631]">
+      <div className="px-4 pt-4 sm:px-6">
+        <ArtistProfileContextBar active="workspace" showCleoStatus />
+      </div>
       <ArtistDashboardOverview artist={workspace.artist} profile={workspace.profile} analytics={workspace.analytics} />
     </main>
   )
@@ -83,6 +87,9 @@ export function ArtistDashboardView() {
 
   return (
     <main className="kleio-artist-dashboard-main h-full overflow-y-auto bg-white text-[#292631]">
+      <div className="px-4 pt-4 sm:px-6">
+        <ArtistProfileContextBar active="workspace" showCleoStatus />
+      </div>
       <ArtistDashboardOverview
         artist={artist}
         profile={artistDashboardProfile}
