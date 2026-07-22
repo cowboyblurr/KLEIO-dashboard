@@ -2,6 +2,7 @@ import {
   LayoutGrid,
   FolderOpen,
   FileStack,
+  FilePlus2,
   Users,
   ListChecks,
   Bookmark,
@@ -37,6 +38,7 @@ export const navSections: NavSection[] = [
     heading: "Core Review Flow",
     items: [
       { label: "Programs", href: "/programs/", icon: FolderOpen },
+      { label: "Submit Opportunity", href: "/opportunities/submit/", icon: FilePlus2 },
       { label: "Submissions", href: "/submissions/", icon: FileStack },
       { label: "Artist Records", href: "/artists/", icon: Users },
       { label: "Review Queue", href: "/review-queue/", icon: ListChecks, badge: analytics.reviewQueueCount },
