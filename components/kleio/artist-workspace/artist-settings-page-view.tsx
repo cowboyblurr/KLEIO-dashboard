@@ -21,12 +21,12 @@ const settingsGroups = [
   {
     title: "Notification preferences",
     icon: Bell,
-    items: ["Deadline reminders: 7 days and 48 hours", "Missing material requests", "Collaborator messages"],
+    items: ["Deadline reminders: 7 days and 48 hours", "Missing material requests", "Collaboration messages"],
   },
   {
-    title: "Demo settings",
+    title: "Privacy & control",
     icon: Lock,
-    items: ["Demo artist: Amina El Badri", "Static workspace data", "No outbound email in this build"],
+    items: ["Choose what appears on your Artist Profile", "Control opportunity and message notifications", "Review account and data preferences"],
   },
 ]
 
@@ -64,7 +64,7 @@ export function ArtistSettingsPageView() {
 
         <section className="rounded-2xl border bg-[#F7F4FF] p-5" style={{ ...cardStyle, borderColor: lavenderSoftLine }}>
           <p className="text-sm" style={{ color: mutedColor }}>
-            Settings in this demo are static foundation controls. Full preference editing will be added in a later build pass.
+            Coming soon: edit profile visibility, notification preferences, material defaults, and account controls directly from this page.
           </p>
           <Link href="/artist-dashboard/passport/" className="mt-3 inline-flex text-xs font-medium transition-opacity hover:opacity-75" style={{ color: "#5B4B8A" }}>
             Manage Creative Passport →
