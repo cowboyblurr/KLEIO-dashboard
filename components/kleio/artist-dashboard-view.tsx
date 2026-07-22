@@ -58,7 +58,7 @@ function LiveArtistDashboard() {
   return (
     <main className="kleio-artist-dashboard-main h-full overflow-y-auto bg-white text-[#292631]">
       <div className="px-4 pt-4 sm:px-6">
-        <ArtistProfileContextBar active="workspace" showCleoStatus />
+        <ArtistProfileContextBar active="workspace" showKleioAssistStatus />
       </div>
       <ArtistDashboardOverview artist={workspace.artist} profile={workspace.profile} analytics={workspace.analytics} />
     </main>
@@ -88,7 +88,7 @@ export function ArtistDashboardView() {
   return (
     <main className="kleio-artist-dashboard-main h-full overflow-y-auto bg-white text-[#292631]">
       <div className="px-4 pt-4 sm:px-6">
-        <ArtistProfileContextBar active="workspace" showCleoStatus />
+        <ArtistProfileContextBar active="workspace" showKleioAssistStatus />
       </div>
       <ArtistDashboardOverview
         artist={artist}
