@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import { Suspense } from "react"
 import { ArtistShell } from "@/components/kleio/artist-shell"
 import { ApplicationPreparationWorkspace } from "@/components/kleio/application-preparation-workspace"
+import { ApplicationArtistIdentityBar } from "@/components/kleio/application-artist-identity-bar"
 
 export const metadata: Metadata = {
   title: "KLEIO — Prepare application",
@@ -15,9 +16,14 @@ function PreparationFallback() {
 export default function Page() {
   return (
     <ArtistShell>
-      <Suspense fallback={<PreparationFallback />}>
-        <ApplicationPreparationWorkspace />
-      </Suspense>
+      <div className="flex h-full min-h-0 flex-col">
+        <ApplicationArtistIdentityBar />
+        <div className="min-h-0 flex-1">
+          <Suspense fallback={<PreparationFallback />}>
+            <ApplicationPreparationWorkspace />
+          </Suspense>
+        </div>
+      </div>
     </ArtistShell>
   )
 }

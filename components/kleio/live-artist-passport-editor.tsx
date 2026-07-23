@@ -4,7 +4,7 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
-import { FileUp, ImageIcon, Loader2, Save, Trash2, UserRound } from "lucide-react"
+import { FileUp, ImageIcon, Loader2, Save, Trash2 } from "lucide-react"
 import {
   loadArtistPassport,
   loadPortfolioWorks,
@@ -20,10 +20,12 @@ import {
   type ArtistProfilePresentationRecord,
 } from "@/lib/kleio-profile-presentation"
 import { WorkspacePageHeader } from "@/components/kleio/workspace-page-header"
+import { DisciplineMultiSelect, TagEntryField } from "@/components/kleio/forms/artist-term-fields"
+import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
 
 const card = "border border-[#E7E1F7] bg-white p-5 shadow-[0_18px_48px_rgba(82,64,130,0.05)]"
 const input = "h-10 w-full rounded-lg border border-[#E7E1F7] bg-white px-3 text-sm outline-none focus:border-[#A997E8] focus:ring-2 focus:ring-[#A997E8]/15"
-const textarea = "w-full rounded-lg border border-[#E7E1F7] bg-white px-3 py-2 text-sm outline-none focus:border-[#A997E8] focus:ring-2 focus:ring-[#A997E8]/15"
+const textarea = "w-full rounded-lg border border-[#E7E1F7] bg-white px-3 py-2 text-sm leading-relaxed outline-none focus:border-[#A997E8] focus:ring-2 focus:ring-[#A997E8]/15"
 const primary = "inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-[#5B4B8A] px-4 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
 const secondary = "inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-[#D8D0F2] bg-white px-4 text-sm font-semibold text-[#5B4B8A] disabled:cursor-not-allowed disabled:opacity-50"
 
@@ -50,10 +52,8 @@ const blankPresentation: ArtistProfilePresentationRecord = {
   profile_image_path: null,
   profile_image_url: null,
   featured_work_id: null,
-}
-
-function splitList(value: string) {
-  return value.split(/[,;\n]/).map((item) => item.trim()).filter(Boolean)
+  profile_image_position_x: 50,
+  profile_image_position_y: 50,
 }
 
 function Field({
@@ -82,15 +82,11 @@ function Field({
 }
 
 function initialsFor(name: string) {
-  return name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase())
-    .join("") || "A"
+  return name.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase()).join("") || "A"
 }
 
 export function LiveArtistPassportEditor() {
+  const { locale } = useKleioLocale()
   const [record, setRecord] = useState(blankPassport)
   const [works, setWorks] = useState<PortfolioWorkRecord[]>([])
   const [presentation, setPresentation] = useState(blankPresentation)
@@ -110,16 +106,9 @@ export function LiveArtistPassportEditor() {
         setWorks(portfolio)
         setPresentation(profilePresentation)
       })
-      .catch((reason: Error) => {
-        if (active) setError(reason.message)
-      })
-      .finally(() => {
-        if (active) setLoading(false)
-      })
-
-    return () => {
-      active = false
-    }
+      .catch((reason: Error) => { if (active) setError(reason.message) })
+      .finally(() => { if (active) setLoading(false) })
+    return () => { active = false }
   }, [])
 
   function update(key: keyof ArtistPassportRecord, value: string | string[] | null) {
@@ -140,10 +129,12 @@ export function LiveArtistPassportEditor() {
       const nextPresentation = await saveArtistProfilePresentation({
         profile_image_path: presentation.profile_image_path,
         featured_work_id: presentation.featured_work_id,
+        profile_image_position_x: presentation.profile_image_position_x,
+        profile_image_position_y: presentation.profile_image_position_y,
       })
       setRecord(next)
       setPresentation(nextPresentation)
-      setSaved("Creative Passport and profile presentation saved.")
+      setSaved("Creative Passport saved. Multiword selections, paragraphs, and profile presentation are preserved.")
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "Unable to save the Creative Passport.")
     } finally {
@@ -156,6 +147,8 @@ export function LiveArtistPassportEditor() {
     setSaving(true)
     setError("")
     try {
+      if (file.type !== "application/pdf") throw new Error("Choose a PDF for your CV.")
+      if (file.size > 15 * 1024 * 1024) throw new Error("CV files must be 15 MB or smaller.")
       const path = await uploadArtistAsset(file, "cv")
       update("cv_file_path", path)
       setCvName(file.name)
@@ -173,12 +166,8 @@ export function LiveArtistPassportEditor() {
     setError("")
     try {
       const uploaded = await uploadArtistProfileImage(file)
-      setPresentation((current) => ({
-        ...current,
-        profile_image_path: uploaded.path,
-        profile_image_url: uploaded.signedUrl,
-      }))
-      setSaved("Profile photo uploaded. Save the Passport to publish it to the profile preview.")
+      setPresentation((current) => ({ ...current, profile_image_path: uploaded.path, profile_image_url: uploaded.signedUrl }))
+      setSaved("Profile photo uploaded. Adjust its position if needed, then save the Passport.")
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "Unable to upload the profile image.")
     } finally {
@@ -194,16 +183,10 @@ export function LiveArtistPassportEditor() {
         <WorkspacePageHeader
           eyebrow="Creative Passport"
           title="Artist information and profile presentation"
-          description="Edit the reusable information behind applications and choose the images shown in your artist profile. Every artist profile uses the same KLEIO editorial layout."
+          description="Edit reusable artist information, select standardized disciplines, and control the images shown in the shared KLEIO profile layout."
         />
 
-        {loading && (
-          <div className={`${card} flex items-center gap-2 text-sm text-muted-foreground`}>
-            <Loader2 className="size-4 animate-spin" />
-            Loading your Creative Passport…
-          </div>
-        )}
-
+        {loading && <div className={`${card} flex items-center gap-2 text-sm text-muted-foreground`}><Loader2 className="size-4 animate-spin" />Loading your Creative Passport…</div>}
         {error && <div role="alert" className={`${card} border-red-200 text-sm text-red-700`}>{error}</div>}
 
         {!loading && (
@@ -214,71 +197,45 @@ export function LiveArtistPassportEditor() {
                 <div>
                   <p className="text-[0.68rem] font-semibold uppercase tracking-[0.17em] text-[#6A5896]">Profile presentation</p>
                   <h2 className="mt-2 font-serif text-2xl tracking-[-0.03em]">Your images, one consistent layout</h2>
-                  <p className="mt-3 text-sm leading-6 text-[#746E80]">
-                    Artists control the profile photo, featured artwork, portfolio images, and approved text. KLEIO keeps typography, spacing, image treatment, and review hierarchy consistent across every profile.
-                  </p>
-                  <Link href="/artist-dashboard/profile/" className={`${secondary} mt-4`}>
-                    Preview profile
-                  </Link>
+                  <p className="mt-3 text-sm leading-6 text-[#746E80]">Upload, replace, remove, and position one authoritative profile photo. KLEIO reuses it across your artist identity surfaces.</p>
+                  <Link href="/artist-dashboard/profile/" className={`${secondary} mt-4`}>Preview profile</Link>
                 </div>
 
                 <div className="grid gap-5 sm:grid-cols-[180px_minmax(0,1fr)]">
                   <div>
                     <div className="grid aspect-[4/5] place-items-center overflow-hidden border border-[#D8D0F2] bg-[#F7F4FF]">
                       {presentation.profile_image_url ? (
-                        <img src={presentation.profile_image_url} alt="Profile preview" className="size-full object-cover" />
+                        <img src={presentation.profile_image_url} alt="Profile preview" className="size-full object-cover" style={{ objectPosition: `${presentation.profile_image_position_x}% ${presentation.profile_image_position_y}%` }} />
                       ) : (
-                        <div className="text-center text-[#5B4B8A]">
-                          <span className="font-serif text-4xl">{initialsFor(record.professional_name)}</span>
-                          <p className="mt-2 text-[0.65rem] uppercase tracking-[0.14em] text-[#8A8296]">Profile photo</p>
-                        </div>
+                        <div className="text-center text-[#5B4B8A]"><span className="font-serif text-4xl">{initialsFor(record.professional_name)}</span><p className="mt-2 text-[0.65rem] uppercase tracking-[0.14em] text-[#8A8296]">Profile photo</p></div>
                       )}
                     </div>
                     <label className={`${secondary} mt-2 w-full cursor-pointer`}>
                       {uploadingPhoto ? <Loader2 className="size-4 animate-spin" /> : <ImageIcon className="size-4" />}
                       {presentation.profile_image_url ? "Replace photo" : "Upload photo"}
-                      <input
-                        type="file"
-                        accept="image/jpeg,image/png,image/webp"
-                        className="sr-only"
-                        disabled={uploadingPhoto}
-                        onChange={(event) => void uploadProfilePhoto(event.target.files?.[0] ?? null)}
-                      />
+                      <input type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" disabled={uploadingPhoto} onChange={(event) => void uploadProfilePhoto(event.target.files?.[0] ?? null)} />
                     </label>
                     {presentation.profile_image_path && (
-                      <button
-                        type="button"
-                        className="mt-2 inline-flex w-full items-center justify-center gap-2 py-2 text-xs font-semibold text-[#8A5B65]"
-                        onClick={() => setPresentation((current) => ({ ...current, profile_image_path: null, profile_image_url: null }))}
-                      >
-                        <Trash2 className="size-3.5" />
-                        Remove photo
-                      </button>
+                      <button type="button" className="mt-2 inline-flex w-full items-center justify-center gap-2 py-2 text-xs font-semibold text-[#8A5B65]" onClick={() => setPresentation((current) => ({ ...current, profile_image_path: null, profile_image_url: null, profile_image_position_x: 50, profile_image_position_y: 50 }))}><Trash2 className="size-3.5" />Remove photo</button>
                     )}
                   </div>
 
-                  <div>
+                  <div className="space-y-4">
                     <label className="grid gap-1.5 text-xs font-semibold text-[#746E80]">
                       <span>Featured artwork</span>
-                      <select
-                        className={input}
-                        value={presentation.featured_work_id || ""}
-                        onChange={(event) => setPresentation((current) => ({ ...current, featured_work_id: event.target.value || null }))}
-                      >
+                      <select className={input} value={presentation.featured_work_id || ""} onChange={(event) => setPresentation((current) => ({ ...current, featured_work_id: event.target.value || null }))}>
                         <option value="">Use the first portfolio work with an image</option>
-                        {eligibleFeaturedWorks.map((work) => (
-                          <option key={work.id} value={work.id}>{work.title}</option>
-                        ))}
+                        {eligibleFeaturedWorks.map((work) => <option key={work.id} value={work.id}>{work.title}</option>)}
                       </select>
                     </label>
-                    <p className="mt-2 text-xs leading-5 text-[#8A8296]">
-                      KLEIO preserves the full artwork inside an adaptive frame. Landscape, portrait, and square uploads retain their natural proportions without breaking the shared layout.
-                    </p>
-                    {eligibleFeaturedWorks.length === 0 && (
-                      <Link href="/artist-dashboard/portfolio/" className={`${secondary} mt-4`}>
-                        Add portfolio images
-                      </Link>
+                    {presentation.profile_image_url && (
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <label className="grid gap-1 text-xs font-medium text-[#746E80]"><span>Horizontal position</span><input type="range" min="0" max="100" value={presentation.profile_image_position_x} onChange={(event) => setPresentation((current) => ({ ...current, profile_image_position_x: Number(event.target.value) }))} /></label>
+                        <label className="grid gap-1 text-xs font-medium text-[#746E80]"><span>Vertical position</span><input type="range" min="0" max="100" value={presentation.profile_image_position_y} onChange={(event) => setPresentation((current) => ({ ...current, profile_image_position_y: Number(event.target.value) }))} /></label>
+                      </div>
                     )}
+                    <p className="text-xs leading-5 text-[#8A8296]">JPG, PNG, or WebP, up to 5 MB. Artwork files preserve their natural proportions; portrait positioning affects only the profile-photo frame.</p>
+                    {eligibleFeaturedWorks.length === 0 && <Link href="/artist-dashboard/portfolio/" className={secondary}>Add portfolio images</Link>}
                   </div>
                 </div>
               </div>
@@ -286,14 +243,8 @@ export function LiveArtistPassportEditor() {
 
             <section className={card}>
               <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <p className="text-sm font-semibold">Passport completeness</p>
-                  <p className="text-xs text-muted-foreground">{record.profile_completion}% profile complete</p>
-                </div>
-                <button className={primary} disabled={saving || !record.professional_name.trim()} onClick={() => void save()}>
-                  {saving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
-                  Save Passport
-                </button>
+                <div><p className="text-sm font-semibold">Passport completeness</p><p className="text-xs text-muted-foreground">{record.profile_completion}% profile complete</p></div>
+                <button className={primary} disabled={saving || !record.professional_name.trim()} onClick={() => void save()}>{saving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}Save Passport</button>
               </div>
 
               <div className="grid gap-4 md:grid-cols-2">
@@ -301,26 +252,21 @@ export function LiveArtistPassportEditor() {
                 <Field label="Location" value={record.location} onChange={(value) => update("location", value)} />
                 <Field label="Website" value={record.website_url} onChange={(value) => update("website_url", value)} />
                 <Field label="Instagram" value={record.instagram_url} onChange={(value) => update("instagram_url", value)} />
-                <Field label="Disciplines — comma separated" value={record.disciplines.join(", ")} onChange={(value) => update("disciplines", splitList(value))} />
-                <Field label="Mediums — comma separated" value={record.mediums.join(", ")} onChange={(value) => update("mediums", splitList(value))} />
-                <Field label="Languages — comma separated" value={record.languages.join(", ")} onChange={(value) => update("languages", splitList(value))} />
-                <Field label="Education" value={record.education} onChange={(value) => update("education", value)} />
+                <DisciplineMultiSelect values={record.disciplines} onChange={(values) => update("disciplines", values)} locale={locale} />
+                <TagEntryField values={record.mediums} onChange={(values) => update("mediums", values)} label="Mediums and materials" placeholder="Type a medium and press Enter" />
+                <TagEntryField values={record.languages} onChange={(values) => update("languages", values)} label="Languages" placeholder="Type a language and press Enter" />
               </div>
 
               <div className="mt-4 grid gap-4">
-                <Field multiline label="Short biography" value={record.bio} onChange={(value) => update("bio", value)} />
-                <Field multiline rows={6} label="Artist statement" value={record.artist_statement} onChange={(value) => update("artist_statement", value)} />
-                <Field multiline label="Practice description" value={record.practice_description} onChange={(value) => update("practice_description", value)} />
-                <Field multiline label="Exhibition history" value={record.exhibition_history} onChange={(value) => update("exhibition_history", value)} />
-                <Field multiline label="Awards" value={record.awards} onChange={(value) => update("awards", value)} />
+                <Field multiline rows={5} label="Short biography" value={record.bio} onChange={(value) => update("bio", value)} />
+                <Field multiline rows={7} label="Artist statement" value={record.artist_statement} onChange={(value) => update("artist_statement", value)} />
+                <Field multiline rows={6} label="Practice description" value={record.practice_description} onChange={(value) => update("practice_description", value)} />
+                <Field multiline rows={5} label="Education" value={record.education} onChange={(value) => update("education", value)} />
+                <Field multiline rows={6} label="Exhibition history" value={record.exhibition_history} onChange={(value) => update("exhibition_history", value)} />
+                <Field multiline rows={5} label="Awards" value={record.awards} onChange={(value) => update("awards", value)} />
               </div>
 
-              <label className="mt-4 flex cursor-pointer items-center gap-3 rounded-lg border border-dashed border-[#D8D0F2] p-4 text-sm text-[#5B4B8A]">
-                <FileUp className="size-4" />
-                <span>{cvName || (record.cv_file_path ? "Replace saved CV" : "Upload CV as PDF")}</span>
-                <input type="file" accept="application/pdf" className="sr-only" onChange={(event) => void uploadCv(event.target.files?.[0] ?? null)} />
-              </label>
-
+              <label className="mt-4 flex cursor-pointer items-center gap-3 rounded-lg border border-dashed border-[#D8D0F2] p-4 text-sm text-[#5B4B8A]"><FileUp className="size-4" /><span>{cvName || (record.cv_file_path ? "Replace saved CV" : "Upload CV as PDF")}</span><input type="file" accept="application/pdf" className="sr-only" onChange={(event) => void uploadCv(event.target.files?.[0] ?? null)} /></label>
               {saved && <p role="status" className="mt-4 text-sm font-medium text-emerald-700">{saved}</p>}
             </section>
           </>
