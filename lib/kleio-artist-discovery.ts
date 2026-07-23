@@ -53,6 +53,26 @@ export type ActiveInstitutionListing = {
   provider_name: string
 }
 
+export type ArtistOpportunityInvitation = {
+  invitation_id: string
+  conversation_id: string
+  opportunity_id: string
+  opportunity_title: string
+  opportunity_type: string
+  institution_id: string
+  institution_name: string
+  deadline_at: string | null
+  invitation_status: "draft" | "sent" | "viewed" | "interested" | "declined" | "expired" | "withdrawn" | "applied"
+  invitation_note: string
+  sent_at: string
+  viewed_at: string | null
+  responded_at: string | null
+  expires_at: string | null
+  muted_at: string | null
+  archived_at: string | null
+  reported_at: string | null
+}
+
 const discoverySelect = "artist_user_id, visibility, contact_mode, availability, themes, selected_work_ids, professional_name, location, bio, artist_statement, practice_description, website_url, instagram_url, disciplines, mediums, languages, career_stage, profile_completion, profile_image_path, featured_work_id, selected_works, enabled_at, updated_at"
 
 async function signedArtistAsset(path: string | null | undefined) {
@@ -152,4 +172,36 @@ export async function inviteArtistToOpportunity(input: { artistUserId: string; o
   const row = Array.isArray(data) ? data[0] : data
   if (!row) throw new Error("The invitation was not confirmed by the server.")
   return row as { invitation_id: string; conversation_id: string; invitation_status: string }
+}
+
+export async function loadMyArtistOpportunityInvitations(): Promise<ArtistOpportunityInvitation[]> {
+  const supabase = getSupabaseBrowserClient()
+  const { data, error } = await supabase.rpc("list_my_artist_opportunity_invitations")
+  if (error) throw error
+  return (data ?? []) as ArtistOpportunityInvitation[]
+}
+
+export async function respondToArtistOpportunityInvitation(invitationId: string, status: "viewed" | "interested" | "declined") {
+  const supabase = getSupabaseBrowserClient()
+  const { data, error } = await supabase.rpc("respond_to_artist_opportunity_invitation", {
+    target_invitation_id: invitationId,
+    target_status: status,
+  })
+  if (error) throw error
+  return String(data)
+}
+
+export async function setArtistOpportunityConversationControl(input: {
+  conversationId: string
+  action: "mute" | "unmute" | "archive" | "unarchive" | "report"
+  reportReason?: string
+}) {
+  const supabase = getSupabaseBrowserClient()
+  const { data, error } = await supabase.rpc("set_artist_opportunity_conversation_control", {
+    target_conversation_id: input.conversationId,
+    target_action: input.action,
+    target_report_reason: input.reportReason?.trim() || "",
+  })
+  if (error) throw error
+  return Array.isArray(data) ? data[0] : data
 }
