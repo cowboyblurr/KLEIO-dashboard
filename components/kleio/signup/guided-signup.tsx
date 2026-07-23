@@ -2,12 +2,12 @@
 
 import type { FormEvent } from "react"
 import { useRouter } from "next/navigation"
-import { LiveSignup } from "@/components/kleio/signup/live-signup"
+import { GuidedSignupForm } from "@/components/kleio/signup/guided-signup-form"
 import { getDashboardForRole, loginDemoUser } from "@/lib/kleio-demo-auth"
 import { setKleioMode } from "@/lib/kleio-mode"
 
 /**
- * Guided signup shares the production form layout but never runs production
+ * Guided signup is visually aligned with onboarding but contains no production
  * authentication, account recovery, onboarding writes, or Supabase redirects.
  */
 export function GuidedSignup({ role }: { role: "artist" | "institution" }) {
@@ -23,7 +23,7 @@ export function GuidedSignup({ role }: { role: "artist" | "institution" }) {
 
   return (
     <div onSubmitCapture={enterGuidedWorkspace}>
-      <LiveSignup role={role} experience="guided" />
+      <GuidedSignupForm role={role} />
     </div>
   )
 }
