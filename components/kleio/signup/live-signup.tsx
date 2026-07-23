@@ -10,7 +10,7 @@ import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
 import { clearDemoSession, getDashboardForRole } from "@/lib/kleio-demo-auth"
 import type { KleioEntitySuggestion } from "@/lib/kleio-entity-search"
 import {
-  clearPendingKleioOnboarding,
+  completeAuthenticatedKleioOnboarding,
   completeKleioOnboarding,
   resumePendingKleioOnboarding,
   savePendingKleioOnboarding,
@@ -21,8 +21,9 @@ import {
 } from "@/lib/kleio-live-onboarding"
 import { setKleioMode } from "@/lib/kleio-mode"
 import { getKleioAuthErrorMessage, resendKleioSignupConfirmation } from "@/lib/kleio-auth"
+import { loadKleioAccount, type KleioAccountRole } from "@/lib/kleio-supabase"
 
-const inputClassName = "h-11 w-full rounded-xl border border-border bg-background px-3 text-sm text-foreground outline-none transition-colors focus:border-primary/40 focus:ring-4 focus:ring-primary/10"
+const inputClassName = "h-11 w-full rounded-xl border border-border bg-background px-3 text-sm text-foreground outline-none transition-colors focus:border-primary/40 focus:ring-4 focus:ring-primary/10 disabled:cursor-not-allowed disabled:bg-muted/50 disabled:text-muted-foreground"
 
 const INSTITUTION_TYPES = [
   ["museum", "Museum", "Museo"],
@@ -39,7 +40,7 @@ const INSTITUTION_TYPES = [
   ["other", "Other", "Otro"],
 ] as const
 
-function Field({ label, value, onChange, type = "text", placeholder, required, autoComplete }: {
+function Field({ label, value, onChange, type = "text", placeholder, required, autoComplete, disabled }: {
   label: string
   value: string
   onChange: (value: string) => void
@@ -47,6 +48,7 @@ function Field({ label, value, onChange, type = "text", placeholder, required, a
   placeholder?: string
   required?: boolean
   autoComplete?: string
+  disabled?: boolean
 }) {
   const id = useId()
   return (
@@ -60,6 +62,7 @@ function Field({ label, value, onChange, type = "text", placeholder, required, a
         placeholder={placeholder}
         required={required}
         autoComplete={autoComplete}
+        disabled={disabled}
         className={inputClassName}
       />
     </div>
@@ -105,6 +108,7 @@ export function LiveSignup({ role }: { role: "artist" | "institution" }) {
   const es = locale === "es"
   const [submitting, setSubmitting] = useState(false)
   const [resuming, setResuming] = useState(true)
+  const [recoveringExistingAccount, setRecoveringExistingAccount] = useState(false)
   const [confirmationEmail, setConfirmationEmail] = useState("")
   const [resending, setResending] = useState(false)
   const [confirmationStatus, setConfirmationStatus] = useState("")
@@ -129,23 +133,30 @@ export function LiveSignup({ role }: { role: "artist" | "institution" }) {
   const [publicDescription, setPublicDescription] = useState("")
   const [missionStatement, setMissionStatement] = useState("")
 
-  const title = role === "artist"
-    ? (es ? "Crea tu cuenta y Pasaporte Creativo" : "Create your account and Creative Passport")
-    : (es ? "Crea tu cuenta institucional" : "Create your institution account")
-  const subtitle = role === "artist"
-    ? (es ? "Guarda un perfil reutilizable y mantén el control de tus materiales." : "Save a reusable profile while keeping control of your materials.")
-    : (es ? "Configura el espacio de tu institución para convocatorias, revisión y colaboración." : "Set up your institution workspace for calls, review, and collaboration.")
+  const title = recoveringExistingAccount
+    ? role === "artist"
+      ? (es ? "Termina tu Pasaporte Creativo" : "Finish your Creative Passport")
+      : (es ? "Termina la configuración institucional" : "Finish your institution setup")
+    : role === "artist"
+      ? (es ? "Crea tu cuenta y Pasaporte Creativo" : "Create your account and Creative Passport")
+      : (es ? "Crea tu cuenta institucional" : "Create your institution account")
+  const subtitle = recoveringExistingAccount
+    ? (es ? "Tu correo ya está confirmado. Completa los detalles que faltan para abrir tu espacio." : "Your email is already confirmed. Complete the missing details to open your workspace.")
+    : role === "artist"
+      ? (es ? "Guarda un perfil reutilizable y mantén el control de tus materiales." : "Save a reusable profile while keeping control of your materials.")
+      : (es ? "Configura el espacio de tu institución para convocatorias, revisión y colaboración." : "Set up your institution workspace for calls, review, and collaboration.")
 
   const requiredReady = useMemo(() => {
-    const common = displayName.trim() && email.trim() && password.length >= 8 && password === confirmPassword && location.trim()
+    const credentialsReady = recoveringExistingAccount || (password.length >= 8 && password === confirmPassword)
+    const common = displayName.trim() && email.trim() && credentialsReady && location.trim()
     if (role === "artist") return Boolean(common && discipline.trim())
     return Boolean(common && institutionName.trim() && institutionType.trim())
-  }, [confirmPassword, discipline, displayName, email, institutionName, institutionType, location, password, role])
+  }, [confirmPassword, discipline, displayName, email, institutionName, institutionType, location, password, recoveringExistingAccount, role])
 
-  function routeToWorkspace() {
+  function routeToWorkspace(targetRole: KleioAccountRole = role) {
     clearDemoSession()
     setKleioMode("live")
-    router.replace(getDashboardForRole(role))
+    router.replace(getDashboardForRole(targetRole))
   }
 
   useEffect(() => {
@@ -154,7 +165,22 @@ export function LiveSignup({ role }: { role: "artist" | "institution" }) {
     async function resume() {
       try {
         const completed = await resumePendingKleioOnboarding(role)
-        if (!cancelled && completed) routeToWorkspace()
+        if (cancelled) return
+        if (completed) {
+          routeToWorkspace()
+          return
+        }
+
+        const account = await loadKleioAccount()
+        if (cancelled || !account) return
+        if (account.profile.onboarding_completed || account.profile.role !== role) {
+          routeToWorkspace(account.profile.role)
+          return
+        }
+
+        setRecoveringExistingAccount(true)
+        setEmail(account.user.email ?? account.profile.email ?? "")
+        setDisplayName(account.profile.display_name ?? "")
       } catch (resumeError) {
         if (!cancelled) setError(getKleioAuthErrorMessage(resumeError, es ? "es" : "en"))
       } finally {
@@ -189,7 +215,11 @@ export function LiveSignup({ role }: { role: "artist" | "institution" }) {
     setError("")
 
     if (!requiredReady) {
-      setError(es ? "Completa los campos obligatorios y confirma una contraseña de al menos 8 caracteres." : "Complete the required fields and confirm a password of at least 8 characters.")
+      setError(
+        recoveringExistingAccount
+          ? (es ? "Completa todos los campos obligatorios para terminar la configuración." : "Complete all required fields to finish setting up your workspace.")
+          : (es ? "Completa los campos obligatorios y confirma una contraseña de al menos 8 caracteres." : "Complete the required fields and confirm a password of at least 8 characters."),
+      )
       return
     }
 
@@ -198,7 +228,13 @@ export function LiveSignup({ role }: { role: "artist" | "institution" }) {
     savePendingKleioOnboarding(payload)
 
     try {
-      const signup = await signUpKleioAccount({ email, password, displayName, role })
+      if (recoveringExistingAccount) {
+        await completeAuthenticatedKleioOnboarding(payload)
+        routeToWorkspace()
+        return
+      }
+
+      const signup = await signUpKleioAccount({ email, password, displayName, role, payload })
       if (signup.confirmationRequired) {
         setConfirmationEmail(email.trim().toLowerCase())
         return
@@ -206,7 +242,6 @@ export function LiveSignup({ role }: { role: "artist" | "institution" }) {
       await completeKleioOnboarding(signup.userId, payload)
       routeToWorkspace()
     } catch (submitError) {
-      clearPendingKleioOnboarding()
       setError(getKleioAuthErrorMessage(submitError, es ? "es" : "en"))
     } finally {
       setSubmitting(false)
@@ -265,13 +300,25 @@ export function LiveSignup({ role }: { role: "artist" | "institution" }) {
     <SignupShell title={title} subtitle={subtitle}>
       <form onSubmit={handleSubmit} noValidate>
         <SignupStepCard>
+          {recoveringExistingAccount && (
+            <div className="mb-5 rounded-2xl border border-[#D9D0F2] bg-[#F8F5FF] px-4 py-3 text-sm leading-relaxed text-[#5B4B8A]" role="status">
+              {es
+                ? "Encontramos tu cuenta confirmada. No necesitas registrarte otra vez ni crear una contraseña nueva; completa estos datos una sola vez para terminar tu perfil."
+                : "We found your confirmed account. You do not need to register again or create a new password; complete these details once to finish your profile."}
+            </div>
+          )}
+
           <div className="grid gap-5 sm:grid-cols-2">
             <Field label={role === "artist" ? (es ? "Nombre profesional" : "Professional name") : (es ? "Tu nombre" : "Your name")} value={displayName} onChange={setDisplayName} required autoComplete="name" />
-            <Field label={es ? "Correo" : "Email"} value={email} onChange={setEmail} type="email" required autoComplete="email" />
-            <PasswordField label={es ? "Contraseña" : "Password"} value={password} onChange={setPassword} es={es} placeholder={es ? "Mínimo 8 caracteres" : "At least 8 characters"} />
-            <PasswordField label={es ? "Confirmar contraseña" : "Confirm password"} value={confirmPassword} onChange={setConfirmPassword} es={es} />
+            <Field label={es ? "Correo" : "Email"} value={email} onChange={setEmail} type="email" required autoComplete="email" disabled={recoveringExistingAccount} />
+            {!recoveringExistingAccount && (
+              <>
+                <PasswordField label={es ? "Contraseña" : "Password"} value={password} onChange={setPassword} es={es} placeholder={es ? "Mínimo 8 caracteres" : "At least 8 characters"} />
+                <PasswordField label={es ? "Confirmar contraseña" : "Confirm password"} value={confirmPassword} onChange={setConfirmPassword} es={es} />
+              </>
+            )}
           </div>
-          <p className="mt-2 text-[0.68rem] leading-relaxed text-muted-foreground">{es ? "Usa al menos 8 caracteres. Para mayor seguridad, combina palabras, números o símbolos y evita reutilizar otra contraseña." : "Use at least 8 characters. For stronger security, combine words, numbers, or symbols and avoid reusing another password."}</p>
+          {!recoveringExistingAccount && <p className="mt-2 text-[0.68rem] leading-relaxed text-muted-foreground">{es ? "Usa al menos 8 caracteres. Para mayor seguridad, combina palabras, números o símbolos y evita reutilizar otra contraseña." : "Use at least 8 characters. For stronger security, combine words, numbers, or symbols and avoid reusing another password."}</p>}
 
           <div className="my-6 border-t border-border" />
 
@@ -331,12 +378,24 @@ export function LiveSignup({ role }: { role: "artist" | "institution" }) {
 
           <div className="mt-6 flex flex-col gap-3 border-t border-border pt-5 sm:flex-row sm:items-center sm:justify-between">
             <div className="max-w-md text-xs leading-relaxed text-muted-foreground">
-              <p>{es ? "Las sugerencias solo se añaden cuando eliges un resultado. Puedes revisar toda la información antes de crear la cuenta." : "Suggestions are added only when you choose a result. You can review all information before creating the account."}</p>
-              <Link href="/#login" className="mt-2 inline-flex font-semibold text-primary hover:underline">{es ? "¿Ya tienes una cuenta? Inicia sesión" : "Already have an account? Sign in"}</Link>
+              <p>{recoveringExistingAccount
+                ? (es ? "Al guardar, KLEIO creará el perfil conectado a tu cuenta confirmada y abrirá tu espacio correcto." : "When you save, KLEIO will create the profile connected to your confirmed account and open the correct workspace.")
+                : (es ? "Las sugerencias solo se añaden cuando eliges un resultado. Puedes revisar toda la información antes de crear la cuenta." : "Suggestions are added only when you choose a result. You can review all information before creating the account.")}</p>
+              {!recoveringExistingAccount && <Link href="/#login" className="mt-2 inline-flex font-semibold text-primary hover:underline">{es ? "¿Ya tienes una cuenta? Inicia sesión" : "Already have an account? Sign in"}</Link>}
             </div>
             <button type="submit" disabled={submitting} className="inline-flex h-11 min-w-40 items-center justify-center rounded-xl bg-primary px-5 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50">
               {submitting && <Loader2 className="mr-2 size-4 animate-spin" />}
-              {submitting ? (es ? "Creando…" : "Creating…") : role === "artist" ? (es ? "Crear Pasaporte" : "Create Passport") : (es ? "Crear espacio" : "Create workspace")}
+              {submitting
+                ? recoveringExistingAccount
+                  ? (es ? "Guardando…" : "Saving…")
+                  : (es ? "Creando…" : "Creating…")
+                : recoveringExistingAccount
+                  ? role === "artist"
+                    ? (es ? "Terminar Pasaporte" : "Finish Passport")
+                    : (es ? "Terminar espacio" : "Finish workspace")
+                  : role === "artist"
+                    ? (es ? "Crear Pasaporte" : "Create Passport")
+                    : (es ? "Crear espacio" : "Create workspace")}
             </button>
           </div>
         </SignupStepCard>
