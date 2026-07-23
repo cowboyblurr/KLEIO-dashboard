@@ -24,8 +24,8 @@ function AuthorizedArtistConversationInbox() {
   const rootRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    const root = rootRef.current
-    if (!root) return
+    const rootElement = rootRef.current
+    if (!rootElement) return
 
     const replacements = new Map([
       [
@@ -39,7 +39,7 @@ function AuthorizedArtistConversationInbox() {
     ])
 
     function alignConversationCopy() {
-      for (const element of root.querySelectorAll("p, div")) {
+      for (const element of rootElement.querySelectorAll("p, div")) {
         const text = element.textContent?.trim()
         const replacement = text ? replacements.get(text) : undefined
         if (replacement && element.childElementCount === 0) element.textContent = replacement
@@ -48,7 +48,7 @@ function AuthorizedArtistConversationInbox() {
 
     alignConversationCopy()
     const observer = new MutationObserver(alignConversationCopy)
-    observer.observe(root, { childList: true, subtree: true })
+    observer.observe(rootElement, { childList: true, subtree: true })
     return () => observer.disconnect()
   }, [])
 
