@@ -89,6 +89,13 @@ function normalizeSession(value: unknown): OpportunityResearchSession {
   }
 }
 
+async function loadArtistAccount() {
+  const account = await loadKleioAccount()
+  if (!account) throw new Error("Please sign in to research an opportunity.")
+  if (account.profile.role !== "artist") throw new Error("Opportunity research is available from an artist account.")
+  return account
+}
+
 export async function loadOpportunityResearchSession(sessionId: string) {
   const supabase = getSupabaseBrowserClient()
   const { data, error } = await supabase
@@ -107,9 +114,7 @@ export async function loadOpportunityResearchSession(sessionId: string) {
 }
 
 export async function findRecentOpportunityResearch(opportunityId: string) {
-  const account = await loadKleioAccount()
-  if (!account) throw new Error("Please sign in to research an opportunity.")
-
+  const account = await loadArtistAccount()
   const supabase = getSupabaseBrowserClient()
   const { data, error } = await supabase
     .from("opportunity_research_sessions")
@@ -132,9 +137,7 @@ export async function findRecentOpportunityResearch(opportunityId: string) {
 }
 
 export async function createOpportunityResearchSession(opportunityId: string) {
-  const account = await loadKleioAccount()
-  if (!account) throw new Error("Please sign in to research an opportunity.")
-
+  const account = await loadArtistAccount()
   const supabase = getSupabaseBrowserClient()
   const { data, error } = await supabase
     .from("opportunity_research_sessions")
