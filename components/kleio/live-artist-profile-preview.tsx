@@ -75,29 +75,32 @@ export function LiveArtistProfilePreview() {
         {!loading && !error && !passport && <section className="border border-[#E7E1F7] bg-white p-7 text-center"><UserRound className="mx-auto size-7 text-[#5B4B8A]" /><h2 className="mt-3 font-serif text-xl font-semibold">Create your Creative Passport first</h2><p className="mx-auto mt-2 max-w-xl text-sm leading-relaxed text-muted-foreground">KLEIO generates the artist profile only from information and works saved to this authenticated account.</p><Link href="/artist-dashboard/passport/" className={`${primary} mt-5`}>Create Creative Passport</Link></section>}
 
         {!loading && !error && passport && (
-          <EditorialArtistProfile
-            eyebrow="KLEIO / Private artist profile preview"
-            data={{
-              name: passport.professional_name || "Artist name not added",
-              role: disciplines.join(" · ") || (locale === "es" ? "Artista" : "Artist"),
-              location: passport.location,
-              portraitImage: presentation.profile_image_url,
-              heroImage: featuredWork?.image_url || null,
-              heroLabel: featuredWork?.title || "Featured practice",
-              bio: passport.bio,
-              artistStatement: passport.artist_statement,
-              practiceDescription: passport.practice_description,
-              tags: [...disciplines, ...passport.mediums],
-              works: works.map((work) => ({ id: work.id, title: work.title, year: work.year, medium: work.medium, details: work.dimensions, description: work.description, image: work.image_url })),
-              history,
-              education: passport.education,
-              awards,
-              website: passport.website_url,
-              instagram: passport.instagram_url,
-              passportLabel: "Creative Passport",
-            }}
-            actions={<><Link href="/artist-dashboard/passport/" className={secondary}>Edit profile</Link><Link href="/artist-dashboard/portfolio/" className={secondary}>Manage portfolio</Link></>}
-          />
+          <div className="kleio-live-artist-profile-position">
+            <style>{`.kleio-live-artist-profile-position img[alt$=" portrait"] { object-position: ${presentation.profile_image_position_x}% ${presentation.profile_image_position_y}% !important; }`}</style>
+            <EditorialArtistProfile
+              eyebrow="KLEIO / Private artist profile preview"
+              data={{
+                name: passport.professional_name || "Artist name not added",
+                role: disciplines.join(" · ") || (locale === "es" ? "Artista" : "Artist"),
+                location: passport.location,
+                portraitImage: presentation.profile_image_url,
+                heroImage: featuredWork?.image_url || null,
+                heroLabel: featuredWork?.title || "Featured practice",
+                bio: passport.bio,
+                artistStatement: passport.artist_statement,
+                practiceDescription: passport.practice_description,
+                tags: [...disciplines, ...passport.mediums],
+                works: works.map((work) => ({ id: work.id, title: work.title, year: work.year, medium: work.medium, details: work.dimensions, description: work.description, image: work.image_url })),
+                history,
+                education: passport.education,
+                awards,
+                website: passport.website_url,
+                instagram: passport.instagram_url,
+                passportLabel: "Creative Passport",
+              }}
+              actions={<><Link href="/artist-dashboard/passport/" className={secondary}>Edit profile</Link><Link href="/artist-dashboard/portfolio/" className={secondary}>Manage portfolio</Link></>}
+            />
+          </div>
         )}
       </div>
     </main>
