@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useState } from "react"
 import {
   AlertTriangle,
   ArrowLeft,
@@ -41,9 +41,9 @@ import {
   assessOpportunityMaterialReadiness,
   loadOpportunityDirectoryWithSources,
   safeOpportunityUrl,
+  type OpportunityDirectoryDataWithSources,
 } from "@/lib/kleio-opportunity-presentation"
 import { getSupabaseBrowserClient } from "@/lib/kleio-supabase"
-import type { OpportunityDirectoryDataWithSources } from "@/lib/kleio-opportunity-presentation"
 import type { OpportunityDirectoryItem } from "@/lib/kleio-opportunity-data"
 
 const surface = "rounded-2xl border border-[#E7E1F7] bg-white p-5 shadow-[0_18px_48px_rgba(82,64,130,0.06)]"
@@ -61,6 +61,11 @@ const approvalLabels = {
 
 type ApprovalKey = keyof typeof approvalLabels
 
+type WrittenContent = {
+  project_proposal: string
+  email_introduction: string
+}
+
 function formatDate(value: string | null) {
   if (!value) return "Not stated by source"
   const date = new Date(value)
@@ -68,8 +73,8 @@ function formatDate(value: string | null) {
   return new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeStyle: "short" }).format(date)
 }
 
-function stateLabel(state: ApplicationPackageState) {
-  return state.replaceAll("_", " ").replace(/\b\w/g, (letter) => letter.toUpperCase())
+function displayLabel(value: string) {
+  return value.replaceAll("_", " ").replace(/\b\w/g, (letter) => letter.toUpperCase())
 }
 
 function downloadFile(name: string, content: string, type: string) {
@@ -114,24 +119,38 @@ function RequirementStatusIcon({ status }: { status: string }) {
   return <AlertTriangle className="mt-0.5 size-4 shrink-0" />
 }
 
-function PackageSummary({ item, state, score, blockingCount }: { item: OpportunityDirectoryItem; state: ApplicationPackageState; score: number | null; blockingCount: number }) {
+function PackageSummary({
+  item,
+  state,
+  score,
+  blockingCount,
+}: {
+  item: OpportunityDirectoryItem
+  state: ApplicationPackageState
+  score: number | null
+  blockingCount: number
+}) {
   return (
     <section className={`${surface} grid gap-5 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start`}>
       <div>
         <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#A997E8]">{item.provider_name}</p>
         <h2 className="mt-1 font-serif text-2xl font-semibold text-[#292631]">{item.title}</h2>
-        <p className="mt-2 max-w-3xl text-sm leading-relaxed text-muted-foreground">{item.summary || "Review the official source before approving this application package."}</p>
+        <p className="mt-2 max-w-3xl text-sm leading-relaxed text-muted-foreground">
+          {item.summary || "Review the official source before approving this application package."}
+        </p>
         <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-3">
           <div><dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Deadline</dt><dd className="mt-1 font-medium">{formatDate(item.deadline_at)}{item.deadline_timezone ? ` · ${item.deadline_timezone}` : ""}</dd></div>
-          <div><dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Submission method</dt><dd className="mt-1 font-medium">{stateLabel(deriveSubmissionMethod(item))}</dd></div>
+          <div><dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Submission method</dt><dd className="mt-1 font-medium">{displayLabel(deriveSubmissionMethod(item))}</dd></div>
           <div><dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Source last checked</dt><dd className="mt-1 font-medium">{formatDate(item.last_verified_at)}</dd></div>
         </dl>
       </div>
       <div className="min-w-[190px] rounded-2xl border border-[#E7E1F7] bg-[#F9F7FD] p-4">
         <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Application readiness</p>
         <p className="mt-2 font-serif text-3xl font-semibold text-[#4E426F]">{score === null ? "—" : `${score}%`}</p>
-        <p className="mt-1 text-sm font-semibold text-[#292631]">{stateLabel(state)}</p>
-        <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{blockingCount ? `${blockingCount} required item${blockingCount === 1 ? "" : "s"} currently block submission.` : "No confirmed requirement is currently blocking preparation."}</p>
+        <p className="mt-1 text-sm font-semibold text-[#292631]">{displayLabel(state)}</p>
+        <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+          {blockingCount ? `${blockingCount} required item${blockingCount === 1 ? "" : "s"} currently block submission.` : "No confirmed requirement is currently blocking preparation."}
+        </p>
       </div>
     </section>
   )
@@ -144,44 +163,43 @@ export function ApplicationPreparationWorkspace() {
   const [storedPackage, setStoredPackage] = useState<ApplicationPackageRecord | null>(null)
   const [application, setApplication] = useState<ApplicationRecord | null>(null)
   const [selectedWorkIds, setSelectedWorkIds] = useState<string[]>([])
-  const [writtenContent, setWrittenContent] = useState<Record<string, string>>({ project_proposal: "", email_introduction: "" })
+  const [writtenContent, setWrittenContent] = useState<WrittenContent>({ project_proposal: "", email_introduction: "" })
   const [approvals, setApprovals] = useState<Record<ApprovalKey, boolean>>({ destination: false, materials: false, accuracy: false, submit: false })
   const [providerConfirmation, setProviderConfirmation] = useState("")
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(Boolean(opportunityId))
   const [saving, setSaving] = useState(false)
-  const [error, setError] = useState("")
+  const [error, setError] = useState(opportunityId ? "" : "Choose an opportunity before preparing an application.")
   const [message, setMessage] = useState("")
 
   useEffect(() => {
-    if (!opportunityId) {
-      setError("Choose an opportunity before preparing an application.")
-      setLoading(false)
-      return
-    }
-    setLoading(true)
-    setError("")
+    if (!opportunityId) return
+    let active = true
+
     void Promise.all([
       loadOpportunityDirectoryWithSources({ limit: 100 }),
       loadApplicationPackage(opportunityId),
     ]).then(async ([loadedDirectory, packageRecord]) => {
       const item = loadedDirectory.items.find((candidate) => candidate.id === opportunityId)
       if (!item) throw new Error("This opportunity is unavailable or no longer part of the approved directory.")
+      const nativeApplication = item.internal_call ? await getOrCreateApplicationDraft(item.internal_call) : null
+      if (!active) return
+
       setDirectory(loadedDirectory)
       setStoredPackage(packageRecord)
+      setApplication(nativeApplication)
+
       const savedWorkIds = Array.isArray(packageRecord?.portfolio_snapshot)
         ? packageRecord.portfolio_snapshot.flatMap((work) => typeof work === "object" && work && "id" in work ? [String((work as { id: unknown }).id)] : [])
         : []
-      let nativeApplication: ApplicationRecord | null = null
-      if (item.internal_call) nativeApplication = await getOrCreateApplicationDraft(item.internal_call)
-      setApplication(nativeApplication)
       const applicationWorkIds = nativeApplication?.application_works?.map((work) => work.portfolio_work_id) ?? []
-      const maximumWorks = (item.requirements.find((requirement) => ["portfolio", "work_samples", "artwork_images"].includes(requirement.material_key)) as { maximum_item_count?: number | null } | undefined)?.maximum_item_count ?? 5
-      const initialWorkIds = applicationWorkIds.length
+      const workRequirement = item.requirements.find((requirement) => ["portfolio", "work_samples", "artwork_images"].includes(requirement.material_key)) as { maximum_item_count?: number | null } | undefined
+      const maximumWorks = workRequirement?.maximum_item_count ?? 5
+      setSelectedWorkIds(applicationWorkIds.length
         ? applicationWorkIds
         : savedWorkIds.length
           ? savedWorkIds
-          : loadedDirectory.portfolioWorks.filter((work) => work.image_path).slice(0, maximumWorks).map((work) => work.id)
-      setSelectedWorkIds(initialWorkIds)
+          : loadedDirectory.portfolioWorks.filter((work) => work.image_path).slice(0, maximumWorks).map((work) => work.id))
+
       setWrittenContent({
         project_proposal: nativeApplication?.application_answers?.find((answer) => answer.question_key === "project_proposal")?.answer_text
           || String(packageRecord?.written_content?.project_proposal ?? ""),
@@ -195,11 +213,17 @@ export function ApplicationPreparationWorkspace() {
         submit: Boolean(savedApprovals.submit),
       })
       setProviderConfirmation(packageRecord?.provider_confirmation ?? "")
-    }).catch((reason: Error) => setError(reason.message)).finally(() => setLoading(false))
+    }).catch((reason: Error) => {
+      if (active) setError(reason.message)
+    }).finally(() => {
+      if (active) setLoading(false)
+    })
+
+    return () => { active = false }
   }, [opportunityId])
 
   const item = directory?.items.find((candidate) => candidate.id === opportunityId) ?? null
-  const selectedWorks = useMemo(() => (directory?.portfolioWorks ?? []).filter((work) => selectedWorkIds.includes(work.id)), [directory, selectedWorkIds])
+  const selectedWorks = (directory?.portfolioWorks ?? []).filter((work) => selectedWorkIds.includes(work.id))
   const readiness = item ? assessOpportunityMaterialReadiness(item, directory?.passport ?? null, selectedWorks) : null
   const approvalsComplete = Object.values(approvals).every(Boolean)
   const state = item && readiness ? packageStateFor(item, readiness, approvalsComplete) : "draft"
@@ -223,9 +247,14 @@ export function ApplicationPreparationWorkspace() {
         item_type: requirement.key,
         label: requirement.label,
         status: requirement.status,
-        source_kind: requirement.key === "portfolio" || requirement.key === "work_samples" ? "creative_passport_portfolio" : "creative_passport",
+        source_kind: ["portfolio", "work_samples"].includes(requirement.key) ? "creative_passport_portfolio" : "creative_passport",
         source_reference: requirement.sourceUrl,
-        content_data: { explanation: requirement.explanation, current_count: requirement.currentCount, minimum_count: requirement.minimumCount, maximum_count: requirement.maximumCount },
+        content_data: {
+          explanation: requirement.explanation,
+          current_count: requirement.currentCount,
+          minimum_count: requirement.minimumCount,
+          maximum_count: requirement.maximumCount,
+        },
         artist_approved: approvals.materials,
         sort_order: index,
       })),
@@ -271,7 +300,11 @@ export function ApplicationPreparationWorkspace() {
       if (approvalError) throw approvalError
       await submitApplication(application.id)
       const submittedAt = new Date().toISOString()
-      const { data: updatedPackage, error: packageError } = await supabase.from("application_packages").update({ state: "submitted", submitted_at: submittedAt, updated_at: submittedAt }).eq("id", packageRecord.id).select("*").single()
+      const { data: updatedPackage, error: packageError } = await supabase.from("application_packages").update({
+        state: "submitted",
+        submitted_at: submittedAt,
+        updated_at: submittedAt,
+      }).eq("id", packageRecord.id).select("*").single()
       if (packageError) throw packageError
       setStoredPackage(updatedPackage as ApplicationPackageRecord)
       setApplication((current) => current ? { ...current, status: "submitted", submitted_at: submittedAt } : current)
@@ -335,14 +368,18 @@ export function ApplicationPreparationWorkspace() {
     }
   }
 
-  if (loading) return <main className="h-full overflow-y-auto px-4 py-6 sm:px-6"><div className="mx-auto flex max-w-[1120px] items-center gap-2 rounded-2xl border border-[#E7E1F7] bg-white p-5 text-sm text-muted-foreground"><Loader2 className="size-4 animate-spin" />Preparing the application workspace…</div></main>
+  if (loading) {
+    return <main className="h-full overflow-y-auto px-4 py-6 sm:px-6"><div className="mx-auto flex max-w-[1120px] items-center gap-2 rounded-2xl border border-[#E7E1F7] bg-white p-5 text-sm text-muted-foreground"><Loader2 className="size-4 animate-spin" />Preparing the application workspace…</div></main>
+  }
 
-  if (error && !item) return <main className="h-full overflow-y-auto px-4 py-6 sm:px-6"><div className="mx-auto max-w-[1120px] space-y-4"><Link className={secondary} href="/artist-dashboard/opportunities/"><ArrowLeft className="size-4" />Back to opportunities</Link><div role="alert" className={`${surface} border-red-200 text-sm text-red-700`}>{error}</div></div></main>
+  if (error && !item) {
+    return <main className="h-full overflow-y-auto px-4 py-6 sm:px-6"><div className="mx-auto max-w-[1120px] space-y-4"><Link className={secondary} href="/artist-dashboard/opportunities/"><ArrowLeft className="size-4" />Back to opportunities</Link><div role="alert" className={`${surface} border-red-200 text-sm text-red-700`}>{error}</div></div></main>
+  }
   if (!item || !directory || !readiness || !emailPreview) return null
 
   const officialUrl = safeOpportunityUrl(item.canonical_url)
   const destinationUrl = safeOpportunityUrl(item.application_url || item.canonical_url)
-  const alreadySubmitted = application?.status && application.status !== "draft"
+  const alreadySubmitted = Boolean(application?.status && application.status !== "draft")
 
   return (
     <main className="h-full overflow-y-auto px-4 py-5 sm:px-6 sm:py-6">
@@ -357,7 +394,11 @@ export function ApplicationPreparationWorkspace() {
         <section className={surface}>
           <div className="flex items-start gap-3"><FileCheck2 className="mt-0.5 size-5 text-primary" /><div><h2 className="text-base font-semibold">Requirements checklist</h2><p className="mt-1 text-sm text-muted-foreground">Every status below comes from a source requirement and the artist information currently available to KLEIO.</p></div></div>
           <div className="mt-4 grid gap-3 md:grid-cols-2">
-            {readiness.requirements.length ? readiness.requirements.map((requirement) => <article key={requirement.id} className={`rounded-xl border p-3 ${statusTone(requirement.status)}`}><div className="flex gap-2"><RequirementStatusIcon status={requirement.status} /><div><div className="flex flex-wrap items-center gap-2"><h3 className="text-sm font-semibold">{requirement.label}</h3><span className="rounded-full bg-white/70 px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wide">{requirement.status.replaceAll("_", " ")}</span></div><p className="mt-1 text-xs leading-relaxed opacity-90">{requirement.explanation}</p>{requirement.sourceText && <details className="mt-2"><summary className="cursor-pointer text-xs font-semibold">Source wording</summary><p className="mt-1 whitespace-pre-wrap text-xs leading-relaxed opacity-80">{requirement.sourceText}</p></details>}</div></div></article>) : <p className="text-sm text-muted-foreground">The source does not provide structured application materials yet.</p>}
+            {readiness.requirements.length ? readiness.requirements.map((requirement) => (
+              <article key={requirement.id} className={`rounded-xl border p-3 ${statusTone(requirement.status)}`}>
+                <div className="flex gap-2"><RequirementStatusIcon status={requirement.status} /><div><div className="flex flex-wrap items-center gap-2"><h3 className="text-sm font-semibold">{requirement.label}</h3><span className="rounded-full bg-white/70 px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wide">{requirement.status.replaceAll("_", " ")}</span></div><p className="mt-1 text-xs leading-relaxed opacity-90">{requirement.explanation}</p>{requirement.sourceText && <details className="mt-2"><summary className="cursor-pointer text-xs font-semibold">Source wording</summary><p className="mt-1 whitespace-pre-wrap text-xs leading-relaxed opacity-80">{requirement.sourceText}</p></details>}</div></div>
+              </article>
+            )) : <p className="text-sm text-muted-foreground">The source does not provide structured application materials yet.</p>}
           </div>
         </section>
 
@@ -372,7 +413,9 @@ export function ApplicationPreparationWorkspace() {
         <section className={surface}>
           <div className="flex items-start gap-3"><PackageCheck className="mt-0.5 size-5 text-primary" /><div><h2 className="text-base font-semibold">Portfolio package</h2><p className="mt-1 text-sm text-muted-foreground">Select the exact works to include. KLEIO preserves originals and records the selected metadata.</p></div></div>
           <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {directory.portfolioWorks.length ? directory.portfolioWorks.map((work: PortfolioWorkRecord) => <label key={work.id} className={`flex cursor-pointer items-start gap-3 rounded-xl border p-3 ${selectedWorkIds.includes(work.id) ? "border-[#B9ACE4] bg-[#F7F4FF]" : "border-[#E7E1F7]"}`}><input className="mt-1" type="checkbox" checked={selectedWorkIds.includes(work.id)} onChange={(event) => setSelectedWorkIds((current) => event.target.checked ? [...current, work.id] : current.filter((id) => id !== work.id))} /><span><span className="block text-sm font-semibold">{work.title}</span><span className="mt-0.5 block text-xs text-muted-foreground">{[work.year, work.medium, work.dimensions].filter(Boolean).join(" · ") || "Metadata incomplete"}</span><span className="mt-1 block text-xs text-muted-foreground">{work.image_path ? "Asset available" : "Image missing"}</span></span></label>) : <p className="text-sm text-muted-foreground">No portfolio works are available in the Creative Passport.</p>}
+            {directory.portfolioWorks.length ? directory.portfolioWorks.map((work: PortfolioWorkRecord) => (
+              <label key={work.id} className={`flex cursor-pointer items-start gap-3 rounded-xl border p-3 ${selectedWorkIds.includes(work.id) ? "border-[#B9ACE4] bg-[#F7F4FF]" : "border-[#E7E1F7]"}`}><input className="mt-1" type="checkbox" checked={selectedWorkIds.includes(work.id)} onChange={(event) => setSelectedWorkIds((current) => event.target.checked ? [...current, work.id] : current.filter((id) => id !== work.id))} /><span><span className="block text-sm font-semibold">{work.title}</span><span className="mt-0.5 block text-xs text-muted-foreground">{[work.year, work.medium, work.dimensions].filter(Boolean).join(" · ") || "Metadata incomplete"}</span><span className="mt-1 block text-xs text-muted-foreground">{work.image_path ? "Asset available" : "Image missing"}</span></span></label>
+            )) : <p className="text-sm text-muted-foreground">No portfolio works are available in the Creative Passport.</p>}
           </div>
         </section>
 
@@ -392,7 +435,7 @@ export function ApplicationPreparationWorkspace() {
           <button type="button" className={secondary} disabled={saving} onClick={() => void save()}>{saving ? <Loader2 className="size-4 animate-spin" /> : <FileCheck2 className="size-4" />}Save package</button>
           <button type="button" className={secondary} disabled={saving} onClick={() => void exportPackage()}><Download className="size-4" />Download package manifest</button>
           {method === "email" && <button type="button" className={primary} disabled={saving || !emailPreview.to || !approvalsComplete || readiness.blockingCount > 0} onClick={() => void exportEmailDraft()}><Mail className="size-4" />Create reviewable email draft</button>}
-          {method === "native_kleio" && <button type="button" className={primary} disabled={saving || Boolean(alreadySubmitted) || !approvalsComplete || state !== "ready_for_submission"} onClick={() => void submitNative()}>{saving ? <Loader2 className="size-4 animate-spin" /> : <ShieldCheck className="size-4" />}{alreadySubmitted ? `Already ${application?.status.replaceAll("_", " ")}` : "Submit through KLEIO"}</button>}
+          {method === "native_kleio" && <button type="button" className={primary} disabled={saving || alreadySubmitted || !approvalsComplete || state !== "ready_for_submission"} onClick={() => void submitNative()}>{saving ? <Loader2 className="size-4 animate-spin" /> : <ShieldCheck className="size-4" />}{alreadySubmitted ? `Already ${application?.status.replaceAll("_", " ")}` : "Submit through KLEIO"}</button>}
           {["external_portal", "download_package", "unknown"].includes(method) && destinationUrl && <a className={approvalsComplete && readiness.blockingCount === 0 ? primary : secondary} href={destinationUrl} target="_blank" rel="noreferrer">Open official submission destination<ExternalLink className="size-4" /></a>}
         </section>
 
