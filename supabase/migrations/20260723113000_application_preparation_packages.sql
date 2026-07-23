@@ -28,7 +28,7 @@ alter table public.opportunity_requirements
   check (confidence_score is null or (confidence_score >= 0 and confidence_score <= 1));
 
 alter table public.opportunities
-  add column if not exists submission_method text not null default 'external_portal',
+  add column if not exists submission_method text not null default 'unknown',
   add column if not exists submission_email text not null default '',
   add column if not exists submission_instructions text not null default '';
 
@@ -42,10 +42,10 @@ update public.opportunities
 set submission_method = case
   when application_mode = 'internal' then 'native_kleio'
   when application_url <> '' then 'external_portal'
+  when canonical_url <> '' then 'download_package'
   else 'unknown'
 end
-where submission_method = 'external_portal'
-  and application_mode = 'internal';
+where submission_method = 'unknown';
 
 alter table public.applications
   add column if not exists submission_snapshot jsonb not null default '{}'::jsonb,
@@ -141,17 +141,17 @@ to authenticated
 using (
   exists (
     select 1
-    from public.application_packages package
-    where package.id = application_package_items.package_id
-      and package.artist_user_id = (select auth.uid())
+    from public.application_packages package_row
+    where package_row.id = application_package_items.package_id
+      and package_row.artist_user_id = (select auth.uid())
   )
 )
 with check (
   exists (
     select 1
-    from public.application_packages package
-    where package.id = application_package_items.package_id
-      and package.artist_user_id = (select auth.uid())
+    from public.application_packages package_row
+    where package_row.id = application_package_items.package_id
+      and package_row.artist_user_id = (select auth.uid())
   )
 );
 
