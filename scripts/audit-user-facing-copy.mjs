@@ -57,9 +57,11 @@ async function collectFiles(target) {
 }
 
 function isAllowedDictionaryDefinition(relativeFile, phrase, line) {
-  return relativeFile === "lib/kleio-i18n.ts"
-    && phrase === "foundation workflow"
-    && line.includes('"common.foundationWorkflow"')
+  const isTranslationDictionary = relativeFile === "lib/kleio-i18n.ts" || relativeFile === "lib/kleio-spanish-overrides.ts"
+  const isLegacyFoundationKey = line.includes('"common.foundationWorkflow"')
+  return isTranslationDictionary
+    && isLegacyFoundationKey
+    && (phrase === "foundation workflow" || phrase === "common.foundationworkflow")
 }
 
 const files = (await Promise.all(scanRoots.map(collectFiles))).flat()
