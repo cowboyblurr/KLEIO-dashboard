@@ -1,8 +1,8 @@
 import type { Metadata } from "next"
 import { ArtistShell } from "@/components/kleio/artist-shell"
 import { ArtistOpportunitiesPageView } from "@/components/kleio/artist-workspace/artist-opportunities-page-view"
+import { AuthorizedArtistOpportunityDirectory } from "@/components/kleio/authorized-artist-opportunity-directory"
 import { LiveModeView } from "@/components/kleio/live-mode-view"
-import { LiveGlobalArtistOpportunitiesWithImages } from "@/components/kleio/live-global-artist-opportunities-with-images"
 
 export const metadata: Metadata = {
   title: "KLEIO — Opportunities",
@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 export default function Page() {
   return (
     <ArtistShell>
-      <LiveModeView live={<LiveGlobalArtistOpportunitiesWithImages />} preview={<ArtistOpportunitiesPageView />} />
+      <LiveModeView live={<AuthorizedArtistOpportunityDirectory />} preview={<ArtistOpportunitiesPageView />} />
     </ArtistShell>
   )
 }
