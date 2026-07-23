@@ -82,6 +82,14 @@ jobs:
           set -o pipefail
           pnpm run audit:navigation 2>&1 | tee navigation.log
 
+      - name: Audit user-facing copy
+        id: user_copy
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          pnpm run audit:user-copy 2>&1 | tee user-copy.log
+
       - name: Upload verification logs
         if: always()
         uses: actions/upload-artifact@v4
@@ -92,6 +100,7 @@ jobs:
             lint.log
             build.log
             navigation.log
+            user-copy.log
           if-no-files-found: warn
 
       - name: Enforce verification result
@@ -102,8 +111,10 @@ jobs:
           echo "build=${{ steps.build.outcome }}"
           echo "routes=${{ steps.routes.outcome }}"
           echo "navigation=${{ steps.navigation.outcome }}"
+          echo "user_copy=${{ steps.user_copy.outcome }}"
           test "${{ steps.typecheck.outcome }}" = "success"
           test "${{ steps.lint.outcome }}" = "success"
           test "${{ steps.build.outcome }}" = "success"
           test "${{ steps.routes.outcome }}" = "success"
           test "${{ steps.navigation.outcome }}" = "success"
+          test "${{ steps.user_copy.outcome }}" = "success"
