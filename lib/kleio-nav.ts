@@ -4,6 +4,7 @@ import {
   FileStack,
   FilePlus2,
   Users,
+  Search,
   ListChecks,
   Bookmark,
   Vote,
@@ -31,7 +32,6 @@ export type NavSection = {
 export const navSections: NavSection[] = [
   {
     heading: "Overview",
-    // Institution workspace entry — not the public homepage (`/`).
     items: [{ label: "Overview", href: "/dashboard/", icon: LayoutGrid }],
   },
   {
@@ -39,8 +39,9 @@ export const navSections: NavSection[] = [
     items: [
       { label: "Programs", href: "/programs/", icon: FolderOpen },
       { label: "Submit Opportunity", href: "/opportunities/submit/", icon: FilePlus2 },
+      { label: "Artist Discovery", href: "/artists/", icon: Search },
       { label: "Submissions", href: "/submissions/", icon: FileStack },
-      { label: "Artist Records", href: "/artists/", icon: Users },
+      { label: "Applicant Records", href: "/artists/applicants/", icon: Users },
       { label: "Review Queue", href: "/review-queue/", icon: ListChecks, badge: analytics.reviewQueueCount },
       { label: "Review Room", href: "/review-room/", icon: Vote, badge: analytics.pendingVoteCount },
       { label: "Shortlist", href: "/shortlist/", icon: Bookmark, badge: analytics.shortlistedCount },
