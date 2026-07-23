@@ -8,7 +8,7 @@ export function AuthorizedArtistOpportunityDirectory() {
   const rootRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    const rootElement = rootRef.current
+    const rootElement = rootRef.current!
     if (!rootElement) return
 
     function enforceAuthorizedEntryPoints() {
