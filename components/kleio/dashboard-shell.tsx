@@ -10,7 +10,6 @@ import { DemoPresentationStyles } from "@/components/kleio/demo-presentation-sty
 import { GuideWalkthroughCollapser } from "@/components/kleio/guide-walkthrough-collapser"
 import { DemoClickFeedbackLayer } from "@/components/kleio/demo-click-feedback-layer"
 import { DemoGuideHighlightLayer } from "@/components/kleio/demo-guide-highlight-layer"
-import { DemoTrustLink } from "@/components/kleio/demo-trust-link"
 import { InternalMessengerAccent } from "@/components/kleio/internal-messenger-accent"
 import { LiveInstitutionUnavailable } from "@/components/kleio/live-institution-unavailable"
 import { useKleioMode } from "@/components/kleio/use-kleio-mode"
@@ -36,7 +35,6 @@ export function DashboardShell({ children }: { children: ReactNode }) {
       {isDemo && <GuideWalkthroughCollapser />}
       {isDemo && <DemoClickFeedbackLayer />}
       {isDemo && <DemoGuideHighlightLayer />}
-      {isDemo && <DemoTrustLink className="fixed bottom-4 left-4 z-40 max-lg:hidden" />}
       <div className="kleio-workspace-density flex h-dvh min-w-0 overflow-hidden bg-background pt-14 text-foreground md:pt-0">
         <Sidebar />
         <div className="flex min-w-0 flex-1 flex-col overflow-hidden">

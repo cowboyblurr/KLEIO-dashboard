@@ -1,4 +1,4 @@
-import { programs } from "@/lib/kleio-data"
+import { programs, submissions } from "@/lib/kleio-data"
 import { kleioSyntheticInstitutionProfiles } from "@/lib/kleio-profile-data"
 
 function slugify(value: string) {
@@ -21,17 +21,22 @@ const opportunityTitleToId: Record<string, string> = {
 }
 
 const programTitleToId = Object.fromEntries(programs.map((program) => [program.title, program.id]))
+const demoSubmissionArtistIds = new Set(submissions.map((submission) => submission.artistId))
 
 const institutionNameToUsername = Object.fromEntries(
   kleioSyntheticInstitutionProfiles.map((institution) => [institution.displayName, institution.username]),
 )
 
-export function internalArtistHref(artistId: string) {
-  return `/artists/${artistId}/`
-}
-
 export function publicArtistHref(username: string) {
   return `/artist/${username}/`
+}
+
+/**
+ * Synthetic demo applicants open the polished Creative Passport profile.
+ * Unknown/live IDs retain the authenticated institution applicant-record route.
+ */
+export function internalArtistHref(artistId: string) {
+  return demoSubmissionArtistIds.has(artistId) ? publicArtistHref(artistId) : `/artists/${artistId}/`
 }
 
 export function submissionHref(submissionId: string) {

@@ -4,6 +4,10 @@ import { EditorialArtistProfile } from "@/components/kleio/profile/editorial-art
 
 type ArtistProfile = (typeof kleioSyntheticArtistProfiles)[number]
 
+function optionalAsset(path: string) {
+  return path && path !== "/placeholder.svg" ? assetPath(path) : null
+}
+
 export function ArtistPublicProfile({ profile }: { profile: ArtistProfile }) {
   return (
     <EditorialArtistProfile
@@ -12,8 +16,8 @@ export function ArtistPublicProfile({ profile }: { profile: ArtistProfile }) {
         name: profile.displayName,
         role: profile.role,
         location: profile.location,
-        portraitImage: assetPath(profile.portrait),
-        heroImage: assetPath(profile.heroImage),
+        portraitImage: optionalAsset(profile.portrait),
+        heroImage: optionalAsset(profile.heroImage),
         heroLabel: profile.visualTheme.replaceAll("-", " "),
         bio: profile.shortBio,
         artistStatement: profile.artistStatement,
@@ -24,7 +28,7 @@ export function ArtistPublicProfile({ profile }: { profile: ArtistProfile }) {
           year: work.year,
           medium: work.medium,
           details: work.details,
-          image: assetPath(work.image),
+          image: optionalAsset(work.image),
         })),
         history: profile.history,
         website: profile.website,
