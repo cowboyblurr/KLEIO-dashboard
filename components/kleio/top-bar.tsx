@@ -82,9 +82,9 @@ export function TopBar() {
   }
 
   return (
-    <header className="sticky top-0 z-20 flex min-h-16 items-center gap-2 overflow-x-auto border-b border-border bg-background/85 px-3 py-3 backdrop-blur-xl sm:gap-3 sm:px-5 xl:px-7">
+    <header className="sticky top-0 z-20 flex min-h-14 items-center gap-2 overflow-x-auto border-b border-border bg-background/85 px-3 py-2 backdrop-blur-xl sm:px-4 xl:px-5">
       <div className="relative flex-1 max-w-3xl">
-        <Search className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+        <Search className="pointer-events-none absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
         <input
           type="search"
           value={searchQuery}
@@ -95,55 +95,55 @@ export function TopBar() {
             if (event.key === "Enter" && searchResults[0]) openResult(searchResults[0].href)
           }}
           placeholder={searchPlaceholder}
-          className="h-10 w-full rounded-xl border border-border bg-card pl-10 pr-16 text-sm text-foreground shadow-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-primary/40 focus:ring-4 focus:ring-primary/10"
+          className="h-9 w-full rounded-lg border border-border bg-card pl-9 pr-14 text-[0.82rem] text-foreground shadow-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-primary/40 focus:ring-4 focus:ring-primary/10"
           aria-label={t("institution.topBar.searchPlaceholder")}
         />
-        <kbd className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md border border-border bg-muted px-1.5 py-0.5 text-[0.7rem] font-medium text-muted-foreground">↵</kbd>
+        <kbd className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded border border-border bg-muted px-1.5 py-0.5 text-[0.64rem] font-medium text-muted-foreground">↵</kbd>
 
         {searchOpen && (
-          <div className="absolute left-0 right-0 top-12 z-50 overflow-hidden rounded-2xl border border-border bg-card shadow-[0_18px_50px_rgba(40,30,70,0.14)]">
-            <div className="flex items-center justify-between border-b border-border px-4 py-3">
+          <div className="absolute left-0 right-0 top-11 z-50 overflow-hidden rounded-xl border border-border bg-card shadow-[0_18px_50px_rgba(40,30,70,0.14)]">
+            <div className="flex items-center justify-between border-b border-border px-3 py-2.5">
               <div>
-                <p className="text-sm font-semibold text-foreground">{searchQuery.trim() ? (es ? "Resultados de búsqueda" : "Search results") : (es ? "Rutas sugeridas del espacio" : "Suggested workspace paths")}</p>
-                <p className="text-xs text-muted-foreground">{isLive ? (es ? "Páginas y herramientas disponibles en tu espacio." : "Pages and tools available in your workspace.") : (es ? "Postulantes, artistas, programas, revisores, mensajes e informes de muestra." : "Sample applicants, artists, programs, reviewers, messages, and reports.")}</p>
+                <p className="text-[0.82rem] font-semibold text-foreground">{searchQuery.trim() ? (es ? "Resultados de búsqueda" : "Search results") : (es ? "Rutas sugeridas del espacio" : "Suggested workspace paths")}</p>
+                <p className="text-[0.7rem] text-muted-foreground">{isLive ? (es ? "Páginas y herramientas disponibles en tu espacio." : "Pages and tools available in your workspace.") : (es ? "Postulantes, artistas, programas, revisores, mensajes e informes de muestra." : "Sample applicants, artists, programs, reviewers, messages, and reports.")}</p>
               </div>
-              <button type="button" onClick={() => setSearchOpen(false)} className="grid size-7 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground" aria-label={es ? "Cerrar búsqueda" : "Close search"}><X className="size-4" /></button>
+              <button type="button" onClick={() => setSearchOpen(false)} className="grid size-7 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground" aria-label={es ? "Cerrar búsqueda" : "Close search"}><X className="size-3.5" /></button>
             </div>
-            <div className="max-h-[25rem] overflow-y-auto p-2">
+            <div className="max-h-[23rem] overflow-y-auto p-1.5">
               {searchResults.length > 0 ? searchResults.map((result) => {
                 const translatedCategory = categoryLabel(result.category, locale)
                 return (
-                  <button key={result.id} type="button" onMouseDown={(event) => event.preventDefault()} onClick={() => openResult(result.href)} className="flex w-full items-start gap-3 rounded-xl px-3 py-3 text-left transition-colors hover:bg-accent/40">
-                    <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-primary/10 text-[0.65rem] font-semibold uppercase text-primary">{translatedCategory.slice(0, 2)}</span>
-                    <span className="min-w-0 flex-1"><span className="flex items-center justify-between gap-2"><span className="truncate text-sm font-semibold text-foreground">{result.title}</span><span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[0.58rem] font-semibold uppercase tracking-wide text-muted-foreground">{translatedCategory}</span></span><span className="mt-0.5 block text-xs leading-snug text-muted-foreground">{result.subtitle}</span></span>
+                  <button key={result.id} type="button" onMouseDown={(event) => event.preventDefault()} onClick={() => openResult(result.href)} className="flex w-full items-start gap-2.5 rounded-lg px-2.5 py-2.5 text-left transition-colors hover:bg-accent/40">
+                    <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-primary/10 text-[0.58rem] font-semibold uppercase text-primary">{translatedCategory.slice(0, 2)}</span>
+                    <span className="min-w-0 flex-1"><span className="flex items-center justify-between gap-2"><span className="truncate text-[0.82rem] font-semibold text-foreground">{result.title}</span><span className="shrink-0 rounded-full bg-muted px-1.5 py-0.5 text-[0.52rem] font-semibold uppercase tracking-wide text-muted-foreground">{translatedCategory}</span></span><span className="mt-0.5 block text-[0.7rem] leading-snug text-muted-foreground">{result.subtitle}</span></span>
                   </button>
                 )
-              }) : <p className="px-3 py-6 text-center text-sm text-muted-foreground">{isLive ? (es ? "No hay páginas que coincidan. Prueba “Postulaciones”, “Cola de revisión” o “Informes”." : "No matching pages. Try “Submissions,” “Review Queue,” or “Reports.”") : (es ? "Sin resultados todavía. Prueba “Amina”, “Informe”, “Cola de revisión” o “materiales faltantes”." : "No results yet. Try “Amina,” “Report,” “Review Queue,” or “missing materials.”")}</p>}
+              }) : <p className="px-3 py-5 text-center text-[0.82rem] text-muted-foreground">{isLive ? (es ? "No hay páginas que coincidan. Prueba “Postulaciones”, “Cola de revisión” o “Informes”." : "No matching pages. Try “Submissions,” “Review Queue,” or “Reports.”") : (es ? "Sin resultados todavía. Prueba “Amina”, “Informe”, “Cola de revisión” o “materiales faltantes”." : "No results yet. Try “Amina,” “Report,” “Review Queue,” or “missing materials.”")}</p>}
             </div>
           </div>
         )}
       </div>
 
       {!isLive && <DemoEnvironmentBadge compact className="hidden xl:inline-flex" />}
-      {isPreview && <span className="hidden rounded-full border border-border bg-card px-3 py-1 text-[0.62rem] font-semibold uppercase tracking-[0.12em] text-muted-foreground xl:inline-flex">{es ? "Vista previa" : "Workspace Preview"}</span>}
+      {isPreview && <span className="hidden rounded-full border border-border bg-card px-2.5 py-1 text-[0.58rem] font-semibold uppercase tracking-[0.11em] text-muted-foreground xl:inline-flex">{es ? "Vista previa" : "Workspace Preview"}</span>}
 
-      <div className="ml-auto flex shrink-0 items-center gap-2">
-        <Link href="/submissions/" className="hidden h-10 items-center gap-2 rounded-xl border border-border bg-card px-3.5 text-sm font-medium text-foreground shadow-sm transition-colors hover:bg-accent/50 lg:flex"><SlidersHorizontal className="size-4 text-muted-foreground" />{t("institution.topBar.filterSubmissions")}</Link>
-        <Link href="/shortlist/" aria-label={t("institution.shortlist.title")} className="grid size-10 place-items-center rounded-xl border border-border bg-card text-muted-foreground shadow-sm transition-colors hover:bg-accent/50 hover:text-foreground"><Bookmark className="size-4" /></Link>
+      <div className="ml-auto flex shrink-0 items-center gap-1.5">
+        <Link href="/submissions/" className="hidden h-9 items-center gap-1.5 rounded-lg border border-border bg-card px-3 text-[0.82rem] font-medium text-foreground shadow-sm transition-colors hover:bg-accent/50 lg:flex"><SlidersHorizontal className="size-3.5 text-muted-foreground" />{t("institution.topBar.filterSubmissions")}</Link>
+        <Link href="/shortlist/" aria-label={t("institution.shortlist.title")} className="grid size-9 place-items-center rounded-lg border border-border bg-card text-muted-foreground shadow-sm transition-colors hover:bg-accent/50 hover:text-foreground"><Bookmark className="size-3.5" /></Link>
 
         {isLive ? <LiveNotificationsPanel /> : <div className="relative">
-          <button type="button" onClick={() => setNotificationsOpen((open) => !open)} aria-expanded={notificationsOpen} aria-label={es ? "Ver tareas pendientes" : "View pending tasks"} className="relative grid size-10 place-items-center rounded-xl border border-border bg-card text-muted-foreground shadow-sm transition-colors hover:bg-accent/50 hover:text-foreground"><Bell className="size-4" /><span className="absolute -right-1 -top-1 grid size-5 place-items-center rounded-full bg-primary text-[0.65rem] font-semibold text-primary-foreground ring-2 ring-background">{notificationThreads.length}</span></button>
+          <button type="button" onClick={() => setNotificationsOpen((open) => !open)} aria-expanded={notificationsOpen} aria-label={es ? "Ver tareas pendientes" : "View pending tasks"} className="relative grid size-9 place-items-center rounded-lg border border-border bg-card text-muted-foreground shadow-sm transition-colors hover:bg-accent/50 hover:text-foreground"><Bell className="size-3.5" /><span className="absolute -right-1 -top-1 grid size-[1.15rem] place-items-center rounded-full bg-primary text-[0.58rem] font-semibold text-primary-foreground ring-2 ring-background">{notificationThreads.length}</span></button>
 
           {notificationsOpen && (
-            <div className="absolute right-0 top-12 z-50 w-[24rem] overflow-hidden rounded-2xl border border-border bg-card shadow-[0_18px_50px_rgba(40,30,70,0.14)]">
-              <div className="flex items-center justify-between border-b border-border px-4 py-3"><div><p className="text-sm font-semibold text-foreground">{es ? `${notificationThreads.length} acciones requieren atención` : `${notificationThreads.length} actions need attention`}</p><p className="text-xs text-muted-foreground">{es ? "Cada elemento abre la conversación o flujo correspondiente." : "Each item opens the exact thread or workflow."}</p></div><button type="button" onClick={() => setNotificationsOpen(false)} aria-label={es ? "Cerrar tareas" : "Close notifications"} className="grid size-7 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground"><X className="size-4" /></button></div>
-              <div className="max-h-[22rem] overflow-y-auto p-2">{notificationThreads.map((thread) => { const linkedMessage = getDemoMessageForThread(thread.linkedMessageId); const task = taskForThread(thread, locale); const TaskIcon = task.icon; return <Link key={thread.id} href={`/messages/?thread=${thread.id}`} onClick={() => setNotificationsOpen(false)} className="block rounded-xl px-3 py-3 transition-colors hover:bg-accent/40"><div className="flex items-start gap-3"><InitialAvatar name={thread.counterpart} className="size-9 text-xs" /><span className="min-w-0 flex-1"><span className="flex items-center justify-between gap-2"><span className="truncate text-sm font-medium text-foreground">{thread.counterpart}</span><span className="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-[0.58rem] font-semibold uppercase tracking-wide text-primary">{linkedMessage?.status ?? thread.channel}</span></span><span className="mt-0.5 block text-xs font-semibold text-foreground/80">{task.title}</span><span className="mt-0.5 block text-xs leading-snug text-muted-foreground">{thread.preview}</span><span className="mt-2 inline-flex h-7 items-center gap-1.5 rounded-full bg-primary px-2.5 text-[0.65rem] font-semibold text-primary-foreground"><TaskIcon className="size-3" />{task.action}</span></span></div></Link> })}</div>
-              <div className="border-t border-border p-3"><Link href="/messages/" onClick={() => setNotificationsOpen(false)} className="inline-flex h-9 w-full items-center justify-center rounded-xl bg-primary text-xs font-semibold text-primary-foreground transition-colors hover:bg-primary/90">{es ? "Abrir centro de mensajes" : "Open full message center"}</Link></div>
+            <div className="absolute right-0 top-11 z-50 w-[22rem] overflow-hidden rounded-xl border border-border bg-card shadow-[0_18px_50px_rgba(40,30,70,0.14)]">
+              <div className="flex items-center justify-between border-b border-border px-3 py-2.5"><div><p className="text-[0.82rem] font-semibold text-foreground">{es ? `${notificationThreads.length} acciones requieren atención` : `${notificationThreads.length} actions need attention`}</p><p className="text-[0.7rem] text-muted-foreground">{es ? "Cada elemento abre la conversación o flujo correspondiente." : "Each item opens the exact thread or workflow."}</p></div><button type="button" onClick={() => setNotificationsOpen(false)} aria-label={es ? "Cerrar tareas" : "Close notifications"} className="grid size-7 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground"><X className="size-3.5" /></button></div>
+              <div className="max-h-[20rem] overflow-y-auto p-1.5">{notificationThreads.map((thread) => { const linkedMessage = getDemoMessageForThread(thread.linkedMessageId); const task = taskForThread(thread, locale); const TaskIcon = task.icon; return <Link key={thread.id} href={`/messages/?thread=${thread.id}`} onClick={() => setNotificationsOpen(false)} className="block rounded-lg px-2.5 py-2.5 transition-colors hover:bg-accent/40"><div className="flex items-start gap-2.5"><InitialAvatar name={thread.counterpart} className="size-8 text-[0.68rem]" /><span className="min-w-0 flex-1"><span className="flex items-center justify-between gap-2"><span className="truncate text-[0.82rem] font-medium text-foreground">{thread.counterpart}</span><span className="shrink-0 rounded-full bg-primary/10 px-1.5 py-0.5 text-[0.52rem] font-semibold uppercase tracking-wide text-primary">{linkedMessage?.status ?? thread.channel}</span></span><span className="mt-0.5 block text-[0.7rem] font-semibold text-foreground/80">{task.title}</span><span className="mt-0.5 block text-[0.7rem] leading-snug text-muted-foreground">{thread.preview}</span><span className="mt-1.5 inline-flex h-6.5 items-center gap-1.5 rounded-full bg-primary px-2.5 text-[0.6rem] font-semibold text-primary-foreground"><TaskIcon className="size-3" />{task.action}</span></span></div></Link> })}</div>
+              <div className="border-t border-border p-2.5"><Link href="/messages/" onClick={() => setNotificationsOpen(false)} className="inline-flex h-8.5 w-full items-center justify-center rounded-lg bg-primary text-[0.72rem] font-semibold text-primary-foreground transition-colors hover:bg-primary/90">{es ? "Abrir centro de mensajes" : "Open full message center"}</Link></div>
             </div>
           )}
         </div>}
 
-        {primaryAction.href ? <Link href={primaryAction.href} className="flex h-10 items-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"><PrimaryIcon className="size-4" />{primaryAction.label}</Link> : <DemoSafeAction message={demoMessage} className="flex h-10 items-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"><PrimaryIcon className="size-4" />{primaryAction.label}</DemoSafeAction>}
+        {primaryAction.href ? <Link href={primaryAction.href} className="flex h-9 items-center gap-1.5 rounded-lg bg-primary px-3.5 text-[0.82rem] font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"><PrimaryIcon className="size-3.5" />{primaryAction.label}</Link> : <DemoSafeAction message={demoMessage} className="flex h-9 items-center gap-1.5 rounded-lg bg-primary px-3.5 text-[0.82rem] font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"><PrimaryIcon className="size-3.5" />{primaryAction.label}</DemoSafeAction>}
       </div>
     </header>
   )
