@@ -2,6 +2,7 @@ import "@/lib/kleio-content-integrity"
 import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
 import { Geist, Geist_Mono, Playfair_Display } from 'next/font/google'
+import { DemoReturnControl } from '@/components/kleio/demo-return-control'
 import { KleioLocaleProvider } from '@/components/kleio/kleio-locale-provider'
 import './globals.css'
 import './density.css'
@@ -60,7 +61,10 @@ export default function RootLayout({
       className={`light ${geistSans.variable} ${geistMono.variable} ${playfair.variable} bg-background`}
     >
       <body className="font-sans antialiased">
-        <KleioLocaleProvider>{children}</KleioLocaleProvider>
+        <KleioLocaleProvider>
+          {children}
+          <DemoReturnControl />
+        </KleioLocaleProvider>
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
     </html>
