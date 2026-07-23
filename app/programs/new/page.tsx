@@ -2,7 +2,7 @@ import { DashboardShell } from "@/components/kleio/dashboard-shell"
 import { ProgramsNewPageView } from "@/components/kleio/programs-new-page-view"
 import { InstitutionKleioAssistStatusBar } from "@/components/kleio/institution-kleio-assist-status-bar"
 import { LiveModeView } from "@/components/kleio/live-mode-view"
-import { LiveInstitutionCallsWithImages } from "@/components/kleio/live-institution-calls-with-images"
+import { LiveInstitutionOpportunityWorkspace } from "@/components/kleio/live-institution-opportunity-workspace"
 
 export default function Page() {
   return (
@@ -12,7 +12,7 @@ export default function Page() {
           <InstitutionKleioAssistStatusBar />
         </div>
         <div className="min-h-0 flex-1">
-          <LiveModeView live={<LiveInstitutionCallsWithImages />} preview={<ProgramsNewPageView />} />
+          <LiveModeView live={<LiveInstitutionOpportunityWorkspace />} preview={<ProgramsNewPageView />} />
         </div>
       </div>
     </DashboardShell>
