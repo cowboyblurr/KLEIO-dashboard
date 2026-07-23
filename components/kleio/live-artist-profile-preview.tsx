@@ -82,8 +82,6 @@ export function LiveArtistProfilePreview() {
               role: disciplines.join(" · ") || (locale === "es" ? "Artista" : "Artist"),
               location: passport.location,
               portraitImage: presentation.profile_image_url,
-              portraitPositionX: presentation.profile_image_position_x,
-              portraitPositionY: presentation.profile_image_position_y,
               heroImage: featuredWork?.image_url || null,
               heroLabel: featuredWork?.title || "Featured practice",
               bio: passport.bio,
