@@ -115,16 +115,18 @@ function WorkspaceHeader({ artist, assetProfile, passportComplete }: { artist: A
   )
 }
 
-function ContextMetric({ label, value, detail, icon: Icon }: { label: string; value: string; detail: string; icon: typeof FileText }) {
+function ContextSignal({ label, value, detail, icon: Icon }: { label: string; value: string; detail: string; icon: typeof FileText }) {
   return (
-    <div className="flex min-w-0 items-start gap-3 rounded-2xl bg-white/75 p-3">
-      <span className="grid size-9 shrink-0 place-items-center rounded-xl" style={{ backgroundColor: lavenderMist, color: lavenderDeep }}>
-        <Icon className="size-4" />
+    <div className="flex min-w-0 items-start gap-2.5 py-1">
+      <span className="mt-0.5 grid size-7 shrink-0 place-items-center rounded-lg" style={{ backgroundColor: lavenderMist, color: lavenderDeep }}>
+        <Icon className="size-3.5" />
       </span>
       <div className="min-w-0">
-        <p className="text-[0.64rem] font-semibold uppercase tracking-[0.14em]" style={{ color: "#A997E8" }}>{label}</p>
-        <p className="mt-1 font-serif text-2xl font-semibold tabular-nums" style={{ color: inkColor }}>{value}</p>
-        <p className="mt-0.5 text-[0.7rem] leading-snug" style={{ color: mutedColor }}>{detail}</p>
+        <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+          <p className="text-xs font-semibold" style={{ color: inkColor }}>{label}</p>
+          <p className="text-xs font-semibold tabular-nums" style={{ color: lavenderDeep }}>{value}</p>
+        </div>
+        <p className="mt-0.5 text-[0.68rem] leading-snug" style={{ color: mutedColor }}>{detail}</p>
       </div>
     </div>
   )
@@ -174,20 +176,20 @@ function PriorityPanel({ profile, analytics }: { profile: ArtistDashboardProfile
         </div>
       </div>
 
-      <div className="mt-6 grid gap-3 border-t pt-5 md:grid-cols-3" style={{ borderColor: lavenderLine }}>
-        <ContextMetric
+      <div className="mt-6 grid gap-4 border-t pt-5 sm:grid-cols-3" style={{ borderColor: lavenderLine }}>
+        <ContextSignal
           label={locale === "es" ? "Preparación del perfil" : "Profile readiness"}
           value={`${analytics.passportCompletenessPct}%`}
           detail={passportNeedsAttention ? (locale === "es" ? "Todavía faltan materiales útiles." : "Useful materials are still missing.") : (locale === "es" ? "Listo para reutilizar." : "Ready to reuse.")}
           icon={CheckCircle2}
         />
-        <ContextMetric
+        <ContextSignal
           label={locale === "es" ? "Fechas próximas" : "Upcoming deadlines"}
           value={String(analytics.upcomingDeadlines)}
           detail={locale === "es" ? `La próxima es ${formatArtistNextDeadline(analytics.nextDeadline, locale)}.` : `Next is ${formatArtistNextDeadline(analytics.nextDeadline, locale)}.`}
           icon={CalendarDays}
         />
-        <ContextMetric
+        <ContextSignal
           label={locale === "es" ? "Solicitudes activas" : "Active applications"}
           value={String(analytics.activeApplications)}
           detail={locale === "es" ? `${analytics.dueSoon} necesitan atención pronto.` : `${analytics.dueSoon} need attention soon.`}
@@ -311,28 +313,41 @@ function SelectedWorksPreview({ assetProfile }: { assetProfile: ArtistAssetProfi
   )
 }
 
-function GuidancePanel({ profile }: { profile: ArtistDashboardProfile }) {
+function AssistDisclosure({ profile }: { profile: ArtistDashboardProfile }) {
   const { locale } = useKleioLocale()
+
   return (
-    <Surface className="grid gap-5 p-5 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
-      <div>
-        <div className="flex items-center gap-2">
-          <Sparkles className="size-4" style={{ color: lavenderDeep }} />
-          <h2 className="text-sm font-semibold" style={{ color: inkColor }}>{locale === "es" ? "Orientación de KLEIO Assist" : "KLEIO Assist guidance"}</h2>
-        </div>
+    <details className="group border-t" style={{ borderColor: lavenderLine }}>
+      <summary
+        className="flex cursor-pointer list-none items-center justify-between gap-4 py-4 text-xs transition-colors hover:text-[#5B4B8A] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A997E8]/50 focus-visible:ring-offset-2 [&::-webkit-details-marker]:hidden"
+        style={{ color: mutedColor }}
+      >
+        <span className="flex min-w-0 items-center gap-2">
+          <Sparkles className="size-3.5 shrink-0" style={{ color: "#9B91AA" }} />
+          <span className="font-semibold" style={{ color: inkColor }}>KLEIO Assist</span>
+          <span aria-hidden="true">·</span>
+          <span>{locale === "es" ? "Próximamente" : "Coming soon"}</span>
+          <span className="hidden sm:inline">— {locale === "es" ? "orientación opcional y revisable" : "optional, review-first guidance"}</span>
+        </span>
+        <ChevronRight className="size-3.5 shrink-0 transition-transform group-open:rotate-90" aria-hidden="true" />
+      </summary>
+
+      <div className="pb-4 pl-5 pr-1">
+        <p className="max-w-2xl text-xs leading-relaxed" style={{ color: mutedColor }}>
+          {locale === "es"
+            ? "Cuando esté disponible, KLEIO Assist ofrecerá sugerencias editables solo cuando las solicites. Nada se guardará, publicará o modificará sin tu aprobación."
+            : "When available, KLEIO Assist will offer editable suggestions only when you request them. Nothing will be saved, published, or changed without your approval."}
+        </p>
         <ul className="mt-3 grid gap-2 md:grid-cols-2">
           {profile.quietInsights.slice(0, 2).map((insight) => (
             <li key={insight} className="flex gap-2 text-xs leading-relaxed" style={{ color: mutedColor }}>
-              <span className="mt-1 size-1.5 shrink-0 rounded-full bg-primary" />
+              <span className="mt-1.5 size-1 shrink-0 rounded-full bg-[#B8AEC8]" />
               {insight}
             </li>
           ))}
         </ul>
       </div>
-      <Link href="/artist-dashboard/opportunities/" className="inline-flex h-10 items-center justify-center rounded-xl border bg-white px-4 text-sm font-semibold transition-colors hover:bg-[#FDFBFF]" style={{ borderColor: "#D8D0F2", color: lavenderDeep }}>
-        {locale === "es" ? "Ver oportunidades relevantes" : "View relevant opportunities"}
-      </Link>
-    </Surface>
+    </details>
   )
 }
 
@@ -355,8 +370,8 @@ export function ArtistDashboardOverview({ artist, profile, assetProfile, analyti
         </aside>
       </div>
 
-      <div className="mt-5">
-        <GuidancePanel profile={profile} />
+      <div className="mt-7">
+        <AssistDisclosure profile={profile} />
       </div>
     </div>
   )
