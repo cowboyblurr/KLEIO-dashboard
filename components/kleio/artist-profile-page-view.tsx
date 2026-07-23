@@ -22,11 +22,11 @@ export function ArtistProfilePageView() {
   }
 
   return (
-    <main className="h-full overflow-y-auto bg-white px-4 py-5 sm:px-6 sm:py-6">
-      <div className="mx-auto max-w-[1200px] space-y-5">
-        <ArtistProfileContextBar active="profile" showKleioAssistStatus />
-        <div className="rounded-xl border border-[#E7E1F7] bg-[#FDFBFF] px-4 py-3 text-sm leading-relaxed text-[#625C70]">
-          <strong className="text-[#292631]">Guided-demo profile.</strong> This presentation uses clearly labeled synthetic artist data. It is separate from connected artist accounts and does not represent a real public user.
+    <main className="h-full overflow-y-auto bg-white px-4 py-4 sm:px-6">
+      <div className="mx-auto max-w-[1440px] space-y-4">
+        <ArtistProfileContextBar active="profile" />
+        <div className="border-b border-[#EEE9F8] pb-3 text-xs leading-relaxed text-[#625C70]">
+          <strong className="text-[#292631]">Guided-demo profile.</strong> This presentation uses synthetic artist data and does not represent a real public account.
         </div>
         <ArtistPublicProfile profile={profile} />
       </div>
