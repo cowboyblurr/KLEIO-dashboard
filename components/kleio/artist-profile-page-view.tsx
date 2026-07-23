@@ -1,7 +1,7 @@
 "use client"
 
 import { ArtistProfileContextBar } from "@/components/kleio/artist-profile-context-bar"
-import { LiveArtistProfilePreview } from "@/components/kleio/live-artist-profile-preview"
+import { LiveArtistProfilePreviewV2 } from "@/components/kleio/live-artist-profile-preview-v2"
 import { ArtistPublicProfile } from "@/components/kleio/profile/artist-public-profile"
 import { useKleioMode } from "@/components/kleio/use-kleio-mode"
 import { getArtistProfileByUsername } from "@/lib/kleio-profile-data"
@@ -9,7 +9,7 @@ import { getArtistProfileByUsername } from "@/lib/kleio-profile-data"
 export function ArtistProfilePageView() {
   const { isLive } = useKleioMode()
 
-  if (isLive) return <LiveArtistProfilePreview />
+  if (isLive) return <LiveArtistProfilePreviewV2 />
 
   const profile = getArtistProfileByUsername("amina-el-badri")
 
