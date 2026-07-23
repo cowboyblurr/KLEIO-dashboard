@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react"
 import { useState } from "react"
-import { ArrowUpRight, BadgeCheck, FileText, Globe, Instagram, Mail, MapPin } from "lucide-react"
+import { ArrowUpRight, AtSign, BadgeCheck, FileText, Globe, Mail, MapPin } from "lucide-react"
 
 export type EditorialArtistProfileWork = {
   id?: string
@@ -49,11 +49,18 @@ function initialsFor(name: string) {
     .join("") || "A"
 }
 
-function safeExternalHref(value: string | undefined) {
-  if (!value?.trim()) return ""
-  const trimmed = value.trim()
-  if (/^(https?:\/\/|mailto:)/i.test(trimmed)) return trimmed
+function websiteHref(value?: string) {
+  const trimmed = value?.trim()
+  if (!trimmed) return ""
+  if (/^https?:\/\//i.test(trimmed)) return trimmed
   return `https://${trimmed}`
+}
+
+function instagramHref(value?: string) {
+  const trimmed = value?.trim()
+  if (!trimmed) return ""
+  if (/^https?:\/\//i.test(trimmed)) return trimmed
+  return `https://instagram.com/${trimmed.replace(/^@/, "")}`
 }
 
 function orientationFor(width: number, height: number): ImageOrientation {
@@ -64,13 +71,10 @@ function orientationFor(width: number, height: number): ImageOrientation {
   return "square"
 }
 
-function LavenderGrain({ className = "" }: { className?: string }) {
+function LavenderGrain() {
   return (
-    <div
-      aria-hidden="true"
-      className={`pointer-events-none absolute inset-0 overflow-hidden ${className}`}
-    >
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_15%_20%,rgba(169,151,232,0.24),transparent_34%),radial-gradient(circle_at_84%_78%,rgba(216,208,242,0.3),transparent_30%),linear-gradient(135deg,rgba(247,244,255,0.88),rgba(255,255,255,0.22))]" />
+    <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_15%_20%,rgba(169,151,232,0.24),transparent_34%),radial-gradient(circle_at_84%_78%,rgba(216,208,242,0.3),transparent_30%),linear-gradient(135deg,rgba(247,244,255,0.9),rgba(255,255,255,0.2))]" />
       <div
         className="absolute inset-0 opacity-[0.075] mix-blend-multiply"
         style={{ backgroundImage: grainTexture, backgroundSize: "180px 180px" }}
@@ -89,36 +93,25 @@ function ArtworkFrame({
   prominence?: "hero" | "primary" | "standard"
 }) {
   const [orientation, setOrientation] = useState<ImageOrientation>("landscape")
-  const adaptiveAspect =
-    orientation === "portrait"
-      ? "aspect-[4/5]"
-      : orientation === "square"
-        ? "aspect-square"
-        : prominence === "primary"
-          ? "aspect-[16/11]"
-          : "aspect-[4/3]"
-  const frameClass = prominence === "hero" ? "aspect-[16/10] min-h-[300px]" : adaptiveAspect
+  let aspect = "aspect-[4/3]"
+  if (orientation === "portrait") aspect = "aspect-[4/5]"
+  if (orientation === "square") aspect = "aspect-square"
+  if (prominence === "primary" && orientation === "landscape") aspect = "aspect-[16/11]"
+  if (prominence === "hero") aspect = "aspect-[16/10] min-h-[300px]"
 
   return (
-    <div className={`relative isolate overflow-hidden bg-[#F3EFF8] ${frameClass}`}>
+    <div className={`relative isolate overflow-hidden bg-[#F3EFF8] ${aspect}`}>
       {src ? (
         <>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            aria-hidden="true"
-            src={src}
-            alt=""
-            className="absolute inset-0 size-full scale-110 object-cover opacity-30 blur-2xl saturate-75"
-          />
+          <img aria-hidden="true" src={src} alt="" className="absolute inset-0 size-full scale-110 object-cover opacity-30 blur-2xl saturate-75" />
           <div className="absolute inset-0 bg-white/16" />
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={src}
             alt={alt}
             className="relative z-10 size-full object-contain"
-            onLoad={(event) => {
-              setOrientation(orientationFor(event.currentTarget.naturalWidth, event.currentTarget.naturalHeight))
-            }}
+            onLoad={(event) => setOrientation(orientationFor(event.currentTarget.naturalWidth, event.currentTarget.naturalHeight))}
           />
         </>
       ) : (
@@ -136,7 +129,6 @@ function ArtworkFrame({
 
 function WorkCaption({ work, index }: { work: EditorialArtistProfileWork; index: number }) {
   const metadata = [work.year, work.medium, work.details].filter(Boolean).join(" · ")
-
   return (
     <figcaption className="mt-3 flex items-start justify-between gap-4 border-t border-[#DDD7E7] pt-3 text-xs text-[#746F7C]">
       <div className="min-w-0">
@@ -165,9 +157,8 @@ function PortraitOverlay({ name, src }: { name: string; src?: string | null }) {
 }
 
 function ProfileLinks({ data }: { data: EditorialArtistProfileData }) {
-  const website = safeExternalHref(data.website)
-  const instagram = safeExternalHref(data.instagram)
-
+  const website = websiteHref(data.website)
+  const instagram = instagramHref(data.instagram)
   if (!website && !instagram && !data.email) return null
 
   return (
@@ -176,28 +167,19 @@ function ProfileLinks({ data }: { data: EditorialArtistProfileData }) {
       <div className="mt-3 grid gap-2 text-sm">
         {website && (
           <a href={website} target="_blank" rel="noreferrer" className="flex items-center justify-between gap-3 py-1.5 text-[#4F4957] hover:text-[#6A5896]">
-            <span className="inline-flex min-w-0 items-center gap-2">
-              <Globe className="size-3.5 shrink-0" />
-              <span className="truncate">Website</span>
-            </span>
-            <ArrowUpRight className="size-3.5 shrink-0" />
+            <span className="inline-flex items-center gap-2"><Globe className="size-3.5" />Website</span>
+            <ArrowUpRight className="size-3.5" />
           </a>
         )}
         {instagram && (
           <a href={instagram} target="_blank" rel="noreferrer" className="flex items-center justify-between gap-3 py-1.5 text-[#4F4957] hover:text-[#6A5896]">
-            <span className="inline-flex min-w-0 items-center gap-2">
-              <Instagram className="size-3.5 shrink-0" />
-              <span className="truncate">Instagram</span>
-            </span>
-            <ArrowUpRight className="size-3.5 shrink-0" />
+            <span className="inline-flex items-center gap-2"><AtSign className="size-3.5" />Instagram</span>
+            <ArrowUpRight className="size-3.5" />
           </a>
         )}
         {data.email && (
           <a href={`mailto:${data.email}`} className="flex items-center justify-between gap-3 py-1.5 text-[#4F4957] hover:text-[#6A5896]">
-            <span className="inline-flex min-w-0 items-center gap-2">
-              <Mail className="size-3.5 shrink-0" />
-              <span className="truncate">{data.email}</span>
-            </span>
+            <span className="inline-flex min-w-0 items-center gap-2"><Mail className="size-3.5 shrink-0" /><span className="truncate">{data.email}</span></span>
             <ArrowUpRight className="size-3.5 shrink-0" />
           </a>
         )}
@@ -242,27 +224,15 @@ export function EditorialArtistProfile({
 
           <div className="mt-6 grid gap-5 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
             <div>
-              <h1 className="max-w-[1080px] font-serif text-[clamp(3.25rem,8vw,7.35rem)] font-medium leading-[0.84] tracking-[-0.06em]">
-                {data.name || "Artist name"}
-              </h1>
+              <h1 className="max-w-[1080px] font-serif text-[clamp(3.25rem,8vw,7.35rem)] font-medium leading-[0.84] tracking-[-0.06em]">{data.name || "Artist name"}</h1>
               <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs font-medium uppercase tracking-[0.12em] text-[#746F7C]">
                 {data.role && <span>{data.role}</span>}
                 {data.role && data.location && <span className="text-[#B0A9BA]">/</span>}
-                {data.location && (
-                  <span className="inline-flex items-center gap-1.5">
-                    <MapPin className="size-3.5" />
-                    {data.location}
-                  </span>
-                )}
-                <span className="inline-flex items-center gap-1.5 text-[#6A5896]">
-                  <BadgeCheck className="size-3.5" />
-                  {data.passportLabel || "Creative Passport"}
-                </span>
+                {data.location && <span className="inline-flex items-center gap-1.5"><MapPin className="size-3.5" />{data.location}</span>}
+                <span className="inline-flex items-center gap-1.5 text-[#6A5896]"><BadgeCheck className="size-3.5" />{data.passportLabel || "Creative Passport"}</span>
               </div>
             </div>
-            <p className="max-w-sm text-sm leading-6 text-[#746F7C] lg:text-right">
-              Artist-selected work and approved Creative Passport information, organized in one consistent review format.
-            </p>
+            <p className="max-w-sm text-sm leading-6 text-[#746F7C] lg:text-right">Artist-selected work and approved Creative Passport information, organized in one consistent review format.</p>
           </div>
         </header>
 
@@ -284,9 +254,7 @@ export function EditorialArtistProfile({
                   <p className="text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-[#6A5896]">Selected works</p>
                   <h2 className="mt-2 font-serif text-3xl tracking-[-0.04em] sm:text-4xl">Portfolio selection</h2>
                 </div>
-                <span className="hidden text-xs uppercase tracking-[0.14em] text-[#746F7C] sm:block">
-                  {works.length} {works.length === 1 ? "work" : "works"}
-                </span>
+                <span className="hidden text-xs uppercase tracking-[0.14em] text-[#746F7C] sm:block">{works.length} {works.length === 1 ? "work" : "works"}</span>
               </div>
 
               {works.length ? (
@@ -298,7 +266,6 @@ export function EditorialArtistProfile({
                       {primaryWork.description && <p className="mt-3 text-sm leading-6 text-[#746F7C]">{primaryWork.description}</p>}
                     </figure>
                   )}
-
                   <div className="grid gap-6 md:col-span-5">
                     {secondaryWorks.map((work, index) => (
                       <figure key={work.id || `${work.title}-${index}`}>
@@ -311,10 +278,7 @@ export function EditorialArtistProfile({
               ) : (
                 <div className="relative overflow-hidden border border-[#E2DCEE] bg-white px-6 py-14 text-center">
                   <LavenderGrain />
-                  <div className="relative z-10">
-                    <p className="font-serif text-2xl text-[#4E426F]">No portfolio works added yet</p>
-                    <p className="mt-2 text-sm text-[#746F7C]">Uploaded works will appear here in the shared KLEIO layout.</p>
-                  </div>
+                  <div className="relative z-10"><p className="font-serif text-2xl text-[#4E426F]">No portfolio works added yet</p><p className="mt-2 text-sm text-[#746F7C]">Uploaded works will appear here in the shared KLEIO layout.</p></div>
                 </div>
               )}
             </section>
@@ -322,25 +286,16 @@ export function EditorialArtistProfile({
 
           <aside id="profile" className="scroll-mt-8 lg:sticky lg:top-5 lg:self-start">
             <div className="relative overflow-hidden border-y border-[#DDD7E7] bg-white/84 px-1 py-5 backdrop-blur-sm sm:px-5 lg:border lg:p-5">
-              <LavenderGrain className="opacity-80" />
+              <LavenderGrain />
               <div className="relative z-10">
                 <p className="text-[0.63rem] font-semibold uppercase tracking-[0.18em] text-[#6A5896]">Profile snapshot</p>
                 <h2 className="mt-3 font-serif text-3xl leading-none tracking-[-0.04em]">{data.name}</h2>
-                {(data.role || data.location) && (
-                  <p className="mt-2 text-sm leading-6 text-[#746F7C]">{[data.role, data.location].filter(Boolean).join(" · ")}</p>
-                )}
-
-                <p className="mt-5 whitespace-pre-wrap text-sm leading-6 text-[#4F4957]">
-                  {data.bio || "Biography not yet added."}
-                </p>
+                {(data.role || data.location) && <p className="mt-2 text-sm leading-6 text-[#746F7C]">{[data.role, data.location].filter(Boolean).join(" · ")}</p>}
+                <p className="mt-5 whitespace-pre-wrap text-sm leading-6 text-[#4F4957]">{data.bio || "Biography not yet added."}</p>
 
                 {tags.length > 0 && (
                   <div className="mt-5 flex flex-wrap gap-1.5">
-                    {tags.map((tag) => (
-                      <span key={tag} className="border border-[#D8D0F2] bg-white/75 px-2 py-1 text-[0.65rem] font-medium uppercase tracking-[0.08em] text-[#625676]">
-                        {tag}
-                      </span>
-                    ))}
+                    {tags.map((tag) => <span key={tag} className="border border-[#D8D0F2] bg-white/75 px-2 py-1 text-[0.65rem] font-medium uppercase tracking-[0.08em] text-[#625676]">{tag}</span>)}
                   </div>
                 )}
 
@@ -349,10 +304,7 @@ export function EditorialArtistProfile({
                     <p className="text-[0.63rem] font-semibold uppercase tracking-[0.18em] text-[#6A5896]">Selected record</p>
                     <ol className="mt-2 divide-y divide-[#E5E0EA] text-sm">
                       {history.slice(0, 3).map((entry, index) => (
-                        <li key={`${entry}-${index}`} className="grid grid-cols-[1.75rem_1fr] gap-2 py-2.5 leading-5">
-                          <span className="text-xs text-[#A098AA]">{String(index + 1).padStart(2, "0")}</span>
-                          <span>{entry}</span>
-                        </li>
+                        <li key={`${entry}-${index}`} className="grid grid-cols-[1.75rem_1fr] gap-2 py-2.5 leading-5"><span className="text-xs text-[#A098AA]">{String(index + 1).padStart(2, "0")}</span><span>{entry}</span></li>
                       ))}
                     </ol>
                   </div>
@@ -360,63 +312,25 @@ export function EditorialArtistProfile({
 
                 {(data.artistStatement || data.practiceDescription) && (
                   <details className="group mt-4 border-t border-[#DDD7E7] pt-4">
-                    <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-xs font-semibold uppercase tracking-[0.14em] text-[#4E426F]">
-                      Artist statement
-                      <span className="text-lg font-light transition-transform group-open:rotate-45">+</span>
-                    </summary>
-                    <div className="mt-3 space-y-3 text-sm leading-6 text-[#625C70]">
-                      {data.artistStatement && <p className="whitespace-pre-wrap">{data.artistStatement}</p>}
-                      {data.practiceDescription && <p className="whitespace-pre-wrap">{data.practiceDescription}</p>}
-                    </div>
+                    <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-xs font-semibold uppercase tracking-[0.14em] text-[#4E426F]">Artist statement<span className="text-lg font-light transition-transform group-open:rotate-45">+</span></summary>
+                    <div className="mt-3 space-y-3 text-sm leading-6 text-[#625C70]">{data.artistStatement && <p className="whitespace-pre-wrap">{data.artistStatement}</p>}{data.practiceDescription && <p className="whitespace-pre-wrap">{data.practiceDescription}</p>}</div>
                   </details>
                 )}
 
                 {recordExists && (
                   <details className="group mt-4 border-t border-[#DDD7E7] pt-4">
-                    <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-xs font-semibold uppercase tracking-[0.14em] text-[#4E426F]">
-                      Professional record
-                      <span className="text-lg font-light transition-transform group-open:rotate-45">+</span>
-                    </summary>
+                    <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-xs font-semibold uppercase tracking-[0.14em] text-[#4E426F]">Professional record<span className="text-lg font-light transition-transform group-open:rotate-45">+</span></summary>
                     <div className="mt-3 space-y-4 text-sm leading-6 text-[#625C70]">
-                      {data.education && (
-                        <div>
-                          <p className="text-[0.62rem] font-semibold uppercase tracking-[0.14em] text-[#8A8296]">Education</p>
-                          <p className="mt-1 whitespace-pre-wrap">{data.education}</p>
-                        </div>
-                      )}
-                      {history.length > 3 && (
-                        <div>
-                          <p className="text-[0.62rem] font-semibold uppercase tracking-[0.14em] text-[#8A8296]">Exhibitions and residencies</p>
-                          <ul className="mt-1 space-y-1.5">
-                            {history.map((entry, index) => <li key={`${entry}-full-${index}`}>{entry}</li>)}
-                          </ul>
-                        </div>
-                      )}
-                      {awards.length > 0 && (
-                        <div>
-                          <p className="text-[0.62rem] font-semibold uppercase tracking-[0.14em] text-[#8A8296]">Awards</p>
-                          <ul className="mt-1 space-y-1.5">
-                            {awards.map((entry, index) => <li key={`${entry}-award-${index}`}>{entry}</li>)}
-                          </ul>
-                        </div>
-                      )}
+                      {data.education && <div><p className="text-[0.62rem] font-semibold uppercase tracking-[0.14em] text-[#8A8296]">Education</p><p className="mt-1 whitespace-pre-wrap">{data.education}</p></div>}
+                      {history.length > 3 && <div><p className="text-[0.62rem] font-semibold uppercase tracking-[0.14em] text-[#8A8296]">Exhibitions and residencies</p><ul className="mt-1 space-y-1.5">{history.map((entry, index) => <li key={`${entry}-full-${index}`}>{entry}</li>)}</ul></div>}
+                      {awards.length > 0 && <div><p className="text-[0.62rem] font-semibold uppercase tracking-[0.14em] text-[#8A8296]">Awards</p><ul className="mt-1 space-y-1.5">{awards.map((entry, index) => <li key={`${entry}-award-${index}`}>{entry}</li>)}</ul></div>}
                     </div>
                   </details>
                 )}
 
                 <ProfileLinks data={data} />
-
-                {actions && (
-                  <div className="mt-5 border-t border-[#DDD7E7] pt-4">
-                    <p className="mb-3 text-[0.63rem] font-semibold uppercase tracking-[0.18em] text-[#6A5896]">Profile controls</p>
-                    <div className="flex flex-wrap gap-2">{actions}</div>
-                  </div>
-                )}
-
-                <div className="mt-5 flex items-center gap-2 border-t border-[#DDD7E7] pt-4 text-xs text-[#746F7C]">
-                  <FileText className="size-3.5 text-[#6A5896]" />
-                  Structured through the artist&rsquo;s Creative Passport
-                </div>
+                {actions && <div className="mt-5 border-t border-[#DDD7E7] pt-4"><p className="mb-3 text-[0.63rem] font-semibold uppercase tracking-[0.18em] text-[#6A5896]">Profile controls</p><div className="flex flex-wrap gap-2">{actions}</div></div>}
+                <div className="mt-5 flex items-center gap-2 border-t border-[#DDD7E7] pt-4 text-xs text-[#746F7C]"><FileText className="size-3.5 text-[#6A5896]" />Structured through the artist&rsquo;s Creative Passport</div>
               </div>
             </div>
           </aside>
