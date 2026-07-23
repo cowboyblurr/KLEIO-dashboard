@@ -1,10 +1,11 @@
-import type { AuthChangeEvent, Session } from "@supabase/supabase-js"
+import type { AuthChangeEvent, Session, User } from "@supabase/supabase-js"
 import { getSupabaseBrowserClient, type KleioAccountRole } from "@/lib/kleio-supabase"
 import type { KleioEntitySuggestion, KleioLocationData } from "@/lib/kleio-entity-search"
 import { getKleioAuthCallbackUrl } from "@/lib/kleio-url"
 
 const PENDING_ONBOARDING_KEY = "kleio:auth:pending-onboarding:v2"
 const LEGACY_PENDING_ONBOARDING_KEY = "kleio-pending-live-onboarding"
+const RECOVERY_METADATA_KEY = "kleio_onboarding_recovery"
 
 export type ArtistOnboardingPayload = {
   role: "artist"
@@ -67,19 +68,101 @@ function locationData(selection: KleioEntitySuggestion | null, fallback: string)
   return { formatted_address: fallback.trim() }
 }
 
+function stringField(record: Record<string, unknown>, key: string) {
+  return typeof record[key] === "string" ? record[key] : ""
+}
+
+function suggestionField(record: Record<string, unknown>, key: string): KleioEntitySuggestion | null {
+  const value = record[key]
+  return value && typeof value === "object" ? (value as KleioEntitySuggestion) : null
+}
+
+function normalizeStoredOnboarding(value: unknown): KleioOnboardingPayload | null {
+  if (!value || typeof value !== "object") return null
+  const record = value as Record<string, unknown>
+  const role = record.role
+  const email = normalizeEmail(stringField(record, "email"))
+  const displayName = stringField(record, "displayName")
+
+  if (!email || !displayName || (role !== "artist" && role !== "institution")) return null
+
+  if (role === "artist") {
+    return {
+      role,
+      email,
+      displayName,
+      location: stringField(record, "location"),
+      selectedLocation: suggestionField(record, "selectedLocation"),
+      discipline: stringField(record, "discipline"),
+      website: stringField(record, "website"),
+      shortBio: stringField(record, "shortBio"),
+      artistStatement: stringField(record, "artistStatement"),
+      mediums: stringField(record, "mediums"),
+    }
+  }
+
+  return {
+    role,
+    email,
+    displayName,
+    institutionName: stringField(record, "institutionName"),
+    selectedInstitution: suggestionField(record, "selectedInstitution"),
+    institutionType: stringField(record, "institutionType"),
+    location: stringField(record, "location"),
+    selectedLocation: suggestionField(record, "selectedLocation"),
+    website: stringField(record, "website"),
+    publicDescription: stringField(record, "publicDescription"),
+    missionStatement: stringField(record, "missionStatement"),
+  }
+}
+
+function payloadHasRequiredFields(payload: KleioOnboardingPayload) {
+  const common = payload.email.trim() && payload.displayName.trim() && payload.location.trim()
+  if (!common) return false
+  if (payload.role === "artist") return Boolean(payload.discipline.trim())
+  return Boolean(payload.institutionName.trim() && payload.institutionType.trim())
+}
+
+function recoveryPayload(payload: KleioOnboardingPayload): KleioOnboardingPayload {
+  if (payload.role === "artist") {
+    return {
+      ...payload,
+      email: normalizeEmail(payload.email),
+      selectedLocation: null,
+      shortBio: "",
+      artistStatement: "",
+      mediums: "",
+    }
+  }
+
+  return {
+    ...payload,
+    email: normalizeEmail(payload.email),
+    selectedInstitution: null,
+    selectedLocation: null,
+    publicDescription: "",
+    missionStatement: "",
+  }
+}
+
+function onboardingFromUserMetadata(user: User, expectedRole?: "artist" | "institution") {
+  const payload = normalizeStoredOnboarding(user.user_metadata?.[RECOVERY_METADATA_KEY])
+  if (!payload || !payloadHasRequiredFields(payload)) return null
+  if (expectedRole && payload.role !== expectedRole) return null
+  if (normalizeEmail(user.email ?? "") !== normalizeEmail(payload.email)) return null
+  return payload
+}
+
 export function readPendingKleioOnboarding(): KleioOnboardingPayload | null {
   if (!isBrowser()) return null
   const raw = window.localStorage.getItem(PENDING_ONBOARDING_KEY) ?? window.localStorage.getItem(LEGACY_PENDING_ONBOARDING_KEY)
   if (!raw) return null
   try {
-    const parsed = JSON.parse(raw) as KleioOnboardingPayload
-    if (parsed?.role === "artist" || parsed?.role === "institution") {
-      return { ...parsed, email: normalizeEmail(parsed.email) }
-    }
+    return normalizeStoredOnboarding(JSON.parse(raw))
   } catch {
     clearPendingKleioOnboarding()
+    return null
   }
-  return null
 }
 
 export function savePendingKleioOnboarding(payload: KleioOnboardingPayload) {
@@ -104,15 +187,21 @@ export async function signUpKleioAccount(input: {
   password: string
   displayName: string
   role: Extract<KleioAccountRole, "artist" | "institution">
+  payload: KleioOnboardingPayload
 }): Promise<KleioSignupResult> {
+  if (input.payload.role !== input.role) throw new Error("The selected account role does not match this signup path.")
+
+  const normalizedEmail = normalizeEmail(input.email)
+  const payload = recoveryPayload({ ...input.payload, email: normalizedEmail })
   const supabase = getSupabaseBrowserClient()
   const { data, error } = await supabase.auth.signUp({
-    email: normalizeEmail(input.email),
+    email: normalizedEmail,
     password: input.password,
     options: {
       data: {
         role: input.role,
         display_name: input.displayName.trim(),
+        [RECOVERY_METADATA_KEY]: payload,
       },
       emailRedirectTo: getKleioSignupRedirect(input.role),
     },
@@ -196,23 +285,60 @@ async function completeInstitutionOnboarding(userId: string, payload: Institutio
 }
 
 export async function completeKleioOnboarding(userId: string, payload: KleioOnboardingPayload) {
+  if (!payloadHasRequiredFields(payload)) throw new Error("The onboarding profile is missing required information.")
   if (payload.role === "artist") await completeArtistOnboarding(userId, payload)
   else await completeInstitutionOnboarding(userId, payload)
   clearPendingKleioOnboarding()
+
+  const supabase = getSupabaseBrowserClient()
+  await supabase.auth.updateUser({ data: { [RECOVERY_METADATA_KEY]: null } }).catch(() => undefined)
+}
+
+export async function completeAuthenticatedKleioOnboarding(payload: KleioOnboardingPayload) {
+  const supabase = getSupabaseBrowserClient()
+  const { data, error } = await supabase.auth.getUser()
+  if (error || !data.user) throw error ?? new Error("Sign in again to finish setting up this account.")
+  if (!data.user.email_confirmed_at) throw new Error("Email not confirmed.")
+  if (normalizeEmail(data.user.email ?? "") !== normalizeEmail(payload.email)) {
+    throw new Error("The signed-in account does not match this onboarding email.")
+  }
+
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles")
+    .select("role, onboarding_completed")
+    .eq("id", data.user.id)
+    .single()
+  if (profileError) throw profileError
+  if (profile.role !== payload.role) throw new Error("This account belongs to a different KLEIO workspace type.")
+  if (!profile.onboarding_completed) await completeKleioOnboarding(data.user.id, payload)
+  return data.user.id
 }
 
 export async function resumePendingKleioOnboarding(expectedRole?: "artist" | "institution") {
-  const payload = readPendingKleioOnboarding()
-  if (!payload || (expectedRole && payload.role !== expectedRole)) return false
-
   const supabase = getSupabaseBrowserClient()
   const { data, error } = await supabase.auth.getUser()
   if (error || !data.user) return false
   if (!data.user.email_confirmed_at) return false
-  if (normalizeEmail(data.user.email ?? "") !== normalizeEmail(payload.email)) {
+
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles")
+    .select("role, onboarding_completed")
+    .eq("id", data.user.id)
+    .single()
+  if (profileError) throw profileError
+  if (profile.onboarding_completed) return false
+  if (expectedRole && profile.role !== expectedRole) return false
+
+  let payload = readPendingKleioOnboarding()
+  if (payload && normalizeEmail(data.user.email ?? "") !== normalizeEmail(payload.email)) {
     clearPendingKleioOnboarding()
-    return false
+    payload = null
   }
+  if (payload && expectedRole && payload.role !== expectedRole) payload = null
+  if (!payload || !payloadHasRequiredFields(payload)) {
+    payload = onboardingFromUserMetadata(data.user, expectedRole)
+  }
+  if (!payload || payload.role !== profile.role) return false
 
   await completeKleioOnboarding(data.user.id, payload)
   return true
