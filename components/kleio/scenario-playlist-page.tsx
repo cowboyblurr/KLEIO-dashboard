@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { useEffect, useMemo } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { ArrowRight, ChevronRight } from "lucide-react"
@@ -9,18 +10,60 @@ import { DemoEnvironmentBadge } from "@/components/kleio/demo-environment-badge"
 import { useDemoGuide } from "@/components/kleio/use-demo-guide"
 import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
 import type { KleioLocale } from "@/lib/kleio-i18n"
-import { demoGuideScenarios, getFirstStepForScenario, isDemoGuideScenarioId, type DemoGuideScenario, type DemoGuideScenarioId } from "@/lib/kleio-demo-guide"
+import {
+  demoGuideScenarios,
+  getFirstStepForScenario,
+  isDemoGuideScenarioId,
+  type DemoGuideScenario,
+  type DemoGuideScenarioId,
+} from "@/lib/kleio-demo-guide"
 import { clearDemoSession, loginDemoUser } from "@/lib/kleio-demo-auth"
 import { setKleioMode } from "@/lib/kleio-mode"
 
-type ScenarioCopy = { title: string; summary: string; roleLabel: string; outcome: string; previewSteps: string[] }
+type ScenarioCopy = {
+  title: string
+  summary: string
+  roleLabel: string
+  outcome: string
+  previewSteps: string[]
+}
 
 const scenarioEs: Partial<Record<DemoGuideScenarioId, ScenarioCopy>> = {
-  "artist-passport-setup": { title: "Crea tu Pasaporte Creativo", summary: "Inicia un perfil de artista y prepara materiales reutilizables para futuras postulaciones.", roleLabel: "Artista", outcome: "Crea el perfil reutilizable que facilita futuras postulaciones.", previewSteps: ["Datos básicos del perfil", "Import Assist prepara borradores", "Revisión del Pasaporte Creativo"] },
-  "find-first-grant": { title: "Lee oportunidades con tu Pasaporte", summary: "Pasa de las señales del perfil a afinidad, fechas y materiales faltantes.", roleLabel: "Artista", outcome: "Entiende qué oportunidad vale la pena preparar primero.", previewSteps: ["Señales del perfil", "Oportunidades", "Afinidad, urgencia y materiales faltantes"] },
-  "create-open-call": { title: "Configura una convocatoria institucional", summary: "Inicia el espacio institucional y prepara una convocatoria estructurada.", roleLabel: "Institución", outcome: "Prepara un flujo claro para una convocatoria, beca, residencia o exposición.", previewSteps: ["Configuración institucional", "Programas y convocatorias", "Elegibilidad, fechas y materiales"] },
-  "invite-reviewers-resolve-materials": { title: "Coordina revisores y materiales faltantes", summary: "Sigue cómo una institución revisa asignaciones, materiales incompletos y seguimiento.", roleLabel: "Institución", outcome: "Mantén la coordinación de revisores y solicitudes de materiales cerca del registro de revisión.", previewSteps: ["Programas activos", "Comité", "Cola de revisión", "Mensajes", "Registro de actividad"] },
-  "review-and-shortlist": { title: "Revisa postulaciones y crea lista corta", summary: "Pasa de revisión a contexto, notas, lista corta e informes.", roleLabel: "Institución", outcome: "Revisa postulaciones con estructura y conserva el historial de decisión.", previewSteps: ["Resumen institucional", "Cola de revisión", "Contexto del postulante", "Lista corta"] },
+  "artist-passport-setup": {
+    title: "Crea tu Pasaporte Creativo",
+    summary: "Inicia un perfil de artista y prepara materiales reutilizables para futuras postulaciones.",
+    roleLabel: "Artista",
+    outcome: "Crea el perfil reutilizable que facilita futuras postulaciones.",
+    previewSteps: ["Datos básicos del perfil", "Import Assist prepara borradores", "Revisión del Pasaporte Creativo"],
+  },
+  "find-first-grant": {
+    title: "Lee oportunidades con tu Pasaporte",
+    summary: "Pasa de las señales del perfil a afinidad, fechas y materiales faltantes.",
+    roleLabel: "Artista",
+    outcome: "Entiende qué oportunidad vale la pena preparar primero.",
+    previewSteps: ["Señales del perfil", "Oportunidades", "Afinidad, urgencia y materiales faltantes"],
+  },
+  "create-open-call": {
+    title: "Configura una convocatoria institucional",
+    summary: "Inicia el espacio institucional y prepara una convocatoria estructurada.",
+    roleLabel: "Institución",
+    outcome: "Prepara un flujo claro para una convocatoria, beca, residencia o exposición.",
+    previewSteps: ["Configuración institucional", "Programas y convocatorias", "Elegibilidad, fechas y materiales"],
+  },
+  "invite-reviewers-resolve-materials": {
+    title: "Coordina revisores y materiales faltantes",
+    summary: "Sigue cómo una institución revisa asignaciones, materiales incompletos y seguimiento.",
+    roleLabel: "Institución",
+    outcome: "Mantén la coordinación de revisores y solicitudes de materiales cerca del registro de revisión.",
+    previewSteps: ["Programas activos", "Comité", "Cola de revisión", "Mensajes", "Registro de actividad"],
+  },
+  "review-and-shortlist": {
+    title: "Revisa postulaciones y crea lista corta",
+    summary: "Pasa de revisión a contexto, notas, lista corta e informes.",
+    roleLabel: "Institución",
+    outcome: "Revisa postulaciones con estructura y conserva el historial de decisión.",
+    previewSteps: ["Resumen institucional", "Cola de revisión", "Contexto del postulante", "Lista corta"],
+  },
 }
 
 function scenarioCopy(scenario: DemoGuideScenario, locale: KleioLocale) {
@@ -28,59 +71,84 @@ function scenarioCopy(scenario: DemoGuideScenario, locale: KleioLocale) {
   return { ...scenario, ...scenarioEs[scenario.id], timeEstimate: scenario.timeEstimate }
 }
 
-function ScenarioCard({ scenario, locale, onStart, recommended = false }: { scenario: DemoGuideScenario; locale: KleioLocale; onStart: (scenarioId: DemoGuideScenarioId) => void; recommended?: boolean }) {
+function AudiencePathCard({
+  scenario,
+  locale,
+  eyebrow,
+  title,
+  description,
+  buttonLabel,
+  onStart,
+}: {
+  scenario: DemoGuideScenario
+  locale: KleioLocale
+  eyebrow: string
+  title: string
+  description: string
+  buttonLabel: string
+  onStart: (scenarioId: DemoGuideScenarioId) => void
+}) {
   const copy = scenarioCopy(scenario, locale)
+
   return (
-    <article className="flex h-full flex-col rounded-[1.35rem] border border-[#E7E1F7] bg-white p-4 shadow-[0_18px_48px_rgba(82,64,130,0.08)]">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="text-[0.62rem] font-semibold uppercase tracking-[0.18em] text-[#A997E8]">{copy.roleLabel}</p>
-          <h2 className="mt-1 font-serif text-lg font-semibold tracking-[-0.02em] text-[#292631]">{copy.title}</h2>
-        </div>
-        <div className="flex shrink-0 flex-col items-end gap-1">
-          {recommended && <span className="rounded-full bg-[#F7F4FF] px-2 py-0.5 text-[0.52rem] font-bold uppercase tracking-wide text-[#5B4B8A]">{locale === "es" ? "Empieza aquí" : "Start here"}</span>}
-          <span className="rounded-full border border-[#E7E1F7] bg-[#F7F4FF] px-2.5 py-1 text-[0.62rem] font-semibold text-[#5B4B8A]">{copy.timeEstimate}</span>
-        </div>
+    <article className="flex h-full flex-col rounded-[1.75rem] border border-[#E7E1F7] bg-white p-6 shadow-[0_24px_70px_rgba(82,64,130,0.09)] max-sm:p-5">
+      <div className="flex items-start justify-between gap-4">
+        <p className="text-[0.66rem] font-bold uppercase tracking-[0.18em] text-[#A997E8]">{eyebrow}</p>
+        <span className="shrink-0 rounded-full border border-[#E7E1F7] bg-[#F7F4FF] px-3 py-1 text-[0.62rem] font-semibold text-[#5B4B8A]">
+          {copy.timeEstimate}
+        </span>
       </div>
-      <p className="mt-2 text-sm leading-relaxed text-[#6F6882]">{copy.outcome}</p>
-      <div className="mt-4 rounded-2xl border border-[#E7E1F7] bg-[#F7F4FF]/70 p-3">
-        <p className="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-[#A997E8]">{locale === "es" ? "Ruta" : "Path"}</p>
-        <ul className="mt-2 space-y-1.5">
-          {copy.previewSteps.map((step) => <li key={step} className="flex gap-2 text-xs leading-relaxed text-[#6F6882]"><span className="mt-1 size-1.5 rounded-full bg-[#A997E8]" aria-hidden /><span>{step}</span></li>)}
-        </ul>
-      </div>
-      <button type="button" onClick={() => onStart(scenario.id)} className="mt-4 inline-flex min-h-10 items-center justify-center gap-2 rounded-xl bg-[#5B4B8A] px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-[#5B4B8A]/90">
-        {locale === "es" ? "Comenzar" : "Start walkthrough"}<ArrowRight className="size-3.5" />
+
+      <h2 className="mt-4 font-serif text-2xl font-semibold tracking-[-0.025em] text-[#292631]">{title}</h2>
+      <p className="mt-3 text-sm leading-6 text-[#6F6882]">{description}</p>
+
+      <ol className="mt-6 space-y-3 border-t border-[#EEEAF8] pt-5">
+        {copy.previewSteps.slice(0, 3).map((step, index) => (
+          <li key={step} className="flex items-center gap-3 text-sm text-[#514B60]">
+            <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-[#F7F4FF] text-[0.68rem] font-bold text-[#5B4B8A]">
+              {index + 1}
+            </span>
+            <span>{step}</span>
+          </li>
+        ))}
+      </ol>
+
+      <button
+        type="button"
+        onClick={() => onStart(scenario.id)}
+        className="mt-7 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#5B4B8A] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#4F4179] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#A997E8]/30"
+      >
+        {buttonLabel}
+        <ArrowRight className="size-4" />
       </button>
     </article>
   )
 }
 
-function StartRecommendation({ scenario, label, body, locale, onStart }: { scenario: DemoGuideScenario; label: string; body: string; locale: KleioLocale; onStart: (scenarioId: DemoGuideScenarioId) => void }) {
+function CompactScenarioButton({
+  scenario,
+  locale,
+  onStart,
+}: {
+  scenario: DemoGuideScenario
+  locale: KleioLocale
+  onStart: (scenarioId: DemoGuideScenarioId) => void
+}) {
   const copy = scenarioCopy(scenario, locale)
-  return (
-    <button type="button" onClick={() => onStart(scenario.id)} className="group rounded-2xl border border-[#E7E1F7] bg-white p-4 text-left shadow-[0_12px_34px_rgba(82,64,130,0.06)] transition-colors hover:bg-[#F7F4FF]">
-      <p className="text-[0.6rem] font-bold uppercase tracking-[0.16em] text-[#A997E8]">{label}</p>
-      <h3 className="mt-1 font-serif text-base font-semibold text-[#292631]">{copy.title}</h3>
-      <p className="mt-1 text-xs leading-relaxed text-[#6F6882]">{body}</p>
-      <span className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-[#5B4B8A]">
-        {locale === "es" ? "Empezar esta ruta" : "Start this path"}<ChevronRight className="size-3 transition-transform group-hover:translate-x-0.5" />
-      </span>
-    </button>
-  )
-}
 
-function ScenarioGroup({ title, description, scenarios, locale, onStart }: { title: string; description: string; scenarios: DemoGuideScenario[]; locale: KleioLocale; onStart: (scenarioId: DemoGuideScenarioId) => void }) {
   return (
-    <section className="rounded-[1.5rem] border border-[#E7E1F7] bg-[#F7F4FF]/55 p-4">
-      <div className="mb-4">
-        <h2 className="font-serif text-xl font-semibold tracking-[-0.02em] text-[#292631]">{title}</h2>
-        <p className="mt-1 max-w-xl text-sm leading-relaxed text-[#6F6882]">{description}</p>
-      </div>
-      <div className="grid grid-cols-2 gap-4 max-md:grid-cols-1">
-        {scenarios.map((scenario, index) => <ScenarioCard key={scenario.id} scenario={scenario} locale={locale} onStart={onStart} recommended={index === 0} />)}
-      </div>
-    </section>
+    <button
+      type="button"
+      onClick={() => onStart(scenario.id)}
+      className="group flex w-full items-center justify-between gap-4 rounded-2xl border border-[#E7E1F7] bg-white px-4 py-3 text-left transition-colors hover:bg-[#F7F4FF] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#A997E8]/25"
+    >
+      <span>
+        <span className="block text-[0.6rem] font-bold uppercase tracking-[0.14em] text-[#A997E8]">{copy.roleLabel}</span>
+        <span className="mt-1 block text-sm font-semibold text-[#292631]">{copy.title}</span>
+        <span className="mt-1 block text-xs leading-relaxed text-[#6F6882]">{copy.outcome}</span>
+      </span>
+      <ChevronRight className="size-4 shrink-0 text-[#5B4B8A] transition-transform group-hover:translate-x-0.5" />
+    </button>
   )
 }
 
@@ -101,19 +169,6 @@ const institutionWorkspaceLinks = [
   ["Demo messaging", "/messages/"],
 ] as const
 
-function WorkspaceLibrary({ title, description, links, onOpen }: { title: string; description: string; links: ReadonlyArray<readonly [string, string]>; onOpen: (route: string) => void }) {
-  return (
-    <article className="rounded-[1.35rem] border border-[#E7E1F7] bg-white p-4 shadow-[0_14px_38px_rgba(82,64,130,0.07)]">
-      <p className="text-[0.62rem] font-bold uppercase tracking-[0.16em] text-[#A997E8]">Demo workspace</p>
-      <h3 className="mt-1 font-serif text-xl font-semibold text-[#292631]">{title}</h3>
-      <p className="mt-1 text-sm leading-relaxed text-[#6F6882]">{description}</p>
-      <div className="mt-4 flex flex-wrap gap-2">
-        {links.map(([label, route]) => <button key={route} type="button" onClick={() => onOpen(route)} className="rounded-full border border-[#D8D0F2] bg-[#F7F4FF] px-3 py-2 text-xs font-semibold text-[#5B4B8A] transition-colors hover:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#A997E8]/25">{label}</button>)}
-      </div>
-    </article>
-  )
-}
-
 export function ScenarioPlaylistPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -124,6 +179,7 @@ export function ScenarioPlaylistPage() {
   const institutionScenarios = useMemo(() => demoGuideScenarios.filter((scenario) => scenario.roleGroup === "Institutions"), [])
   const artistStart = artistScenarios[0]
   const institutionStart = institutionScenarios[0]
+  const additionalScenarios = [...artistScenarios.slice(1), ...institutionScenarios.slice(1)]
 
   function handleStartScenario(scenarioId: DemoGuideScenarioId) {
     setKleioMode("demo")
@@ -160,86 +216,212 @@ export function ScenarioPlaylistPage() {
   }, [router, searchParams, startScenario])
 
   return (
-    <main className="min-h-dvh bg-white text-[#292631]">
+    <main className="min-h-dvh bg-[#FCFBFE] text-[#292631]">
       <header className="border-b border-[#E7E1F7] bg-white/90 px-5 py-4 backdrop-blur-sm">
-        <div className="mx-auto flex w-full max-w-[1120px] items-center justify-between gap-4">
-          <KleioWordmarkLink href="/demo/" imageClassName="h-8 w-auto" imageStyle={{ filter: "brightness(0) saturate(100%) invert(16%) sepia(5%) saturate(800%) hue-rotate(220deg)" }} />
+        <div className="mx-auto flex w-full max-w-[1040px] items-center justify-between gap-4">
+          <KleioWordmarkLink
+            href="/demo/"
+            imageClassName="h-8 w-auto"
+            imageStyle={{ filter: "brightness(0) saturate(100%) invert(16%) sepia(5%) saturate(800%) hue-rotate(220deg)" }}
+          />
           <nav className="flex items-center gap-2 text-xs font-medium text-[#6F6882]">
-            <button type="button" onClick={returnToKleio} className="rounded-full px-3 py-1.5 transition-colors hover:bg-[#F7F4FF]">{locale === "es" ? "Volver a KLEIO" : "Return to KLEIO"}</button>
-            <button type="button" onClick={() => openRealAccount("artist")} className="rounded-full bg-[#5B4B8A] px-3 py-1.5 font-semibold text-white transition-opacity hover:opacity-90 max-sm:hidden">{locale === "es" ? "Crear cuenta real" : "Create a Real Account"}</button>
+            <button type="button" onClick={returnToKleio} className="rounded-full px-3 py-1.5 transition-colors hover:bg-[#F7F4FF]">
+              {locale === "es" ? "Volver a KLEIO" : "Return to KLEIO"}
+            </button>
+            <button
+              type="button"
+              onClick={() => openRealAccount("artist")}
+              className="rounded-full bg-[#5B4B8A] px-3 py-1.5 font-semibold text-white transition-opacity hover:opacity-90 max-sm:hidden"
+            >
+              {locale === "es" ? "Crear cuenta" : "Create account"}
+            </button>
           </nav>
         </div>
       </header>
-      <section className="mx-auto w-full max-w-[1120px] px-5 py-10">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="max-w-3xl">
-            <p className="text-[0.7rem] font-semibold uppercase tracking-[0.2em] text-[#A997E8]">{locale === "es" ? "Recorridos guiados" : "Guided demo"}</p>
-            <h1 className="mt-3 font-serif text-4xl font-semibold tracking-[-0.035em] text-[#292631] max-md:text-3xl">{locale === "es" ? "Elige una ruta para empezar" : "Choose one path to begin"}</h1>
-            <p className="mt-3 max-w-2xl text-sm leading-relaxed text-[#6F6882]">
-              {locale === "es" ? "Cada recorrido abre la primera pantalla correcta y mantiene KLEIO Assist visible mientras avanzas. Si estás evaluando KLEIO por primera vez, usa una recomendación de abajo." : "Each walkthrough opens the right first screen and keeps KLEIO Assist visible as you move. If you are evaluating KLEIO for the first time, use one of the recommendations below."}
-            </p>
-          </div>
-          <DemoEnvironmentBadge className="mt-1" />
-        </div>
 
-        <div className="mt-6 rounded-[1.5rem] border border-[#E7E1F7] bg-[#F7F4FF]/65 p-4">
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div>
-              <p className="text-[0.65rem] font-bold uppercase tracking-[0.16em] text-[#A997E8]">{locale === "es" ? "Nuevo en KLEIO" : "New to KLEIO"}</p>
-              <h2 className="mt-1 font-serif text-xl font-semibold text-[#292631]">{locale === "es" ? "Empieza con una de estas dos rutas" : "Start with one of these two paths"}</h2>
-              <p className="mt-1 max-w-2xl text-sm leading-relaxed text-[#6F6882]">
-                {locale === "es" ? "Si estás viendo KLEIO como institución, empieza con la convocatoria. Si quieres entender el valor para artistas, empieza con el Pasaporte Creativo." : "If you are reviewing KLEIO as an institution, start with the call setup. If you want to understand the artist-side value, start with the Creative Passport."}
-              </p>
-            </div>
-            <div className="rounded-full border border-[#E7E1F7] bg-white px-3 py-1 text-[0.62rem] font-semibold uppercase tracking-wide text-[#7F7890]">
-              {locale === "es" ? "Prototipo clicable" : "Clickable prototype"}
-            </div>
+      <section className="mx-auto w-full max-w-[1040px] px-5 py-12 max-sm:py-9">
+        <div className="mx-auto max-w-3xl text-center">
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            <p className="text-[0.7rem] font-semibold uppercase tracking-[0.2em] text-[#A997E8]">
+              {locale === "es" ? "Demo guiado" : "Guided demo"}
+            </p>
+            <DemoEnvironmentBadge />
           </div>
-          <div className="mt-4 grid grid-cols-2 gap-3 max-md:grid-cols-1">
-            {institutionStart && <StartRecommendation scenario={institutionStart} label={locale === "es" ? "Explorar como institución" : "Explore as an Institution"} body={locale === "es" ? "La mejor ruta para ver cómo KLEIO organiza una convocatoria antes de recibir postulaciones." : "The best first path for seeing how KLEIO organizes an open call before submissions arrive."} locale={locale} onStart={handleStartScenario} />}
-            {artistStart && <StartRecommendation scenario={artistStart} label={locale === "es" ? "Explorar como artista" : "Explore as an Artist"} body={locale === "es" ? "La mejor ruta para ver cómo un artista empieza un registro reutilizable y mantiene control sobre sus materiales." : "The best first path for seeing how an artist starts a reusable record and keeps control of their materials."} locale={locale} onStart={handleStartScenario} />}
-          </div>
-          <p className="mt-3 text-xs leading-relaxed text-[#7F7890]">
-            {locale === "es" ? "Este demo usa datos sintéticos. Muestra el flujo previsto, no cuentas institucionales reales ni postulaciones en vivo." : "This demo uses synthetic data. It shows the intended workflow, not live institutional accounts or real submissions."}
+          <h1 className="mt-4 font-serif text-4xl font-semibold tracking-[-0.04em] text-[#292631] max-md:text-3xl">
+            {locale === "es" ? "Explora KLEIO desde una ruta clara" : "Explore KLEIO through one clear path"}
+          </h1>
+          <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-[#6F6882] max-sm:text-sm">
+            {locale === "es"
+              ? "Descubre cómo KLEIO ayuda a artistas a preparar postulaciones y a instituciones a organizar convocatorias, revisión y decisiones en un solo espacio."
+              : "See how KLEIO helps artists prepare stronger applications and helps institutions organize calls, review, and decisions in one workspace."}
           </p>
         </div>
 
-        <div className="mt-8 space-y-5">
-          <ScenarioGroup title={locale === "es" ? "Para artistas" : "For artists"} description={locale === "es" ? "Empieza con el Pasaporte Creativo y luego usa ese contexto para leer oportunidades." : "Start with the Creative Passport, then use that context to read opportunities."} scenarios={artistScenarios} locale={locale} onStart={handleStartScenario} />
-          <ScenarioGroup title={locale === "es" ? "Para instituciones" : "For institutions"} description={locale === "es" ? "Empieza con la estructura de una convocatoria; luego coordina revisión, materiales y decisiones." : "Start with call structure, then coordinate reviewers, materials, and decisions."} scenarios={institutionScenarios} locale={locale} onStart={handleStartScenario} />
-
-          <section className="rounded-[1.5rem] border border-[#E7E1F7] bg-[#F7F4FF]/55 p-4">
-            <div className="mb-4">
-              <p className="text-[0.62rem] font-bold uppercase tracking-[0.16em] text-[#A997E8]">{locale === "es" ? "Biblioteca sintética" : "Synthetic workspace library"}</p>
-              <h2 className="mt-1 font-serif text-xl font-semibold text-[#292631]">{locale === "es" ? "Abre una pantalla demo directamente" : "Open any demo workspace directly"}</h2>
-              <p className="mt-1 max-w-2xl text-sm leading-relaxed text-[#6F6882]">{locale === "es" ? "Todos los artistas, instituciones, portafolios, oportunidades, postulaciones, revisiones, mensajes y métricas de estas pantallas son registros de muestra." : "Every artist, institution, portfolio, opportunity, application, submission, review, message, and metric on these screens is a sample record."}</p>
-            </div>
-            <div className="grid gap-4 md:grid-cols-2">
-              <WorkspaceLibrary title={locale === "es" ? "Artista sintético" : "Synthetic artist workspace"} description={locale === "es" ? "Explora un Pasaporte, portafolio, oportunidades y aplicaciones de muestra." : "Explore a sample Passport, portfolio, opportunities, and applications."} links={artistWorkspaceLinks} onOpen={(route) => openDemoWorkspace("artist", route)} />
-              <WorkspaceLibrary title={locale === "es" ? "Institución sintética" : "Synthetic institution workspace"} description={locale === "es" ? "Explora convocatorias, postulaciones, revisión, lista corta, informes y mensajes de muestra." : "Explore sample calls, submissions, review, shortlist, reports, and messaging."} links={institutionWorkspaceLinks} onOpen={(route) => openDemoWorkspace("institution", route)} />
-            </div>
-          </section>
-
-          <section className="rounded-[1.5rem] border border-[#E7E1F7] bg-white p-4 shadow-[0_14px_38px_rgba(82,64,130,0.07)]">
-            <div className="flex flex-wrap items-start justify-between gap-4">
-              <div>
-                <p className="text-[0.62rem] font-bold uppercase tracking-[0.16em] text-[#A997E8]">Sample credentials</p>
-                <h2 className="mt-1 font-serif text-xl font-semibold text-[#292631]">{locale === "es" ? "Acceso compatible al demo" : "Compatible demo access"}</h2>
-                <p className="mt-1 max-w-2xl text-sm leading-relaxed text-[#6F6882]">{locale === "es" ? "Los botones de arriba no requieren credenciales. Estas cuentas existen solo para enlaces de vista previa anteriores; nunca autentican contra Supabase." : "The buttons above do not require credentials. These accounts remain only for older preview links and never authenticate against Supabase."}</p>
-              </div>
-              <span className="rounded-full border border-[#E7E1F7] bg-[#F7F4FF] px-3 py-1 text-[0.62rem] font-semibold uppercase tracking-wide text-[#5B4B8A]">Synthetic only</span>
-            </div>
-            <div className="mt-4 grid gap-2 text-xs text-[#6F6882] sm:grid-cols-3">
-              {["artist@kleio.demo", "institution@kleio.demo", "reviewer@kleio.demo"].map((email) => <div key={email} className="rounded-xl border border-[#E7E1F7] bg-[#F7F4FF]/60 px-3 py-2"><span className="block font-semibold text-[#292631]">Sample account</span>{email}<span className="mt-1 block">Password: <strong>kleio2026</strong></span></div>)}
-            </div>
-          </section>
-
-          <section className="flex flex-col items-start justify-between gap-4 rounded-[1.5rem] bg-[#292631] p-5 text-white sm:flex-row sm:items-center">
-            <div><p className="text-[0.62rem] font-bold uppercase tracking-[0.16em] text-[#CFC2F7]">{locale === "es" ? "Listo para usar KLEIO" : "Ready to use KLEIO"}</p><h2 className="mt-1 font-serif text-xl font-semibold">{locale === "es" ? "Crea una cuenta real separada del demo" : "Create a real account, separate from the demo"}</h2></div>
-            <div className="flex flex-wrap gap-2"><button type="button" onClick={() => openRealAccount("artist")} className="rounded-full bg-white px-4 py-2 text-xs font-semibold text-[#292631]">{locale === "es" ? "Cuenta de artista" : "Artist account"}</button><button type="button" onClick={() => openRealAccount("institution")} className="rounded-full border border-white/35 px-4 py-2 text-xs font-semibold text-white">{locale === "es" ? "Cuenta institucional" : "Institution account"}</button></div>
-          </section>
+        <div className="mt-10 grid grid-cols-2 gap-5 max-md:grid-cols-1">
+          {artistStart && (
+            <AudiencePathCard
+              scenario={artistStart}
+              locale={locale}
+              eyebrow={locale === "es" ? "Experiencia del artista" : "Artist experience"}
+              title={locale === "es" ? "Empieza con el Pasaporte Creativo" : "Start with the Creative Passport"}
+              description={
+                locale === "es"
+                  ? "Crea un perfil reutilizable, organiza materiales profesionales y entiende cómo KLEIO reduce el trabajo repetitivo de cada postulación."
+                  : "Build a reusable profile, organize professional materials, and see how KLEIO reduces repetitive application work."
+              }
+              buttonLabel={locale === "es" ? "Entrar al demo de artista" : "Enter artist demo"}
+              onStart={handleStartScenario}
+            />
+          )}
+          {institutionStart && (
+            <AudiencePathCard
+              scenario={institutionStart}
+              locale={locale}
+              eyebrow={locale === "es" ? "Experiencia institucional" : "Institution experience"}
+              title={locale === "es" ? "Empieza con una convocatoria" : "Start with an open call"}
+              description={
+                locale === "es"
+                  ? "Organiza requisitos, fechas, materiales y estructura de revisión antes de que lleguen las postulaciones."
+                  : "Organize requirements, deadlines, materials, and review structure before submissions arrive."
+              }
+              buttonLabel={locale === "es" ? "Entrar al demo institucional" : "Enter institution demo"}
+              onStart={handleStartScenario}
+            />
+          )}
         </div>
+
+        <p className="mx-auto mt-5 max-w-2xl text-center text-xs leading-relaxed text-[#7F7890]">
+          {locale === "es"
+            ? "Este demo utiliza datos sintéticos y muestra flujos previstos. No representa instituciones verificadas, artistas reales ni postulaciones en vivo."
+            : "This demo uses synthetic data and shows intended workflows. It does not represent verified institutions, real artists, or live submissions."}
+        </p>
+
+        <div className="mt-10 space-y-3">
+          <details className="group rounded-2xl border border-[#E7E1F7] bg-white shadow-[0_12px_34px_rgba(82,64,130,0.05)]">
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 text-sm font-semibold text-[#292631] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-inset focus-visible:ring-[#A997E8]/25">
+              <span>
+                {locale === "es" ? "Explorar más recorridos guiados" : "Explore more guided walkthroughs"}
+                <span className="mt-1 block text-xs font-normal text-[#7F7890]">
+                  {locale === "es" ? "Rutas opcionales para profundizar después de la introducción." : "Optional paths for a deeper look after the introduction."}
+                </span>
+              </span>
+              <span className="text-lg font-normal text-[#5B4B8A] transition-transform group-open:rotate-45">+</span>
+            </summary>
+            <div className="grid gap-3 border-t border-[#EEEAF8] p-4 md:grid-cols-2">
+              {additionalScenarios.map((scenario) => (
+                <CompactScenarioButton key={scenario.id} scenario={scenario} locale={locale} onStart={handleStartScenario} />
+              ))}
+            </div>
+          </details>
+
+          <details className="group rounded-2xl border border-[#E7E1F7] bg-white shadow-[0_12px_34px_rgba(82,64,130,0.05)]">
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 text-sm font-semibold text-[#292631] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-inset focus-visible:ring-[#A997E8]/25">
+              <span>
+                {locale === "es" ? "Abrir una pantalla demo específica" : "Open a specific demo workspace"}
+                <span className="mt-1 block text-xs font-normal text-[#7F7890]">
+                  {locale === "es" ? "Acceso directo para revisiones técnicas o demostraciones en vivo." : "Direct access for technical review or a live presentation."}
+                </span>
+              </span>
+              <span className="text-lg font-normal text-[#5B4B8A] transition-transform group-open:rotate-45">+</span>
+            </summary>
+            <div className="grid gap-5 border-t border-[#EEEAF8] p-5 md:grid-cols-2">
+              <div>
+                <p className="text-[0.62rem] font-bold uppercase tracking-[0.16em] text-[#A997E8]">
+                  {locale === "es" ? "Espacio del artista" : "Artist workspace"}
+                </p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {artistWorkspaceLinks.map(([label, route]) => (
+                    <button
+                      key={route}
+                      type="button"
+                      onClick={() => openDemoWorkspace("artist", route)}
+                      className="rounded-full border border-[#D8D0F2] bg-[#F7F4FF] px-3 py-2 text-xs font-semibold text-[#5B4B8A] transition-colors hover:bg-white"
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <p className="text-[0.62rem] font-bold uppercase tracking-[0.16em] text-[#A997E8]">
+                  {locale === "es" ? "Espacio institucional" : "Institution workspace"}
+                </p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {institutionWorkspaceLinks.map(([label, route]) => (
+                    <button
+                      key={route}
+                      type="button"
+                      onClick={() => openDemoWorkspace("institution", route)}
+                      className="rounded-full border border-[#D8D0F2] bg-[#F7F4FF] px-3 py-2 text-xs font-semibold text-[#5B4B8A] transition-colors hover:bg-white"
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </details>
+
+          <details className="group rounded-2xl border border-[#E7E1F7] bg-white shadow-[0_12px_34px_rgba(82,64,130,0.05)]">
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 text-sm font-semibold text-[#292631] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-inset focus-visible:ring-[#A997E8]/25">
+              <span>
+                {locale === "es" ? "Acerca de este demo" : "About this demo"}
+                <span className="mt-1 block text-xs font-normal text-[#7F7890]">
+                  {locale === "es" ? "Datos, credenciales de muestra y documentación de confianza." : "Synthetic-data notes, sample credentials, and trust documentation."}
+                </span>
+              </span>
+              <span className="text-lg font-normal text-[#5B4B8A] transition-transform group-open:rotate-45">+</span>
+            </summary>
+            <div className="border-t border-[#EEEAF8] p-5 text-sm text-[#6F6882]">
+              <p className="max-w-3xl leading-6">
+                {locale === "es"
+                  ? "Los botones principales no requieren credenciales. Las cuentas de muestra se mantienen únicamente para enlaces de vista previa anteriores y nunca autentican contra Supabase."
+                  : "The primary demo buttons do not require credentials. Sample accounts remain only for older preview links and never authenticate against Supabase."}
+              </p>
+              <div className="mt-4 grid gap-2 text-xs sm:grid-cols-3">
+                {["artist@kleio.demo", "institution@kleio.demo", "reviewer@kleio.demo"].map((email) => (
+                  <div key={email} className="rounded-xl border border-[#E7E1F7] bg-[#F7F4FF]/65 px-3 py-2">
+                    <span className="block font-semibold text-[#292631]">{email}</span>
+                    <span className="mt-1 block">Password: kleio2026</span>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-5 flex flex-wrap gap-2">
+                {[
+                  ["Data note", "/demo/trust/"],
+                  ["Reports", "/demo/reports-export-archive/"],
+                  ["Roles", "/demo/roles/"],
+                  ["Pilot readiness", "/demo/pilot-readiness/"],
+                ].map(([label, href]) => (
+                  <Link key={href} href={href} className="rounded-full border border-[#D8D0F2] px-3 py-1.5 text-xs font-semibold text-[#5B4B8A] transition-colors hover:bg-[#F7F4FF]">
+                    {label}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </details>
+        </div>
+
+        <section className="mt-10 flex flex-col items-start justify-between gap-4 rounded-[1.5rem] border border-[#E7E1F7] bg-white p-5 sm:flex-row sm:items-center">
+          <div>
+            <p className="text-[0.62rem] font-bold uppercase tracking-[0.16em] text-[#A997E8]">
+              {locale === "es" ? "Listo para usar KLEIO" : "Ready to use KLEIO"}
+            </p>
+            <h2 className="mt-1 font-serif text-xl font-semibold text-[#292631]">
+              {locale === "es" ? "Crea una cuenta real separada del demo" : "Create a real account, separate from the demo"}
+            </h2>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <button type="button" onClick={() => openRealAccount("artist")} className="rounded-full bg-[#5B4B8A] px-4 py-2 text-xs font-semibold text-white">
+              {locale === "es" ? "Cuenta de artista" : "Artist account"}
+            </button>
+            <button type="button" onClick={() => openRealAccount("institution")} className="rounded-full border border-[#D8D0F2] px-4 py-2 text-xs font-semibold text-[#5B4B8A]">
+              {locale === "es" ? "Cuenta institucional" : "Institution account"}
+            </button>
+          </div>
+        </section>
       </section>
+
       <KleioDemoGuide variant="workspace" />
     </main>
   )
