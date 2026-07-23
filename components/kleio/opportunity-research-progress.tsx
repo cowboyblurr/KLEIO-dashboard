@@ -36,6 +36,12 @@ function statusCopy(session: OpportunityResearchSession | null, loading: boolean
   return "Research paused"
 }
 
+function confidenceTone(value: string) {
+  if (value === "verified" || value === "corroborated") return "bg-emerald-50 text-emerald-700"
+  if (value === "likely") return "bg-amber-50 text-amber-700"
+  return "bg-[#F4F0FF] text-[#6A579F]"
+}
+
 function safeUrl(value: string) {
   try {
     const url = new URL(value)
@@ -63,6 +69,10 @@ export function OpportunityResearchProgress({
   const progress = session?.progress_percent ?? (loading ? 4 : 0)
   const isActive = loading || session?.status === "queued" || session?.status === "running"
   const canResearchAgain = Boolean(session && ["succeeded", "partial", "failed", "cancelled"].includes(session.status))
+  const requirementFindings = [...(session?.findings ?? [])]
+    .filter((finding) => finding.finding_type === "requirement")
+    .sort((left, right) => Number(right.accepted) - Number(left.accepted) || Number(right.official_source) - Number(left.official_source))
+    .filter((finding, index, findings) => findings.findIndex((candidate) => candidate.normalized_key === finding.normalized_key) === index)
 
   if (minimized) {
     return (
@@ -145,6 +155,27 @@ export function OpportunityResearchProgress({
             <div className="rounded-xl bg-[#F8F5FF] px-2 py-2.5"><p className="font-serif text-lg font-semibold text-[#4E426F]">{session.unresolved_count}</p><p className="text-[0.62rem] text-muted-foreground">Review</p></div>
           </div>
         )}
+
+        {requirementFindings.length ? (
+          <details className="mt-4 border-t border-[#ECE7F7] pt-3" open={!isActive}>
+            <summary className="cursor-pointer text-xs font-semibold text-[#5B4B8A]">Requirements found ({requirementFindings.length})</summary>
+            <div className="mt-2 space-y-2">
+              {requirementFindings.map((finding) => {
+                const href = safeUrl(finding.source_url)
+                return (
+                  <div key={finding.id} className="rounded-xl border border-[#ECE7F7] px-3 py-2">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <p className="text-xs font-semibold text-[#383240]">{finding.label}</p>
+                      <span className={`rounded-full px-2 py-0.5 text-[0.58rem] font-semibold uppercase ${confidenceTone(finding.confidence_status)}`}>{finding.confidence_status}</span>
+                    </div>
+                    <p className="mt-1 line-clamp-3 text-[0.65rem] leading-relaxed text-muted-foreground">{finding.original_text}</p>
+                    {href && <a className="mt-1.5 inline-flex items-center gap-1 text-[0.66rem] font-semibold text-primary hover:underline" href={href} target="_blank" rel="noreferrer">Requirement source<ExternalLink className="size-3" /></a>}
+                  </div>
+                )
+              })}
+            </div>
+          </details>
+        ) : null}
 
         {session?.sources.length ? (
           <details className="mt-4 border-t border-[#ECE7F7] pt-3">
