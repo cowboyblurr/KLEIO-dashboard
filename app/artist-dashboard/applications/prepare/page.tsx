@@ -1,12 +1,12 @@
 import type { Metadata } from "next"
 import { Suspense } from "react"
 import { ArtistShell } from "@/components/kleio/artist-shell"
-import { ApplicationPreparationWorkspace } from "@/components/kleio/application-preparation-workspace"
+import { ApplicationPreparationOrchestrator } from "@/components/kleio/application-preparation-orchestrator"
 import { ApplicationArtistIdentityBar } from "@/components/kleio/application-artist-identity-bar"
 
 export const metadata: Metadata = {
   title: "KLEIO — Prepare application",
-  description: "Review source requirements, assemble Creative Passport materials, and approve an artist-controlled application package.",
+  description: "Research public source requirements, assemble Creative Passport materials, and approve an artist-controlled application package.",
 }
 
 function PreparationFallback() {
@@ -20,7 +20,7 @@ export default function Page() {
         <ApplicationArtistIdentityBar />
         <div className="min-h-0 flex-1">
           <Suspense fallback={<PreparationFallback />}>
-            <ApplicationPreparationWorkspace />
+            <ApplicationPreparationOrchestrator />
           </Suspense>
         </div>
       </div>
