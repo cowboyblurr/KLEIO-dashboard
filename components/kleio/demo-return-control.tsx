@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { ArrowLeft } from "lucide-react"
-import { useDemoGuide, persistDemoGuideState } from "@/components/kleio/use-demo-guide"
+import { persistDemoGuideState } from "@/components/kleio/use-demo-guide"
 import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
 import { useKleioMode } from "@/components/kleio/use-kleio-mode"
 
@@ -11,13 +11,11 @@ export function DemoReturnControl() {
   const pathname = usePathname()
   const { locale } = useKleioLocale()
   const { isDemo, isResolved } = useKleioMode()
-  const { returnToPlaylist } = useDemoGuide()
 
   const isDemoHome = pathname === "/demo" || pathname === "/demo/"
   if (!isResolved || !isDemo || isDemoHome) return null
 
   function prepareDemoHome() {
-    returnToPlaylist()
     persistDemoGuideState({
       isOpen: false,
       isMinimized: true,
