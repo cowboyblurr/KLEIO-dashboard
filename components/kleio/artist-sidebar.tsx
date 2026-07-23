@@ -25,6 +25,7 @@ import { artistNavLabelKeys } from "@/lib/kleio-nav-i18n"
 import { loadArtistPassport } from "@/lib/kleio-live-data"
 import { loadArtistProfilePresentation } from "@/lib/kleio-profile-presentation"
 import { disciplineLabel } from "@/lib/kleio-artist-taxonomy"
+import { AccountSignOutButton } from "@/components/kleio/account-sign-out-button"
 import { InitialAvatar } from "@/components/kleio/initial-avatar"
 import { KleioWordmarkLink } from "@/components/kleio/kleio-wordmark-link"
 import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
@@ -104,6 +105,7 @@ export function ArtistSidebar() {
         <nav aria-label="Artist workspace" className="flex min-w-0 flex-1 gap-1 overflow-x-auto">
           {mobileItems.map((item) => { const active = item.activeMatch ? pathname.startsWith(item.activeMatch) : pathname === item.href || `${pathname}/` === item.href; const Icon = item.icon; return <Link key={item.href} href={item.href} aria-current={active ? "page" : undefined} aria-label={item.label} className={cn("grid size-10 shrink-0 place-items-center rounded-lg", active ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-accent/60")}><Icon className="size-4" /></Link> })}
         </nav>
+        <AccountSignOutButton compact className="border-[#E7E1F7] bg-white shadow-sm" />
       </div>
       <aside className="hidden h-full w-[220px] shrink-0 flex-col border-r border-[#E7E1F7] bg-white md:flex">
         <div className="flex items-center justify-between px-6 pt-6 pb-5"><KleioWordmarkLink href="/" className="rounded-md bg-white px-2.5 py-1.5 shadow-sm ring-1 ring-border" /></div>
@@ -125,6 +127,7 @@ export function ArtistSidebar() {
         <div className="border-t border-[#E7E1F7] p-4">
           <div className="rounded-2xl border border-[#E7E1F7] bg-[#F7F4FF] p-4"><p className="font-serif text-sm font-semibold text-[#292631]">{t("nav.artist.tagline.title")}</p><p className="mt-1 text-xs leading-relaxed text-[#7F7890]">{t("nav.artist.tagline.body")}</p><div className="mt-3 h-0.5 w-10 rounded-full bg-[#A997E8]" /></div>
           {artist && <Link href="/artist-dashboard/profile/" className="mt-3 flex items-center gap-3 rounded-xl border border-[#E7E1F7] bg-white p-3 transition-colors hover:bg-[#FDFBFF]">{artist.imageUrl ? <img src={artist.imageUrl} alt="" className="size-9 rounded-full object-cover" style={{ objectPosition: `${artist.positionX}% ${artist.positionY}%` }} /> : <InitialAvatar name={artist.name} className="size-9 text-xs" />}<div className="min-w-0 flex-1"><p className="truncate text-sm font-medium text-foreground">{artist.name}</p><p className="truncate text-xs text-muted-foreground">{artist.discipline}</p><p className="mt-1 text-[0.65rem] font-semibold text-[#5B4B8A]">{locale === "es" ? "Ver perfil" : "View profile"}</p></div></Link>}
+          <AccountSignOutButton className="mt-3 justify-start border-transparent bg-transparent px-3 hover:border-[#E7E1F7]" />
         </div>
       </aside>
     </>
