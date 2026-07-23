@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "audit:navigation": "node scripts/audit-navigation.mjs"
+    "audit:navigation": "node scripts/audit-navigation.mjs",
+    "audit:user-copy": "node scripts/audit-user-facing-copy.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.5.0",
