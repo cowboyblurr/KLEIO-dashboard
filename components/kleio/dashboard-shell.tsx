@@ -37,7 +37,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
       {isDemo && <DemoClickFeedbackLayer />}
       {isDemo && <DemoGuideHighlightLayer />}
       {isDemo && <DemoTrustLink className="fixed bottom-4 left-4 z-40 max-lg:hidden" />}
-      <div className="flex h-dvh min-w-0 overflow-hidden bg-background pt-14 text-foreground md:pt-0">
+      <div className="kleio-workspace-density flex h-dvh min-w-0 overflow-hidden bg-background pt-14 text-foreground md:pt-0">
         <Sidebar />
         <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
           <TopBar />
