@@ -3,11 +3,10 @@
 import { useMemo, useState } from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { Bell, Bookmark, ChevronDown, LogOut, Mail, Plus, Search, Send, SlidersHorizontal, Vote, X } from "lucide-react"
+import { Bell, Bookmark, Mail, Plus, Search, Send, SlidersHorizontal, Vote, X } from "lucide-react"
 import { getDemoMessageForThread, isSubmissionMessagePending } from "@/lib/kleio-analytics"
 import { messageThreads, type MessageThread } from "@/lib/kleio-data"
 import { getGlobalSearchResults, type KleioSearchResult } from "@/lib/kleio-search"
-import { useDemoSignOut } from "@/components/kleio/auth-gate"
 import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
 import { useKleioMode } from "@/components/kleio/use-kleio-mode"
 import { DemoEnvironmentBadge } from "@/components/kleio/demo-environment-badge"
@@ -49,7 +48,6 @@ function categoryLabel(category: KleioSearchResult["category"], locale: string) 
 }
 
 export function TopBar() {
-  const signOut = useDemoSignOut()
   const pathname = usePathname()
   const router = useRouter()
   const { t, locale } = useKleioLocale()
@@ -145,10 +143,7 @@ export function TopBar() {
           )}
         </div>}
 
-        <div className="ml-1 flex items-center overflow-visible rounded-xl shadow-sm">
-          {primaryAction.href ? <Link href={primaryAction.href} className="flex h-10 items-center gap-2 rounded-l-xl bg-primary px-4 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"><PrimaryIcon className="size-4" />{primaryAction.label}</Link> : <DemoSafeAction message={demoMessage} className="flex h-10 items-center gap-2 rounded-l-xl bg-primary px-4 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"><PrimaryIcon className="size-4" />{primaryAction.label}</DemoSafeAction>}
-          <button type="button" onClick={signOut} className="flex h-10 items-center gap-2 rounded-r-xl border-l border-primary/20 bg-primary px-3 text-primary-foreground transition-colors hover:bg-primary/90" aria-label={t("institution.topBar.signOut")}><LogOut className="size-4" /><ChevronDown className="size-3.5 opacity-80" /></button>
-        </div>
+        {primaryAction.href ? <Link href={primaryAction.href} className="flex h-10 items-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"><PrimaryIcon className="size-4" />{primaryAction.label}</Link> : <DemoSafeAction message={demoMessage} className="flex h-10 items-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"><PrimaryIcon className="size-4" />{primaryAction.label}</DemoSafeAction>}
       </div>
     </header>
   )
