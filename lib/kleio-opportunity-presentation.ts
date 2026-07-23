@@ -7,9 +7,15 @@ import {
   type OpportunityDirectoryItem,
   type OpportunitySourceRecord,
 } from "@/lib/kleio-opportunity-data"
+import {
+  localizeOpportunity,
+  type LocalizedOpportunityItem,
+  type OpportunityTranslationRecord,
+} from "@/lib/kleio-opportunity-localization"
 import type { PortfolioWorkRecord } from "@/lib/kleio-live-data"
 
-export type OpportunityDirectoryDataWithSources = OpportunityDirectoryData & {
+export type OpportunityDirectoryDataWithSources = Omit<OpportunityDirectoryData, "items"> & {
+  items: LocalizedOpportunityItem[]
   sources: OpportunitySourceRecord[]
 }
 
@@ -63,23 +69,37 @@ type EnrichedRequirement = OpportunityDirectoryItem["requirements"][number] & {
   confidence_score?: number | null
 }
 
+function selectedInterfaceLocale(): "en" | "es" {
+  if (typeof window === "undefined") return "en"
+  return window.localStorage.getItem("kleio_locale") === "es" ? "es" : "en"
+}
+
 export async function loadOpportunityDirectoryWithSources(
   filters: OpportunityDirectoryFilters = {},
 ): Promise<OpportunityDirectoryDataWithSources> {
   const supabase = getSupabaseBrowserClient()
-  const [directory, sourceResponse] = await Promise.all([
-    loadOpportunityDirectory(filters),
+  const directory = await loadOpportunityDirectory(filters)
+  const opportunityIds = directory.items.map((item) => item.id)
+  const [sourceResponse, translationResponse] = await Promise.all([
     supabase
       .from("opportunity_sources")
       .select("id, slug, name, base_domain, source_type, ingestion_method, attribution_required, active, last_successful_sync")
       .eq("active", true)
       .order("name"),
+    opportunityIds.length
+      ? supabase.from("opportunity_translations").select("*").in("opportunity_id", opportunityIds)
+      : Promise.resolve({ data: [], error: null }),
   ])
 
   if (sourceResponse.error) throw sourceResponse.error
+  if (translationResponse.error) throw translationResponse.error
+
+  const locale = selectedInterfaceLocale()
+  const translations = (translationResponse.data ?? []) as OpportunityTranslationRecord[]
 
   return {
     ...directory,
+    items: directory.items.map((item) => localizeOpportunity(item as OpportunityDirectoryItem & { source_language?: string }, locale, translations)),
     sources: (sourceResponse.data ?? []) as OpportunitySourceRecord[],
   }
 }
