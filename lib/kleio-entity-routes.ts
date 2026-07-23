@@ -26,12 +26,16 @@ const institutionNameToUsername = Object.fromEntries(
   kleioSyntheticInstitutionProfiles.map((institution) => [institution.displayName, institution.username]),
 )
 
-export function internalArtistHref(artistId: string) {
-  return `/artists/${artistId}/`
-}
-
 export function publicArtistHref(username: string) {
   return `/artist/${username}/`
+}
+
+/**
+ * Demo institution surfaces should open the artist's complete Creative Passport.
+ * Submission-specific review history remains available through submissionHref.
+ */
+export function internalArtistHref(artistId: string) {
+  return publicArtistHref(artistId)
 }
 
 export function submissionHref(submissionId: string) {
