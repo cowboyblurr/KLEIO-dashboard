@@ -7,10 +7,8 @@ import { getDashboardForRole, loginDemoUser } from "@/lib/kleio-demo-auth"
 import { setKleioMode } from "@/lib/kleio-mode"
 
 /**
- * Guided signup intentionally renders the live signup component so the demo
- * cannot drift from the real artist and institution registration experience.
- * The wrapper only intercepts submission to enter the synthetic demo workspace
- * instead of creating a live account.
+ * Guided signup shares the production form layout but never runs production
+ * authentication, account recovery, onboarding writes, or Supabase redirects.
  */
 export function GuidedSignup({ role }: { role: "artist" | "institution" }) {
   const router = useRouter()
@@ -20,12 +18,12 @@ export function GuidedSignup({ role }: { role: "artist" | "institution" }) {
     event.stopPropagation()
     loginDemoUser(role)
     setKleioMode("demo")
-    router.push(getDashboardForRole(role))
+    router.replace(getDashboardForRole(role))
   }
 
   return (
     <div onSubmitCapture={enterGuidedWorkspace}>
-      <LiveSignup role={role} />
+      <LiveSignup role={role} experience="guided" />
     </div>
   )
 }
