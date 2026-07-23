@@ -35,6 +35,7 @@ const internalProductPhrases = [
   "static foundation controls",
   "foundation preview",
   "foundation workflow",
+  "common.foundationworkflow",
   "current live schema",
   "dedicated live event model",
   "live persistence workflow",
@@ -55,19 +56,26 @@ async function collectFiles(target) {
   return nested.flat()
 }
 
+function isAllowedDictionaryDefinition(relativeFile, phrase, line) {
+  return relativeFile === "lib/kleio-i18n.ts"
+    && phrase === "foundation workflow"
+    && line.includes('"common.foundationWorkflow"')
+}
+
 const files = (await Promise.all(scanRoots.map(collectFiles))).flat()
 const findings = []
 
 for (const file of files) {
   const source = await readFile(file, "utf8")
   const lines = source.split(/\r?\n/)
+  const relativeFile = path.relative(repositoryRoot, file)
 
   for (const phrase of internalProductPhrases) {
     const normalizedPhrase = phrase.toLowerCase()
     lines.forEach((line, index) => {
-      if (line.toLowerCase().includes(normalizedPhrase)) {
+      if (line.toLowerCase().includes(normalizedPhrase) && !isAllowedDictionaryDefinition(relativeFile, phrase, line)) {
         findings.push({
-          file: path.relative(repositoryRoot, file),
+          file: relativeFile,
           line: index + 1,
           phrase,
           source: line.trim(),
