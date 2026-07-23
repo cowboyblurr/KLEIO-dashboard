@@ -36,8 +36,8 @@ export function ArtistProfileContextBar({
   showKleioAssistStatus?: boolean
 }) {
   return (
-    <section className="rounded-2xl border border-[#E7E1F7] bg-white p-3 shadow-[0_12px_36px_rgba(82,64,130,0.05)]">
-      <div className="grid gap-2 lg:grid-cols-3">
+    <section className="flex min-w-0 flex-col gap-2 border-b border-[#EEE9F8] pb-3 sm:flex-row sm:items-center sm:justify-between">
+      <nav aria-label="Artist workspace sections" className="-mx-1 flex min-w-0 gap-1 overflow-x-auto px-1 pb-1 sm:pb-0">
         {items.map((item) => {
           const Icon = item.icon
           const selected = item.id === active
@@ -46,38 +46,33 @@ export function ArtistProfileContextBar({
             <Link
               key={item.id}
               href={item.href}
+              title={item.description}
               aria-current={selected ? "page" : undefined}
               className={cn(
-                "flex min-w-0 items-start gap-3 rounded-xl border px-3 py-3 transition-colors",
+                "inline-flex h-9 shrink-0 items-center gap-2 rounded-lg px-3 text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A997E8]/60 focus-visible:ring-offset-2",
                 selected
-                  ? "border-[#CFC4EF] bg-[#F7F4FF] text-[#292631]"
-                  : "border-transparent text-[#625C70] hover:border-[#E7E1F7] hover:bg-[#FDFBFF]",
+                  ? "bg-[#F3EFFB] text-[#4E426F]"
+                  : "text-[#746E80] hover:bg-[#FAF8FE] hover:text-[#4E426F]",
               )}
             >
-              <span className="grid size-8 shrink-0 place-items-center rounded-full bg-white text-[#5B4B8A] shadow-sm ring-1 ring-[#E7E1F7]">
-                <Icon className="size-4" />
-              </span>
-              <span className="min-w-0">
-                <span className="block text-sm font-semibold">{item.label}</span>
-                <span className="mt-0.5 block text-xs leading-relaxed text-[#7F7890]">{item.description}</span>
-              </span>
+              <Icon className="size-3.5" aria-hidden="true" />
+              <span>{item.label}</span>
             </Link>
           )
         })}
-      </div>
+      </nav>
 
       {showKleioAssistStatus && (
-        <div className="mt-3 flex items-start gap-3 rounded-xl border border-[#E7E1F7] bg-[#FDFBFF] px-3 py-3">
-          <span className="grid size-8 shrink-0 place-items-center rounded-full bg-[#F1ECFB] text-[#5B4B8A]">
-            <Sparkles className="size-4" />
-          </span>
-          <div>
-            <p className="text-sm font-semibold text-[#292631]">Coming soon: KLEIO Assist</p>
-            <p className="mt-0.5 text-xs leading-relaxed text-[#7F7890]">
-              KLEIO Assist will help you prepare and refine artist materials while keeping every suggestion editable and under your approval. Your saved information will never be changed or published automatically.
-            </p>
-          </div>
-        </div>
+        <span
+          role="status"
+          title="KLEIO Assist will provide optional, editable guidance. It is not active on this screen yet."
+          className="inline-flex shrink-0 items-center gap-1.5 self-start rounded-full border border-[#E9E3F5] bg-[#FBFAFE] px-2.5 py-1 text-[0.65rem] font-medium text-[#8A8296] sm:self-auto"
+        >
+          <Sparkles className="size-3" aria-hidden="true" />
+          <span>KLEIO Assist</span>
+          <span aria-hidden="true">·</span>
+          <span>Coming soon</span>
+        </span>
       )}
     </section>
   )
