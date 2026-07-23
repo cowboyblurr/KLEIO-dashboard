@@ -1,0 +1,58 @@
+/*
+ * KLEIO compact-density system
+ *
+ * Creates a calmer desktop-scale interface without CSS zoom or transforms.
+ * Mobile keeps the browser-default 16px root size for touch and readability.
+ */
+
+:root {
+  --radius: 0.75rem;
+  --kleio-density-page-gutter: 1.25rem;
+  --kleio-density-section-gap: 1rem;
+}
+
+@media (min-width: 1024px) {
+  html {
+    font-size: 15px;
+  }
+}
+
+@media (min-width: 1440px) {
+  html {
+    font-size: 14.75px;
+  }
+}
+
+@media (max-width: 767px) {
+  html {
+    font-size: 16px;
+  }
+}
+
+body {
+  text-size-adjust: 100%;
+  -webkit-text-size-adjust: 100%;
+}
+
+/* Shared workspace rhythm. */
+.kleio-workspace-density {
+  --kleio-workspace-control-height: 2.25rem;
+  --kleio-workspace-card-radius: 1rem;
+  --kleio-workspace-panel-radius: 1.125rem;
+}
+
+@media (min-width: 1280px) {
+  .kleio-workspace-density {
+    letter-spacing: -0.002em;
+  }
+}
+
+/* Keep readable touch targets on compact screens. */
+@media (max-width: 767px) {
+  .kleio-workspace-density button,
+  .kleio-workspace-density [role='button'],
+  .kleio-workspace-density input,
+  .kleio-workspace-density select {
+    min-height: 2.5rem;
+  }
+}
