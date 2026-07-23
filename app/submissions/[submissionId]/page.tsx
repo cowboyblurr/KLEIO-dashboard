@@ -5,6 +5,7 @@ import { ArrowLeft, FileText, MessageCircle } from "lucide-react"
 import { DashboardShell } from "@/components/kleio/dashboard-shell"
 import { StatusPill, PriorityPill } from "@/components/kleio/pills"
 import { allSubmissions } from "@/lib/kleio-data"
+import { publicArtistHref } from "@/lib/kleio-entity-routes"
 
 const inkColor = "#292631"
 const mutedColor = "#7F7890"
@@ -53,7 +54,7 @@ export default async function Page({ params }: { params: Promise<{ submissionId:
                 <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#A997E8]">Submission detail · {submission.programCycle}</p>
                 <h1 className="mt-2 font-serif text-3xl font-semibold tracking-tight" style={{ color: inkColor }}>{submission.projectTitle}</h1>
                 <p className="mt-2 text-sm" style={{ color: mutedColor }}>
-                  <Link href={`/artists/${submission.artistId}/`} className="font-medium transition-colors hover:text-[#5B4B8A]" style={{ color: inkColor }}>{submission.artist}</Link>
+                  <Link href={publicArtistHref(submission.artistId)} className="font-medium transition-colors hover:text-[#5B4B8A]" style={{ color: inkColor }}>{submission.artist}</Link>
                   <span> · </span>
                   <Link href={`/programs/${submission.programId}/`} className="transition-colors hover:text-[#5B4B8A]">{submission.program}</Link>
                 </p>
@@ -72,7 +73,10 @@ export default async function Page({ params }: { params: Promise<{ submissionId:
           <section className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_340px]">
             <div className="space-y-5">
               <section className="rounded-2xl border bg-white p-5" style={{ borderColor: lavenderSoftLine, boxShadow: cardShadow }}>
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#A997E8]">Artist statement</p>
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#A997E8]">Artist statement</p>
+                  <Link href={publicArtistHref(submission.artistId)} className="text-xs font-semibold text-[#5B4B8A] transition-opacity hover:opacity-75">View complete artist profile →</Link>
+                </div>
                 <p className="mt-3 text-sm leading-relaxed" style={{ color: mutedColor }}>{submission.statement}</p>
               </section>
 
