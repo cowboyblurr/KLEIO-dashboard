@@ -3,6 +3,7 @@ import { Suspense } from "react"
 import { ArtistShell } from "@/components/kleio/artist-shell"
 import { ApplicationPreparationWorkspace } from "@/components/kleio/application-preparation-workspace"
 import { ApplicationArtistIdentityBar } from "@/components/kleio/application-artist-identity-bar"
+import { ApplicationSubmissionCover } from "@/components/kleio/application-submission-cover"
 
 export const metadata: Metadata = {
   title: "KLEIO — Prepare application",
@@ -18,6 +19,9 @@ export default function Page() {
     <ArtistShell>
       <div className="flex h-full min-h-0 flex-col">
         <ApplicationArtistIdentityBar />
+        <Suspense fallback={null}>
+          <ApplicationSubmissionCover />
+        </Suspense>
         <div className="min-h-0 flex-1">
           <Suspense fallback={<PreparationFallback />}>
             <ApplicationPreparationWorkspace />
