@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import {
@@ -18,15 +19,6 @@ import {
 import { WorkspacePageHeader } from "@/components/kleio/workspace-page-header"
 import { OpportunityPreviewImage } from "@/components/kleio/opportunity-preview-image"
 import {
-  getOrCreateApplicationDraft,
-  loadPortfolioWorks,
-  saveApplicationDraft,
-  submitApplication,
-  type ApplicationRecord,
-  type OpenCallRecord,
-  type PortfolioWorkRecord,
-} from "@/lib/kleio-live-data"
-import {
   evaluateOpportunity,
   getOrCreateOpportunityConversation,
   recordOpportunityEvent,
@@ -44,7 +36,6 @@ import type { OpportunityImageMetadata } from "@/lib/kleio-opportunity-images"
 
 const card = "rounded-2xl border border-[#E7E1F7] bg-white p-5 shadow-[0_18px_48px_rgba(82,64,130,0.06)]"
 const input = "h-10 w-full rounded-xl border border-[#E7E1F7] bg-white px-3 text-sm outline-none focus:border-primary/40"
-const textarea = "w-full rounded-xl border border-[#E7E1F7] bg-white px-3 py-2 text-sm outline-none focus:border-primary/40"
 const primary = "inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground disabled:opacity-50"
 const secondary = "inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-[#D8D0F2] bg-white px-4 text-sm font-semibold text-[#5B4B8A] disabled:opacity-50"
 
@@ -57,7 +48,7 @@ type VisualOpportunity = OpportunityDirectoryItem & OpportunityImageMetadata & {
 }
 
 function LiveShell({ children }: { children: React.ReactNode }) {
-  return <main className="h-full overflow-y-auto px-4 py-5 sm:px-6 sm:py-6"><div className="mx-auto max-w-[1180px] space-y-5"><WorkspacePageHeader eyebrow="Artist workspace" title="Opportunities" description="Discover sourced grants and creative opportunities from the United States, Spain, Mexico, and the wider Ibero-American region, with clear deadlines, funding, eligibility, fees, and application requirements. Source facts, KLEIO presentation summaries, and artist-specific analysis remain visibly separate." />{children}</div></main>
+  return <main className="h-full overflow-y-auto px-4 py-5 sm:px-6 sm:py-6"><div className="mx-auto max-w-[1180px] space-y-5"><WorkspacePageHeader eyebrow="Artist workspace" title="Opportunities" description="Discover sourced opportunities, assess confirmed requirements against your Creative Passport, and prepare a reviewable application package before anything is submitted." />{children}</div></main>
 }
 
 function StateNotice({ loading, error, empty }: { loading: boolean; error: string; empty?: string }) {
@@ -137,8 +128,7 @@ function statusCopy(status: OpportunityDirectoryItem["status"]) {
 }
 
 function statusTone(status: OpportunityDirectoryItem["status"]) {
-  if (status === "open") return "bg-emerald-50 text-emerald-700"
-  return "bg-amber-50 text-amber-700"
+  return status === "open" ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"
 }
 
 function locationCopy(item: OpportunityDirectoryItem) {
@@ -152,6 +142,13 @@ function locationAndFormatCopy(item: OpportunityDirectoryItem) {
   return item.participation_format === "other" ? location : `${location} · ${cleanLabel(item.participation_format)}`
 }
 
+function readinessCopy(readiness: ReturnType<typeof assessOpportunityMaterialReadiness>) {
+  if (readiness.unknown || readiness.score === null) return "Application materials not structured"
+  if (readiness.blockingCount) return `${readiness.score}% ready · ${readiness.blockingCount} blocking`
+  if (readiness.manualReview.length) return `${readiness.score}% ready · ${readiness.manualReview.length} to confirm`
+  return `${readiness.score}% of required materials ready`
+}
+
 function imageRightsCopy(item: VisualOpportunity) {
   if (item.preview_image_origin === "kleio_fallback") return "KLEIO category cover"
   if (item.preview_image_rights_status === "provider_owned") return "Provider-owned image"
@@ -160,63 +157,6 @@ function imageRightsCopy(item: VisualOpportunity) {
   if (item.preview_image_rights_status === "licensed") return "Licensed image"
   if (item.preview_image_rights_status === "permission_confirmed") return "Permission confirmed"
   return "Image rights not independently confirmed"
-}
-
-function readinessCopy(readiness: ReturnType<typeof assessOpportunityMaterialReadiness>) {
-  if (readiness.unknown) return "Application materials not structured"
-  const assessed = readiness.assessableCount
-    ? `${readiness.readyCount} of ${readiness.assessableCount} assessable materials ready`
-    : "No materials can be checked automatically"
-  return readiness.manualReview.length ? `${assessed} · ${readiness.manualReview.length} verify manually` : assessed
-}
-
-function InternalApplicationEditor({ call, onComplete }: { call: OpenCallRecord; onComplete: () => void }) {
-  const [application, setApplication] = useState<ApplicationRecord | null>(null)
-  const [works, setWorks] = useState<PortfolioWorkRecord[]>([])
-  const [answer, setAnswer] = useState("")
-  const [selected, setSelected] = useState<string[]>([])
-  const [saving, setSaving] = useState(false)
-  const [message, setMessage] = useState("")
-  const [error, setError] = useState("")
-
-  useEffect(() => {
-    void Promise.all([getOrCreateApplicationDraft(call), loadPortfolioWorks()])
-      .then(([draft, portfolio]) => {
-        setApplication(draft)
-        setWorks(portfolio)
-        setAnswer(draft.application_answers?.find((item) => item.question_key === "project_proposal")?.answer_text || "")
-        setSelected(draft.application_works?.map((item) => item.portfolio_work_id) || [])
-      })
-      .catch((reason: Error) => setError(reason.message))
-  }, [call])
-
-  async function persist(submit: boolean) {
-    if (!application) return
-    setSaving(true)
-    setError("")
-    try {
-      await saveApplicationDraft(application.id, answer, selected)
-      if (submit) await submitApplication(application.id)
-      setMessage(submit ? "Application submitted and status history recorded." : "Draft saved to your account.")
-      if (submit) onComplete()
-    } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "Unable to save the application.")
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  if (error) return <p role="alert" className="mt-4 text-sm text-red-700">{error}</p>
-  if (!application) return <p className="mt-4 flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="size-4 animate-spin" />Preparing your KLEIO application…</p>
-  if (application.status !== "draft") return <p className="mt-4 text-sm font-medium text-emerald-700">This application is already {application.status.replaceAll("_", " ")}.</p>
-
-  return <div className="mt-4 border-t border-[#E7E1F7] pt-4">
-    <label className="grid gap-1.5 text-xs font-semibold text-muted-foreground"><span>Project proposal / application note</span><textarea className={textarea} rows={5} value={answer} onChange={(event) => setAnswer(event.target.value)} /></label>
-    <p className="mt-4 text-xs font-semibold text-muted-foreground">Select completed portfolio works</p>
-    <div className="mt-2 flex flex-wrap gap-2">{works.map((work) => <label key={work.id} className="flex items-center gap-2 rounded-xl border border-[#E7E1F7] px-3 py-2 text-sm"><input type="checkbox" checked={selected.includes(work.id)} onChange={(event) => setSelected((current) => event.target.checked ? [...current, work.id] : current.filter((id) => id !== work.id))} />{work.title}</label>)}</div>
-    <div className="mt-4 flex flex-wrap gap-2"><button type="button" className={secondary} disabled={saving} onClick={() => void persist(false)}>Save draft</button><button type="button" className={primary} disabled={saving || !answer.trim()} onClick={() => void persist(true)}>{saving && <Loader2 className="size-4 animate-spin" />}Submit through KLEIO</button></div>
-    {message && <p role="status" className="mt-3 text-sm font-medium text-emerald-700">{message}</p>}
-  </div>
 }
 
 export function LiveGlobalArtistOpportunitiesWithImages() {
@@ -228,7 +168,6 @@ export function LiveGlobalArtistOpportunitiesWithImages() {
   const [format, setFormat] = useState("all")
   const [noFeeOnly, setNoFeeOnly] = useState(false)
   const [expanded, setExpanded] = useState<string | null>(null)
-  const [applying, setApplying] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const [actionId, setActionId] = useState("")
@@ -289,7 +228,7 @@ export function LiveGlobalArtistOpportunitiesWithImages() {
       <label className="flex h-10 items-center gap-2 rounded-xl border border-[#E7E1F7] px-3 text-sm"><input type="checkbox" checked={noFeeOnly} onChange={(event) => setNoFeeOnly(event.target.checked)} />Confirmed no application fee</label>
     </section>
 
-    <div className="rounded-xl border border-[#E7E1F7] bg-[#FDFBFF] px-4 py-3 text-xs leading-relaxed text-muted-foreground">KLEIO includes selected English- and Spanish-language records from official and reviewed sources. Funding labels distinguish fixed awards, ranges, category-specific ceilings, reimbursements, prize pools, and country-dependent currencies. Official listing images appear when they are source-specific and reusable; otherwise KLEIO shows a clearly labeled category cover.</div>
+    <div className="rounded-xl border border-[#E7E1F7] bg-[#FDFBFF] px-4 py-3 text-xs leading-relaxed text-muted-foreground">Readiness is calculated from confirmed source requirements and actual Creative Passport materials. “Prepare application” creates a reviewable package; it does not imply that an external provider has received anything.</div>
     <StateNotice loading={loading} error={error} empty={!loading && !items.length ? "No approved opportunities match these filters. Unknown fees do not count as no-fee, and KLEIO will not substitute demo records." : undefined} />
 
     <div className="space-y-4">{items.map((rawItem) => {
@@ -299,11 +238,8 @@ export function LiveGlobalArtistOpportunitiesWithImages() {
       const isExpanded = expanded === item.id
       const canMessage = item.application_mode === "internal" && Boolean(item.internal_call)
       const canonicalUrl = safeOpportunityUrl(item.canonical_url)
-      const applicationUrl = safeOpportunityUrl(item.application_url)
       const guidelinesUrl = safeOpportunityUrl(item.guidelines_url)
       const fundingSourceUrl = safeOpportunityUrl(item.funding_source_url || "")
-      const externalUrl = applicationUrl || canonicalUrl
-      const hasDirectApplication = Boolean(applicationUrl && canonicalUrl && applicationUrl !== canonicalUrl)
       const detailsId = `opportunity-details-${item.id}`
 
       return <article key={item.id} className={`${card} overflow-hidden`} aria-labelledby={`opportunity-title-${item.id}`}>
@@ -341,23 +277,20 @@ export function LiveGlobalArtistOpportunitiesWithImages() {
         </div>
 
         <div className="mt-4 flex flex-wrap gap-2">
-          {item.application_mode === "external" && externalUrl ? <a href={externalUrl} target="_blank" rel="noreferrer" className={item.status === "open" ? primary : secondary} aria-label={`${item.status === "open" && hasDirectApplication ? "Continue to official application for" : "View official listing for"} ${item.title}`} onClick={() => void recordOpportunityEvent(item.status === "open" ? "external_application_click" : "view", item.id).catch(() => undefined)}>{item.status === "open" ? (hasDirectApplication ? "Continue to official application" : "View official listing") : "View official forecast"}<ExternalLink className="size-4" /></a> : item.application_mode === "internal" && item.internal_call && item.status === "open" ? <button type="button" className={primary} onClick={() => setApplying((current) => current === item.id ? null : item.id)}>{applying === item.id ? "Close application" : "Apply through KLEIO"}</button> : null}
+          <Link className={item.status === "open" ? primary : secondary} href={`/artist-dashboard/applications/prepare/?opportunity=${encodeURIComponent(item.id)}`} onClick={() => void recordOpportunityEvent("application_prepare", item.id).catch(() => undefined)}>{item.status === "open" ? "Prepare application" : "Review requirements"}<FileText className="size-4" /></Link>
           {canMessage && <button type="button" className={secondary} disabled={actionId === item.id} onClick={() => void messageInstitution(item)}><MessageCircle className="size-4" />Message institution</button>}
-          {guidelinesUrl && guidelinesUrl !== externalUrl && <a className={secondary} href={guidelinesUrl} target="_blank" rel="noreferrer" aria-label={`Open official guidelines for ${item.title}`}>Official guidelines<ExternalLink className="size-4" /></a>}
+          {guidelinesUrl && <a className={secondary} href={guidelinesUrl} target="_blank" rel="noreferrer" aria-label={`Open official guidelines for ${item.title}`}>Official guidelines<ExternalLink className="size-4" /></a>}
         </div>
-
-        {applying === item.id && item.internal_call && <InternalApplicationEditor call={item.internal_call} onComplete={() => setApplying(null)} />}
 
         {isExpanded && <div id={detailsId} className="mt-5 border-t border-[#E7E1F7] pt-5">
           <OpportunityPreviewImage opportunity={item} variant="hero" showCaption />
           <div className="mt-5 grid gap-5 lg:grid-cols-3">
             <section><h3 className="flex items-center gap-2 text-sm font-semibold"><ShieldCheck className="size-4 text-primary" />Eligibility evidence</h3><div className="mt-3 space-y-2">{evaluation.ruleResults.length ? evaluation.ruleResults.map((result) => <div key={result.rule_id} className="rounded-xl border border-[#E7E1F7] p-3 text-sm"><p className="flex items-center gap-2 font-semibold">{result.status === "passed" ? <CheckCircle2 className="size-4 text-emerald-600" /> : result.status === "failed" ? <XCircle className="size-4 text-red-600" /> : <CircleHelp className="size-4 text-amber-600" />}{result.label}</p><p className="mt-1 text-xs leading-relaxed text-muted-foreground">{result.explanation}</p></div>) : <p className="text-sm text-muted-foreground">The source does not yet provide enough structured evidence for a formal eligibility decision.</p>}</div></section>
 
-            <section><h3 className="flex items-center gap-2 text-sm font-semibold"><FileText className="size-4 text-primary" />Application readiness</h3>{readiness.unknown ? <p className="mt-3 text-sm text-muted-foreground">Required materials are not stated in a structured source field. Review the official guidelines before preparing an application.</p> : <div className="mt-3 space-y-3"><div><p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">Ready</p><ul className="mt-1 space-y-1 text-sm text-muted-foreground">{readiness.ready.length ? readiness.ready.map((label) => <li key={label}>✓ {label}</li>) : <li>No assessable materials are confirmed ready yet.</li>}</ul></div><div><p className="text-xs font-semibold uppercase tracking-wide text-red-700">Missing</p><ul className="mt-1 space-y-1 text-sm text-muted-foreground">{readiness.missing.length ? readiness.missing.map((label) => <li key={label}>• {label}</li>) : <li>No assessable materials are confirmed missing.</li>}</ul></div>{readiness.manualReview.length > 0 && <div><p className="text-xs font-semibold uppercase tracking-wide text-amber-700">Verify manually</p><ul className="mt-1 space-y-1 text-sm text-muted-foreground">{readiness.manualReview.map((label) => <li key={label}>? {label}</li>)}</ul></div>}</div>}</section>
+            <section><h3 className="flex items-center gap-2 text-sm font-semibold"><FileText className="size-4 text-primary" />Application readiness</h3>{readiness.unknown ? <p className="mt-3 text-sm text-muted-foreground">Required materials are not stated in a structured source field. Review the official guidelines before preparing an application.</p> : <div className="mt-3 space-y-2">{readiness.requirements.map((requirement) => <div key={requirement.id} className="rounded-xl border border-[#E7E1F7] p-3"><p className="text-sm font-semibold">{requirement.label}</p><p className="mt-1 text-xs leading-relaxed text-muted-foreground">{requirement.status.replaceAll("_", " ")} · {requirement.explanation}</p></div>)}</div>}</section>
 
-            <section><h3 className="text-sm font-semibold">Verified source facts</h3><dl className="mt-3 space-y-3 text-sm"><div><dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Official source</dt><dd>{canonicalUrl ? <a className="font-medium text-primary underline-offset-4 hover:underline" href={canonicalUrl} target="_blank" rel="noreferrer">{item.source?.name || item.provider_name}<ExternalLink className="ml-1 inline size-3" /></a> : "Source link not provided"}</dd></div><div><dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Funding</dt><dd className="mt-1 leading-relaxed">{formatAmount(item)}{fundingSourceUrl && <> · <a className="font-medium text-primary underline-offset-2 hover:underline" href={fundingSourceUrl} target="_blank" rel="noreferrer">Funding source</a></>}</dd>{item.funding_source_note && <dd className="mt-1 text-xs leading-relaxed text-muted-foreground">{item.funding_source_note}</dd>}</div><div><dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Funding checked</dt><dd>{formatDate(item.funding_verified_at ?? null, "Not separately confirmed")}</dd></div><div><dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Last checked</dt><dd>{formatDate(item.last_verified_at, "Not confirmed")}</dd></div><div><dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Status</dt><dd>{statusCopy(item.status)}</dd></div><div><dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Opens</dt><dd>{formatDate(item.opens_at)}</dd></div><div><dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Deadline</dt><dd>{formatDeadline(item)}</dd></div><div><dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Application fee</dt><dd>{formatFee(item)}</dd></div><div><dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Location / participation</dt><dd>{locationAndFormatCopy(item)}</dd></div><div><dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Eligible countries / regions</dt><dd>{[...item.eligible_countries, ...item.eligible_regions].length ? [...item.eligible_countries, ...item.eligible_regions].join(", ") : "Not stated in structured source data"}</dd></div><div><dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Disciplines</dt><dd>{item.disciplines.length ? item.disciplines.join(", ") : "Not stated in structured source data"}</dd></div><div><dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Image provenance</dt><dd>{imageRightsCopy(item)}</dd></div></dl></section>
+            <section><h3 className="text-sm font-semibold">Verified source facts</h3><dl className="mt-3 space-y-3 text-sm"><div><dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Official source</dt><dd>{canonicalUrl ? <a className="font-medium text-primary underline-offset-4 hover:underline" href={canonicalUrl} target="_blank" rel="noreferrer">{item.source?.name || item.provider_name}<ExternalLink className="ml-1 inline size-3" /></a> : "Source link not provided"}</dd></div><div><dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Funding</dt><dd className="mt-1 leading-relaxed">{formatAmount(item)}{fundingSourceUrl && <> · <a className="font-medium text-primary underline-offset-2 hover:underline" href={fundingSourceUrl} target="_blank" rel="noreferrer">Funding source</a></>}</dd>{item.funding_source_note && <dd className="mt-1 text-xs leading-relaxed text-muted-foreground">{item.funding_source_note}</dd>}</div><div><dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Funding checked</dt><dd>{formatDate(item.funding_verified_at ?? null, "Not separately confirmed")}</dd></div><div><dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Last checked</dt><dd>{formatDate(item.last_verified_at, "Not confirmed")}</dd></div><div><dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Deadline</dt><dd>{formatDeadline(item)}</dd></div><div><dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Application fee</dt><dd>{formatFee(item)}</dd></div><div><dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Location / participation</dt><dd>{locationAndFormatCopy(item)}</dd></div><div><dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Image provenance</dt><dd>{imageRightsCopy(item)}</dd></div></dl></section>
           </div>
-
           <section className="mt-5 rounded-xl border border-[#E7E1F7] p-4"><h3 className="text-sm font-semibold">Full source description</h3><p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">{item.description || "The source did not provide a reusable full description. Continue to the official listing."}</p></section>
         </div>}
       </article>
