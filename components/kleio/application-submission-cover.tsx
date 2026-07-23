@@ -28,14 +28,25 @@ export function ApplicationSubmissionCover() {
   useEffect(() => {
     if (!opportunityId) return
     let active = true
-    const supabase = getSupabaseBrowserClient()
-    void supabase.from("opportunities").select("title, provider_name, opportunity_type, deadline_at, submission_cover_path, submission_cover_alt_text, submission_cover_position_x, submission_cover_position_y").eq("id", opportunityId).maybeSingle()
-      .then(({ data, error }) => {
+
+    void (async () => {
+      try {
+        const supabase = getSupabaseBrowserClient()
+        const { data, error } = await supabase
+          .from("opportunities")
+          .select("title, provider_name, opportunity_type, deadline_at, submission_cover_path, submission_cover_alt_text, submission_cover_position_x, submission_cover_position_y")
+          .eq("id", opportunityId)
+          .maybeSingle()
+
         if (error) throw error
         if (active && data?.submission_cover_path) setRecord(data as SubmissionCoverRecord)
-      })
-      .catch(() => undefined)
-      .finally(() => { if (active) setLoading(false) })
+      } catch {
+        if (active) setRecord(null)
+      } finally {
+        if (active) setLoading(false)
+      }
+    })()
+
     return () => { active = false }
   }, [opportunityId])
 
