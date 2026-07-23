@@ -7,9 +7,15 @@ import {
   type OpportunityDirectoryItem,
   type OpportunitySourceRecord,
 } from "@/lib/kleio-opportunity-data"
+import {
+  localizeOpportunity,
+  type LocalizedOpportunityItem,
+  type OpportunityTranslationRecord,
+} from "@/lib/kleio-opportunity-localization"
 import type { PortfolioWorkRecord } from "@/lib/kleio-live-data"
 
-export type OpportunityDirectoryDataWithSources = OpportunityDirectoryData & {
+export type OpportunityDirectoryDataWithSources = Omit<OpportunityDirectoryData, "items"> & {
+  items: LocalizedOpportunityItem[]
   sources: OpportunitySourceRecord[]
 }
 
@@ -63,23 +69,37 @@ type EnrichedRequirement = OpportunityDirectoryItem["requirements"][number] & {
   confidence_score?: number | null
 }
 
+function selectedInterfaceLocale(): "en" | "es" {
+  if (typeof window === "undefined") return "en"
+  return window.localStorage.getItem("kleio_locale") === "es" ? "es" : "en"
+}
+
 export async function loadOpportunityDirectoryWithSources(
   filters: OpportunityDirectoryFilters = {},
 ): Promise<OpportunityDirectoryDataWithSources> {
   const supabase = getSupabaseBrowserClient()
-  const [directory, sourceResponse] = await Promise.all([
-    loadOpportunityDirectory(filters),
+  const directory = await loadOpportunityDirectory(filters)
+  const opportunityIds = directory.items.map((item) => item.id)
+  const [sourceResponse, translationResponse] = await Promise.all([
     supabase
       .from("opportunity_sources")
       .select("id, slug, name, base_domain, source_type, ingestion_method, attribution_required, active, last_successful_sync")
       .eq("active", true)
       .order("name"),
+    opportunityIds.length
+      ? supabase.from("opportunity_translations").select("*").in("opportunity_id", opportunityIds)
+      : Promise.resolve({ data: [], error: null }),
   ])
 
   if (sourceResponse.error) throw sourceResponse.error
+  if (translationResponse.error) throw translationResponse.error
+
+  const locale = selectedInterfaceLocale()
+  const translations = (translationResponse.data ?? []) as OpportunityTranslationRecord[]
 
   return {
     ...directory,
+    items: directory.items.map((item) => localizeOpportunity(item as OpportunityDirectoryItem & { source_language?: string }, locale, translations)),
     sources: (sourceResponse.data ?? []) as OpportunitySourceRecord[],
   }
 }
@@ -133,30 +153,18 @@ function assessRequirement(
     maximumCount: requirement.maximum_item_count ?? requirement.maximum_word_count ?? null,
   }
 
-  if (!requirement.required) {
-    return { ...base, status: "optional", explanation: "This source requirement is optional." }
-  }
-  if (requirement.verification_status !== "confirmed") {
-    return { ...base, status: "unverified", explanation: "The source requirement needs verification before KLEIO can treat it as complete." }
-  }
-  if (requirement.legal_declaration || requirement.requires_artist_confirmation || requirement.payment_required || requirement.human_verification_required) {
-    return { ...base, status: "needs_review", explanation: "The artist must personally review or confirm this requirement." }
-  }
+  if (!requirement.required) return { ...base, status: "optional", explanation: "This source requirement is optional." }
+  if (requirement.verification_status !== "confirmed") return { ...base, status: "unverified", explanation: "The source requirement needs verification before KLEIO can treat it as complete." }
+  if (requirement.legal_declaration || requirement.requires_artist_confirmation || requirement.payment_required || requirement.human_verification_required) return { ...base, status: "needs_review", explanation: "The artist must personally review or confirm this requirement." }
 
   if (["portfolio", "work_samples", "artwork_images", "images", "image_list"].includes(normalized)) {
     const completeWorks = portfolioWorks.filter((work) => Boolean(work.title.trim() && work.image_path))
     const currentCount = completeWorks.length
     const minimum = requirement.minimum_item_count ?? 1
     const maximum = requirement.maximum_item_count ?? null
-    if (currentCount < minimum) {
-      return { ...base, currentCount, minimumCount: minimum, maximumCount: maximum, status: "missing", explanation: `${minimum} completed portfolio work${minimum === 1 ? " is" : "s are"} required; ${currentCount} currently available.` }
-    }
-    if (maximum !== null && currentCount > maximum) {
-      return { ...base, currentCount, minimumCount: minimum, maximumCount: maximum, status: "needs_review", explanation: `${currentCount} works are available; select no more than ${maximum} for this application.` }
-    }
-    if ((requirement.accepted_file_types?.length ?? 0) > 0 || requirement.maximum_file_size_bytes || requirement.maximum_total_size_bytes) {
-      return { ...base, currentCount, minimumCount: minimum, maximumCount: maximum, status: "needs_review", explanation: "Enough works are available, but file format and size limits require final validation." }
-    }
+    if (currentCount < minimum) return { ...base, currentCount, minimumCount: minimum, maximumCount: maximum, status: "missing", explanation: `${minimum} completed portfolio work${minimum === 1 ? " is" : "s are"} required; ${currentCount} currently available.` }
+    if (maximum !== null && currentCount > maximum) return { ...base, currentCount, minimumCount: minimum, maximumCount: maximum, status: "needs_review", explanation: `${currentCount} works are available; select no more than ${maximum} for this application.` }
+    if ((requirement.accepted_file_types?.length ?? 0) > 0 || requirement.maximum_file_size_bytes || requirement.maximum_total_size_bytes) return { ...base, currentCount, minimumCount: minimum, maximumCount: maximum, status: "needs_review", explanation: "Enough works are available, but file format and size limits require final validation." }
     return { ...base, currentCount, minimumCount: minimum, maximumCount: maximum, status: "complete", explanation: `${currentCount} completed portfolio work${currentCount === 1 ? " is" : "s are"} available.` }
   }
 
@@ -184,9 +192,7 @@ function assessRequirement(
     return { ...base, currentCount: count, minimumCount: minimum, maximumCount: maximum, status: "complete", explanation: maximum ? `${count} of ${maximum} allowed words are ready.` : "Approved Creative Passport content is available." }
   }
 
-  if (["project_proposal", "budget", "timeline", "work_plan", "references", "recommendation_letters", "application_question", "signature", "proof_of_residency", "proof_of_identity", "tax_information"].includes(normalized)) {
-    return { ...base, status: "needs_review", explanation: "This application-specific requirement must be completed or confirmed by the artist." }
-  }
+  if (["project_proposal", "budget", "timeline", "work_plan", "references", "recommendation_letters", "application_question", "signature", "proof_of_residency", "proof_of_identity", "tax_information"].includes(normalized)) return { ...base, status: "needs_review", explanation: "This application-specific requirement must be completed or confirmed by the artist." }
 
   return { ...base, status: "needs_review", explanation: "KLEIO cannot safely confirm this requirement from the current Creative Passport fields." }
 }
