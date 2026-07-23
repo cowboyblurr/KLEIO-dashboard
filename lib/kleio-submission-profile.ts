@@ -1,7 +1,7 @@
-import { artists, submissions, type Artist, type Submission } from "@/lib/kleio-data"
+import { artists, submissions, type Artist, type ArtistDashboardHero, type Submission } from "@/lib/kleio-data"
 import type { KleioSyntheticArtistProfile } from "@/lib/kleio-profile-data"
 
-const visualThemes: KleioSyntheticArtistProfile["visualTheme"][] = [
+const visualThemes: ArtistDashboardHero["visualTheme"][] = [
   "studio-portrait",
   "archive-field",
   "paper-forms",
@@ -9,7 +9,7 @@ const visualThemes: KleioSyntheticArtistProfile["visualTheme"][] = [
   "soft-botanical",
 ]
 
-const accentColors: KleioSyntheticArtistProfile["accentColor"][] = ["lavender", "blue", "green", "peach"]
+const accentColors: ArtistDashboardHero["accentColor"][] = ["lavender", "blue", "green", "peach"]
 
 function unique(values: string[]) {
   return Array.from(new Set(values.filter(Boolean)))
@@ -85,8 +85,10 @@ export function getSubmissionArtistProfile(username: string): KleioSyntheticArti
 
   const artist = artists.find((entry) => entry.id === username)
   const index = Math.max(0, submissionArtistUsernames.indexOf(username))
-  const visualTheme = artist?.dashboardHero?.visualTheme ?? visualThemes[index % visualThemes.length]
-  const accentColor = artist?.dashboardHero?.accentColor ?? accentColors[index % accentColors.length]
+  const visualTheme: ArtistDashboardHero["visualTheme"] =
+    artist?.dashboardHero?.visualTheme ?? visualThemes[index % visualThemes.length] ?? "studio-portrait"
+  const accentColor: ArtistDashboardHero["accentColor"] =
+    artist?.dashboardHero?.accentColor ?? accentColors[index % accentColors.length] ?? "lavender"
   const heroImage = artist?.portfolioImage && artist.portfolioImage !== "/placeholder.svg"
     ? artist.portfolioImage
     : submission.image && submission.image !== "/placeholder.svg"
@@ -109,6 +111,13 @@ export function getSubmissionArtistProfile(username: string): KleioSyntheticArti
     "Memory",
     "Material practice",
   ]).slice(0, 8)
+
+  const dashboardHero: ArtistDashboardHero = artist?.dashboardHero ?? {
+    title: "Creative Passport",
+    subtitle: "Artist-approved work, professional context, and reusable application materials in one profile.",
+    visualTheme,
+    accentColor,
+  }
 
   return {
     username: submission.artistId,
@@ -146,11 +155,6 @@ export function getSubmissionArtistProfile(username: string): KleioSyntheticArti
         }
       : availabilityFor(submission),
     history: syntheticHistory(submission, artist),
-    dashboardHero: artist?.dashboardHero ?? {
-      title: "Creative Passport",
-      subtitle: "Artist-approved work, professional context, and reusable application materials in one profile.",
-      visualTheme,
-      accentColor,
-    },
+    dashboardHero,
   }
 }
