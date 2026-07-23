@@ -26,7 +26,14 @@ export function LandingLoginCard() {
         <RealLoginForm
           variant="landing"
           className="mt-1"
-          onSuccess={(account) => router.push(getDashboardForRole(account.profile.role))}
+          onSuccess={(account) => {
+            const role = account.profile.role
+            const destination =
+              !account.profile.onboarding_completed && (role === "artist" || role === "institution")
+                ? `/signup/${role}/`
+                : getDashboardForRole(role)
+            router.push(destination)
+          }}
         />
       </div>
     </section>
