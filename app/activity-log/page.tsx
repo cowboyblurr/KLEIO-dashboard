@@ -102,7 +102,7 @@ export default function Page() {
           </section>
 
           <section className="rounded-2xl border bg-[#F7F4FF] p-5" style={{ ...cardStyle, borderColor: lavenderSoftLine }}>
-            <p className="text-sm font-medium" style={{ color: inkColor }}>{t("common.foundationWorkflow")}</p>
+            <p className="text-sm font-medium" style={{ color: inkColor }}>{es ? "Lo que el registro de actividad ayudará a seguir" : "What the activity log will help your team track"}</p>
             <ul className="mt-2 space-y-1 text-sm" style={{ color: mutedColor }}>{activityExamples(es).map((item) => <li key={item}>· {item}</li>)}</ul>
           </section>
         </div>

@@ -220,9 +220,9 @@ export function LiveArtistProfilePreview() {
                       <Sparkles className="size-4" />
                     </span>
                     <div>
-                      <h2 className="font-serif text-lg font-semibold">KLEIO Assist boundaries</h2>
+                      <h2 className="font-serif text-lg font-semibold">Coming soon: KLEIO Assist</h2>
                       <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                        KLEIO Assist may eventually help draft or organize profile language, but suggestions must remain editable and require your approval. KLEIO Assist is not active on this connected profile screen and does not publish, verify, or overwrite your information.
+                        KLEIO Assist will help you draft and organize profile language while keeping every suggestion editable and subject to your approval. Your information will not be published, verified, or overwritten automatically.
                       </p>
                     </div>
                   </div>

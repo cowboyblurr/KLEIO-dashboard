@@ -62,7 +62,7 @@ export function ArtistMessagesPageView() {
             <p className="mt-1 text-xs" style={{ color: mutedColor }}>{selected.date}</p>
             <p className="mt-4 text-sm leading-relaxed" style={{ color: inkColor }}>{selected.preview}</p>
             <p className="mt-3 text-sm leading-relaxed" style={{ color: mutedColor }}>
-              This foundation preview keeps message context connected to the related application, materials request, or collaborator thread.
+              Messages stay connected to the related application, materials request, or collaboration thread so the next step is clear.
             </p>
             <Link href="/artist-dashboard/applications/" className="mt-4 inline-flex h-9 items-center rounded-xl bg-primary px-3 text-xs font-semibold text-primary-foreground transition-colors hover:bg-primary/90">
               Open related application

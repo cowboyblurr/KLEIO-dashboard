@@ -25,16 +25,15 @@ export function TemplatesNewPageView() {
     <main className="h-full overflow-y-auto px-6 py-6">
       <div className="mx-auto max-w-[1180px] space-y-5">
         <WorkspacePageHeader
-          eyebrow="Template builder"
-          title="Create Template"
-          description="Start a reusable structure for open calls, review criteria, messages, or reports."
-          prototypeNote="This foundation page outlines where reusable templates will be created. Full editing controls will be added in a later build pass."
+          eyebrow="Coming soon"
+          title="Template Builder"
+          description="Create reusable structures for open calls, review criteria, applicant messages, reports, and recurring committee workflows."
           primaryCta={{ label: "Back to Templates", href: "/templates/" }}
           secondaryCta={{ label: "Programs", href: "/programs/" }}
         />
 
         <div className="grid gap-4 lg:grid-cols-2">
-          <WorkflowCard title="Template type selection" body="Choose the structure you want to reuse across future programs.">
+          <WorkflowCard title="Choose a template type" body="Select the kind of structure your team wants to reuse across future programs.">
             <div className="grid gap-2 sm:grid-cols-2">
               {templateTypes.map((type) => (
                 <div key={type} className="rounded-xl border px-3 py-2.5 text-sm" style={{ borderColor: "#E7E1F7", color: inkColor }}>
@@ -44,7 +43,7 @@ export function TemplatesNewPageView() {
             </div>
           </WorkflowCard>
 
-          <WorkflowCard title="Draft outline" body="Define the reusable fields your team will fill in later.">
+          <WorkflowCard title="Define the reusable structure" body="Organize the fields, guidance, and language your team will need each time the template is used.">
             <ul className="space-y-2">
               {draftFields.map((field) => (
                 <li key={field} className="rounded-xl border px-3 py-2 text-sm" style={{ borderColor: "#E7E1F7", color: mutedColor }}>
@@ -55,9 +54,9 @@ export function TemplatesNewPageView() {
           </WorkflowCard>
         </div>
 
-        <WorkflowCard title="Preview card" body="Open Call template · Required materials · Applicant communication · Review criteria attachment">
+        <WorkflowCard title="How templates will help" body="Keep required materials, applicant communication, review criteria, and committee handoffs consistent across programs.">
           <Link href="/programs/new/" className="text-xs font-medium transition-opacity hover:opacity-75" style={{ color: "#5B4B8A" }}>
-            Apply to new open call →
+            Create a new open call →
           </Link>
         </WorkflowCard>
       </div>
