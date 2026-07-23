@@ -4,10 +4,10 @@ import { useEffect, useState } from "react"
 import { getKleioMode, KLEIO_MODE_CHANGE_EVENT, setKleioMode, type KleioMode } from "@/lib/kleio-mode"
 
 export function useKleioMode() {
-  const [mode, setModeState] = useState<KleioMode>("live")
+  const [resolvedMode, setResolvedMode] = useState<KleioMode | null>(null)
 
   useEffect(() => {
-    const syncMode = () => setModeState(getKleioMode())
+    const syncMode = () => setResolvedMode(getKleioMode())
     syncMode()
     window.addEventListener(KLEIO_MODE_CHANGE_EVENT, syncMode)
     window.addEventListener("storage", syncMode)
@@ -19,8 +19,15 @@ export function useKleioMode() {
 
   function updateMode(nextMode: KleioMode) {
     setKleioMode(nextMode)
-    setModeState(nextMode)
+    setResolvedMode(nextMode)
   }
 
-  return { mode, isDemo: mode === "demo", isPreview: mode === "preview", isLive: mode === "live", setMode: updateMode }
+  return {
+    mode: resolvedMode ?? "live",
+    isResolved: resolvedMode !== null,
+    isDemo: resolvedMode === "demo",
+    isPreview: resolvedMode === "preview",
+    isLive: resolvedMode === "live",
+    setMode: updateMode,
+  }
 }
