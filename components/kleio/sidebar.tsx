@@ -3,13 +3,14 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { ChevronsUpDown } from "lucide-react"
+import { Settings } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { navSections } from "@/lib/kleio-nav"
 import { institutionNavLabelKeys, institutionSectionKeys } from "@/lib/kleio-nav-i18n"
 import { collaborators, institution } from "@/lib/kleio-data"
 import { loadInstitutionProfile } from "@/lib/kleio-live-data"
 import { loadKleioAccount } from "@/lib/kleio-supabase"
+import { AccountSignOutButton } from "@/components/kleio/account-sign-out-button"
 import { InitialAvatar } from "@/components/kleio/initial-avatar"
 import { KleioWordmarkLink } from "@/components/kleio/kleio-wordmark-link"
 import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
@@ -89,6 +90,7 @@ export function Sidebar() {
         <nav aria-label="Institution workspace" className="flex min-w-0 flex-1 gap-1 overflow-x-auto">
           {mobileItems.map((item) => { const active = pathname === item.href; const Icon = item.icon; return <Link key={item.href} href={item.href} aria-current={active ? "page" : undefined} aria-label={itemLabel(item.href, item.label, locale, t)} className={cn("grid size-10 shrink-0 place-items-center rounded-lg", active ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-accent/60")}><Icon className="size-4" /></Link> })}
         </nav>
+        <AccountSignOutButton compact className="border-border bg-card shadow-sm" />
       </div>
       <aside className="hidden h-full w-64 shrink-0 flex-col border-r border-border bg-sidebar md:flex">
         <div className="flex items-center px-6 pb-5 pt-6"><KleioWordmarkLink href="/" className="rounded-md bg-white px-2.5 py-1.5 shadow-sm ring-1 ring-border" /></div>
@@ -111,8 +113,9 @@ export function Sidebar() {
           <Link href="/settings/" className="flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left transition-colors hover:bg-accent/60" aria-label={es ? "Abrir configuración de la cuenta" : "Open account settings"}>
             <InitialAvatar name={personName} className="size-9 text-xs" />
             <span className="min-w-0 flex-1"><span className="block truncate text-sm font-medium text-foreground">{personName}</span><span className="block truncate text-xs text-muted-foreground">{personRole}</span></span>
-            <ChevronsUpDown className="size-4 text-muted-foreground" />
+            <Settings className="size-4 text-muted-foreground" />
           </Link>
+          <AccountSignOutButton className="mt-1 justify-start border-transparent bg-transparent px-2 hover:border-border" />
           <div className="mt-1 flex w-full items-center gap-3 rounded-lg border border-border bg-card px-2 py-2 text-left">
             <span className="grid size-9 shrink-0 place-items-center rounded-md bg-primary text-[0.6rem] font-bold tracking-wide text-primary-foreground">{institutionInitials}</span>
             <span className="min-w-0 flex-1"><span className="block truncate text-sm font-medium text-foreground">{institutionName}</span><span className="block truncate text-xs text-muted-foreground">{isLive ? (es ? "Espacio institucional activo" : "Active institution workspace") : (es ? "Un solo espacio institucional" : "Single institution workspace")}</span></span>
