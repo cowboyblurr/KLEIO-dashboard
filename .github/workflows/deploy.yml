@@ -83,6 +83,7 @@ jobs:
           echo "Checking profile and entity exports..."
           test -f out/demo/index.html
           test -f out/artists/index.html
+          test -f out/artists/applicants/index.html
           test -f out/artists/amina-el-badri/index.html
           test -f out/artist/amina-el-badri/index.html
           test -f out/institution/kleio-arthouse/index.html
