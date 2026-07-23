@@ -8,11 +8,11 @@ export function AuthorizedArtistOpportunityDirectory() {
   const rootRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    const root = rootRef.current
-    if (!root) return
+    const rootElement = rootRef.current
+    if (!rootElement) return
 
     function enforceAuthorizedEntryPoints() {
-      for (const button of root.querySelectorAll("button")) {
+      for (const button of rootElement.querySelectorAll("button")) {
         if (button.textContent?.trim() === "Message institution") {
           button.disabled = true
           button.hidden = true
@@ -24,7 +24,7 @@ export function AuthorizedArtistOpportunityDirectory() {
 
     enforceAuthorizedEntryPoints()
     const observer = new MutationObserver(enforceAuthorizedEntryPoints)
-    observer.observe(root, { childList: true, subtree: true })
+    observer.observe(rootElement, { childList: true, subtree: true })
     return () => observer.disconnect()
   }, [])
 
