@@ -29,14 +29,14 @@ export function AuthorizedArtistOpportunityDirectory() {
   }, [])
 
   return (
-    <div ref={rootRef} className="h-full">
-      <div className="mx-auto max-w-[1180px] px-4 pt-4 sm:px-6">
+    <div ref={rootRef} className="flex h-full min-h-0 flex-col">
+      <div className="mx-auto w-full max-w-[1180px] shrink-0 px-4 pt-4 sm:px-6">
         <div className="flex items-start gap-2 rounded-xl border border-[#E7E1F7] bg-[#FDFBFF] px-4 py-3 text-xs leading-5 text-[#625C70]">
           <ShieldCheck className="mt-0.5 size-4 shrink-0 text-[#6A5896]" />
           <p><strong className="text-[#292631]">Messaging boundary:</strong> artists may reply after an institution invitation or continue a conversation connected to a submitted application. Opportunity listings do not open unsolicited institution conversations.</p>
         </div>
       </div>
-      <div className="h-[calc(100%-5rem)]">
+      <div className="min-h-0 flex-1">
         <LiveGlobalArtistOpportunitiesWithImages />
       </div>
     </div>
