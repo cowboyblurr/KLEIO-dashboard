@@ -92,34 +92,34 @@ export function Sidebar() {
         </nav>
         <AccountSignOutButton compact className="border-border bg-card shadow-sm" />
       </div>
-      <aside className="hidden h-full w-64 shrink-0 flex-col border-r border-border bg-sidebar md:flex">
-        <div className="flex items-center px-6 pb-5 pt-6"><KleioWordmarkLink href="/" className="rounded-md bg-white px-2.5 py-1.5 shadow-sm ring-1 ring-border" /></div>
-        <nav className="flex-1 overflow-y-auto px-3 pb-4">
+      <aside className="hidden h-full w-[228px] shrink-0 flex-col border-r border-border bg-sidebar md:flex">
+        <div className="flex items-center px-5 pb-4 pt-5"><KleioWordmarkLink href="/" className="rounded-md bg-white px-2 py-1 shadow-sm ring-1 ring-border" /></div>
+        <nav className="flex-1 overflow-y-auto px-2.5 pb-3">
           {navSections.map((section) => (
-            <div key={section.heading} className="mb-5">
-              <p className="px-3 pb-2 text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground/80">{sectionLabel(section.heading, locale, t)}</p>
+            <div key={section.heading} className="mb-4">
+              <p className="px-2.5 pb-1.5 text-[0.61rem] font-semibold uppercase tracking-[0.15em] text-muted-foreground/80">{sectionLabel(section.heading, locale, t)}</p>
               <ul className="space-y-0.5">
                 {section.items.map((item) => {
                   const active = pathname === item.href
                   const Icon = item.icon
                   const label = itemLabel(item.href, item.label, locale, t)
-                  return <li key={item.href}><Link href={item.href} onClick={isLive ? undefined : openPageGuide} aria-current={active ? "page" : undefined} className={cn("group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors", active ? "bg-sidebar-accent text-sidebar-accent-foreground" : "text-foreground/70 hover:bg-accent/60 hover:text-foreground")}><Icon className={cn("size-4 shrink-0", active ? "text-primary" : "text-muted-foreground")} /><span className="flex-1">{label}</span>{item.badge != null && !isLive && <span className={cn("rounded-full px-1.5 py-0.5 text-[0.65rem] font-semibold tabular-nums", active ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground")}>{item.badge}</span>}</Link></li>
+                  return <li key={item.href}><Link href={item.href} onClick={isLive ? undefined : openPageGuide} aria-current={active ? "page" : undefined} className={cn("group flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-[0.82rem] font-medium transition-colors", active ? "bg-sidebar-accent text-sidebar-accent-foreground" : "text-foreground/70 hover:bg-accent/60 hover:text-foreground")}><Icon className={cn("size-3.5 shrink-0", active ? "text-primary" : "text-muted-foreground")} /><span className="flex-1">{label}</span>{item.badge != null && !isLive && <span className={cn("rounded-full px-1.5 py-0.5 text-[0.6rem] font-semibold tabular-nums", active ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground")}>{item.badge}</span>}</Link></li>
                 })}
               </ul>
             </div>
           ))}
         </nav>
-        <div className="border-t border-border p-3">
-          <Link href="/settings/" className="flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left transition-colors hover:bg-accent/60" aria-label={es ? "Abrir configuración de la cuenta" : "Open account settings"}>
-            <InitialAvatar name={personName} className="size-9 text-xs" />
-            <span className="min-w-0 flex-1"><span className="block truncate text-sm font-medium text-foreground">{personName}</span><span className="block truncate text-xs text-muted-foreground">{personRole}</span></span>
-            <Settings className="size-4 text-muted-foreground" />
+        <div className="border-t border-border p-2.5">
+          <Link href="/settings/" className="flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-accent/60" aria-label={es ? "Abrir configuración de la cuenta" : "Open account settings"}>
+            <InitialAvatar name={personName} className="size-8 text-[0.68rem]" />
+            <span className="min-w-0 flex-1"><span className="block truncate text-[0.82rem] font-medium text-foreground">{personName}</span><span className="block truncate text-[0.7rem] text-muted-foreground">{personRole}</span></span>
+            <Settings className="size-3.5 text-muted-foreground" />
           </Link>
-          <AccountSignOutButton className="mt-1 justify-start border-transparent bg-transparent px-2 hover:border-border" />
-          <div className="mt-1 flex w-full items-center gap-3 rounded-lg border border-border bg-card px-2 py-2 text-left">
-            <span className="grid size-9 shrink-0 place-items-center rounded-md bg-primary text-[0.6rem] font-bold tracking-wide text-primary-foreground">{institutionInitials}</span>
-            <span className="min-w-0 flex-1"><span className="block truncate text-sm font-medium text-foreground">{institutionName}</span><span className="block truncate text-xs text-muted-foreground">{isLive ? (es ? "Espacio institucional activo" : "Active institution workspace") : (es ? "Un solo espacio institucional" : "Single institution workspace")}</span></span>
-            {!isLive && <span className="rounded-full bg-muted px-2 py-0.5 text-[0.55rem] font-semibold uppercase tracking-wide text-muted-foreground">{es ? "Pronto" : "Soon"}</span>}
+          <AccountSignOutButton className="mt-0.5 justify-start border-transparent bg-transparent px-2 hover:border-border" />
+          <div className="mt-1 flex w-full items-center gap-2.5 rounded-lg border border-border bg-card px-2 py-1.5 text-left">
+            <span className="grid size-8 shrink-0 place-items-center rounded-md bg-primary text-[0.56rem] font-bold tracking-wide text-primary-foreground">{institutionInitials}</span>
+            <span className="min-w-0 flex-1"><span className="block truncate text-[0.82rem] font-medium text-foreground">{institutionName}</span><span className="block truncate text-[0.68rem] text-muted-foreground">{isLive ? (es ? "Espacio institucional activo" : "Active institution workspace") : (es ? "Un solo espacio institucional" : "Single institution workspace")}</span></span>
+            {!isLive && <span className="rounded-full bg-muted px-1.5 py-0.5 text-[0.52rem] font-semibold uppercase tracking-wide text-muted-foreground">{es ? "Pronto" : "Soon"}</span>}
           </div>
         </div>
       </aside>
