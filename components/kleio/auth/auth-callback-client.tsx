@@ -8,6 +8,7 @@ import { Loader2, MailCheck, TriangleAlert } from "lucide-react"
 import { clearDemoSession, getDashboardForRole } from "@/lib/kleio-demo-auth"
 import { getKleioAuthErrorMessage } from "@/lib/kleio-auth"
 import { resumePendingKleioOnboarding } from "@/lib/kleio-live-onboarding"
+import { finalizePendingArtistProfileImage } from "@/lib/kleio-pending-profile-image"
 import { setKleioMode } from "@/lib/kleio-mode"
 import {
   getSupabaseBrowserClient,
@@ -60,6 +61,16 @@ export function AuthCallbackClient() {
         const expectedRole = requestedRole === "artist" || requestedRole === "institution" ? requestedRole : undefined
         await resumePendingKleioOnboarding(expectedRole)
 
+        let profilePhotoNeedsAttention = false
+        if (expectedRole === "artist") {
+          try {
+            const photoResult = await finalizePendingArtistProfileImage({ retries: 6, delayMs: 500 })
+            profilePhotoNeedsAttention = photoResult.status === "email_mismatch" || photoResult.status === "not_ready"
+          } catch {
+            profilePhotoNeedsAttention = true
+          }
+        }
+
         const account = await loadKleioAccount()
         if (!account) throw new Error("KLEIO could not load the profile connected to this account.")
 
@@ -68,13 +79,19 @@ export function AuthCallbackClient() {
 
         const role = account.profile.role
         const destination =
-          !account.profile.onboarding_completed && SIGNUP_ROLES.has(role)
-            ? `/signup/${role}/`
-            : getDashboardForRole(role)
+          profilePhotoNeedsAttention && role === "artist" && account.profile.onboarding_completed
+            ? "/artist-dashboard/settings/"
+            : !account.profile.onboarding_completed && SIGNUP_ROLES.has(role)
+              ? `/signup/${role}/`
+              : getDashboardForRole(role)
 
         if (!active) return
-        setMessage("Email confirmed. Opening your workspace…")
-        window.setTimeout(() => router.replace(destination), 250)
+        setMessage(
+          profilePhotoNeedsAttention
+            ? "Email confirmed. Your workspace is ready, but the selected profile photo needs to be added again in Settings."
+            : "Email confirmed. Opening your workspace…",
+        )
+        window.setTimeout(() => router.replace(destination), profilePhotoNeedsAttention ? 1400 : 250)
       } catch (error) {
         if (!active) return
         setStatus("error")
