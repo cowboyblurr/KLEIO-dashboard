@@ -1,12 +1,14 @@
 "use client"
 
 import Link from "next/link"
+import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { KleioWordmarkLink } from "@/components/kleio/kleio-wordmark-link"
 import { KleioDemoGuide } from "@/components/kleio/kleio-demo-guide"
 import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
 import { DemoEnvironmentBadge } from "@/components/kleio/demo-environment-badge"
 import { useKleioMode } from "@/components/kleio/use-kleio-mode"
+import { ArtistSignupProfilePhoto } from "@/components/kleio/signup/artist-signup-profile-photo"
 
 function cleanSignupLabel(label: string) {
   return label
@@ -19,6 +21,8 @@ function cleanSignupLabel(label: string) {
 export function SignupShell({ children, title, subtitle, stepLabel }: { children: React.ReactNode; title?: string; subtitle?: string; stepLabel?: string }) {
   const { t } = useKleioLocale()
   const { isDemo } = useKleioMode()
+  const pathname = usePathname()
+  const showArtistSignupPhoto = !isDemo && pathname.includes("/signup/artist")
 
   return (
     <div className="min-h-screen bg-[oklch(0.985_0.005_287)]">
@@ -43,6 +47,7 @@ export function SignupShell({ children, title, subtitle, stepLabel }: { children
             {subtitle && <p className="mt-2 max-w-xl text-sm leading-relaxed text-muted-foreground">{subtitle}</p>}
           </div>
         )}
+        {showArtistSignupPhoto && <ArtistSignupProfilePhoto />}
         {children}
       </main>
       {isDemo && <KleioDemoGuide variant="workspace" />}
