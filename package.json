@@ -9,7 +9,8 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "audit:navigation": "node scripts/audit-navigation.mjs",
-    "audit:user-copy": "node scripts/audit-user-facing-copy.mjs"
+    "audit:user-copy": "node scripts/audit-user-facing-copy.mjs",
+    "audit:auth-redirect": "node scripts/audit-auth-redirect.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.5.0",
