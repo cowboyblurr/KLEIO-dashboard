@@ -4,26 +4,43 @@ import { useState } from "react"
 import { ShieldCheck } from "lucide-react"
 import { SignupField, SignupShell, SignupStepCard, SignupTextArea } from "@/components/kleio/signup/signup-shell"
 import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
+import { collaborators, DEMO_ARTIST_ID, getArtistById, institution } from "@/lib/kleio-data"
 
 const inputClassName = "h-10 w-full rounded-xl border border-border bg-background px-3 text-sm text-foreground outline-none transition-colors focus:border-primary/40"
+const demoArtist = getArtistById(DEMO_ARTIST_ID)
+const demoInstitutionLead = collaborators.find((person) => person.role === "Program Director")
 
 export function GuidedSignupForm({ role }: { role: "artist" | "institution" }) {
   const { locale } = useKleioLocale()
   const es = locale === "es"
   const artist = role === "artist"
 
-  const [displayName, setDisplayName] = useState(artist ? "Jordan Ellis" : "Maya Chen")
-  const [email, setEmail] = useState(artist ? "artist.preview@kleio.demo" : "institution.preview@kleio.demo")
-  const [location, setLocation] = useState(artist ? "Atlanta, Georgia" : "Chicago, Illinois")
-  const [website, setWebsite] = useState(artist ? "https://portfolio.example" : "https://northlight.example")
-  const [discipline, setDiscipline] = useState("Mixed-media installation")
-  const [mediums, setMediums] = useState("Installation, sculpture, sound")
-  const [shortBio, setShortBio] = useState("An interdisciplinary artist exploring memory, migration, and the materials people carry between places.")
-  const [artistStatement, setArtistStatement] = useState("My practice combines found objects, sound, and spatial storytelling to examine how personal histories become shared environments.")
-  const [institutionName, setInstitutionName] = useState("Northlight Arts Foundation")
-  const [institutionType, setInstitutionType] = useState("arts_nonprofit")
-  const [publicDescription, setPublicDescription] = useState("A synthetic nonprofit arts organization used only to demonstrate KLEIO institution workflows.")
-  const [missionStatement, setMissionStatement] = useState("Support artists through clear opportunities, thoughtful review, and transparent program administration.")
+  const [displayName, setDisplayName] = useState(
+    artist ? demoArtist?.name ?? "Amina El Badri" : demoInstitutionLead?.name ?? institution.primaryUser,
+  )
+  const [email, setEmail] = useState(artist ? "artist@kleio.demo" : "institution@kleio.demo")
+  const [location, setLocation] = useState(artist ? demoArtist?.location ?? "Cairo, Egypt" : institution.location)
+  const [website, setWebsite] = useState(
+    artist ? `https://${demoArtist?.website ?? "aminaelbadri.com"}` : "https://kleioarthouse.demo",
+  )
+  const [discipline, setDiscipline] = useState(demoArtist?.discipline ?? "Visual Artist")
+  const [mediums, setMediums] = useState(
+    demoArtist?.methods?.join(", ") ?? "Installation, fabric, light, sound, archival materials",
+  )
+  const [shortBio, setShortBio] = useState(
+    demoArtist?.bio ??
+      "Amina builds immersive environments from fabric, sound, archival fragments, and light, creating spaces where collective memory becomes tangible.",
+  )
+  const [artistStatement, setArtistStatement] = useState(
+    demoArtist?.statement ??
+      "My work explores the relationship between memory, space, and visibility through minimal forms and subtle light.",
+  )
+  const [institutionName, setInstitutionName] = useState(institution.name)
+  const [institutionType, setInstitutionType] = useState("arthouse")
+  const [publicDescription, setPublicDescription] = useState(institution.description)
+  const [missionStatement, setMissionStatement] = useState(
+    "Support artists through clear opportunities, thoughtful review, transparent decisions, and preserved institutional history.",
+  )
 
   const title = artist
     ? (es ? "Vista previa de configuración del artista" : "Preview the artist setup")
@@ -68,6 +85,7 @@ export function GuidedSignupForm({ role }: { role: "artist" | "institution" }) {
               <label className="block">
                 <span className="mb-1.5 block text-xs font-medium text-muted-foreground">{es ? "Tipo de institución" : "Institution type"}</span>
                 <select value={institutionType} onChange={(event) => setInstitutionType(event.target.value)} className={inputClassName}>
+                  <option value="arthouse">{es ? "Casa de arte / organización cultural" : "Arthouse / cultural organization"}</option>
                   <option value="arts_nonprofit">{es ? "Organización artística sin fines de lucro" : "Arts nonprofit"}</option>
                   <option value="museum">{es ? "Museo" : "Museum"}</option>
                   <option value="gallery">{es ? "Galería" : "Gallery"}</option>
