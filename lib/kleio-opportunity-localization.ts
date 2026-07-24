@@ -26,12 +26,6 @@ export type LocalizedOpportunityItem = OpportunityDirectoryItem & {
   original_description?: string
 }
 
-function languageName(code: string, locale: "en" | "es") {
-  if (code === "es") return locale === "es" ? "español" : "Spanish"
-  if (code === "en") return locale === "es" ? "inglés" : "English"
-  return locale === "es" ? "el idioma original" : "the original language"
-}
-
 function localizedRequirements(requirements: OpportunityRequirement[], translation: OpportunityTranslationRecord) {
   return requirements.map((requirement) => {
     const translated = translation.requirement_translations?.[requirement.id] || translation.requirement_translations?.[requirement.material_key]
@@ -48,42 +42,32 @@ export function localizeOpportunity(
   if (sourceLanguage === locale || sourceLanguage === "und") return { ...item, source_language: sourceLanguage, translation_locale: null }
 
   const translation = translations.find((record) => record.opportunity_id === item.id && record.locale === locale)
-  const sourceName = languageName(sourceLanguage, locale)
   if (!translation) {
-    const notice = locale === "es"
-      ? `Traducción no disponible. Se muestra el contenido original en ${sourceName}.`
-      : `Translation unavailable. Original ${sourceName} content is shown.`
     return {
       ...item,
       source_language: sourceLanguage,
       translation_locale: null,
-      translation_notice: notice,
+      translation_notice: locale === "es" ? "Texto original" : "Original text",
       translation_complete: false,
-      summary: `${notice}\n\n${item.summary}`,
-      description: `${notice}\n\n${item.description}`,
     }
   }
 
-  const notice = locale === "es"
-    ? `Traducción al español de contenido originalmente publicado en ${sourceName}. Consulta el texto original a continuación.`
-    : `English translation of content originally published in ${sourceName}. Original text is included below.`
+  const translatedTitle = translation.title.trim()
+  const translatedSummary = translation.summary.trim()
   const translatedDescription = translation.description.trim()
-  const description = translatedDescription
-    ? `${notice}\n\n${translatedDescription}\n\n${locale === "es" ? "Texto original" : "Original text"}:\n${item.description}`
-    : `${notice}\n\n${locale === "es" ? "La descripción completa no está traducida; se muestra el texto original." : "The full description is not translated; the original text is shown."}\n\n${item.description}`
 
   return {
     ...item,
     source_language: sourceLanguage,
     translation_locale: locale,
-    translation_notice: notice,
-    translation_complete: Boolean(translation.title.trim() && translation.summary.trim() && translatedDescription),
+    translation_notice: locale === "es" ? "Traducido del texto original" : "Translated from original text",
+    translation_complete: Boolean(translatedTitle && translatedSummary && translatedDescription),
     original_title: item.title,
     original_summary: item.summary,
     original_description: item.description,
-    title: translation.title.trim() || item.title,
-    summary: `${notice}\n\n${translation.summary.trim() || item.summary}`,
-    description,
+    title: translatedTitle || item.title,
+    summary: translatedSummary || item.summary,
+    description: translatedDescription || item.description,
     required_materials: translation.required_materials?.length ? translation.required_materials : item.required_materials,
     requirements: localizedRequirements(item.requirements, translation),
   }
