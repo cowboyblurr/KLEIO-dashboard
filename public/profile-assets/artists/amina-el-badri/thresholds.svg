@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1200" role="img" aria-labelledby="title desc">
+  <title id="title">Thresholds</title>
+  <desc id="desc">A synthetic site-responsive installation artwork for Amina El Badri's guided demo profile.</desc>
+  <defs>
+    <linearGradient id="room" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#eee9ef"/><stop offset=".62" stop-color="#d8d0d7"/><stop offset="1" stop-color="#a99aa3"/></linearGradient>
+    <linearGradient id="panelA" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fffaf0" stop-opacity=".85"/><stop offset=".45" stop-color="#d7c0b8" stop-opacity=".48"/><stop offset="1" stop-color="#6d526b" stop-opacity=".18"/></linearGradient>
+    <linearGradient id="panelB" x1="1" y1="0" x2="0" y2="1"><stop stop-color="#f8f1ff" stop-opacity=".82"/><stop offset=".5" stop-color="#b8a5c9" stop-opacity=".42"/><stop offset="1" stop-color="#5d4b67" stop-opacity=".16"/></linearGradient>
+    <radialGradient id="light" cx="43%" cy="38%" r="56%"><stop stop-color="#fffdf4" stop-opacity=".96"/><stop offset=".45" stop-color="#fff5dd" stop-opacity=".38"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
+    <filter id="shadow"><feGaussianBlur stdDeviation="22"/></filter>
+    <filter id="grain"><feTurbulence type="fractalNoise" baseFrequency=".8" numOctaves="2" seed="14"/><feColorMatrix type="saturate" values="0"/><feComponentTransfer><feFuncA type="table" tableValues="0 .07"/></feComponentTransfer></filter>
+  </defs>
+  <rect width="1600" height="1200" fill="url(#room)"/>
+  <path d="M0 0h1600v188L0 492z" fill="#faf8fa" opacity=".78"/>
+  <path d="M0 810l1600-210v600H0z" fill="#c6bac1"/>
+  <ellipse cx="700" cy="470" rx="600" ry="430" fill="url(#light)"/>
+  <g opacity=".38" filter="url(#shadow)" fill="#4f3d4e">
+    <path d="M340 190h240l115 760-270 35z"/>
+    <path d="M690 105h218l28 785-240 18z"/>
+    <path d="M995 160h260l-130 752-250-6z"/>
+  </g>
+  <g stroke="#fff" stroke-opacity=".62" stroke-width="4">
+    <path d="M300 120h255l95 800-285 40z" fill="url(#panelA)"/>
+    <path d="M650 72h248l10 820-250 17z" fill="url(#panelB)"/>
+    <path d="M965 126h290l-118 790-270-9z" fill="url(#panelA)"/>
+  </g>
+  <g fill="none" stroke="#8d748d" stroke-opacity=".34" stroke-width="2">
+    <path d="M355 210l225 618"/><path d="M420 165l145 714"/><path d="M738 140l91 674"/><path d="M1032 210l89 620"/><path d="M1170 180l-82 690"/>
+  </g>
+  <g transform="translate(765 706)" fill="#39303b" opacity=".78">
+    <ellipse cx="54" cy="240" rx="76" ry="18" opacity=".32"/>
+    <circle cx="54" cy="42" r="24"/>
+    <path d="M33 68c-17 48-20 112-15 184h72c4-73 0-139-17-184z"/>
+  </g>
+  <rect width="1600" height="1200" filter="url(#grain)" opacity=".65"/>
+</svg>
