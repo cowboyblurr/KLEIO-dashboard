@@ -130,13 +130,91 @@ update("components/kleio/live-global-artist-opportunities-with-images.tsx", (sou
   return next
 })
 
-write("scripts/audit-guidance-hierarchy.mjs", `import fs from "node:fs"\nimport path from "node:path"\n\nconst roots = ["app", "components"]\nconst files = []\n\nfunction walk(directory) {\n  if (!fs.existsSync(directory)) return\n  for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {\n    const target = path.join(directory, entry.name)\n    if (entry.isDirectory()) walk(target)\n    else if (/\\.(tsx|ts|jsx|js)$/.test(entry.name)) files.push(target)\n  }\n}\n\nfor (const root of roots) walk(root)\n\nconst failures = []\nconst bannedCopy = ["Worldwide discovery:", "Translation protocol:", "Messaging boundary:"]\n\nfor (const file of files) {\n  const source = fs.readFileSync(file, "utf8")\n  for (const phrase of bannedCopy) {\n    if (source.includes(phrase)) failures.push(\`${file}: warning-style policy block returned: ${phrase}\`)\n  }\n  if (source.includes("<AlertCircle") && (source.includes('"Current priority"') || source.includes('"Cycle priority"'))) {\n    failures.push(\`${file}: ordinary workflow focus is still paired with alert iconography\`)\n  }\n}\n\nconst required = fs.readFileSync("components/kleio/guidance-system.tsx", "utf8")\nfor (const component of ["InlineHelper", "TrustIndicator", "FocusLabel", "ExpandableInfo", "FirstUseHint"]) {\n  if (!required.includes(\`export function ${component}\`)) failures.push(\`guidance-system.tsx: missing ${component}\`)\n}\n\nif (failures.length) {\n  console.error("KLEIO guidance hierarchy audit failed:\\n" + failures.map((failure) => \`- ${failure}\`).join("\\n"))\n  process.exit(1)\n}\n\nconsole.log(\`KLEIO guidance hierarchy audit passed across ${files.length} source files.\`)\n`)
+const auditSource = `import fs from "node:fs"
+import path from "node:path"
+
+const roots = ["app", "components"]
+const files = []
+
+function walk(directory) {
+  if (!fs.existsSync(directory)) return
+  for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+    const target = path.join(directory, entry.name)
+    if (entry.isDirectory()) walk(target)
+    else if (/\\.(tsx|ts|jsx|js)$/.test(entry.name)) files.push(target)
+  }
+}
+
+for (const root of roots) walk(root)
+
+const failures = []
+const bannedCopy = ["Worldwide discovery:", "Translation protocol:", "Messaging boundary:"]
+
+for (const file of files) {
+  const source = fs.readFileSync(file, "utf8")
+  for (const phrase of bannedCopy) {
+    if (source.includes(phrase)) failures.push(file + ": warning-style policy block returned: " + phrase)
+  }
+  if (source.includes("<AlertCircle") && (source.includes('"Current priority"') || source.includes('"Cycle priority"'))) {
+    failures.push(file + ": ordinary workflow focus is still paired with alert iconography")
+  }
+}
+
+const required = fs.readFileSync("components/kleio/guidance-system.tsx", "utf8")
+for (const component of ["InlineHelper", "TrustIndicator", "FocusLabel", "ExpandableInfo", "FirstUseHint"]) {
+  if (!required.includes("export function " + component)) failures.push("guidance-system.tsx: missing " + component)
+}
+
+if (failures.length) {
+  console.error("KLEIO guidance hierarchy audit failed:\\n" + failures.map((failure) => "- " + failure).join("\\n"))
+  process.exit(1)
+}
+
+console.log("KLEIO guidance hierarchy audit passed across " + files.length + " source files.")
+`
+
+write("scripts/audit-guidance-hierarchy.mjs", auditSource)
 
 const packageJson = JSON.parse(read("package.json"))
 packageJson.scripts["audit:guidance"] = "node scripts/audit-guidance-hierarchy.mjs"
 write("package.json", JSON.stringify(packageJson, null, 2) + "\n")
 
-write("docs/guidance-system-2026-07-24.md", `# KLEIO contextual guidance system\n\nImplemented July 24, 2026.\n\n## Product rule\n\nThe task appears first. Guidance supports the task where it becomes relevant. Large bordered notices are reserved for real errors, destructive consequences, privacy consequences, submission consequences, and confirmed eligibility conflicts.\n\n## Shared patterns\n\n- **InlineHelper** — concise field and control guidance.\n- **TrustIndicator** — low-weight source, privacy, approval, and authority signals.\n- **FocusLabel** — calm workflow emphasis without alert iconography.\n- **ExpandableInfo** — detailed methodology, policy, and educational content collapsed by default.\n- **FirstUseHint** — dismissible first-use guidance with reduced-motion support and persistent dismissal.\n\n## Implemented surfaces\n\n- Opportunity discovery: removed the three warning-like worldwide, translation, and messaging cards. The search task now appears first; trust indicators and detailed policy live inside a compact disclosure.\n- Natural-language search: interpreted criteria remain visible without a full bordered notice. Exact, partial, and zero-result messages now reflect their actual severity.\n- Guided onboarding: synthetic-data context now appears after the first usable fields as a dismissible first-use hint.\n- Artist dashboard: ordinary workflow priority is now framed as the next focus; missing Passport items use neutral markers rather than exclamation symbols.\n- Institution dashboards: cycle priorities are framed as focus, while true errors and actual follow-up counts retain stronger treatment.\n\n## Motion and accessibility\n\n- Expandable details use a short fade and upward transition.\n- Dismissible first-use guidance uses a 200 ms fade/collapse.\n- Motion is disabled when the user requests reduced motion.\n- Ordinary guidance does not use alert semantics.\n- Error treatment and role=alert remain reserved for actual failures.\n\n## Enforcement\n\nRun \`pnpm audit:guidance\`. The audit prevents the removed policy-card copy and alert-framed workflow-priority pattern from returning.\n`)
+write("docs/guidance-system-2026-07-24.md", `# KLEIO contextual guidance system
+
+Implemented July 24, 2026.
+
+## Product rule
+
+The task appears first. Guidance supports the task where it becomes relevant. Large bordered notices are reserved for real errors, destructive consequences, privacy consequences, submission consequences, and confirmed eligibility conflicts.
+
+## Shared patterns
+
+- **InlineHelper** — concise field and control guidance.
+- **TrustIndicator** — low-weight source, privacy, approval, and authority signals.
+- **FocusLabel** — calm workflow emphasis without alert iconography.
+- **ExpandableInfo** — detailed methodology, policy, and educational content collapsed by default.
+- **FirstUseHint** — dismissible first-use guidance with reduced-motion support and persistent dismissal.
+
+## Implemented surfaces
+
+- Opportunity discovery: removed the three warning-like worldwide, translation, and messaging cards. The search task now appears first; trust indicators and detailed policy live inside a compact disclosure.
+- Natural-language search: interpreted criteria remain visible without a full bordered notice. Exact, partial, and zero-result messages now reflect their actual severity.
+- Guided onboarding: synthetic-data context now appears after the first usable fields as a dismissible first-use hint.
+- Artist dashboard: ordinary workflow priority is now framed as the next focus; missing Passport items use neutral markers rather than exclamation symbols.
+- Institution dashboards: cycle priorities are framed as focus, while true errors and actual follow-up counts retain stronger treatment.
+
+## Motion and accessibility
+
+- Expandable details use a short fade and upward transition.
+- Dismissible first-use guidance uses a 200 ms fade/collapse.
+- Motion is disabled when the user requests reduced motion.
+- Ordinary guidance does not use alert semantics.
+- Error treatment and role=alert remain reserved for actual failures.
+
+## Enforcement
+
+Run \`pnpm audit:guidance\`. The audit prevents the removed policy-card copy and alert-framed workflow-priority pattern from returning.
+`)
 
 fs.rmSync(path.join(root, ".github/workflows/apply-guidance-redesign.yml"), { force: true })
 fs.rmSync(path.join(root, "scripts/apply-guidance-redesign.mjs"), { force: true })
