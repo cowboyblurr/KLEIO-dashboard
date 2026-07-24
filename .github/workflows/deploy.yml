@@ -172,7 +172,27 @@ jobs:
             fi
           }
 
+          check_client_bundle() {
+            route="$1"
+            required_one="$2"
+            required_two="$3"
+            forbidden="$4"
+            html="$(mktemp)"
+            bundle="$(mktemp)"
+            curl --silent --show-error --location --fail --max-time 30 "${SITE_URL}${route}?bundle_verification=${GITHUB_SHA}" > "$html"
+            grep -oE 'src="[^"]+\.js"' "$html" | cut -d'"' -f2 | sort -u | while read -r src; do
+              curl --silent --show-error --location --fail --max-time 30 "https://cowboyblurr.github.io${src}?bundle_verification=${GITHUB_SHA}" >> "$bundle"
+            done
+            grep -Fq "$required_one" "$bundle"
+            grep -Fq "$required_two" "$bundle"
+            if grep -Eq "$forbidden" "$bundle"; then
+              echo "Deprecated guidance treatment found in live client bundle."
+              exit 1
+            fi
+          }
+
           check_route "/" "Enter your KLEIO workspace" "institution@kleio\.demo|artist@kleio\.demo|Prototype · Synthetic data"
-          check_route "/signup/artist/" "Create your account and Creative Passport" "Prototype · Synthetic data"
-          check_route "/signup/institution/" "Create your institution account" "Prototype · Synthetic data"
+          check_route "/signup/artist/" "LiveSignup" "Prototype · Synthetic data"
+          check_route "/signup/institution/" "LiveSignup" "Prototype · Synthetic data"
           check_route "/auth/callback/" "Confirming your account" "localhost:3000"
+          check_client_bundle "/artist-dashboard/opportunities/" "How KLEIO works here" "Worldwide sourced search" "Translation protocol:|Messaging boundary:|Worldwide discovery:"
