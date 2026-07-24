@@ -127,13 +127,13 @@ function containsPhrase(text: string, phrase: string) {
 
 function detectAliases(text: string, definitions: AliasDefinition[]) {
   const matches: AliasDefinition[] = []
-  const consumed = new Set<string>()
+  let unconsumedText = ` ${text} `
   const ordered = [...definitions].sort((a, b) => Math.max(...b.aliases.map((alias) => alias.length)) - Math.max(...a.aliases.map((alias) => alias.length)))
   for (const definition of ordered) {
-    const alias = [...definition.aliases].sort((a, b) => b.length - a.length).find((candidate) => containsPhrase(text, candidate))
-    if (!alias || consumed.has(definition.value)) continue
+    const alias = [...definition.aliases].sort((a, b) => b.length - a.length).find((candidate) => containsPhrase(unconsumedText.trim(), candidate))
+    if (!alias) continue
     matches.push(definition)
-    consumed.add(definition.value)
+    unconsumedText = unconsumedText.replace(` ${normalize(alias)} `, " ").replace(/\s+/g, " ")
   }
   return matches
 }
