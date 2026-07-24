@@ -1,3 +1,5 @@
+const DEFAULT_PRODUCTION_SITE_URL = "https://cowboyblurr.github.io/KLEIO-dashboard"
+
 function normalizeBasePath(value: string) {
   const trimmed = value.trim()
   if (!trimmed || trimmed === "/") return ""
@@ -13,6 +15,15 @@ function ensurePath(value: string) {
   return `/${value.replace(/^\/+/, "")}`
 }
 
+function isLocalUrl(value: string) {
+  try {
+    const parsed = new URL(value)
+    return parsed.hostname === "localhost" || parsed.hostname === "127.0.0.1" || parsed.hostname === "::1"
+  } catch {
+    return false
+  }
+}
+
 export function getKleioSiteUrl() {
   const configuredSiteUrl = process.env.NEXT_PUBLIC_SITE_URL
   if (configuredSiteUrl?.trim()) return normalizeSiteUrl(configuredSiteUrl)
@@ -20,11 +31,16 @@ export function getKleioSiteUrl() {
   const basePath = normalizeBasePath(process.env.NEXT_PUBLIC_BASE_PATH ?? "")
   if (typeof window !== "undefined") return `${window.location.origin}${basePath}`
 
+  if (process.env.NODE_ENV === "production") return DEFAULT_PRODUCTION_SITE_URL
   return `http://localhost:3000${basePath}`
 }
 
 export function getKleioAbsoluteUrl(path = "/") {
-  return `${getKleioSiteUrl()}${ensurePath(path)}`
+  const absoluteUrl = `${getKleioSiteUrl()}${ensurePath(path)}`
+  if (process.env.NODE_ENV === "production" && isLocalUrl(absoluteUrl)) {
+    throw new Error("KLEIO refused to create a localhost URL in production.")
+  }
+  return absoluteUrl
 }
 
 export function getKleioAuthCallbackUrl(role?: "artist" | "institution") {
