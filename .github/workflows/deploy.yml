@@ -25,6 +25,8 @@ jobs:
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
+        with:
+          enablement: true
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -46,6 +48,13 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --no-frozen-lockfile
+
+      - name: Audit production auth redirects
+        env:
+          CI: "true"
+          NEXT_PUBLIC_BASE_PATH: /KLEIO-dashboard
+          NEXT_PUBLIC_SITE_URL: https://cowboyblurr.github.io/KLEIO-dashboard
+        run: pnpm run audit:auth-redirect
 
       - name: Build static site
         env:
@@ -129,3 +138,41 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+      - name: Verify live production routes
+        env:
+          SITE_URL: https://cowboyblurr.github.io/KLEIO-dashboard
+        run: |
+          set -euo pipefail
+          check_route() {
+            route="$1"
+            required="$2"
+            forbidden="${3:-}"
+            url="${SITE_URL}${route}?verification=${GITHUB_SHA}"
+            body="$(mktemp)"
+            success="false"
+            for attempt in $(seq 1 18); do
+              status="$(curl --silent --show-error --location --output "$body" --write-out '%{http_code}' --max-time 30 "$url" || true)"
+              if [ "$status" = "200" ] && grep -Fq "$required" "$body"; then
+                if [ -n "$forbidden" ] && grep -Eq "$forbidden" "$body"; then
+                  echo "Forbidden production marker found on ${route}."
+                  cat "$body"
+                  exit 1
+                fi
+                success="true"
+                break
+              fi
+              echo "Waiting for ${route} to serve the deployed export (attempt ${attempt}/18, HTTP ${status})..."
+              sleep 10
+            done
+            if [ "$success" != "true" ]; then
+              echo "Production verification failed for ${route}."
+              cat "$body"
+              exit 1
+            fi
+          }
+
+          check_route "/" "Enter your KLEIO workspace" "institution@kleio\.demo|artist@kleio\.demo|Prototype · Synthetic data"
+          check_route "/signup/artist/" "Create your account and Creative Passport" "Prototype · Synthetic data"
+          check_route "/signup/institution/" "Create your institution account" "Prototype · Synthetic data"
+          check_route "/auth/callback/" "Confirming your account" "localhost:3000"
