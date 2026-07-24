@@ -1,19 +1,49 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { ArrowLeft } from "lucide-react"
 import { persistDemoGuideState } from "@/components/kleio/use-demo-guide"
 import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
 import { useKleioMode } from "@/components/kleio/use-kleio-mode"
+import { getDemoSession } from "@/lib/kleio-demo-auth"
+
+const demoWorkspacePrefixes = [
+  "/artist-dashboard",
+  "/dashboard",
+  "/collaborator-dashboard",
+  "/programs",
+  "/submissions",
+  "/review-queue",
+  "/review-room",
+  "/shortlist",
+  "/committee",
+  "/reports",
+  "/messages",
+  "/artists",
+  "/activity-log",
+  "/templates",
+  "/settings",
+  "/artist",
+  "/institution",
+]
+
+function isDemoWorkspacePath(pathname: string) {
+  return demoWorkspacePrefixes.some((prefix) => pathname === prefix || pathname === `${prefix}/` || pathname.startsWith(`${prefix}/`))
+}
 
 export function DemoReturnControl() {
   const pathname = usePathname()
   const { locale } = useKleioLocale()
   const { isDemo, isResolved } = useKleioMode()
+  const [hasDemoSession, setHasDemoSession] = useState(false)
 
-  const isDemoHome = pathname === "/demo" || pathname === "/demo/"
-  if (!isResolved || !isDemo || isDemoHome) return null
+  useEffect(() => {
+    setHasDemoSession(Boolean(getDemoSession()))
+  }, [isDemo, pathname])
+
+  if (!isResolved || !isDemo || !hasDemoSession || !isDemoWorkspacePath(pathname)) return null
 
   function prepareDemoHome() {
     persistDemoGuideState({
