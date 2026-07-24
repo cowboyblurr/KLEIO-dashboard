@@ -1,0 +1,4 @@
+section > h3 + p.whitespace-pre-wrap::first-line {
+  color: #292631;
+  font-weight: 650;
+}

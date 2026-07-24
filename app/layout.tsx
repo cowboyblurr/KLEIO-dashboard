@@ -6,6 +6,7 @@ import { DemoReturnControl } from '@/components/kleio/demo-return-control'
 import { KleioLocaleProvider } from '@/components/kleio/kleio-locale-provider'
 import './globals.css'
 import './density.css'
+import './opportunity-translation.css'
 
 const geistSans = Geist({ variable: '--font-geist-sans', subsets: ['latin'] })
 const geistMono = Geist_Mono({
