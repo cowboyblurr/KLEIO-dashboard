@@ -23,16 +23,21 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+          run_install: false
+
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
           node-version: 22
-
-      - name: Enable pnpm
-        run: corepack enable
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --no-frozen-lockfile
 
       - name: Apply contextual guidance system
         run: node scripts/apply-guidance-redesign.mjs
@@ -44,6 +49,12 @@ jobs:
         run: pnpm lint
 
       - name: Verify production build
+        env:
+          GITHUB_ACTIONS: "true"
+          NEXT_PUBLIC_BASE_PATH: /KLEIO-dashboard
+          NEXT_PUBLIC_SITE_URL: https://cowboyblurr.github.io/KLEIO-dashboard
+          NEXT_PUBLIC_SUPABASE_URL: https://trekynurdgxgtaaqqtyq.supabase.co
+          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_XdYXvd0fQm3IJKxNrFXgUQ_M4RgDj1M
         run: pnpm build
 
       - name: Verify navigation
@@ -53,6 +64,10 @@ jobs:
         run: pnpm audit:user-copy
 
       - name: Verify authentication redirects
+        env:
+          CI: "true"
+          NEXT_PUBLIC_BASE_PATH: /KLEIO-dashboard
+          NEXT_PUBLIC_SITE_URL: https://cowboyblurr.github.io/KLEIO-dashboard
         run: pnpm audit:auth-redirect
 
       - name: Verify guidance hierarchy
