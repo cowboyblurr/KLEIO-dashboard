@@ -20,6 +20,7 @@ import {
   type OpenCallRecord,
 } from "@/lib/kleio-live-data"
 import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
+import { FocusLabel } from "@/components/kleio/guidance-system"
 
 const surface = "rounded-[1.1rem] border border-[#E7E1F7] bg-white shadow-[0_12px_34px_rgba(82,64,130,0.045)]"
 
@@ -181,10 +182,7 @@ export function LiveInstitutionOverview() {
         <section className="mt-4 overflow-hidden rounded-[1.1rem] border border-[#E7E1F7] bg-[linear-gradient(135deg,#F8F5FF_0%,#FFFFFF_70%)] p-4 shadow-[0_14px_38px_rgba(82,64,130,0.055)] md:p-5">
           <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_20rem] xl:items-center">
             <div className="max-w-3xl">
-              <div className="inline-flex items-center gap-1.5 rounded-full bg-white px-2.5 py-1 text-[0.6rem] font-semibold uppercase tracking-[0.13em] text-[#5B4B8A] shadow-sm">
-                <AlertCircle className="size-3" />
-                {locale === "es" ? "Prioridad actual" : "Current priority"}
-              </div>
+              <FocusLabel>{locale === "es" ? "Siguiente enfoque" : "Next focus"}</FocusLabel>
               <h2 className="mt-3 max-w-2xl font-serif text-xl font-semibold tracking-tight text-[#292631] md:text-2xl">{primaryTitle}</h2>
               <p className="mt-1.5 max-w-2xl text-[0.82rem] leading-relaxed text-[#6F6882]">{primaryBody}</p>
               <Link href={primaryHref} className="mt-4 inline-flex h-9 items-center rounded-lg bg-[#5B4B8A] px-3.5 text-xs font-semibold text-white transition-opacity hover:opacity-90">{primaryAction}</Link>

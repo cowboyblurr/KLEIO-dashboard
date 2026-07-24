@@ -17,6 +17,7 @@ import {
   XCircle,
 } from "lucide-react"
 import { WorkspacePageHeader } from "@/components/kleio/workspace-page-header"
+import { ExpandableInfo, InlineHelper, TrustIndicator } from "@/components/kleio/guidance-system"
 import { OpportunityPreviewImage } from "@/components/kleio/opportunity-preview-image"
 import {
   evaluateOpportunity,
@@ -62,7 +63,7 @@ function LiveShell({ children }: { children: React.ReactNode }) {
 }
 
 function StateNotice({ loading, error }: { loading: boolean; error: string }) {
-  if (loading) return <div className={`${card} flex items-center gap-2 text-sm text-muted-foreground`}><Loader2 className="size-4 animate-spin" />Searching sourced opportunity records…</div>
+  if (loading) return <p className="flex items-center gap-2 px-1 text-sm text-muted-foreground"><Loader2 className="size-4 animate-spin" />Searching sourced opportunity records…</p>
   if (error) return <div role="alert" className={`${card} border-red-200 text-sm text-red-700`}>{error}</div>
   return null
 }
@@ -193,12 +194,11 @@ function broaderQuery(intent: OpportunitySearchIntent, omit: "location" | "disci
 
 function ResultSummary({ mode, intent, count }: { mode: ResultMode; intent: OpportunitySearchIntent; count: number }) {
   if (!intent.rawQuery.trim()) return null
-  if (mode === "exact") return <div aria-live="polite" className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800"><strong>{count} exact database match{count === 1 ? "" : "es"}.</strong> Every displayed record matches the interpreted search criteria that KLEIO could verify from structured source data.</div>
-  if (mode === "partial") return <div aria-live="polite" className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-relaxed text-amber-900"><strong>No exact verified match is currently available.</strong> KLEIO is showing broader sourced results. Each card states which part of the request does not match.</div>
-  if (mode === "none") return <div aria-live="polite" className="rounded-xl border border-[#E7E1F7] bg-[#FDFBFF] px-4 py-4 text-sm leading-relaxed text-[#625C70]"><strong className="text-[#292631]">Your request was understood, but KLEIO found no verified matching record.</strong><p className="mt-1">No opportunity has been created or inferred from your wording. Try broadening one part of the search, or return later as verified source coverage expands.</p></div>
+  if (mode === "exact") return <p aria-live="polite" className="px-1 text-sm text-emerald-700"><strong>{count} exact database match{count === 1 ? "" : "es"}.</strong> Every displayed record matches the interpreted criteria KLEIO could verify.</p>
+  if (mode === "partial") return <div aria-live="polite" className="border-l-2 border-amber-200 pl-3 text-sm leading-relaxed text-amber-900"><strong>No exact verified match is currently available.</strong> Broader sourced results are labeled with the part of your request they do not match.</div>
+  if (mode === "none") return <div aria-live="polite" className="border-l-2 border-[#D8D0F2] pl-3 text-sm leading-relaxed text-[#625C70]"><strong className="text-[#292631]">Your request was understood, but KLEIO found no verified matching record.</strong><p className="mt-1">No opportunity was created or inferred from your wording. Broaden one part of the search or return as verified coverage expands.</p></div>
   return null
 }
-
 export function LiveGlobalArtistOpportunitiesWithImages() {
   const router = useRouter()
   const requestIdRef = useRef(0)
@@ -326,15 +326,28 @@ export function LiveGlobalArtistOpportunitiesWithImages() {
       </div>
     </section>
 
-    {intent.hasStructuredIntent && <section className="rounded-xl border border-[#D8D0F2] bg-[#FDFBFF] px-4 py-3" aria-label="Interpreted search filters">
+    {intent.hasStructuredIntent && <section className="px-1" aria-label="Interpreted search filters">
       <div className="flex flex-wrap items-center gap-2">
-        <p className="mr-1 text-xs font-semibold uppercase tracking-wide text-[#625C70]">KLEIO understood</p>
-        {intent.chips.map((item) => <span key={item.key} className="rounded-full border border-[#D8D0F2] bg-white px-3 py-1 text-xs font-semibold text-[#5B4B8A]">{item.label}</span>)}
+        <p className="mr-1 text-[0.68rem] font-semibold uppercase tracking-wide text-[#625C70]">KLEIO understood</p>
+        {intent.chips.map((item) => <span key={item.key} className="rounded-full bg-[#F7F4FF] px-2.5 py-1 text-xs font-semibold text-[#5B4B8A]">{item.label}</span>)}
       </div>
-      <p className="mt-2 text-xs leading-relaxed text-muted-foreground">These criteria are inferred from your wording. The dropdowns above can further refine or override the interpreted type, source, format, and fee filters.</p>
+      <InlineHelper className="mt-2">These criteria come from your wording. The controls above can refine the interpreted type, source, format, and fee.</InlineHelper>
     </section>}
 
-    <div className="rounded-xl border border-[#E7E1F7] bg-[#FDFBFF] px-4 py-3 text-xs leading-relaxed text-muted-foreground">Readiness is calculated from confirmed source requirements and actual Creative Passport materials. “Prepare application” creates a reviewable package; it does not imply that an external provider has received anything.</div>
+    <div className="flex flex-wrap items-center gap-x-4 gap-y-2 px-1" aria-label="Opportunity trust indicators">
+      <TrustIndicator>Worldwide sourced search</TrustIndicator>
+      <TrustIndicator>Original source preserved</TrustIndicator>
+      <TrustIndicator>Artist review before submission</TrustIndicator>
+    </div>
+
+    <ExpandableInfo label="How KLEIO works here" summary="search, translation, readiness, and messaging" className="px-1">
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+        <section><p className="font-semibold text-[#292631]">Worldwide discovery</p><p className="mt-1">KLEIO searches sourced records across regions and languages. Eligibility is checked separately against stated rules and Creative Passport data.</p></section>
+        <section><p className="font-semibold text-[#292631]">Translation</p><p className="mt-1">Original titles, deadlines, currencies, requirements, and official sources remain authoritative. Binding language needs human review when a translation is not verified.</p></section>
+        <section><p className="font-semibold text-[#292631]">Readiness</p><p className="mt-1">Readiness uses confirmed source requirements and actual Passport materials. Preparing a package does not submit it.</p></section>
+        <section><p className="font-semibold text-[#292631]">Messaging</p><p className="mt-1">Conversations follow an invitation or submitted application. A listing alone does not open unsolicited institution messaging.</p></section>
+      </div>
+    </ExpandableInfo>
     <StateNotice loading={loading} error={error} />
     {!loading && !error && <ResultSummary mode={resultMode} intent={intent} count={items.length} />}
 
@@ -357,7 +370,7 @@ export function LiveGlobalArtistOpportunitiesWithImages() {
       const detailsId = `opportunity-details-${item.id}`
 
       return <article key={item.id} className={`${card} overflow-hidden`} aria-labelledby={`opportunity-title-${item.id}`}>
-        {intent.hasStructuredIntent && intentMatch && <div className={`mb-4 rounded-xl px-3 py-2 text-xs leading-relaxed ${intentMatch.kind === "exact" ? "bg-emerald-50 text-emerald-800" : "bg-amber-50 text-amber-900"}`}>
+        {intent.hasStructuredIntent && intentMatch && <div className={`mb-3 text-xs leading-relaxed ${intentMatch.kind === "exact" ? "text-emerald-700" : "border-l-2 border-amber-200 pl-3 text-amber-900"}`}>
           <strong>{intentMatch.kind === "exact" ? "Exact interpreted match" : "Broader verified result"}</strong>
           {intentMatch.kind === "partial" && intentMatch.missingLabels.length > 0 && <span> · Does not match: {intentMatch.missingLabels.join(", ")}</span>}
         </div>}

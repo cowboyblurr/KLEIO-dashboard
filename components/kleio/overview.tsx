@@ -5,6 +5,7 @@ import { useMemo, useState } from "react"
 import { AlertCircle, CheckCircle2, Clock3, FileText, UsersRound } from "lucide-react"
 import { analytics, getQueueForTab } from "@/lib/kleio-analytics"
 import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
+import { FocusLabel } from "@/components/kleio/guidance-system"
 import { ApplicationsChart } from "@/components/kleio/applications-chart"
 import { StatusBreakdown } from "@/components/kleio/status-breakdown"
 import { ReviewQueue } from "@/components/kleio/review-queue"
@@ -61,10 +62,7 @@ function PriorityOverview({ locale }: { locale: string }) {
     >
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_20rem] xl:items-center">
         <div className="max-w-3xl">
-          <div className="inline-flex items-center gap-1.5 rounded-full bg-white px-2.5 py-1 text-[0.6rem] font-semibold uppercase tracking-[0.13em] text-[#5B4B8A] shadow-sm">
-            <AlertCircle className="size-3" />
-            {locale === "es" ? "Prioridad del ciclo" : "Cycle priority"}
-          </div>
+          <FocusLabel>{locale === "es" ? "Enfoque del ciclo" : "Cycle focus"}</FocusLabel>
           <h2 className="mt-3 max-w-2xl font-serif text-xl font-semibold tracking-tight text-[#292631] md:text-2xl">
             {locale === "es"
               ? `Resuelve ${analytics.needsAttentionCount} postulaciones antes de ampliar la revisión`

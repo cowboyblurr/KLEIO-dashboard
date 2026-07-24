@@ -1,7 +1,6 @@
 "use client"
 
 import {
-  AlertCircle,
   CalendarDays,
   CheckCircle2,
   ChevronRight,
@@ -17,6 +16,7 @@ import type { kleioSyntheticArtistProfiles } from "@/lib/kleio-profile-data"
 import { assetPath } from "@/lib/asset-path"
 import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
 import { translateStatus } from "@/lib/kleio-i18n"
+import { FocusLabel } from "@/components/kleio/guidance-system"
 import { cn } from "@/lib/utils"
 
 type ArtistAssetProfile = (typeof kleioSyntheticArtistProfiles)[number]
@@ -153,10 +153,7 @@ function PriorityPanel({ profile, analytics }: { profile: ArtistDashboardProfile
     <Surface className="overflow-hidden bg-[linear-gradient(135deg,#F9F6FF_0%,#FFFFFF_68%)] p-4 md:p-5">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="max-w-2xl">
-          <div className="inline-flex items-center gap-1.5 rounded-full bg-white px-2.5 py-1 text-[0.6rem] font-semibold uppercase tracking-[0.12em] shadow-sm" style={{ color: lavenderDeep }}>
-            <AlertCircle className="size-3" />
-            {locale === "es" ? "Prioridad actual" : "Current priority"}
-          </div>
+          <FocusLabel>{locale === "es" ? "Siguiente enfoque" : "Next focus"}</FocusLabel>
           <h2 className="mt-3 max-w-2xl font-serif text-xl font-semibold tracking-tight md:text-2xl" style={{ color: inkColor }}>{title}</h2>
           <p className="mt-1.5 max-w-2xl text-[0.82rem] leading-relaxed" style={{ color: mutedColor }}>{body}</p>
           {nextAction?.due && (
@@ -255,7 +252,7 @@ function WorkspaceStatus({ profile, analytics }: { profile: ArtistDashboardProfi
         <div className="mt-2.5 space-y-1.5">
           {incompleteItems.length ? incompleteItems.map((item) => (
             <div key={item.label} className="flex items-center gap-2 text-[0.68rem]" style={{ color: inkColor }}>
-              <span className="grid size-4 shrink-0 place-items-center rounded-full bg-white text-[0.5rem] font-bold" style={{ color: "#A85656" }}>!</span>
+              <span className="size-1.5 shrink-0 rounded-full bg-[#C6B9E6]" aria-hidden />
               <span className="truncate">{item.label}</span>
             </div>
           )) : (
