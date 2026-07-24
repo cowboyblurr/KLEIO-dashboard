@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { ShieldCheck } from "lucide-react"
+import { FirstUseHint } from "@/components/kleio/guidance-system"
 import { SignupField, SignupShell, SignupStepCard, SignupTextArea } from "@/components/kleio/signup/signup-shell"
 import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
 import { collaborators, DEMO_ARTIST_ID, getArtistById, institution } from "@/lib/kleio-data"
@@ -51,15 +51,6 @@ export function GuidedSignupForm({ role }: { role: "artist" | "institution" }) {
 
   return (
     <SignupShell title={title} subtitle={subtitle} stepLabel={es ? "Demo guiado · configuración sintética" : "Guided demo · synthetic setup"}>
-      <div className="mb-5 flex items-start gap-3 rounded-2xl border border-[#D9D0F2] bg-[#F8F5FF] px-4 py-3 text-sm leading-relaxed text-[#5B4B8A]" role="status">
-        <ShieldCheck className="mt-0.5 size-4 shrink-0" />
-        <p>
-          {es
-            ? "Este formulario está aislado del sistema de cuentas real. Los datos son ejemplos, no se guardan en Supabase y no pueden abrir el perfil de otra persona."
-            : "This form is isolated from the real account system. The information is sample data, is not saved to Supabase, and cannot open another person’s profile."}
-        </p>
-      </div>
-
       <form noValidate>
         <SignupStepCard>
           <div className="grid gap-5 sm:grid-cols-2">
@@ -76,6 +67,16 @@ export function GuidedSignupForm({ role }: { role: "artist" | "institution" }) {
               ? "La experiencia real solicita credenciales seguras. Este recorrido utiliza una identidad sintética y nunca autentica este correo."
               : "The real experience requests secure credentials. This walkthrough uses a synthetic identity and never authenticates this email."}
           </p>
+
+          <FirstUseHint
+            storageKey={`guided-${role}-signup`}
+            title={es ? "Recorrido sintético" : "Synthetic walkthrough"}
+            className="mt-4"
+          >
+            {es
+              ? "Puedes editar estos ejemplos con libertad. Nada se guarda en una cuenta real ni puede abrir el perfil de otra persona."
+              : "Edit these examples freely. Nothing is saved to a real account or connected to another person’s profile."}
+          </FirstUseHint>
 
           <div className="my-6 border-t border-border" />
 
@@ -119,8 +120,8 @@ export function GuidedSignupForm({ role }: { role: "artist" | "institution" }) {
           <div className="mt-6 flex flex-col gap-3 border-t border-border pt-5 sm:flex-row sm:items-center sm:justify-between">
             <p className="max-w-md text-xs leading-relaxed text-muted-foreground">
               {es
-                ? "Puedes editar los ejemplos para explorar el formulario. Al continuar, KLEIO abrirá únicamente el espacio demo sintético."
-                : "You can edit the examples to explore the form. Continuing opens only the isolated synthetic demo workspace."}
+                ? "Al continuar, KLEIO abre únicamente el espacio demo sintético."
+                : "Continuing opens only the isolated synthetic demo workspace."}
             </p>
             <button type="submit" className="inline-flex h-11 min-w-48 items-center justify-center rounded-xl bg-primary px-5 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90">
               {artist
