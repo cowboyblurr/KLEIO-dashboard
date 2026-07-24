@@ -1,0 +1,14 @@
+file:///home/runner/work/KLEIO-dashboard/KLEIO-dashboard/scripts/apply-guidance-redesign.mjs:18
+  if (index < 0) throw new Error(`Could not find ${label}`)
+                       ^
+
+Error: Could not find artist incomplete-item exclamation
+    at replaceOnce (file:///home/runner/work/KLEIO-dashboard/KLEIO-dashboard/scripts/apply-guidance-redesign.mjs:18:24)
+    at file:///home/runner/work/KLEIO-dashboard/KLEIO-dashboard/scripts/apply-guidance-redesign.mjs:51:10
+    at update (file:///home/runner/work/KLEIO-dashboard/KLEIO-dashboard/scripts/apply-guidance-redesign.mjs:33:17)
+    at file:///home/runner/work/KLEIO-dashboard/KLEIO-dashboard/scripts/apply-guidance-redesign.mjs:38:1
+    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+
+Node.js v22.23.1
