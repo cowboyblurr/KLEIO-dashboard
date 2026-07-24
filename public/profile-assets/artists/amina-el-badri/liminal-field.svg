@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1200" role="img" aria-labelledby="title desc">
+  <title id="title">Liminal Field</title>
+  <desc id="desc">A synthetic archival fabric installation artwork for Amina El Badri's guided demo profile.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#2b2226"/><stop offset=".45" stop-color="#6b554d"/><stop offset="1" stop-color="#c9ad86"/></linearGradient>
+    <linearGradient id="paper" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#f5e9cf"/><stop offset="1" stop-color="#b89270"/></linearGradient>
+    <linearGradient id="cloth" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#d8c1c7" stop-opacity=".8"/><stop offset=".5" stop-color="#8d6976" stop-opacity=".55"/><stop offset="1" stop-color="#3d2c39" stop-opacity=".22"/></linearGradient>
+    <radialGradient id="halo" cx="62%" cy="38%" r="52%"><stop stop-color="#ffdca0" stop-opacity=".86"/><stop offset=".4" stop-color="#f4bd78" stop-opacity=".3"/><stop offset="1" stop-color="#f4bd78" stop-opacity="0"/></radialGradient>
+    <filter id="soft"><feGaussianBlur stdDeviation="18"/></filter>
+    <filter id="grain"><feTurbulence type="fractalNoise" baseFrequency=".66" numOctaves="4" seed="21"/><feColorMatrix type="saturate" values="0"/><feComponentTransfer><feFuncA type="table" tableValues="0 .1"/></feComponentTransfer></filter>
+  </defs>
+  <rect width="1600" height="1200" fill="url(#bg)"/>
+  <ellipse cx="985" cy="440" rx="560" ry="420" fill="url(#halo)" filter="url(#soft)"/>
+  <g stroke="#eadbc2" stroke-opacity=".38" stroke-width="3">
+    <path d="M130 0v1200"/><path d="M310 0v1200"/><path d="M510 0v1200"/><path d="M750 0v1200"/><path d="M980 0v1200"/><path d="M1210 0v1200"/><path d="M1430 0v1200"/>
+  </g>
+  <g opacity=".95">
+    <path d="M95 145l235-52 86 832-250 42z" fill="url(#paper)" transform="rotate(-5 255 530)"/>
+    <path d="M355 55l260 64-40 862-276-54z" fill="url(#cloth)"/>
+    <path d="M630 102l190-35 91 886-214 27z" fill="url(#paper)" opacity=".72"/>
+    <path d="M866 48l245 74-57 842-252-59z" fill="url(#cloth)" opacity=".86"/>
+    <path d="M1128 118l250-42 106 826-276 58z" fill="url(#paper)" opacity=".76"/>
+  </g>
+  <g fill="none" stroke="#5b3f45" stroke-opacity=".48" stroke-width="5">
+    <path d="M170 300c70 38 116 42 188 12s128-24 191 21"/>
+    <path d="M365 560c96-72 192-54 282 11s177 70 265 9"/>
+    <path d="M680 792c117-42 221-25 309 38s185 59 298-5"/>
+    <path d="M1030 320c78 44 144 39 223-2"/>
+  </g>
+  <g fill="#45333c" opacity=".38">
+    <circle cx="238" cy="410" r="18"/><circle cx="468" cy="255" r="14"/><circle cx="713" cy="640" r="20"/><circle cx="1012" cy="492" r="16"/><circle cx="1282" cy="690" r="18"/>
+  </g>
+  <path d="M0 1010c360-92 750-66 1100-28 194 21 352 20 500-15v233H0z" fill="#211a1e" opacity=".54"/>
+  <rect width="1600" height="1200" filter="url(#grain)" opacity=".75"/>
+</svg>
