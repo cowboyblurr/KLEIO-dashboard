@@ -28,7 +28,19 @@ The task appears first. Guidance supports the task where it becomes relevant. La
 - Dismissible first-use guidance uses a 200 ms fade/collapse.
 - Motion is disabled when the user requests reduced motion.
 - Ordinary guidance does not use alert semantics.
-- Error treatment and role=alert remain reserved for actual failures.
+- Error treatment and `role="alert"` remain reserved for actual failures.
+
+## Validation
+
+The verified implementation passed:
+
+- TypeScript type checking.
+- ESLint.
+- Production static build.
+- Internal-navigation audit.
+- User-facing-copy audit.
+- Production authentication-redirect audit.
+- Guidance-hierarchy audit.
 
 ## Enforcement
 
