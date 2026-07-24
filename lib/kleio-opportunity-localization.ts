@@ -55,19 +55,23 @@ export function localizeOpportunity(
   const translatedTitle = translation.title.trim()
   const translatedSummary = translation.summary.trim()
   const translatedDescription = translation.description.trim()
+  const translationNotice = locale === "es" ? "Traducido del texto original" : "Translated from original text"
+  const originalLabel = locale === "es" ? "Texto original" : "Original text"
 
   return {
     ...item,
     source_language: sourceLanguage,
     translation_locale: locale,
-    translation_notice: locale === "es" ? "Traducido del texto original" : "Translated from original text",
+    translation_notice: translationNotice,
     translation_complete: Boolean(translatedTitle && translatedSummary && translatedDescription),
     original_title: item.title,
     original_summary: item.summary,
     original_description: item.description,
     title: translatedTitle || item.title,
     summary: translatedSummary || item.summary,
-    description: translatedDescription || item.description,
+    description: translatedDescription
+      ? `${translationNotice}\n\n${translatedDescription}\n\n${originalLabel}\n${item.description}`
+      : item.description,
     required_materials: translation.required_materials?.length ? translation.required_materials : item.required_materials,
     requirements: localizedRequirements(item.requirements, translation),
   }
