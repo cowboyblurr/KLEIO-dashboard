@@ -29,7 +29,7 @@ const DEMO_CREDENTIALS = {
     email: "institution@kleio.demo",
     password: "kleio2026",
     role: "institution" as const,
-    name: "KLEIO Arthouse",
+    name: "Mara Voss",
   },
   artist: {
     email: "artist@kleio.demo",

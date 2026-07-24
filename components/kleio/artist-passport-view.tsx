@@ -15,6 +15,7 @@ import {
 import { artists, allSubmissions, programs, institution } from "@/lib/kleio-data"
 import { artistProfileHref } from "@/lib/kleio-demo-auth"
 import type { Submission } from "@/lib/kleio-data"
+import { resolveArtistWorkImage } from "@/lib/kleio-artist-assets"
 import { getSubmissionReviewerProgress } from "@/lib/kleio-analytics"
 import { InitialAvatar } from "@/components/kleio/initial-avatar"
 import { StatusPill, PriorityPill } from "@/components/kleio/pills"
@@ -227,6 +228,16 @@ export function ArtistPassportView({ artistId }: { artistId: string }) {
     )
   }
 
+  const resolvedArtist = artist.works
+    ? {
+        ...artist,
+        works: artist.works.map((work) => ({
+          ...work,
+          image: resolveArtistWorkImage(artist.id, work),
+        })),
+      }
+    : artist
+
   return (
     <main className="h-full overflow-y-auto bg-background">
       <div className="mx-auto max-w-[1400px] px-5 py-6 xl:px-8 xl:py-7">
@@ -262,8 +273,8 @@ export function ArtistPassportView({ artistId }: { artistId: string }) {
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_22rem] lg:items-start">
           <div className="min-w-0 space-y-6">
-            <ArtistPassportHero artist={artist} mode="institution" />
-            <ArtistPassportSections artist={artist} mode="institution" />
+            <ArtistPassportHero artist={resolvedArtist} mode="institution" />
+            <ArtistPassportSections artist={resolvedArtist} mode="institution" />
           </div>
           <div className="lg:sticky lg:top-0">
             <ReviewContextPanel submission={submission} />

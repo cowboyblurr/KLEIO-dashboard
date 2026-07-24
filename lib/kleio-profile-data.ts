@@ -1,4 +1,5 @@
 import { artists, institution, programs, type Artist, type Program } from "@/lib/kleio-data"
+import { resolveArtistWorkImage } from "@/lib/kleio-artist-assets"
 
 export type KleioSyntheticArtistProfile = {
   username: string
@@ -108,12 +109,12 @@ function availabilityForArtist(artist: Artist): KleioSyntheticArtistProfile["ava
 }
 
 function selectedWorksForArtist(artist: Artist): KleioSyntheticArtistProfile["selectedWorks"] {
-  return (artist.works ?? []).slice(0, 3).map((work) => ({
+  return (artist.works ?? []).slice(0, 6).map((work) => ({
     title: work.title,
     year: work.year,
     medium: work.medium,
     details: work.dimensions ?? work.medium,
-    image: work.image,
+    image: resolveArtistWorkImage(artist.id, work),
   }))
 }
 
