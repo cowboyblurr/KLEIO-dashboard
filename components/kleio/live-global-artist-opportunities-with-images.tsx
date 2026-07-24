@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import {
   Bookmark,
@@ -23,6 +23,7 @@ import {
   getOrCreateOpportunityConversation,
   recordOpportunityEvent,
   setGlobalOpportunitySaved,
+  type OpportunityDirectoryFilters,
   type OpportunityDirectoryItem,
   type OpportunityEvaluation,
 } from "@/lib/kleio-opportunity-data"
@@ -32,6 +33,13 @@ import {
   safeOpportunityUrl,
   type OpportunityDirectoryDataWithSources,
 } from "@/lib/kleio-opportunity-presentation"
+import {
+  buildOpportunityIntentSearchPlan,
+  classifyOpportunityAgainstIntent,
+  parseOpportunitySearchIntent,
+  type OpportunityIntentMatch,
+  type OpportunitySearchIntent,
+} from "@/lib/kleio-opportunity-search-intent"
 import type { OpportunityImageMetadata } from "@/lib/kleio-opportunity-images"
 
 const card = "rounded-2xl border border-[#E7E1F7] bg-white p-5 shadow-[0_18px_48px_rgba(82,64,130,0.06)]"
@@ -47,14 +55,15 @@ type VisualOpportunity = OpportunityDirectoryItem & OpportunityImageMetadata & {
   funding_verified_at?: string | null
 }
 
+type ResultMode = "browse" | "exact" | "partial" | "none"
+
 function LiveShell({ children }: { children: React.ReactNode }) {
-  return <main className="h-full overflow-y-auto px-4 py-5 sm:px-6 sm:py-6"><div className="mx-auto max-w-[1180px] space-y-5"><WorkspacePageHeader eyebrow="Artist workspace" title="Opportunities" description="Discover sourced opportunities, assess confirmed requirements against your Creative Passport, and prepare a reviewable application package before anything is submitted." />{children}</div></main>
+  return <main className="h-full overflow-y-auto px-4 py-5 sm:px-6 sm:py-6"><div className="mx-auto max-w-[1180px] space-y-5"><WorkspacePageHeader eyebrow="Artist workspace" title="Opportunities" description="Describe what you are looking for naturally. KLEIO translates your words into visible search criteria and searches only sourced opportunity records." />{children}</div></main>
 }
 
-function StateNotice({ loading, error, empty }: { loading: boolean; error: string; empty?: string }) {
-  if (loading) return <div className={`${card} flex items-center gap-2 text-sm text-muted-foreground`}><Loader2 className="size-4 animate-spin" />Loading authentic opportunity records…</div>
+function StateNotice({ loading, error }: { loading: boolean; error: string }) {
+  if (loading) return <div className={`${card} flex items-center gap-2 text-sm text-muted-foreground`}><Loader2 className="size-4 animate-spin" />Searching sourced opportunity records…</div>
   if (error) return <div role="alert" className={`${card} border-red-200 text-sm text-red-700`}>{error}</div>
-  if (empty) return <div className={`${card} text-sm text-muted-foreground`}>{empty}</div>
   return null
 }
 
@@ -159,8 +168,40 @@ function imageRightsCopy(item: VisualOpportunity) {
   return "Image rights not independently confirmed"
 }
 
+function withManualFilters(
+  inferred: OpportunityDirectoryFilters,
+  manual: { type: string; source: string; format: string; noFeeOnly: boolean },
+): OpportunityDirectoryFilters {
+  return {
+    ...inferred,
+    opportunityTypes: manual.type === "all" ? inferred.opportunityTypes : [manual.type],
+    sourceSlugs: manual.source === "all" ? undefined : [manual.source],
+    participationFormats: manual.format === "all" ? inferred.participationFormats : [manual.format],
+    noFeeOnly: manual.noFeeOnly || Boolean(inferred.noFeeOnly),
+  }
+}
+
+function broaderQuery(intent: OpportunitySearchIntent, omit: "location" | "discipline") {
+  const terms = [
+    ...(omit === "discipline" ? [] : intent.disciplines),
+    ...(omit === "location" ? [] : intent.locations),
+    ...intent.opportunityTypes.map(cleanLabel),
+    ...intent.freeTextTerms,
+  ]
+  return [...new Set(terms)].join(" ")
+}
+
+function ResultSummary({ mode, intent, count }: { mode: ResultMode; intent: OpportunitySearchIntent; count: number }) {
+  if (!intent.rawQuery.trim()) return null
+  if (mode === "exact") return <div aria-live="polite" className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800"><strong>{count} exact database match{count === 1 ? "" : "es"}.</strong> Every displayed record matches the interpreted search criteria that KLEIO could verify from structured source data.</div>
+  if (mode === "partial") return <div aria-live="polite" className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-relaxed text-amber-900"><strong>No exact verified match is currently available.</strong> KLEIO is showing broader sourced results. Each card states which part of the request does not match.</div>
+  if (mode === "none") return <div aria-live="polite" className="rounded-xl border border-[#E7E1F7] bg-[#FDFBFF] px-4 py-4 text-sm leading-relaxed text-[#625C70]"><strong className="text-[#292631]">Your request was understood, but KLEIO found no verified matching record.</strong><p className="mt-1">No opportunity has been created or inferred from your wording. Try broadening one part of the search, or return later as verified source coverage expands.</p></div>
+  return null
+}
+
 export function LiveGlobalArtistOpportunitiesWithImages() {
   const router = useRouter()
+  const requestIdRef = useRef(0)
   const [directory, setDirectory] = useState<OpportunityDirectoryDataWithSources | null>(null)
   const [query, setQuery] = useState("")
   const [type, setType] = useState("all")
@@ -171,24 +212,76 @@ export function LiveGlobalArtistOpportunitiesWithImages() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const [actionId, setActionId] = useState("")
+  const [resultMode, setResultMode] = useState<ResultMode>("browse")
+  const [intentMatches, setIntentMatches] = useState<Record<string, OpportunityIntentMatch>>({})
+  const intent = useMemo(() => parseOpportunitySearchIntent(query), [query])
 
-  function refresh() {
+  async function refresh() {
+    const requestId = ++requestIdRef.current
     setLoading(true)
     setError("")
-    return loadOpportunityDirectoryWithSources({
-      query,
-      opportunityTypes: type === "all" ? undefined : [type],
-      sourceSlugs: source === "all" ? undefined : [source],
-      participationFormats: format === "all" ? undefined : [format],
-      noFeeOnly,
-    }).then((result) => {
-      setDirectory(result)
-      return recordOpportunityEvent(result.items.length ? "search" : "zero_results", null, query, { opportunity_type: type, source, participation_format: format, no_fee_only: noFeeOnly }).catch(() => undefined)
-    }).catch((reason: Error) => setError(reason.message)).finally(() => setLoading(false))
+    const manual = { type, source, format, noFeeOnly }
+    const plan = buildOpportunityIntentSearchPlan(intent)
+
+    try {
+      const exactDirectory = await loadOpportunityDirectoryWithSources(withManualFilters(plan.exact, manual))
+      if (requestId !== requestIdRef.current) return
+
+      if (!intent.hasStructuredIntent) {
+        setDirectory(exactDirectory)
+        setIntentMatches({})
+        setResultMode(query.trim() ? "exact" : "browse")
+        await recordOpportunityEvent(exactDirectory.items.length ? "search" : "zero_results", null, query, { search_mode: "keyword", opportunity_type: type, source, participation_format: format, no_fee_only: noFeeOnly }).catch(() => undefined)
+        return
+      }
+
+      const candidateMatches = new Map<string, { item: OpportunityDirectoryDataWithSources["items"][number]; match: OpportunityIntentMatch }>()
+      for (const item of exactDirectory.items) {
+        const match = classifyOpportunityAgainstIntent(item as VisualOpportunity, intent)
+        candidateMatches.set(item.id, { item, match })
+      }
+
+      const exactItems = [...candidateMatches.values()].filter((candidate) => candidate.match.kind === "exact")
+      if (exactItems.length) {
+        const matchMap = Object.fromEntries(exactItems.map((candidate) => [candidate.item.id, candidate.match]))
+        setDirectory({ ...exactDirectory, items: exactItems.map((candidate) => candidate.item) })
+        setIntentMatches(matchMap)
+        setResultMode("exact")
+        await recordOpportunityEvent("search", null, query, { search_mode: "natural_language_exact", interpreted_filters: intent.chips.map((item) => item.label), result_count: exactItems.length }).catch(() => undefined)
+        return
+      }
+
+      const broaderDirectories = await Promise.all(
+        plan.broader.slice(0, 4).map((filters) => loadOpportunityDirectoryWithSources(withManualFilters(filters, manual)).catch(() => null)),
+      )
+      if (requestId !== requestIdRef.current) return
+
+      for (const broaderDirectory of broaderDirectories) {
+        for (const item of broaderDirectory?.items ?? []) {
+          const match = classifyOpportunityAgainstIntent(item as VisualOpportunity, intent)
+          const existing = candidateMatches.get(item.id)
+          if (!existing || match.score > existing.match.score) candidateMatches.set(item.id, { item, match })
+        }
+      }
+
+      const partialItems = [...candidateMatches.values()]
+        .filter((candidate) => candidate.match.kind === "partial")
+        .sort((a, b) => b.match.score - a.match.score || a.item.title.localeCompare(b.item.title))
+        .slice(0, 24)
+      const matchMap = Object.fromEntries(partialItems.map((candidate) => [candidate.item.id, candidate.match]))
+      setDirectory({ ...exactDirectory, items: partialItems.map((candidate) => candidate.item) })
+      setIntentMatches(matchMap)
+      setResultMode(partialItems.length ? "partial" : "none")
+      await recordOpportunityEvent(partialItems.length ? "search" : "zero_results", null, query, { search_mode: partialItems.length ? "natural_language_partial" : "natural_language_zero", interpreted_filters: intent.chips.map((item) => item.label), result_count: partialItems.length }).catch(() => undefined)
+    } catch (reason) {
+      if (requestId === requestIdRef.current) setError(reason instanceof Error ? reason.message : "KLEIO could not search the opportunity directory.")
+    } finally {
+      if (requestId === requestIdRef.current) setLoading(false)
+    }
   }
 
   useEffect(() => {
-    const timer = window.setTimeout(() => { void refresh() }, 300)
+    const timer = window.setTimeout(() => { void refresh() }, 350)
     return () => window.clearTimeout(timer)
   }, [query, type, source, format, noFeeOnly])
 
@@ -220,21 +313,42 @@ export function LiveGlobalArtistOpportunitiesWithImages() {
 
   const items = directory?.items ?? []
   return <LiveShell>
-    <section className={`${card} grid gap-3 md:grid-cols-2 xl:grid-cols-[minmax(260px,1fr)_180px_210px_170px_auto]`}>
-      <label className="relative"><span className="sr-only">Search opportunities</span><Search className="pointer-events-none absolute left-3 top-3 size-4 text-muted-foreground" /><input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search in English or Spanish" className={`${input} pl-9`} /></label>
-      <label><span className="sr-only">Opportunity type</span><select className={input} value={type} onChange={(event) => setType(event.target.value)}><option value="all">All types</option><option value="grant">Grants</option><option value="residency">Residencies</option><option value="fellowship">Fellowships</option><option value="commission">Commissions</option><option value="prize_award">Prizes and awards</option><option value="open_call">Open calls</option><option value="other">Other opportunities</option></select></label>
-      <label><span className="sr-only">Opportunity source</span><select className={input} value={source} onChange={(event) => setSource(event.target.value)}><option value="all">All approved sources</option>{(directory?.sources ?? []).map((item) => <option key={item.id} value={item.slug}>{item.name}</option>)}</select></label>
-      <label><span className="sr-only">Participation format</span><select className={input} value={format} onChange={(event) => setFormat(event.target.value)}><option value="all">All formats</option><option value="online">Online</option><option value="in_person">In person</option><option value="hybrid">Hybrid</option><option value="other">Other / confirm source</option></select></label>
-      <label className="flex h-10 items-center gap-2 rounded-xl border border-[#E7E1F7] px-3 text-sm"><input type="checkbox" checked={noFeeOnly} onChange={(event) => setNoFeeOnly(event.target.checked)} />Confirmed no application fee</label>
+    <section className={`${card} space-y-4`}>
+      <div>
+        <label className="relative block"><span className="sr-only">Describe the opportunity you want</span><Search className="pointer-events-none absolute left-3 top-3 size-4 text-muted-foreground" /><input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Try “ceramics residencies in Asia”" className={`${input} pl-9`} /></label>
+        <p className="mt-2 text-xs leading-relaxed text-muted-foreground">Use normal language. KLEIO interprets your words as search filters; it never turns your request into a new opportunity listing.</p>
+      </div>
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-[180px_210px_170px_auto]">
+        <label><span className="sr-only">Opportunity type</span><select className={input} value={type} onChange={(event) => setType(event.target.value)}><option value="all">All types</option><option value="grant">Grants</option><option value="residency">Residencies</option><option value="fellowship">Fellowships</option><option value="commission">Commissions</option><option value="prize_award">Prizes and awards</option><option value="open_call">Open calls</option><option value="professional_development">Professional development</option><option value="other">Other opportunities</option></select></label>
+        <label><span className="sr-only">Opportunity source</span><select className={input} value={source} onChange={(event) => setSource(event.target.value)}><option value="all">All approved sources</option>{(directory?.sources ?? []).map((item) => <option key={item.id} value={item.slug}>{item.name}</option>)}</select></label>
+        <label><span className="sr-only">Participation format</span><select className={input} value={format} onChange={(event) => setFormat(event.target.value)}><option value="all">All formats</option><option value="online">Online</option><option value="in_person">In person</option><option value="hybrid">Hybrid</option><option value="other">Other / confirm source</option></select></label>
+        <label className="flex h-10 items-center gap-2 rounded-xl border border-[#E7E1F7] px-3 text-sm"><input type="checkbox" checked={noFeeOnly} onChange={(event) => setNoFeeOnly(event.target.checked)} />Confirmed no application fee</label>
+      </div>
     </section>
 
+    {intent.hasStructuredIntent && <section className="rounded-xl border border-[#D8D0F2] bg-[#FDFBFF] px-4 py-3" aria-label="Interpreted search filters">
+      <div className="flex flex-wrap items-center gap-2">
+        <p className="mr-1 text-xs font-semibold uppercase tracking-wide text-[#625C70]">KLEIO understood</p>
+        {intent.chips.map((item) => <span key={item.key} className="rounded-full border border-[#D8D0F2] bg-white px-3 py-1 text-xs font-semibold text-[#5B4B8A]">{item.label}</span>)}
+      </div>
+      <p className="mt-2 text-xs leading-relaxed text-muted-foreground">These criteria are inferred from your wording. The dropdowns above can further refine or override the interpreted type, source, format, and fee filters.</p>
+    </section>}
+
     <div className="rounded-xl border border-[#E7E1F7] bg-[#FDFBFF] px-4 py-3 text-xs leading-relaxed text-muted-foreground">Readiness is calculated from confirmed source requirements and actual Creative Passport materials. “Prepare application” creates a reviewable package; it does not imply that an external provider has received anything.</div>
-    <StateNotice loading={loading} error={error} empty={!loading && !items.length ? "No approved opportunities match these filters. Unknown fees do not count as no-fee, and KLEIO will not substitute demo records." : undefined} />
+    <StateNotice loading={loading} error={error} />
+    {!loading && !error && <ResultSummary mode={resultMode} intent={intent} count={items.length} />}
+
+    {!loading && !error && resultMode === "none" && intent.hasStructuredIntent && <div className="flex flex-wrap gap-2">
+      {intent.locations.length > 0 && (intent.disciplines.length > 0 || intent.opportunityTypes.length > 0) && <button type="button" className={secondary} onClick={() => setQuery(broaderQuery(intent, "location"))}>Search without location</button>}
+      {intent.disciplines.length > 0 && (intent.locations.length > 0 || intent.opportunityTypes.length > 0) && <button type="button" className={secondary} onClick={() => setQuery(broaderQuery(intent, "discipline"))}>Search without medium</button>}
+      <button type="button" className={secondary} onClick={() => setQuery("")}>Browse all verified opportunities</button>
+    </div>}
 
     <div className="space-y-4">{items.map((rawItem) => {
       const item = rawItem as VisualOpportunity
       const evaluation = evaluateOpportunity(item, directory?.passport ?? null, directory?.portfolioWorks ?? [])
       const readiness = assessOpportunityMaterialReadiness(item, directory?.passport ?? null, directory?.portfolioWorks ?? [])
+      const intentMatch = intentMatches[item.id]
       const isExpanded = expanded === item.id
       const canMessage = item.application_mode === "internal" && Boolean(item.internal_call)
       const canonicalUrl = safeOpportunityUrl(item.canonical_url)
@@ -243,6 +357,10 @@ export function LiveGlobalArtistOpportunitiesWithImages() {
       const detailsId = `opportunity-details-${item.id}`
 
       return <article key={item.id} className={`${card} overflow-hidden`} aria-labelledby={`opportunity-title-${item.id}`}>
+        {intent.hasStructuredIntent && intentMatch && <div className={`mb-4 rounded-xl px-3 py-2 text-xs leading-relaxed ${intentMatch.kind === "exact" ? "bg-emerald-50 text-emerald-800" : "bg-amber-50 text-amber-900"}`}>
+          <strong>{intentMatch.kind === "exact" ? "Exact interpreted match" : "Broader verified result"}</strong>
+          {intentMatch.kind === "partial" && intentMatch.missingLabels.length > 0 && <span> · Does not match: {intentMatch.missingLabels.join(", ")}</span>}
+        </div>}
         <div className="grid min-w-0 gap-5 lg:grid-cols-[minmax(190px,240px)_minmax(0,1fr)]">
           <OpportunityPreviewImage opportunity={item} className="self-start" />
           <div className="min-w-0">
