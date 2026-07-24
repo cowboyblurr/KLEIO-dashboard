@@ -1,0 +1,71 @@
+name: Apply KLEIO guidance redesign
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - scripts/apply-guidance-redesign.mjs
+      - .github/workflows/apply-guidance-redesign.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: kleio-guidance-redesign
+  cancel-in-progress: false
+
+jobs:
+  apply-and-verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out current main
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Enable pnpm
+        run: corepack enable
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Apply contextual guidance system
+        run: node scripts/apply-guidance-redesign.mjs
+
+      - name: Verify type safety
+        run: pnpm typecheck
+
+      - name: Verify lint
+        run: pnpm lint
+
+      - name: Verify production build
+        run: pnpm build
+
+      - name: Verify navigation
+        run: pnpm audit:navigation
+
+      - name: Verify user-facing copy
+        run: pnpm audit:user-copy
+
+      - name: Verify authentication redirects
+        run: pnpm audit:auth-redirect
+
+      - name: Verify guidance hierarchy
+        run: pnpm audit:guidance
+
+      - name: Commit verified redesign
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+          git commit -m "Apply sitewide contextual guidance redesign"
+          git push origin HEAD:main
