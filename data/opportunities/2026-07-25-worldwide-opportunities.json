@@ -1,0 +1,131 @@
+{
+  "ingestion_date": "2026-07-25",
+  "protocol": "KLEIO Worldwide Opportunity Protocol",
+  "production_project": "trekynurdgxgtaaqqtyq",
+  "summary": {
+    "artist_facing_records_added": 6,
+    "verification_holds_added": 1,
+    "eligibility_rules_added": 22,
+    "application_requirements_added": 33,
+    "current_source_snapshots_added": 7
+  },
+  "artist_facing_records": [
+    {
+      "external_id": "hamburg-westwerk-international-residency-2027-2028",
+      "title": "Three-month residency for international artists at Westwerk",
+      "provider": "Hamburg Ministry for Culture and Media / Westwerk",
+      "official_source": "https://www.hamburg.de/politik-und-verwaltung/behoerden/behoerde-fuer-kultur-und-medien/themen/kulturfoerderung/stipendienangebote-der-behoerde-fuer-kultur-und-medien/residency-for-international-artists-at-westwerk-931724",
+      "deadline_at": "2026-08-27T22:59:00Z",
+      "source_language": "en",
+      "eligibility_scope": "residency_based",
+      "application_fee": null,
+      "funding": "€900 monthly allowance, rent-free live-work accommodation, one return journey, and €500 final-presentation subsidy",
+      "verification_status": "official_source",
+      "financial_terms_verified": true,
+      "rights_terms_verified": false
+    },
+    {
+      "external_id": "goethe-vietnam-beyond-the-silence-2026",
+      "title": "Beyond the Silence",
+      "original_title": "Beyond the Silence / Đâm Toạc Chân Mây",
+      "provider": "Goethe-Institut Vietnam",
+      "official_source": "https://www.goethe.de/ins/vn/de/kul/aus/bsi.html",
+      "deadline_at": "2026-08-23T16:00:00Z",
+      "source_language": "en",
+      "eligibility_scope": "regional",
+      "application_fee": null,
+      "funding": "Up to €2,000 per selected project; up to four projects selected",
+      "verification_status": "official_source",
+      "geographic_matching_note": "The public call does not state applicant geography precisely enough for an automatic country decision.",
+      "financial_terms_verified": true,
+      "rights_terms_verified": false
+    },
+    {
+      "external_id": "martin-roth-initiative-programme-line-1-2026",
+      "title": "Temporary relocation for artists and cultural actors at risk in Germany",
+      "provider": "Martin Roth-Initiative / Goethe-Institut / ifa",
+      "official_source": "https://www.martin-roth-initiative.de/en/application-programme-line-1",
+      "deadline_at": "2026-09-11T15:00:00Z",
+      "source_language": "en",
+      "eligibility_scope": "partnership_based",
+      "application_fee": null,
+      "funding": "Monthly scholarship for up to 15 months, individual support, work resources, host support, and visa-process assistance; amounts are not publicly stated",
+      "verification_status": "official_source",
+      "sensitive_opportunity": true,
+      "privacy_note": "Threat and safety evidence must never be exposed through public profiles or institution discovery.",
+      "financial_terms_verified": false,
+      "rights_terms_verified": false
+    },
+    {
+      "external_id": "cite-aica-bridges-residency-2026",
+      "title": "Bridges Residency",
+      "provider": "AICA International / Cité internationale des arts",
+      "official_source": "https://www.citeinternationaledesarts.fr/en/appels-a-candidature/bridges/",
+      "deadline_at": "2026-08-30T21:59:00Z",
+      "source_language": "en",
+      "eligibility_scope": "residency_based",
+      "application_fee": null,
+      "funding": "At least €1,000 monthly stipend net of taxes, live-in studio, and up to €1,000 for international travel, travel insurance, and visa costs",
+      "verification_status": "official_source",
+      "financial_terms_verified": true,
+      "rights_terms_verified": false
+    },
+    {
+      "external_id": "goethe-hk-colours-of-humanity-2026",
+      "title": "Colours of Humanity Arts Exhibition 2026",
+      "provider": "European Union Office to Hong Kong and Macao / Goethe-Institut Hong Kong / Eaton HK",
+      "official_source": "https://www.goethe.de/ins/hon/en/kul/opc/coh.html",
+      "deadline_at": "2026-08-31T15:59:00Z",
+      "source_language": "en",
+      "eligibility_scope": "residency_based",
+      "application_fee": 0,
+      "application_fee_currency": "HKD",
+      "funding": "Free exhibition opportunity; up to HK$8,000 honorarium for a selected community programme; grand prize includes a two-week Eaton residency",
+      "verification_status": "official_source",
+      "financial_terms_verified": true,
+      "rights_terms_verified": false
+    },
+    {
+      "external_id": "institut-francais-aoca-2027",
+      "title": "AOCA — Appui aux opérateurs culturels en Afrique 2027",
+      "provider": "Institut français",
+      "official_source": "https://www.institutfrancais.com/fr/programme/aide-projet/aoca-appui-aux-operateurs-culturels-afrique",
+      "deadline_at": "2026-10-30T22:59:00Z",
+      "source_language": "fr",
+      "eligibility_scope": "partnership_based",
+      "application_fee": null,
+      "funding": "€5,000–€15,000, covering up to 50% of the project’s total budget",
+      "verification_status": "official_source",
+      "translation_status": "machine_translation_review_required",
+      "available_kleio_translation_locales": ["en", "es"],
+      "financial_terms_verified": true,
+      "rights_terms_verified": false
+    }
+  ],
+  "verification_holds": [
+    {
+      "external_id": "hkbu-international-writers-workshop-2027",
+      "title": "International Writers’ Workshop 2027 — verification hold",
+      "provider": "Hong Kong Baptist University International Writers’ Workshop",
+      "official_source": "https://iww.hkbu.edu.hk/?page_id=375",
+      "status": "draft",
+      "verification_status": "needs_review",
+      "artist_facing": false,
+      "reason": "The official page names a 2027 programme and an August 14, 2026 application deadline but states February–March 2026 residency dates. Funding, travel, accommodation, visa, file, rights, and tax terms are also incomplete."
+    }
+  ],
+  "applied_supabase_migrations": [
+    "seed_july25_worldwide_opportunity_sources",
+    "seed_westwerk_international_residency_2026",
+    "seed_beyond_the_silence_2026_v2",
+    "seed_martin_roth_programme_line_1_2026",
+    "seed_bridges_residency_2026",
+    "seed_colours_of_humanity_2026",
+    "seed_aoca_2027",
+    "add_july25_opportunity_eligibility_rules",
+    "add_july25_opportunity_requirements",
+    "add_aoca_review_required_translations",
+    "queue_hkbu_iww_2027_for_verification",
+    "snapshot_july25_worldwide_opportunities"
+  ]
+}
