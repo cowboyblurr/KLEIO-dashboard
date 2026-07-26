@@ -1,16 +1,27 @@
 # KLEIO Artist Activation and Verified Opportunity Intelligence
 
-**Implementation date:** 2026-07-26  
-**Scope:** Artist activation, verified opportunity schema, eligibility-first matching, PhotoVogue reference fixture, application-preparation boundaries, persistence, security, and launch readiness.  
-**Status:** Material production implementation completed; public launch readiness is **not yet confirmed**.
+**Implementation date:** July 26, 2026  
+**Scope:** Artist activation, verified opportunity intelligence, eligibility-first matching, application preparation, Supabase persistence and security, PhotoVogue reference fixture, and launch readiness.  
+**Status:** Material production implementation completed. Automated source verification passes. Public artist launch readiness is **not yet fully confirmed** because a fresh-account deployed-browser walkthrough remains outstanding.
 
 ## Executive conclusion
 
-KLEIO now has a substantially stronger production data foundation for artist activation and explainable opportunity analysis. The live Supabase project contains durable activation milestones, private reusable artist materials, expanded opportunity provenance and lifecycle fields, artist-controlled artwork provenance, policy-aware eligibility evaluation, and source-backed PhotoVogue reference data.
+KLEIO now has a credible production foundation for the artist journey described in the implementation brief:
 
-The live opportunity-directory client on this branch now uses persisted server evaluations rather than silently presenting browser-only match calculations as verified eligibility. The live artist workspace also surfaces durable activation milestones without treating account creation as activation.
+> Artist signs up → completes onboarding → builds a reusable Creative Passport → adds meaningful work and materials → receives explainable eligibility-first opportunity analysis → prepares an artist-controlled package → reviews and authorizes the supported next action → saves and tracks the application.
 
-KLEIO should **not** begin broad artist outreach yet. The published GitHub Pages build appears stale and demo-first, a complete first-time browser walkthrough has not been passed after deployment, and the repository navigation audit remains red. These are launch blockers, not cosmetic issues.
+The live Supabase project now contains durable artist activation milestones, private reusable materials, expanded opportunity verification and lifecycle fields, artist-controlled artwork provenance, policy-aware opportunity evaluation, and a verified PhotoVogue reference fixture. The live client on this branch uses persisted server evaluations instead of silently treating browser-calculated similarity as verified eligibility.
+
+Automated CI passes:
+
+- TypeScript.
+- Lint.
+- Static production export.
+- Critical auth and workspace exports.
+- Internal navigation audit.
+- User-facing copy audit.
+
+KLEIO should still delay broad artist outreach until the current branch is deployed and one complete first-time browser journey passes against the deployed environment.
 
 ---
 
@@ -18,86 +29,48 @@ KLEIO should **not** begin broad artist outreach yet. The published GitHub Pages
 
 ## Working authentically
 
-- Supabase authentication, profile roles, artist profiles, portfolio works, saved opportunities, applications, institutions, open calls, and review-related tables exist in production.
-- Core artist and institution data is stored in Supabase rather than relying only on local storage.
-- Artist profile, portfolio, saved-opportunity, application-package, and opportunity-evaluation records have row-level security.
-- Storage uses private buckets for artist documents, artist assets, portfolio images, application documents, institution logos, and source documents. The opportunity-preview bucket is intentionally public.
-- Opportunity records already support official URLs, source attribution, structured eligibility rules, structured requirements, translations, snapshots, and search.
-- Application preparation already supports package persistence, approval confirmations, selected-work snapshots, written content, email-preview export, downloadable manifests, native KLEIO submission, submission-attempt records, and explicitly artist-reported external submission status.
-- The institution path has production tables and RLS for institutions, members, open calls, applications, reviewer assignments, reviews, messages, and status history.
+- Supabase authentication, role-based profiles, artist profiles, portfolio works, saved opportunities, application packages, institutions, open calls, submissions, reviewer assignments, reviews, messages, and status history exist in production.
+- Core account, Passport, opportunity, and application records are Supabase-backed rather than authoritative local-storage state.
+- Artist-private records use row-level security.
+- Artist, institution, reviewer, and application access boundaries exist in the schema and policies.
+- Artist and application files use private storage buckets; only the intended opportunity-preview bucket is public.
+- Opportunity records support official URLs, source attribution, structured eligibility rules, structured requirements, translations, source snapshots, and search.
+- Application preparation preserves selected works, written content, approval confirmations, application-package records, submission attempts, native-submission history, and externally reported status.
+- Email preparation creates a reviewable file and does not silently send an email.
+- External submissions remain artist-reported unless provider evidence confirms receipt.
 
-## Mock or demo-only behavior
+## Demo and synthetic behavior
 
-- The currently published GitHub Pages build presents demo credentials and prototype language even though the current source defaults to live mode.
-- Guided-demo data is synthetic by design and must remain clearly separated from live accounts.
-- The repository still contains demo components and static exports used by guided-demo mode. Their presence is acceptable only when live routes do not accidentally fall into demo state.
+- Guided-demo data remains synthetic by design.
+- The repository contains demo components and static demo routes. This is acceptable only while live accounts and demo state remain visibly separated.
+- The currently observed public GitHub Pages build appears older and demo-first even though current source defaults to live signup. This is a deployment-state issue, not proof that the current source still defaults to prototype mode.
 
-## Broken or unverified behavior
+## Still unverified in a deployed browser
 
-- A brand-new email-confirmed artist account has not been tested through the full deployed browser journey after these changes.
-- Cross-device persistence has not been browser-tested during this implementation.
-- The public deployment has not been verified against the current branch.
-- The navigation audit reports many unresolved static-export and literal-route failures.
-- Direct navigation to the application-preparation URL can currently bypass the opportunity-directory eligibility gate. The preparation workspace still needs a server-side or component-level eligibility guard.
-- The preparation workspace does not yet consume the new artwork-provenance compatibility RPC for the artist's exact selected works.
-- PhotoVogue has verified source facts and rule provenance, but no current `opportunity_source_versions` row is linked to the evaluation yet.
-- Full institution regression testing was not completed in a browser.
+- Brand-new email-confirmed artist signup.
+- Profile-image upload.
+- Interrupted upload recovery.
+- Logout/login persistence after the full activation journey.
+- Browser restart and cross-device persistence.
+- Signed-URL expiration and unauthorized-link behavior.
+- Tablet/mobile visual and screen-reader walkthrough.
+- Full institution regression walkthrough.
 
-## Persistence risks
+## Current launch blockers
 
-- Core production records are Supabase-backed.
-- Local storage is still used for interface mode and locale selection; this is acceptable for preferences but must not become authoritative account data.
-- The stale public deployment creates a risk that users enter demo mode or perceive live signup as a prototype even when production persistence is available.
-
-## Security risks
-
-- Supabase leaked-password protection is disabled.
-- The security advisor reports several pre-existing authenticated `SECURITY DEFINER` RPC warnings. The two opportunity-admin RPCs reviewed here independently enforce `is_kleio_admin()`, but all flagged RPCs still require a dedicated authorization audit.
-- Several pre-existing RLS policies call `auth.*` without wrapping the call in `select`, which is a performance issue at scale.
-- Several tables have multiple permissive policies for the same role/action. This is primarily a performance and maintainability concern and needs consolidation after behavior is regression-tested.
-
-## Launch blockers
-
-1. Stale/demo-first public deployment.
-2. No completed fresh-account browser activation walkthrough after deployment.
-3. Red navigation audit.
-4. Direct preparation-route eligibility bypass.
-5. Selected-work AI-policy compatibility not yet enforced inside the preparation workspace.
-6. Leaked-password protection disabled.
-
-## Lower-priority issues
-
-- Unused-index notices are expected on a low-traffic project and should not trigger premature index deletion.
-- RLS initialization-plan optimization can follow correctness and launch-blocker work.
-- Full source-version population can follow the verified fixture and evaluator integration, but should be completed before claiming immutable source-version traceability.
+1. Deploy the current branch or merged source and confirm that the public site no longer foregrounds shared demo credentials or prototype language.
+2. Complete one fresh-account deployed-browser activation walkthrough.
+3. Enforce artwork-policy compatibility against the **exact selected work IDs** inside the preparation workspace before final actions.
+4. Enable leaked-password protection.
+5. Complete a dedicated authorization review of all authenticated `SECURITY DEFINER` RPCs flagged by Supabase.
 
 ---
 
 # 2. Artist activation test report
 
-| Step | Result | Notes |
-|---|---|---|
-| Public site opens | Blocked for launch | Current published build appears stale and demo-first. |
-| Create Artist Account route exists | Passed in source | Current source renders live signup by default unless demo/preview mode is explicitly selected. |
-| Signup/auth persistence | Partially verified | Production auth and profile rows exist; no new email-confirmed browser account was created during this implementation. |
-| Onboarding persistence | Verified at database level | `profiles.onboarding_completed` participates in activation. Browser walkthrough still required. |
-| Profile image | Existing production path | Artist profile contains private storage path fields. New upload was not browser-tested. |
-| Core Creative Passport | Passed at database level | Activation requires professional identity, location, bio, statement, and practice fields. |
-| Three portfolio works | Passed transaction test | Two temporary works were inserted for an existing one-work artist; activation immediately turned true, then the transaction was rolled back. |
-| Reusable material | Implemented | New private `artist_materials` table plus existing CV path support. |
-| Opportunity directory | Existing and enhanced | Server-persisted evaluations replace unexplained browser-only eligibility in the live directory on this branch. |
-| Hard eligibility | Passed | Mandatory failures override creative fit. |
-| Missing data | Passed | Produces `missing_information` or `eligibility_unclear`, not false eligibility. |
-| Save opportunity | Existing production path | Saved record participates in activation. |
-| Prepare package | Existing, partially guarded | Directory gate added; direct preparation URL still requires an internal guard. |
-| Review generated/selected content | Existing | Four explicit approval confirmations required before submission actions. |
-| Native submission | Existing | Preserves application, package, approvals, and submission-attempt history. |
-| External portal/email/download | Existing | Email draft is downloaded without sending; external submission remains artist-reported unless provider-confirmed. |
-| Logout/login persistence | Database foundation passed | Browser logout/login walkthrough still required. |
+## Activation definition implemented
 
-### Activation definition implemented
-
-An artist is activated only when all of the following are true:
+Account creation alone is not activation. An artist is activated only when all seven milestones are true:
 
 1. Account exists.
 2. Onboarding is complete.
@@ -107,118 +80,225 @@ An artist is activated only when all of the following are true:
 6. At least one reusable application material exists.
 7. At least one intentional opportunity action exists.
 
-The status is calculated server-side and exposed as an explanatory record. It is not a ranking, streak, or institutional quality score.
+The server-calculated activation record explains:
+
+- What is complete.
+- What is missing.
+- Why it matters.
+- The next useful action.
+
+It is not a public ranking, streak, gamified quality score, or institutional judgment.
+
+## Test results
+
+| Journey element | Result | Evidence or limitation |
+|---|---|---|
+| Account/profile records | Passed at database level | Production auth and profile records exist with role separation. |
+| Onboarding milestone | Passed at database level | Activation reads persisted onboarding state. |
+| Core Passport milestone | Passed | Requires identity, location, biography, statement, and practice fields. |
+| Identity presentation | Passed | Requires professional name or profile image. |
+| Three-work milestone | Passed transaction test | Two temporary works completed an existing artist's third-work threshold; the transaction was rolled back. |
+| Reusable material milestone | Implemented and passed schema/RLS checks | Supports CV, bio, statement, proposal, budget, timeline, references, media, legal records, and reusable answers. |
+| Opportunity-action milestone | Passed at database level | Save, track, package preparation, or related intentional action counts. |
+| Full activation calculation | Passed transaction test | Every milestone became true immediately; no fake data remained after rollback. |
+| Artist-only visibility | Passed | Authenticated test artist saw one own profile, one own activation row, own works, and own materials only. |
+| Deployed first-time browser journey | Still required | No new production user was created solely for this implementation. |
+
+No synthetic production artist account was created. The activation completion test was transaction-only and rolled back.
 
 ---
 
-# 3. Opportunity schema
+# 3. Final opportunity data model
 
-## Newly added verification and lifecycle fields
+## Verification and provenance
 
-| Field | Purpose |
-|---|---|
-| `discovered_at` | Records when KLEIO first discovered the opportunity. |
-| `verification_confidence` | Normalized 0–1 confidence in the verified record. |
-| `verified_by` | Identifies the reviewer or process. |
-| `verification_method` | Explains how the record was verified. |
-| `reverify_at` | Schedules the next source check. |
-| `lifecycle_status` | Tracks discovered, parsing, verification, published, closing, closed, archived, unavailable, or expired-verification state. |
-| `deadline_kind` | Fixed, rolling, recurring, or not stated. |
-| `expected_decision_at` | Optional expected decision timing. |
-| `program_start_at` / `program_end_at` | Program dates separate from application timing. |
-| `contact_email` | Support/contact address, distinct from an official email-submission destination. |
-| `artwork_ai_policy` | Policy governing submitted artwork. |
-| `application_assistance_policy` | Policy governing administrative or generative application assistance. |
-| `policy_source_url` | Official policy provenance. |
-| `policy_last_verified_at` | Policy verification timestamp. |
+- `external_id`
+- official title and organization
+- canonical official URL
+- application URL
+- source ID and source type
+- `discovered_at`
+- `last_verified_at`
+- `verification_status`
+- `verification_confidence`
+- `verified_by`
+- `verification_method`
+- `reverify_at`
+- source snapshots and source versions
 
-The schema retains the existing official URL, application URL, source, snapshots, eligibility rules, requirements, timing, geographic fields, funding, fees, translation fields, and source-language records.
+## Lifecycle
 
-## Private reusable materials
+- discovered
+- parsing
+- needs verification
+- verified
+- published
+- updated
+- closing soon
+- closed
+- archived
+- source unavailable
+- verification expired
 
-`artist_materials` supports CVs, biographies, statements, proposals, budgets, timelines, references, letters, identity/tax records, video, audio, supporting documents, reusable answers, project descriptions, and other private materials. Each record has artist ownership, visibility, version, active state, metadata, and timestamps.
+## Timing
 
-Public profile data, private Passport material, application-only material, internal drafts, and legal/identity records remain distinguishable through table boundaries and visibility metadata.
+- opening date
+- exact deadline instant
+- deadline timezone
+- fixed, rolling, recurring, or not stated
+- expected decision date
+- program start and end
+
+## Eligibility
+
+Existing structured rules can represent:
+
+- worldwide, national, regional, local, city, and radius conditions
+- country of residence
+- citizenship
+- age
+- career stage
+- applicant type
+- discipline and medium
+- language
+- participation format
+- identity or lived-experience conditions requiring voluntary confirmation
+- legal, tax, membership, partnership, and other human-reviewed conditions
+
+## Value and effort
+
+Existing opportunity fields and structured metadata support:
+
+- amount and currency
+- stipend
+- travel, housing, production, exhibition, or publication support
+- application fee
+- material count
+- written-answer count
+- preparation effort
+- interview/follow-up requirements
+
+## Application requirements
+
+Structured requirements support biographies, statements, CVs, portfolios, image/video/audio counts, proposals, budgets, timelines, references, letters, identification, tax records, links, file types, size limits, external platforms, and verified email destinations.
+
+## Policy separation
+
+Two distinct fields now prevent a critical trust error:
+
+- `artwork_ai_policy`
+- `application_assistance_policy`
+
+An opportunity may prohibit AI-generated artwork while remaining silent about administrative assistance. KLEIO no longer collapses those into one claim.
 
 ---
 
 # 4. PhotoVogue 2026 reference fixture
 
-## Verified fixture
+## Verified record
 
-| Field | Value |
+| Field | Verified value |
 |---|---|
 | Opportunity | PhotoVogue 2026 Global Open Call — Brave New Visions |
-| Eligibility scope | Worldwide |
+| Eligibility | Worldwide |
 | Minimum age | 18 |
 | Accepted media | Photography, video, multimedia |
 | Maximum images | 15 |
-| Optional trailer/video | Up to 60 seconds |
-| Application fee | 0 |
-| Deadline | 2026-09-11 21:59 UTC, stored with source timezone CEST |
+| Optional trailer | Up to 60 seconds |
+| Application fee | No fee |
+| Deadline | September 11, 2026 at 21:59 UTC; source timezone retained as CEST |
 | Grant information | USD 12,000 total: 6,000 / 4,000 / 2,000 |
-| Submission path | Official external Picter portal |
+| Submission platform | Official external Picter portal |
 | Artwork AI policy | Prohibited |
-| Application assistance policy | Not stated by the source |
+| Application-assistance policy | Not stated by the official source |
 | Verification confidence | 1.0 |
-| Re-verification | Scheduled before the deadline |
+| Recheck | Scheduled before the deadline |
 
-## Important correction
+## Important correction made
 
-The public PhotoVogue contact address is stored as `contact_email`, not as an email-submission destination. `submission_email` is blank and `submission_method` is `external_portal`. This prevents KLEIO from implying that an application can be submitted to a support address.
+The public PhotoVogue contact address is now stored as a support/contact address, not as an application-submission email. The submission method is the official external Picter portal. This prevents KLEIO from preparing or claiming an invalid email submission.
 
-## Fixture tests
+## Five-profile matrix
 
-1. **Miami photographer, age 36, 15 confirmed non-AI works:** eligible, creative fit, ready work samples.
-2. **London video artist, age 17:** ineligible despite creative fit and complete work samples.
-3. **Nairobi sculptor, age 30:** ineligible because a mandatory medium requirement fails.
-4. **Tokyo photographer with no age:** eligibility is missing information, not assumed.
+1. **Miami photographer, age 36, 15 confirmed non-AI works:** eligible, creative fit, work samples ready.
+2. **London video artist, age 17:** ineligible despite creative fit and readiness.
+3. **Nairobi sculptor, age 30:** ineligible because the mandatory medium rule fails.
+4. **Tokyo photographer with no age:** missing information; KLEIO does not assume eligibility.
 5. **Mexico City video artist, age 28, no works:** eligible but not ready.
 
-All five returned the expected layered outcome.
+All five produced the expected layered outcome.
 
 ---
 
-# 5. Matching architecture
+# 5. Eligibility-first matching architecture
 
 ## Layer 1 — hard eligibility
 
-The evaluator checks verified mandatory rules before relevance. Supported direct checks include deadline, age, residence/location, citizenship, discipline/medium, career stage, applicant type, language, and participation format.
+The persisted evaluator checks mandatory rules before creative relevance.
 
-A failed hard rule produces `not_eligible`. Missing required artist information produces `missing_information`. No structured verified rule produces `eligibility_unclear`.
+Directly evaluated rules include:
 
-Identity, lived-experience, safety, partnership, membership, and other special requirements are never inferred. They remain unknown until explicitly and voluntarily confirmed by the artist or reviewed by a human.
+- deadline expiration
+- age
+- country/residence/location
+- citizenship
+- discipline/medium
+- career stage
+- applicant type
+- language
+- participation format
+
+Outcomes:
+
+- `eligible`
+- `not_eligible`
+- `missing_information`
+- `eligibility_unclear`
+
+A failed hard rule always overrides semantic or creative similarity.
+
+Identity, lived experience, safety, membership, partnership, and other sensitive/special conditions are never inferred. They remain unknown until explicitly and voluntarily confirmed or reviewed by a human.
 
 ## Layer 2 — creative fit
 
-Creative fit uses explicit overlap between artist disciplines/mediums and accepted opportunity disciplines. It does not estimate artistic quality or probability of winning.
+Creative fit uses explicit overlap between artist disciplines/mediums and the opportunity's verified accepted disciplines. It does not estimate artistic quality or likelihood of winning.
 
 ## Layer 3 — readiness
 
-Verified requirements map to actual Passport fields, portfolio works, and private reusable materials. Readiness identifies ready, missing, artist-confirmation, human-verification, file-type, file-count, and size-related states.
+Readiness maps verified requirements to:
+
+- Creative Passport fields
+- portfolio works
+- private reusable materials
+- artist confirmations
+- required human verification
+- file counts, file types, and size limits
 
 ## Layer 4 — effort
 
-Preparation effort is low, moderate, or significant based on missing verified requirements and time until the official deadline.
+Effort is low, moderate, or significant based on missing verified requirements and deadline timing. The reason is displayed.
 
 ## Layer 5 — strategic value
 
-The evaluation may explain funding, career relevance, geographic relevance, and whether creating a missing reusable asset may help future applications. It explicitly stores no probability of winning.
+Where supportable, KLEIO explains funding, career relevance, and whether preparing a missing reusable asset may benefit future applications. The evaluation explicitly stores no winning probability.
 
-## Why-you-match explanation
+## Why-you-match presentation
 
-Each persisted evaluation includes:
+The live opportunity directory now displays persisted evidence for:
 
-- exact rule results;
-- source text and source URL;
-- eligibility status;
-- creative-fit terms;
-- readiness items;
-- effort explanation;
-- official deadline timezone;
-- source verification status and confidence;
-- last verification and recheck date;
-- artwork/application-assistance policy distinction.
+- eligibility status
+- exact rule reasons
+- source wording and source links
+- creative-fit terms
+- ready and missing materials
+- artist/human confirmations
+- preparation effort
+- deadline status and official timezone
+- verification status and confidence
+- last-verified and recheck dates
+- artwork/application-assistance policy distinction
+
+The preparation button is unavailable until the server confirms hard eligibility.
 
 ---
 
@@ -226,35 +306,44 @@ Each persisted evaluation includes:
 
 ## Existing controlled flow
 
-1. Load official opportunity record and package history.
+1. Load the official opportunity and prior package record.
 2. Map source requirements to Passport content and selected works.
-3. Show missing, complete, and human-review requirements.
+3. Show complete, missing, and review-required items.
 4. Let the artist edit application-specific written material.
 5. Let the artist select exact portfolio works.
-6. Require four explicit confirmations: destination, materials, accuracy, and submission approval.
-7. Save versioned package records and submission attempts.
-8. Offer only the supported next action:
-   - native KLEIO submission for internal calls;
-   - reviewable `.eml` draft for verified email routes;
-   - external portal handoff;
-   - downloadable JSON manifest.
+6. Require explicit confirmations for destination, materials, accuracy, and submission approval.
+7. Save the package, selected works, written content, approvals, and submission attempt.
+8. Offer only supported next actions:
+   - native KLEIO submission for internal calls
+   - reviewable email draft
+   - official external portal handoff
+   - downloadable manifest
 9. Preserve submitted snapshots and status history.
-10. Mark external submissions as artist-reported unless independently confirmed.
+10. Keep external status artist-reported unless independently confirmed.
 
-## Boundaries preserved
+## Boundaries verified
 
-- No email is silently sent.
-- Downloaded email drafts state that files are not embedded and that the draft was prepared for review.
-- Native KLEIO submission requires all confirmations and a ready state.
-- Exported manifests are preparation records, not proof of submission.
-- External submissions are not represented as provider-confirmed without evidence.
+- Email drafts are downloaded for review; no email is silently sent.
+- Native submission requires all approvals and a ready state.
+- Exported manifests state that they are preparation records, not submission evidence.
+- External submission records explicitly state when receipt is not independently verified.
+- Generated or prepared content remains editable and artist-approved.
 
-## Remaining boundary work
+## Route-level guard implemented
 
-- Add a server evaluation guard inside the preparation route itself.
-- Invoke `check_my_work_policy_compatibility` for the exact selected work IDs before enabling external handoff, email draft creation, download marked as final, or native submission.
-- Disable the external-destination link until final review is complete; changing its visual style is not enough.
-- Populate and preserve current source-version IDs for every publishable reference opportunity.
+The preparation route now independently calls the persisted evaluator. Direct URL navigation is blocked when:
+
+- hard eligibility fails
+- the official deadline is expired
+- eligibility is unknown or missing information
+- required artwork-provenance confirmation is absent
+- the evaluator is unavailable
+
+This removes dependence on the artist arriving through the directory button.
+
+## Remaining final-action limitation
+
+The new policy-compatibility RPC validates artist ownership and can check exact work IDs, but the existing preparation workspace does not yet invoke it every time selected works change. Before broad launch, final actions should require compatibility for the exact selected set, not merely the existence of at least one compatible work in the artist's portfolio.
 
 ---
 
@@ -262,55 +351,57 @@ Each persisted evaluation includes:
 
 ## Authentication
 
-- Signup, login, logout, email verification, password reset, session persistence, and role assignment are represented in the source and production schema.
-- Full fresh-account browser verification remains required.
-- Leaked-password protection is disabled and should be enabled before broader outreach.
+Production auth and role assignment exist. The complete deployed browser test for signup, verification, reset, session expiration, and redirect behavior remains outstanding.
+
+Supabase leaked-password protection is currently disabled and should be enabled before broader outreach.
 
 ## Row-level security
 
-Verified with an authenticated artist session:
+Verified with an authenticated artist context:
 
-- one artist profile visible;
-- one activation row visible;
-- only that artist's portfolio works visible;
-- only that artist's private materials visible;
-- artist opportunity evaluations scoped to the authenticated artist.
+- only the artist's own private profile was visible
+- only the artist's own activation row was visible
+- only the artist's own portfolio works were visible
+- only the artist's own reusable materials were visible
+- only the artist's own opportunity evaluations were visible
 
-`artist_materials` uses own-only `ALL` policy. `artist_activation_status` is server-computed and read-only for the artist. The internal base evaluator is in the private schema and not directly executable by authenticated or anonymous clients.
+`artist_materials` uses own-only management. `artist_activation_status` is server-computed and read-only to the artist.
+
+## Evaluator isolation
+
+The internal base evaluator was moved into the private schema and direct client execution was revoked. Clients call only the policy-aware public evaluator.
 
 ## Storage
 
-- Private buckets and owner-folder policies exist for artist and application assets.
-- Public access is limited to the intended opportunity-preview bucket.
-- Signed-URL expiration, interrupted uploads, malware handling, orphan cleanup, and cross-device file replacement still require an explicit browser/storage test suite.
+Private buckets and owner-path policies exist for artist and application assets. Public access is limited to the intended opportunity-preview bucket. Signed-link expiry, interrupted uploads, deletion, replacement, and orphan cleanup still require browser/storage testing.
 
-## Admin functions
+## Security-definer warnings
 
-The opportunity import and approval RPCs independently verify KLEIO administrator status. Anonymous/public execution was revoked. A broader review of all security-definer RPCs remains open.
+Supabase continues to flag authenticated `SECURITY DEFINER` RPCs. Many are intentionally user-invoked operations, but every function must independently authorize the caller and restrict row scope. The opportunity admin import and approval functions reviewed here independently enforce KLEIO-admin status. A systematic audit of the remaining flagged functions is still required.
 
-## Unresolved risks
+## Performance-advisor findings
 
-1. Leaked-password protection disabled.
-2. Pre-existing security-definer advisor warnings.
-3. No full unauthorized signed-link browser test.
-4. Direct application-preparation route guard absent.
-5. Selected-work policy compatibility not enforced at the final action boundary.
+- The new source-version foreign-key index is present.
+- Several older RLS policies should use `(select auth.uid())`-style initialization to avoid per-row reevaluation.
+- Several tables have multiple permissive policies for the same role/action.
+- Numerous indexes are reported unused, which is expected in a low-traffic project; they should not be deleted without representative production query data.
 
 ---
 
 # 8. Implementation summary
 
-| File or subsystem | Change | Reason | Result | Remaining limitation |
-|---|---|---|---|---|
-| Supabase `opportunities` | Added provenance, lifecycle, recheck, and AI-policy fields | Make verification durable and explainable | Publishable records can show source confidence and policy boundaries | Existing records still need field backfill and re-verification |
-| Supabase `artist_materials` | Added private reusable materials with RLS | Make Passport reuse authentic | Materials persist and remain artist-controlled | UI for every material type is not complete |
-| Supabase `artist_activation_status` | Added calculated milestones and triggers | Stop treating signup as activation | Activation updates automatically | Browser event analytics still needed |
-| Supabase evaluations | Added layered JSON evidence and batch RPC | Replace cosmetic percentages | Server-persisted eligibility-first analysis | Source versions missing for some records |
-| Portfolio works | Added artist-controlled AI provenance | Enforce opportunity artwork policies without inference | PhotoVogue can require confirmation | Existing works default to unknown and need artist review |
-| PhotoVogue fixture | Corrected submission route and policy fields | Prevent false email submission and AI-policy ambiguity | Complete reference fixture | Live Picter form fields must still be checked at handoff |
-| Live opportunity directory | Replaced browser-only eligibility with persisted RPC output | Make matching trustworthy | Preparation button requires verified eligibility | Direct URL bypass remains |
-| Live artist dashboard | Added activation status card | Explain useful completion without manipulation | Artists see what is complete, missing, and why | Must be browser-tested after deployment |
-| GitHub migrations | Mirrored production migrations | Keep source control aligned with production | Database is no longer ahead of the branch | PR must pass CI and be merged |
+| Subsystem | Change made | Result | Remaining limitation |
+|---|---|---|---|
+| Opportunity schema | Added provenance, lifecycle, recheck, and AI-policy fields | Publishable opportunities can carry verification evidence and policy boundaries | Older records need structured backfill/re-verification |
+| Private Passport materials | Added `artist_materials` with versioning, visibility, and own-only RLS | Reusable application assets can persist privately | UI coverage for every material type is incomplete |
+| Activation | Added server-computed milestone record and triggers | Activation reflects meaningful product use | Deployed-browser funnel analytics still needed |
+| Opportunity evaluations | Added hard eligibility, fit, readiness, effort, strategic value, and explanation | Matching is persisted and explainable | Some opportunities lack a current source-version row |
+| Artwork provenance | Added artist-controlled creation status and disclosure notes | AI-art restrictions can be evaluated without inference | Existing works default to unknown until artists review them |
+| PhotoVogue fixture | Corrected portal handoff, support contact, policy separation, and verification | Complete reference opportunity for system tests | Live Picter form fields still require handoff-time review |
+| Opportunity directory | Replaced browser-only analysis with persisted batch RPC | Eligibility cannot be overridden by a cosmetic percentage | Full deployed responsive test remains |
+| Preparation route | Added independent server-evaluation gate | Direct URL bypass is closed | Exact selected-work compatibility still needs final-action enforcement |
+| Artist dashboard | Added durable activation status card | Artists see what is complete, missing, and why | Deployed accessibility test remains |
+| Source control | Mirrored all applied migrations and client changes | Production database and branch are aligned | PR remains draft until deployment walkthrough passes |
 
 ---
 
@@ -318,44 +409,49 @@ The opportunity import and approval RPCs independently verify KLEIO administrato
 
 ## Passed
 
-- Migration application.
-- RLS enabled on new tables.
+- All production migrations applied.
+- New-table RLS enabled.
 - Authenticated own-data visibility.
 - Activation-trigger recalculation.
 - Rollback-only full activation test.
-- PhotoVogue hard eligibility.
 - Hard ineligibility overriding creative fit.
-- Missing data returning unknown/missing information.
-- Expired-deadline hard-failure logic.
-- Readiness updating from stored material/works.
-- AI-art policy separated from application-assistance policy.
+- Missing information remaining unknown.
+- Expired-deadline failure logic.
+- Readiness mapping to works and private materials.
+- Artwork policy separated from application-assistance policy.
 - Work-policy ownership validation.
-- Five-profile PhotoVogue fixture matrix.
+- Five-profile PhotoVogue matrix.
 - Batch evaluation RPC.
 - Source-version foreign-key index.
-- Pull-request typecheck, lint, static build, route-export checks, and user-copy audit after fixing the Supabase PromiseLike issue are expected to rerun; final status must be read from CI.
+- Preparation route hard-eligibility guard.
+- TypeScript CI.
+- Lint CI.
+- Static export CI.
+- Critical auth/workspace export verification.
+- Internal navigation audit.
+- User-facing copy audit.
 
-## Failed or blocked
+## Still blocked or unverified
 
-- First CI attempt: typecheck/build failed because the Supabase query builder returns a `PromiseLike` without `.finally`. Fixed in the subsequent commit.
-- Repository navigation audit: remains red with numerous baseline static-export/literal-route failures.
-- Fresh email-confirmed artist browser journey: not run.
-- Logout/login and cross-device browser persistence: not run.
-- Mobile/tablet accessibility walkthrough: not run.
-- Full institution regression browser walkthrough: not run.
-- Direct preparation URL guard: not implemented.
-- Selected-work policy enforcement inside preparation: not implemented.
+- Fresh email-confirmed artist browser journey.
+- Profile image and document upload on the deployed build.
+- Logout/login, browser restart, and cross-device persistence.
+- Tablet/mobile and assistive-technology walkthrough.
+- Unauthorized signed-link and expiry tests.
+- Full institution browser regression test.
+- Exact selected-work policy check inside preparation final actions.
+- Public deployment verification.
 
-## No synthetic production users
+## Test-data integrity
 
-The five-profile matrix was evaluated as a temporary SQL fixture. The activation completion test was executed in a transaction and rolled back. No fake artist account or permanent fake portfolio record was added to production.
+No synthetic production users were created. The five-profile matrix was a temporary SQL fixture. The activation completion test was rolled back.
 
 ---
 
 # 10. Prioritized next actions
 
-1. **Merge only after CI and route integrity are resolved, then deploy the current live build.** Remove the public mismatch that foregrounds demo credentials and prototype language.
-2. **Run one complete fresh-account browser activation test on the deployed build.** Include email confirmation, profile image, three works, one private material, eligible and ineligible opportunities, package preparation, logout/login, mobile width, and cross-account denial tests.
-3. **Close the final authorization boundary.** Add the server eligibility guard inside the preparation route, enforce selected-work AI-policy compatibility at every final action, and enable leaked-password protection.
+1. **Merge/deploy only after reviewing the draft PR, then verify the live public entry state.** The public site must present real signup clearly and keep the guided demo separate.
+2. **Run one complete fresh-account deployed-browser walkthrough.** Include email confirmation, profile image, core Passport, three works, one reusable material, eligible/ineligible matching, package preparation, logout/login, mobile width, and cross-account denial.
+3. **Close the exact selected-work policy boundary and enable leaked-password protection.** Then run the focused security-definer authorization review.
 
-Do not begin broad artist outreach until these three actions pass.
+Broad artist outreach should begin only after those three actions pass.
