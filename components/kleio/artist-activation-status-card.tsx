@@ -65,20 +65,26 @@ export function ArtistActivationStatusCard() {
 
   useEffect(() => {
     let active = true
-    const supabase = getSupabaseBrowserClient()
-    supabase
-      .from("artist_activation_status")
-      .select("*")
-      .maybeSingle()
-      .then(({ data, error: loadError }) => {
+
+    async function loadActivationStatus() {
+      try {
+        const supabase = getSupabaseBrowserClient()
+        const { data, error: loadError } = await supabase
+          .from("artist_activation_status")
+          .select("*")
+          .maybeSingle()
+
         if (!active) return
         if (loadError) setError(loadError.message)
         else setStatus((data ?? null) as ArtistActivationStatus | null)
-      })
-      .finally(() => {
+      } catch (reason) {
+        if (active) setError(reason instanceof Error ? reason.message : "KLEIO could not load the activation record.")
+      } finally {
         if (active) setLoading(false)
-      })
+      }
+    }
 
+    void loadActivationStatus()
     return () => { active = false }
   }, [])
 
