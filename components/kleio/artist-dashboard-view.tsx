@@ -9,6 +9,7 @@ import { loadLiveArtistWorkspace, type LiveArtistWorkspace } from "@/lib/kleio-l
 import { getArtistProfileByUsername } from "@/lib/kleio-profile-data"
 import { ArtistDashboardOverview } from "@/components/kleio/artist-dashboard/artist-dashboard-overview"
 import { ArtistProfileContextBar } from "@/components/kleio/artist-profile-context-bar"
+import { ArtistActivationStatusCard } from "@/components/kleio/artist-activation-status-card"
 import { useKleioMode } from "@/components/kleio/use-kleio-mode"
 
 function LiveArtistDashboard() {
@@ -60,6 +61,7 @@ function LiveArtistDashboard() {
       <div className="px-4 pt-3 sm:px-5">
         <ArtistProfileContextBar active="workspace" showKleioAssistStatus />
       </div>
+      <ArtistActivationStatusCard />
       <ArtistDashboardOverview artist={workspace.artist} profile={workspace.profile} analytics={workspace.analytics} />
     </main>
   )
