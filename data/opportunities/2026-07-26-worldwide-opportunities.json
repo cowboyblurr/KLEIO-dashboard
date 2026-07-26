@@ -1,0 +1,130 @@
+{
+  "run_date": "2026-07-26",
+  "protocol": "KLEIO worldwide multilingual opportunity protocol",
+  "production_project": "trekynurdgxgtaaqqtyq",
+  "summary": {
+    "new_artist_facing_records": 7,
+    "enriched_existing_records": 2,
+    "verification_holds": 1,
+    "catalog_total_after_ingestion": 63,
+    "artist_facing_total_after_ingestion": 58
+  },
+  "new_artist_facing_records": [
+    {
+      "external_id": "goethe-aep-mobility-grants-2026-09",
+      "title": "Mobility Grants for Artists and Cultural Professionals",
+      "source_slug": "goethe-africa-europe-partnerships",
+      "deadline": "2026-09-15",
+      "funding": "Up to EUR 4,000",
+      "verification_status": "official_source",
+      "eligibility_scope": "regional",
+      "official_source": "https://www.goethe.de/prj/aep/en/cal/ssa/mga/img.html"
+    },
+    {
+      "external_id": "goethe-aep-southern-africa-audience-development-2026",
+      "title": "Southern Africa Audience Development Grants",
+      "source_slug": "goethe-africa-europe-partnerships",
+      "deadline": "2026-08-15",
+      "funding": "Category-specific support from EUR 1,750 to EUR 185,000",
+      "verification_status": "official_source",
+      "eligibility_scope": "regional",
+      "official_source": "https://www.goethe.de/prj/aep/en/cal/sna/adg.html"
+    },
+    {
+      "external_id": "creative-australia-venice-biennale-2028-eoi",
+      "title": "Venice Biennale 2028 — Australia Pavilion Expressions of Interest",
+      "source_slug": "creative-australia",
+      "deadline": "2026-08-04T15:00:00+10:00",
+      "funding": "AUD 5,500 shortlist development; AUD 100,000 artist fellowship; AUD 50,000 curator fellowship; separate production and travel support",
+      "verification_status": "official_source",
+      "eligibility_scope": "citizenship_based",
+      "official_source": "https://creative.gov.au/investments-opportunities/venice-biennale-2028-expressions-interest"
+    },
+    {
+      "external_id": "creative-australia-arts-projects-individuals-groups-2026-09",
+      "title": "Arts Projects for Individuals and Groups — September 2026",
+      "source_slug": "creative-australia",
+      "deadline": "2026-09-01T15:00:00+10:00",
+      "funding": "AUD 10,000–50,000",
+      "verification_status": "official_source",
+      "eligibility_scope": "citizenship_based",
+      "official_source": "https://creative.gov.au/investments-opportunities/arts-projects-individuals-and-groups"
+    },
+    {
+      "external_id": "nordic-culture-fund-nemo-2026",
+      "title": "NEMO — Northern European Mobility Opportunity 2026",
+      "source_slug": "nordic-culture-fund",
+      "opens": "2026-08-17",
+      "deadline": "2026-09-18T23:59:00+02:00",
+      "funding": "Up to DKK 75,000",
+      "verification_status": "official_source",
+      "eligibility_scope": "partnership_based",
+      "official_source": "https://nordiskkulturfond.org/en/funding-programmes/nemo-northern-european-mobility-opportunity"
+    },
+    {
+      "external_id": "arts-council-ireland-artist-community-round-2-2026",
+      "title": "Artist in the Community Scheme — Round 2, 2026",
+      "source_slug": "arts-council-ireland",
+      "opens": "2026-08-10",
+      "deadline": "2026-09-28T17:00:00+01:00",
+      "funding": "Up to EUR 15,000",
+      "verification_status": "official_source",
+      "eligibility_scope": "partnership_based",
+      "official_source": "https://artscouncil.ie/funding-opportunities/artist-in-the-community-scheme-round-2/"
+    },
+    {
+      "external_id": "singapore-nac-sangam-house-residency-2026",
+      "title": "NAC–Sangam House Residency 2026",
+      "source_slug": "singapore-national-arts-council",
+      "deadline": "2026-08-07T17:00:00+08:00",
+      "funding": "Airfare, visa, insurance, ground transport, lodging, meals, and per diem",
+      "application_fee": null,
+      "verification_status": "official_source",
+      "eligibility_scope": "citizenship_based",
+      "official_source": "https://www.nac.gov.sg/support/capability-development/training-opportunities/literary-arts-sangamhouse"
+    }
+  ],
+  "enriched_existing_records": [
+    {
+      "external_id": "singapore-nac-cultural-fellowship-2026",
+      "changes": [
+        "Added citizenship-based scope",
+        "Added accepted application language",
+        "Added third eligibility rule",
+        "Added three structured application requirements",
+        "Refreshed source snapshot"
+      ]
+    },
+    {
+      "external_id": "singapore-nac-presentation-participation-2026-08",
+      "changes": [
+        "Added country-specific scope",
+        "Clarified SGD 100,000 as annual cap rather than likely award",
+        "Added five structured application requirements",
+        "Refreshed source snapshot"
+      ]
+    }
+  ],
+  "verification_holds": [
+    {
+      "external_id": "sergipe-arte-cultura-educacao-tempo-integral-2026",
+      "title": "Arte e Cultura na Educação em Tempo Integral — Escolas Integrais de Sergipe",
+      "source_language": "pt",
+      "status": "draft",
+      "verification_status": "needs_review",
+      "artist_facing": false,
+      "reason": "The official listing confirms dates and broad disciplines but does not expose the complete edital, compensation, applicant-territory rules, required documents, rights, safeguarding, or tax terms. The listing also uses a placeholder edital number.",
+      "official_source": "https://mapacultural.se.gov.br/oportunidade/52/"
+    }
+  ],
+  "validation": {
+    "all_target_records_have_current_snapshots": true,
+    "mobility_search_returns_goethe_records": true,
+    "venice_search_returns_creative_australia_record": true,
+    "australia_filter_returns_both_creative_australia_records": true,
+    "nemo_is_upcoming": true,
+    "sergipe_artist_facing_search_count": 0,
+    "sangam_application_fee": null,
+    "sergipe_translation_method": "machine_review_required"
+  }
+}
