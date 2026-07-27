@@ -3,11 +3,11 @@ import { ArtistShell } from "@/components/kleio/artist-shell"
 import { ArtistPassportPageView } from "@/components/kleio/artist-workspace/artist-passport-page-view"
 import { ArtistProfileContextBar } from "@/components/kleio/artist-profile-context-bar"
 import { LiveModeView } from "@/components/kleio/live-mode-view"
-import { LiveArtistPassportBeta } from "@/components/kleio/live-artist-passport-beta"
+import { LiveArtistPassportEditor } from "@/components/kleio/live-artist-passport-editor"
 
 export const metadata: Metadata = {
   title: "KLEIO — Creative Passport",
-  description: "Manage an autosaved, reusable artist source record with structured disciplines, mediums, documents, and profile presentation.",
+  description: "Manage the reusable source record and artist-selected images behind the shared KLEIO profile layout.",
 }
 
 export default function Page() {
@@ -18,7 +18,7 @@ export default function Page() {
           <ArtistProfileContextBar active="passport" showKleioAssistStatus />
         </div>
         <div className="min-h-0 flex-1">
-          <LiveModeView live={<LiveArtistPassportBeta />} preview={<ArtistPassportPageView />} />
+          <LiveModeView live={<LiveArtistPassportEditor />} preview={<ArtistPassportPageView />} />
         </div>
       </div>
     </ArtistShell>
