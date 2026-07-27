@@ -1,0 +1,383 @@
+{
+  "assets": [
+    {
+      "content_length": 758,
+      "content_type": "text/css; charset=utf-8",
+      "final_url": "https://www.kleioarthouse.com/_next/static/chunks/0-2xeawyt4efy.css?diagnostic=1",
+      "kind": "css",
+      "reference": "/KLEIO-dashboard/_next/static/chunks/0-2xeawyt4efy.css",
+      "status": 200,
+      "url": "https://cowboyblurr.github.io/KLEIO-dashboard/_next/static/chunks/0-2xeawyt4efy.css?diagnostic=1"
+    },
+    {
+      "content_length": 8838,
+      "content_type": "text/css; charset=utf-8",
+      "final_url": "https://www.kleioarthouse.com/_next/static/chunks/06556iu8zlb2o.css?diagnostic=1",
+      "kind": "css",
+      "reference": "/KLEIO-dashboard/_next/static/chunks/06556iu8zlb2o.css",
+      "status": 200,
+      "url": "https://cowboyblurr.github.io/KLEIO-dashboard/_next/static/chunks/06556iu8zlb2o.css?diagnostic=1"
+    },
+    {
+      "content_length": 131509,
+      "content_type": "text/css; charset=utf-8",
+      "final_url": "https://www.kleioarthouse.com/_next/static/chunks/0d.5m~18a1-93.css?diagnostic=1",
+      "kind": "css",
+      "reference": "/KLEIO-dashboard/_next/static/chunks/0d.5m~18a1-93.css",
+      "status": 200,
+      "url": "https://cowboyblurr.github.io/KLEIO-dashboard/_next/static/chunks/0d.5m~18a1-93.css?diagnostic=1"
+    },
+    {
+      "content_length": 112594,
+      "content_type": "application/javascript; charset=utf-8",
+      "final_url": "https://www.kleioarthouse.com/_next/static/chunks/03~yq9q893hmn.js?diagnostic=1",
+      "kind": "js",
+      "reference": "/KLEIO-dashboard/_next/static/chunks/03~yq9q893hmn.js",
+      "status": 200,
+      "url": "https://cowboyblurr.github.io/KLEIO-dashboard/_next/static/chunks/03~yq9q893hmn.js?diagnostic=1"
+    },
+    {
+      "content_length": 16886,
+      "content_type": "application/javascript; charset=utf-8",
+      "final_url": "https://www.kleioarthouse.com/_next/static/chunks/087stb29nbdzi.js?diagnostic=1",
+      "kind": "js",
+      "reference": "/KLEIO-dashboard/_next/static/chunks/087stb29nbdzi.js",
+      "status": 200,
+      "url": "https://cowboyblurr.github.io/KLEIO-dashboard/_next/static/chunks/087stb29nbdzi.js?diagnostic=1"
+    },
+    {
+      "content_length": 44400,
+      "content_type": "application/javascript; charset=utf-8",
+      "final_url": "https://www.kleioarthouse.com/_next/static/chunks/0c.tq-mizuazk.js?diagnostic=1",
+      "kind": "js",
+      "reference": "/KLEIO-dashboard/_next/static/chunks/0c.tq-mizuazk.js",
+      "status": 200,
+      "url": "https://cowboyblurr.github.io/KLEIO-dashboard/_next/static/chunks/0c.tq-mizuazk.js?diagnostic=1"
+    },
+    {
+      "content_length": 157429,
+      "content_type": "application/javascript; charset=utf-8",
+      "final_url": "https://www.kleioarthouse.com/_next/static/chunks/0e3qzcugk0mu7.js?diagnostic=1",
+      "kind": "js",
+      "reference": "/KLEIO-dashboard/_next/static/chunks/0e3qzcugk0mu7.js",
+      "status": 200,
+      "url": "https://cowboyblurr.github.io/KLEIO-dashboard/_next/static/chunks/0e3qzcugk0mu7.js?diagnostic=1"
+    },
+    {
+      "content_length": 149965,
+      "content_type": "application/javascript; charset=utf-8",
+      "final_url": "https://www.kleioarthouse.com/_next/static/chunks/0kna.1hm1wjgg.js?diagnostic=1",
+      "kind": "js",
+      "reference": "/KLEIO-dashboard/_next/static/chunks/0kna.1hm1wjgg.js",
+      "status": 200,
+      "url": "https://cowboyblurr.github.io/KLEIO-dashboard/_next/static/chunks/0kna.1hm1wjgg.js?diagnostic=1"
+    },
+    {
+      "content_length": 34676,
+      "content_type": "application/javascript; charset=utf-8",
+      "final_url": "https://www.kleioarthouse.com/_next/static/chunks/0lnw.~.a-4vot.js?diagnostic=1",
+      "kind": "js",
+      "reference": "/KLEIO-dashboard/_next/static/chunks/0lnw.~.a-4vot.js",
+      "status": 200,
+      "url": "https://cowboyblurr.github.io/KLEIO-dashboard/_next/static/chunks/0lnw.~.a-4vot.js?diagnostic=1"
+    },
+    {
+      "content_length": 26047,
+      "content_type": "application/javascript; charset=utf-8",
+      "final_url": "https://www.kleioarthouse.com/_next/static/chunks/0qordfrju~_27.js?diagnostic=1",
+      "kind": "js",
+      "reference": "/KLEIO-dashboard/_next/static/chunks/0qordfrju~_27.js",
+      "status": 200,
+      "url": "https://cowboyblurr.github.io/KLEIO-dashboard/_next/static/chunks/0qordfrju~_27.js?diagnostic=1"
+    },
+    {
+      "content_length": 54638,
+      "content_type": "application/javascript; charset=utf-8",
+      "final_url": "https://www.kleioarthouse.com/_next/static/chunks/0re5y41..x.9k.js?diagnostic=1",
+      "kind": "js",
+      "reference": "/KLEIO-dashboard/_next/static/chunks/0re5y41..x.9k.js",
+      "status": 200,
+      "url": "https://cowboyblurr.github.io/KLEIO-dashboard/_next/static/chunks/0re5y41..x.9k.js?diagnostic=1"
+    },
+    {
+      "content_length": 5251,
+      "content_type": "application/javascript; charset=utf-8",
+      "final_url": "https://www.kleioarthouse.com/_next/static/chunks/0xxp6~l-9vn-a.js?diagnostic=1",
+      "kind": "js",
+      "reference": "/KLEIO-dashboard/_next/static/chunks/0xxp6~l-9vn-a.js",
+      "status": 200,
+      "url": "https://cowboyblurr.github.io/KLEIO-dashboard/_next/static/chunks/0xxp6~l-9vn-a.js?diagnostic=1"
+    },
+    {
+      "content_length": 24072,
+      "content_type": "application/javascript; charset=utf-8",
+      "final_url": "https://www.kleioarthouse.com/_next/static/chunks/11rfdwucb3usr.js?diagnostic=1",
+      "kind": "js",
+      "reference": "/KLEIO-dashboard/_next/static/chunks/11rfdwucb3usr.js",
+      "status": 200,
+      "url": "https://cowboyblurr.github.io/KLEIO-dashboard/_next/static/chunks/11rfdwucb3usr.js?diagnostic=1"
+    },
+    {
+      "content_length": 227312,
+      "content_type": "application/javascript; charset=utf-8",
+      "final_url": "https://www.kleioarthouse.com/_next/static/chunks/12mz0_._155bq.js?diagnostic=1",
+      "kind": "js",
+      "reference": "/KLEIO-dashboard/_next/static/chunks/12mz0_._155bq.js",
+      "status": 200,
+      "url": "https://cowboyblurr.github.io/KLEIO-dashboard/_next/static/chunks/12mz0_._155bq.js?diagnostic=1"
+    },
+    {
+      "content_length": 237905,
+      "content_type": "application/javascript; charset=utf-8",
+      "final_url": "https://www.kleioarthouse.com/_next/static/chunks/188czs_wr9p7c.js?diagnostic=1",
+      "kind": "js",
+      "reference": "/KLEIO-dashboard/_next/static/chunks/188czs_wr9p7c.js",
+      "status": 200,
+      "url": "https://cowboyblurr.github.io/KLEIO-dashboard/_next/static/chunks/188czs_wr9p7c.js?diagnostic=1"
+    },
+    {
+      "content_length": 10596,
+      "content_type": "application/javascript; charset=utf-8",
+      "final_url": "https://www.kleioarthouse.com/_next/static/chunks/turbopack-109rb5qij~r40.js?diagnostic=1",
+      "kind": "js",
+      "reference": "/KLEIO-dashboard/_next/static/chunks/turbopack-109rb5qij~r40.js",
+      "status": 200,
+      "url": "https://cowboyblurr.github.io/KLEIO-dashboard/_next/static/chunks/turbopack-109rb5qij~r40.js?diagnostic=1"
+    }
+  ],
+  "commit_sha": "98d3b52b0caa161e4aab9acd21c76ef35e3b4b2e",
+  "expected_base_path": "/KLEIO-dashboard",
+  "generated_at": "2026-07-27T23:56:15.818993+00:00",
+  "home": {
+    "content_length": 24996,
+    "content_type": "text/html; charset=utf-8",
+    "final_url": "https://www.kleioarthouse.com/?diagnostic=20260727235611",
+    "status": 200,
+    "url": "https://cowboyblurr.github.io/KLEIO-dashboard/?diagnostic=20260727235611"
+  },
+  "html": {
+    "contains_duplicate_next_prefix": false,
+    "contains_expected_next_prefix": true,
+    "contains_root_next_prefix": false,
+    "css_references": [
+      "/KLEIO-dashboard/_next/static/chunks/0-2xeawyt4efy.css",
+      "/KLEIO-dashboard/_next/static/chunks/06556iu8zlb2o.css",
+      "/KLEIO-dashboard/_next/static/chunks/0d.5m~18a1-93.css"
+    ],
+    "js_reference_count": 13,
+    "length": 24996,
+    "title": "KLEIO Arthouse"
+  },
+  "pages_config": {
+    "build_type": "workflow",
+    "cname": "www.kleioarthouse.com",
+    "html_url": "https://www.kleioarthouse.com/",
+    "source": {
+      "branch": "main",
+      "path": "/"
+    },
+    "status": null
+  },
+  "recent_deploy_workflow_runs": [
+    {
+      "conclusion": null,
+      "created_at": "2026-07-27T23:56:02Z",
+      "head_sha": "98d3b52b0caa161e4aab9acd21c76ef35e3b4b2e",
+      "html_url": "https://github.com/cowboyblurr/KLEIO-dashboard/actions/runs/30315741245",
+      "id": 30315741245,
+      "run_number": 478,
+      "status": "in_progress",
+      "updated_at": "2026-07-27T23:56:05Z"
+    },
+    {
+      "conclusion": "failure",
+      "created_at": "2026-07-27T17:36:24Z",
+      "head_sha": "ffa4ed9b55045dd6e3a4d942f53e13bf59c504f0",
+      "html_url": "https://github.com/cowboyblurr/KLEIO-dashboard/actions/runs/30289992162",
+      "id": 30289992162,
+      "run_number": 476,
+      "status": "completed",
+      "updated_at": "2026-07-27T17:37:33Z"
+    },
+    {
+      "conclusion": "failure",
+      "created_at": "2026-07-27T17:33:50Z",
+      "head_sha": "90c735eefb1fe461a45944c22cb773655863f62c",
+      "html_url": "https://github.com/cowboyblurr/KLEIO-dashboard/actions/runs/30289796704",
+      "id": 30289796704,
+      "run_number": 474,
+      "status": "completed",
+      "updated_at": "2026-07-27T17:34:58Z"
+    },
+    {
+      "conclusion": "cancelled",
+      "created_at": "2026-07-27T17:32:40Z",
+      "head_sha": "b1aac66e88b8fe1197c9d939176b68bf9ab00327",
+      "html_url": "https://github.com/cowboyblurr/KLEIO-dashboard/actions/runs/30289708084",
+      "id": 30289708084,
+      "run_number": 473,
+      "status": "completed",
+      "updated_at": "2026-07-27T17:33:56Z"
+    },
+    {
+      "conclusion": "cancelled",
+      "created_at": "2026-07-27T17:32:13Z",
+      "head_sha": "d791bcadf7c489156e97694a291fa1b010233cb7",
+      "html_url": "https://github.com/cowboyblurr/KLEIO-dashboard/actions/runs/30289674302",
+      "id": 30289674302,
+      "run_number": 472,
+      "status": "completed",
+      "updated_at": "2026-07-27T17:32:57Z"
+    },
+    {
+      "conclusion": "cancelled",
+      "created_at": "2026-07-27T17:31:54Z",
+      "head_sha": "648ee3a3820e96c6ca8bd27766e40d95ac463e05",
+      "html_url": "https://github.com/cowboyblurr/KLEIO-dashboard/actions/runs/30289650787",
+      "id": 30289650787,
+      "run_number": 471,
+      "status": "completed",
+      "updated_at": "2026-07-27T17:32:16Z"
+    },
+    {
+      "conclusion": "cancelled",
+      "created_at": "2026-07-27T17:31:36Z",
+      "head_sha": "877be32326e11d0b4584864f02f26e991e72cea9",
+      "html_url": "https://github.com/cowboyblurr/KLEIO-dashboard/actions/runs/30289628295",
+      "id": 30289628295,
+      "run_number": 470,
+      "status": "completed",
+      "updated_at": "2026-07-27T17:32:11Z"
+    },
+    {
+      "conclusion": "failure",
+      "created_at": "2026-07-27T17:26:51Z",
+      "head_sha": "97446181171e97296210a0a7ce90feb040b78398",
+      "html_url": "https://github.com/cowboyblurr/KLEIO-dashboard/actions/runs/30289275551",
+      "id": 30289275551,
+      "run_number": 468,
+      "status": "completed",
+      "updated_at": "2026-07-27T17:28:06Z"
+    },
+    {
+      "conclusion": "failure",
+      "created_at": "2026-07-27T17:24:22Z",
+      "head_sha": "15cadbea250d9b53726fc8f3e45515c54d28292a",
+      "html_url": "https://github.com/cowboyblurr/KLEIO-dashboard/actions/runs/30289087602",
+      "id": 30289087602,
+      "run_number": 466,
+      "status": "completed",
+      "updated_at": "2026-07-27T17:25:45Z"
+    },
+    {
+      "conclusion": "cancelled",
+      "created_at": "2026-07-27T17:23:36Z",
+      "head_sha": "e23a55f0c3bd8ebc8c86f86425d9821339c06833",
+      "html_url": "https://github.com/cowboyblurr/KLEIO-dashboard/actions/runs/30289033132",
+      "id": 30289033132,
+      "run_number": 465,
+      "status": "completed",
+      "updated_at": "2026-07-27T17:24:29Z"
+    }
+  ],
+  "recent_pages_deployments": [
+    {
+      "created_at": "2026-07-27T17:37:20Z",
+      "environment": "github-pages",
+      "id": 5627078616,
+      "ref": "main",
+      "sha": "ffa4ed9b55045dd6e3a4d942f53e13bf59c504f0",
+      "statuses_url": "https://api.github.com/repos/cowboyblurr/KLEIO-dashboard/deployments/5627078616/statuses",
+      "updated_at": "2026-07-27T17:37:33Z"
+    },
+    {
+      "created_at": "2026-07-27T17:34:43Z",
+      "environment": "github-pages",
+      "id": 5627042037,
+      "ref": "main",
+      "sha": "90c735eefb1fe461a45944c22cb773655863f62c",
+      "statuses_url": "https://api.github.com/repos/cowboyblurr/KLEIO-dashboard/deployments/5627042037/statuses",
+      "updated_at": "2026-07-27T17:34:58Z"
+    },
+    {
+      "created_at": "2026-07-27T17:27:47Z",
+      "environment": "github-pages",
+      "id": 5626942331,
+      "ref": "main",
+      "sha": "97446181171e97296210a0a7ce90feb040b78398",
+      "statuses_url": "https://api.github.com/repos/cowboyblurr/KLEIO-dashboard/deployments/5626942331/statuses",
+      "updated_at": "2026-07-27T17:28:06Z"
+    },
+    {
+      "created_at": "2026-07-27T17:25:26Z",
+      "environment": "github-pages",
+      "id": 5626910458,
+      "ref": "main",
+      "sha": "15cadbea250d9b53726fc8f3e45515c54d28292a",
+      "statuses_url": "https://api.github.com/repos/cowboyblurr/KLEIO-dashboard/deployments/5626910458/statuses",
+      "updated_at": "2026-07-27T17:25:45Z"
+    },
+    {
+      "created_at": "2026-07-27T17:20:36Z",
+      "environment": "github-pages",
+      "id": 5626844772,
+      "ref": "main",
+      "sha": "967d8d48386de57f8f64c6f3a66a8843eb16bfa5",
+      "statuses_url": "https://api.github.com/repos/cowboyblurr/KLEIO-dashboard/deployments/5626844772/statuses",
+      "updated_at": "2026-07-27T17:20:37Z"
+    },
+    {
+      "created_at": "2026-07-27T16:26:56Z",
+      "environment": "github-pages",
+      "id": 5626078179,
+      "ref": "main",
+      "sha": "ca7fbabf01adf6de8c824abe899e1941dd9f792a",
+      "statuses_url": "https://api.github.com/repos/cowboyblurr/KLEIO-dashboard/deployments/5626078179/statuses",
+      "updated_at": "2026-07-27T16:27:18Z"
+    },
+    {
+      "created_at": "2026-07-27T16:23:40Z",
+      "environment": "github-pages",
+      "id": 5626030747,
+      "ref": "main",
+      "sha": "35f740a5aecb45ce792eafcc8f3cc9b69fdbec1e",
+      "statuses_url": "https://api.github.com/repos/cowboyblurr/KLEIO-dashboard/deployments/5626030747/statuses",
+      "updated_at": "2026-07-27T16:27:18Z"
+    },
+    {
+      "created_at": "2026-07-27T16:12:59Z",
+      "environment": "github-pages",
+      "id": 5625871640,
+      "ref": "main",
+      "sha": "93eae045fcf39f12c9860686fbab6f5118ef671b",
+      "statuses_url": "https://api.github.com/repos/cowboyblurr/KLEIO-dashboard/deployments/5625871640/statuses",
+      "updated_at": "2026-07-27T16:24:40Z"
+    },
+    {
+      "created_at": "2026-07-27T16:09:10Z",
+      "environment": "github-pages",
+      "id": 5625814549,
+      "ref": "main",
+      "sha": "f5ec1d661fe4250fca5029f6318d799a909d51d4",
+      "statuses_url": "https://api.github.com/repos/cowboyblurr/KLEIO-dashboard/deployments/5625814549/statuses",
+      "updated_at": "2026-07-27T16:13:23Z"
+    },
+    {
+      "created_at": "2026-07-27T16:00:55Z",
+      "environment": "github-pages",
+      "id": 5625691231,
+      "ref": "main",
+      "sha": "3937c61323217363c666e11fa55cbb1fd5bba3fa",
+      "statuses_url": "https://api.github.com/repos/cowboyblurr/KLEIO-dashboard/deployments/5625691231/statuses",
+      "updated_at": "2026-07-27T16:09:33Z"
+    }
+  ],
+  "site_url": "https://cowboyblurr.github.io/KLEIO-dashboard/",
+  "summary": {
+    "all_css_ok": true,
+    "all_js_ok": true,
+    "css_count": 3,
+    "home_ok": true,
+    "js_count": 13
+  }
+}
