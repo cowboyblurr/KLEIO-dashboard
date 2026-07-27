@@ -1,4 +1,4 @@
-name: Repair GitHub Pages Publishing Source
+name: Audit GitHub Pages Publishing
 
 on:
   push:
@@ -14,7 +14,7 @@ permissions:
   pages: write
 
 jobs:
-  repair-pages-source:
+  audit-pages:
     runs-on: ubuntu-latest
     steps:
       - name: Inspect current GitHub Pages configuration
@@ -23,6 +23,13 @@ jobs:
         run: |
           gh api "repos/${GITHUB_REPOSITORY}/pages" --jq '{build_type, html_url, cname, source}' | tee pages-site.json
           test "$(jq -r '.build_type' pages-site.json)" = "workflow"
+
+      - name: Inspect GitHub Pages DNS health
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api "repos/${GITHUB_REPOSITORY}/pages/health" | jq '.' | tee pages-dns-health.json
 
       - name: Inspect recent production workflow runs
         env:
@@ -49,13 +56,14 @@ jobs:
             --jq '{status, commit, created_at, updated_at, error}' \
             | tee pages-latest-build.json
 
-      - name: Upload Pages source evidence
+      - name: Upload Pages audit evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: pages-source-evidence
+          name: pages-audit-evidence
           path: |
             pages-site.json
+            pages-dns-health.json
             pages-workflow-runs.json
             pages-deployments.json
             pages-latest-build.json
