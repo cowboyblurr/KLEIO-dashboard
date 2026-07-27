@@ -1,11 +1,14 @@
 /** @type {import('next').NextConfig} */
-const isGithubPages = process.env.GITHUB_ACTIONS === "true"
+const configuredBasePath = process.env.NEXT_PUBLIC_BASE_PATH?.trim() ?? ""
+const basePath = configuredBasePath && configuredBasePath !== "/"
+  ? `/${configuredBasePath.replace(/^\/+|\/+$/g, "")}`
+  : ""
 
 const nextConfig = {
   output: "export",
   trailingSlash: true,
-  basePath: isGithubPages ? "/KLEIO-dashboard" : "",
-  assetPrefix: isGithubPages ? "/KLEIO-dashboard/" : "",
+  basePath,
+  assetPrefix: basePath ? `${basePath}/` : "",
   images: {
     unoptimized: true,
   },
