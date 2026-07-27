@@ -8,7 +8,9 @@ on:
   workflow_dispatch:
 
 permissions:
+  actions: read
   contents: read
+  deployments: read
   pages: write
 
 jobs:
@@ -19,20 +21,33 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh api "repos/${GITHUB_REPOSITORY}/pages" --jq '{build_type, html_url, cname, source}' | tee pages-source-before.json
+          gh api "repos/${GITHUB_REPOSITORY}/pages" --jq '{build_type, html_url, cname, source}' | tee pages-site.json
+          test "$(jq -r '.build_type' pages-site.json)" = "workflow"
 
-      - name: Switch GitHub Pages to Actions workflow publishing
+      - name: Inspect recent production workflow runs
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh api --method PUT "repos/${GITHUB_REPOSITORY}/pages" -f build_type=workflow
+          gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/deploy.yml/runs?event=push&branch=main&per_page=10" \
+            --jq '{runs: [.workflow_runs[] | {id, head_sha, status, conclusion, run_number, created_at, updated_at, html_url}]}' \
+            | tee pages-workflow-runs.json
 
-      - name: Verify GitHub Pages publishing source
+      - name: Inspect GitHub Pages deployment history
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh api "repos/${GITHUB_REPOSITORY}/pages" --jq '{build_type, html_url, cname, source}' | tee pages-source-after.json
-          test "$(jq -r '.build_type' pages-source-after.json)" = "workflow"
+          gh api "repos/${GITHUB_REPOSITORY}/deployments?environment=github-pages&per_page=10" \
+            --jq '{deployments: [.[] | {id, sha, ref, environment, created_at, updated_at, statuses_url}]}' \
+            | tee pages-deployments.json
+
+      - name: Inspect latest legacy Pages build record
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api "repos/${GITHUB_REPOSITORY}/pages/builds/latest" \
+            --jq '{status, commit, created_at, updated_at, error}' \
+            | tee pages-latest-build.json
 
       - name: Upload Pages source evidence
         if: always()
@@ -40,6 +55,8 @@ jobs:
         with:
           name: pages-source-evidence
           path: |
-            pages-source-before.json
-            pages-source-after.json
+            pages-site.json
+            pages-workflow-runs.json
+            pages-deployments.json
+            pages-latest-build.json
           if-no-files-found: warn
