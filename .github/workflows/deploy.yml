@@ -17,8 +17,8 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  KLEIO_BASE_PATH: /KLEIO-dashboard
-  KLEIO_SITE_URL: https://cowboyblurr.github.io/KLEIO-dashboard
+  KLEIO_BASE_PATH: ""
+  KLEIO_SITE_URL: https://www.kleioarthouse.com
 
 jobs:
   build:
@@ -72,7 +72,7 @@ jobs:
           set -o pipefail
           pnpm run build 2>&1 | tee pages-build.log
 
-      - name: Verify static export output and asset paths
+      - name: Verify static export output and custom-domain asset paths
         id: export_output
         if: steps.pages_build.outcome == 'success'
         env:
@@ -81,8 +81,9 @@ jobs:
         run: |
           test -d out
           test -f out/index.html
+          test -f out/CNAME
           touch out/.nojekyll
-          node scripts/audit-github-pages-export.mjs
+          node scripts/audit-custom-domain-export.mjs
 
           echo "Checking signup and recovery exports..."
           test -f out/signup/artist/index.html
@@ -180,7 +181,6 @@ jobs:
       - name: Verify live production routes and assets
         env:
           SITE_URL: ${{ env.KLEIO_SITE_URL }}
-          BASE_PATH: ${{ env.KLEIO_BASE_PATH }}
         run: |
           set -euo pipefail
           SITE_URL="${SITE_URL%/}"
@@ -218,11 +218,9 @@ jobs:
             html="$(mktemp)"
             curl --silent --show-error --location --fail --max-time 30 "${SITE_URL}/?asset_verification=${GITHUB_SHA}" > "$html"
 
-            expected_prefix="${BASE_PATH}/_next/"
-            duplicate_prefix="${BASE_PATH}${BASE_PATH}/_next/"
-            grep -Fq "$expected_prefix" "$html"
-            if grep -Fq "$duplicate_prefix" "$html"; then
-              echo "The live HTML contains a duplicated GitHub Pages base path."
+            grep -Fq '/_next/' "$html"
+            if grep -Fq '/KLEIO-dashboard/_next/' "$html"; then
+              echo "The custom-domain HTML still contains GitHub project-path asset URLs."
               exit 1
             fi
 
@@ -236,7 +234,7 @@ jobs:
               test "$status" = "200"
               grep -Eiq '^content-type:.*text/css' "$headers"
               test -s "$body"
-            done < <(grep -oE "href=\"${BASE_PATH}/_next/static/css/[^\"]+\.css\"" "$html" | cut -d'"' -f2 | sort -u)
+            done < <(grep -oE 'href="/_next/static/(css|chunks)/[^"]+\.css"' "$html" | cut -d'"' -f2 | sort -u)
             test "$css_count" -gt 0
 
             js_count=0
@@ -245,7 +243,7 @@ jobs:
               js_count=$((js_count + 1))
               status="$(curl --silent --show-error --location --output /dev/null --write-out '%{http_code}' --max-time 30 "${SITE_ORIGIN}${src}?asset_verification=${GITHUB_SHA}")"
               test "$status" = "200"
-            done < <(grep -oE "src=\"${BASE_PATH}/_next/static/chunks/[^\"]+\.js\"" "$html" | cut -d'"' -f2 | sort -u)
+            done < <(grep -oE 'src="/_next/static/chunks/[^"]+\.js"' "$html" | cut -d'"' -f2 | sort -u)
             test "$js_count" -gt 0
           }
 
