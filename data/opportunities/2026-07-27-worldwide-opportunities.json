@@ -1,0 +1,133 @@
+{
+  "reviewed_at": "2026-07-27",
+  "production_project": "trekynurdgxgtaaqqtyq",
+  "summary": {
+    "new_artist_facing_records": 7,
+    "institution_only_holds": 1,
+    "eligibility_rules": 27,
+    "application_requirements": 35,
+    "current_source_snapshots": 8,
+    "machine_review_translation_records": 5
+  },
+  "records": [
+    {
+      "external_id": "culture-resource-production-awards-2026",
+      "title": "Production Awards 2026",
+      "source_slug": "culture-resource",
+      "status": "upcoming",
+      "opens_at": "2026-08-16T21:00:00Z",
+      "deadline_at": "2026-10-19T13:00:00Z",
+      "eligibility_scope": "diaspora",
+      "funding": "Category-specific grants from EUR 6,500 to EUR 13,000",
+      "trust_notes": [
+        "Official overview and detailed guidance contain conflicting birth-date ranges.",
+        "Automatic age matching is disabled and manual organizer confirmation is required.",
+        "Arabic application, agreement, guarantor obligations, cancellation terms, and IP document require human review."
+      ]
+    },
+    {
+      "external_id": "centro-veras-movimentos-a-beira-2026",
+      "title": "Movimentos à Beira — Residência Artística no (en) Veras 2026",
+      "source_slug": "centro-cultural-veras",
+      "status": "open",
+      "deadline_at": "2026-08-02T02:59:00Z",
+      "eligibility_scope": "residency_based",
+      "funding": "BRL 3,000 honorarium, accommodation, airfare, and curatorial support",
+      "trust_notes": [
+        "Application fee remains null because the official call does not explicitly state a fee.",
+        "Insurance, meals, local transport, production expenses, tax treatment, rights, and airfare limits remain unverified."
+      ]
+    },
+    {
+      "external_id": "tada-residency-programme-2027",
+      "title": "TaDA Residency Programme 2027",
+      "source_slug": "tada-textile-design-alliance",
+      "status": "open",
+      "deadline_at": "2026-08-12T21:59:00Z",
+      "eligibility_scope": "worldwide",
+      "funding": "Accommodation, workspace, travel, living-cost contribution, materials, partner infrastructure, and technical support",
+      "trust_notes": [
+        "Application fee remains null because no fee is stated.",
+        "Living contribution, travel ceiling, visa, insurance, and accessibility support are unquantified."
+      ]
+    },
+    {
+      "external_id": "argentina-bada-young-visual-artists-2026",
+      "title": "BADA 2026 — Federal Call for Young Visual Artists",
+      "source_slug": "argentina-cultura",
+      "status": "open",
+      "deadline_at": "2026-08-10T02:59:00Z",
+      "eligibility_scope": "country_specific",
+      "funding": "Exhibition, direct-sales access, and curatorial support; cash support not stated",
+      "trust_notes": [
+        "Exact closing time, booth costs, commissions, transport, installation, insurance, taxes, image rights, and travel support remain unresolved."
+      ]
+    },
+    {
+      "external_id": "argentina-national-prizes-production-2020-2023-2026",
+      "title": "National Prizes for Scientific, Artistic and Literary Production 2020–2023",
+      "source_slug": "argentina-cultura",
+      "status": "open",
+      "deadline_at": "2026-09-01T02:59:00Z",
+      "eligibility_scope": "citizenship_based",
+      "funding": "ARS 3,000,000 first prize; ARS 2,000,000 second; ARS 1,200,000 third",
+      "trust_notes": [
+        "Spanish sworn declarations control authorship, co-authorship, employment exclusion, and rights-holder eligibility.",
+        "Tax and broader rights implications require human review."
+      ]
+    },
+    {
+      "external_id": "berlinale-talents-2027",
+      "title": "Berlinale Talents 2027",
+      "source_slug": "berlinale-talents",
+      "status": "open",
+      "deadline_at": "2026-09-02T10:00:00Z",
+      "eligibility_scope": "worldwide",
+      "application_fee": 15,
+      "application_fee_currency": "EUR",
+      "funding": "No participation fee after selection; participants normally self-fund travel, lodging, and daily expenses",
+      "trust_notes": [
+        "Early-bird application fee is EUR 10 through 19 August 2026.",
+        "Optional EUR 5 accessibility contribution does not affect selection.",
+        "No general travel or accommodation funding should be inferred."
+      ]
+    },
+    {
+      "external_id": "goethe-jordan-layali-al-sayfiya-2026",
+      "title": "Layali Al Sayfiya 2026",
+      "source_slug": "goethe-institut-jordan",
+      "status": "open",
+      "deadline_at": "2026-07-28T20:59:00Z",
+      "eligibility_scope": "worldwide",
+      "funding": "Not stated",
+      "trust_notes": [
+        "Artist fees and all travel, accommodation, production, equipment, insurance, and transport benefits remain unverified.",
+        "Event-related promotional-use permission is source-confirmed."
+      ]
+    },
+    {
+      "external_id": "institut-francais-villae-network-residencies-2026",
+      "title": "VILLÆ — French Diplomatic and Cultural Network Residencies",
+      "source_slug": "institut-francais",
+      "status": "draft",
+      "verification_status": "needs_review",
+      "deadline_at": "2026-10-01T21:59:00Z",
+      "audience": "institution_only",
+      "trust_notes": [
+        "Stored in production but excluded from artist-facing search.",
+        "Requires an explicit institution-opportunity audience field before public promotion."
+      ]
+    }
+  ],
+  "validation": {
+    "total_records": 71,
+    "artist_facing_records": 64,
+    "veras_search_passed": true,
+    "tada_search_passed": true,
+    "argentina_country_filter_passed": true,
+    "berlinale_fee_validation_passed": true,
+    "layali_visible": true,
+    "villae_artist_visible": false,
+    "culture_resource_age_conflict_requires_manual_confirmation": true
+  }
+}
