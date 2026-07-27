@@ -81,20 +81,7 @@ jobs:
           test -d out
           test -f out/index.html
           touch out/.nojekyll
-          test -f out/CNAME
-          grep -Fxq "www.kleioarthouse.com" out/CNAME
-
-          echo "Checking custom-domain asset paths..."
-          if grep -Rqs '/KLEIO-dashboard/_next/' out --include='*.html'; then
-            echo "Project-path assets were found in the custom-domain export."
-            exit 1
-          fi
-          grep -Eq 'href="/_next/static/css/[^\"]+\.css"' out/index.html
-          grep -Eq 'src="/_next/static/chunks/[^\"]+\.js"' out/index.html
-          while IFS= read -r asset; do
-            relative_path="${asset#/}"
-            test -f "out/${relative_path}"
-          done < <(grep -oE '(href|src)="/_next/[^"]+\.(css|js)"' out/index.html | cut -d'"' -f2 | sort -u)
+          node scripts/audit-custom-domain-export.mjs
 
           echo "Top-level exported files:"
           find out -maxdepth 2 -type f | sort | head -120
