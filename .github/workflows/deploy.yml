@@ -52,15 +52,15 @@ jobs:
       - name: Audit production auth redirects
         env:
           CI: "true"
-          NEXT_PUBLIC_BASE_PATH: ""
-          NEXT_PUBLIC_SITE_URL: https://www.kleioarthouse.com
+          NEXT_PUBLIC_BASE_PATH: /KLEIO-dashboard
+          NEXT_PUBLIC_SITE_URL: https://cowboyblurr.github.io/KLEIO-dashboard
         run: pnpm run audit:auth-redirect
 
       - name: Build static site
         env:
           GITHUB_ACTIONS: "true"
-          NEXT_PUBLIC_BASE_PATH: ""
-          NEXT_PUBLIC_SITE_URL: https://www.kleioarthouse.com
+          NEXT_PUBLIC_BASE_PATH: /KLEIO-dashboard
+          NEXT_PUBLIC_SITE_URL: https://cowboyblurr.github.io/KLEIO-dashboard
           NEXT_PUBLIC_SUPABASE_URL: https://trekynurdgxgtaaqqtyq.supabase.co
           NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_XdYXvd0fQm3IJKxNrFXgUQ_M4RgDj1M
         run: pnpm run build
@@ -70,8 +70,6 @@ jobs:
           echo "Checking static export output..."
           test -d out
           test -f out/index.html
-          test -f out/CNAME
-          grep -Fxq "www.kleioarthouse.com" out/CNAME
           touch out/.nojekyll
           echo "Top-level exported files:"
           find out -maxdepth 2 -type f | sort | head -120
@@ -143,10 +141,11 @@ jobs:
 
       - name: Verify live production routes
         env:
-          SITE_URL: ${{ steps.deployment.outputs.page_url }}
+          SITE_URL: https://cowboyblurr.github.io/KLEIO-dashboard
         run: |
           set -euo pipefail
           SITE_URL="${SITE_URL%/}"
+          SITE_ORIGIN="$(printf '%s' "$SITE_URL" | sed -E 's#(https?://[^/]+).*#\1#')"
           check_route() {
             route="$1"
             required="$2"
@@ -184,7 +183,7 @@ jobs:
             bundle="$(mktemp)"
             curl --silent --show-error --location --fail --max-time 30 "${SITE_URL}${route}?bundle_verification=${GITHUB_SHA}" > "$html"
             grep -oE 'src="[^"]+\.js"' "$html" | cut -d'"' -f2 | sort -u | while read -r src; do
-              curl --silent --show-error --location --fail --max-time 30 "${SITE_URL}${src}?bundle_verification=${GITHUB_SHA}" >> "$bundle"
+              curl --silent --show-error --location --fail --max-time 30 "${SITE_ORIGIN}${src}?bundle_verification=${GITHUB_SHA}" >> "$bundle"
             done
             grep -Fq "$required_one" "$bundle"
             grep -Fq "$required_two" "$bundle"
