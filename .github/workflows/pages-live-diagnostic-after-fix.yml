@@ -1,0 +1,97 @@
+name: Verify KLEIO Custom Domain Repair
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - ".github/workflows/pages-live-diagnostic-after-fix.yml"
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: write
+  pages: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Wait for the production deployment
+        run: sleep 45
+
+      - name: Verify live HTML, CSS, and JavaScript
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SITE_URL: https://www.kleioarthouse.com
+        run: |
+          set -euo pipefail
+          mkdir -p docs
+          html="$(mktemp)"
+          curl --silent --show-error --location --fail --max-time 30 "${SITE_URL}/?after_fix=${GITHUB_SHA}" > "$html"
+
+          root_css="$(grep -oE 'href="/_next/static/(css|chunks)/[^"]+\.css"' "$html" | cut -d'"' -f2 | sort -u)"
+          root_js="$(grep -oE 'src="/_next/static/chunks/[^"]+\.js"' "$html" | cut -d'"' -f2 | sort -u)"
+          project_css="$(grep -oE 'href="/KLEIO-dashboard/_next/static/[^"]+\.css"' "$html" | cut -d'"' -f2 | sort -u || true)"
+
+          css_count=0
+          css_failures=0
+          while IFS= read -r href; do
+            [ -n "$href" ] || continue
+            css_count=$((css_count + 1))
+            headers="$(mktemp)"
+            status="$(curl --silent --show-error --location --dump-header "$headers" --output /tmp/kleio-css-body --write-out '%{http_code}' --max-time 30 "${SITE_URL}${href}?after_fix=1" || true)"
+            if [ "$status" != "200" ] || ! grep -Eiq '^content-type:.*text/css' "$headers"; then
+              css_failures=$((css_failures + 1))
+            fi
+          done <<< "$root_css"
+
+          js_count=0
+          js_failures=0
+          while IFS= read -r src; do
+            [ -n "$src" ] || continue
+            js_count=$((js_count + 1))
+            status="$(curl --silent --show-error --location --output /dev/null --write-out '%{http_code}' --max-time 30 "${SITE_URL}${src}?after_fix=1" || true)"
+            if [ "$status" != "200" ]; then
+              js_failures=$((js_failures + 1))
+            fi
+          done <<< "$root_js"
+
+          latest_run="$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/deploy.yml/runs?event=push&branch=main&per_page=1" --jq '.workflow_runs[0] | {id, head_sha, status, conclusion, html_url, created_at, updated_at}')"
+          pages_config="$(gh api "repos/${GITHUB_REPOSITORY}/pages" --jq '{build_type, html_url, cname}')"
+
+          python - <<PY
+          import json
+          from datetime import datetime, timezone
+          report = {
+            "generated_at": datetime.now(timezone.utc).isoformat(),
+            "site_url": "${SITE_URL}",
+            "home_status": 200,
+            "root_css_count": ${css_count},
+            "root_css_failures": ${css_failures},
+            "root_js_count": ${js_count},
+            "root_js_failures": ${js_failures},
+            "contains_project_path_css": bool("""${project_css}""".strip()),
+            "latest_deploy_run": json.loads('''${latest_run}'''),
+            "pages_config": json.loads('''${pages_config}'''),
+          }
+          report["passed"] = (
+            report["root_css_count"] > 0
+            and report["root_css_failures"] == 0
+            and report["root_js_count"] > 0
+            and report["root_js_failures"] == 0
+            and not report["contains_project_path_css"]
+          )
+          with open("docs/pages-live-after-fix.json", "w") as file:
+            json.dump(report, file, indent=2, sort_keys=True)
+            file.write("\n")
+          PY
+
+      - name: Commit verification report
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/pages-live-after-fix.json
+          git commit -m "Record custom-domain asset verification" || exit 0
+          git push
