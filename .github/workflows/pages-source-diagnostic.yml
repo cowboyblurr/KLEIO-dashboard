@@ -1,0 +1,45 @@
+name: Repair GitHub Pages Publishing Source
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+
+jobs:
+  repair-pages-source:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Inspect current GitHub Pages configuration
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api "repos/${GITHUB_REPOSITORY}/pages" --jq '{build_type, html_url, cname, source}' | tee pages-source-before.json
+
+      - name: Switch GitHub Pages to Actions workflow publishing
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api --method PUT "repos/${GITHUB_REPOSITORY}/pages" -f build_type=workflow
+
+      - name: Verify GitHub Pages publishing source
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api "repos/${GITHUB_REPOSITORY}/pages" --jq '{build_type, html_url, cname, source}' | tee pages-source-after.json
+          test "$(jq -r '.build_type' pages-source-after.json)" = "workflow"
+
+      - name: Upload Pages source evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pages-source-evidence
+          path: |
+            pages-source-before.json
+            pages-source-after.json
+          if-no-files-found: warn
