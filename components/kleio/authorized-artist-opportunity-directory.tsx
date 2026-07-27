@@ -1,7 +1,7 @@
 "use client"
 
-import { LiveGlobalArtistOpportunitiesWithImages } from "@/components/kleio/live-global-artist-opportunities-with-images"
+import { ProductionArtistOpportunityDirectory } from "@/components/kleio/production-artist-opportunity-directory"
 
 export function AuthorizedArtistOpportunityDirectory() {
-  return <LiveGlobalArtistOpportunitiesWithImages />
+  return <ProductionArtistOpportunityDirectory />
 }
