@@ -16,6 +16,10 @@ concurrency:
   group: "pages-${{ github.event_name }}-${{ github.ref }}"
   cancel-in-progress: true
 
+env:
+  KLEIO_BASE_PATH: /KLEIO-dashboard
+  KLEIO_SITE_URL: https://cowboyblurr.github.io/KLEIO-dashboard
+
 jobs:
   build:
     name: Build static export
@@ -44,19 +48,14 @@ jobs:
           cache: pnpm
           cache-dependency-path: pnpm-lock.yaml
 
-      - name: Verify toolchain
-        run: |
-          node --version
-          pnpm --version
-
       - name: Install dependencies
         run: pnpm install --no-frozen-lockfile
 
       - name: Audit production auth redirects
         env:
           CI: "true"
-          NEXT_PUBLIC_BASE_PATH: ""
-          NEXT_PUBLIC_SITE_URL: https://www.kleioarthouse.com
+          NEXT_PUBLIC_BASE_PATH: ${{ env.KLEIO_BASE_PATH }}
+          NEXT_PUBLIC_SITE_URL: ${{ env.KLEIO_SITE_URL }}
         run: pnpm run audit:auth-redirect
 
       - name: Build static site
@@ -65,32 +64,33 @@ jobs:
         shell: bash
         env:
           GITHUB_ACTIONS: "true"
-          NEXT_PUBLIC_BASE_PATH: ""
-          NEXT_PUBLIC_SITE_URL: https://www.kleioarthouse.com
+          NEXT_PUBLIC_BASE_PATH: ${{ env.KLEIO_BASE_PATH }}
+          NEXT_PUBLIC_SITE_URL: ${{ env.KLEIO_SITE_URL }}
           NEXT_PUBLIC_SUPABASE_URL: https://trekynurdgxgtaaqqtyq.supabase.co
           NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_XdYXvd0fQm3IJKxNrFXgUQ_M4RgDj1M
         run: |
           set -o pipefail
           pnpm run build 2>&1 | tee pages-build.log
 
-      - name: Verify static export output
+      - name: Verify static export output and asset paths
         id: export_output
         if: steps.pages_build.outcome == 'success'
+        env:
+          NEXT_PUBLIC_BASE_PATH: ${{ env.KLEIO_BASE_PATH }}
+          NEXT_PUBLIC_SITE_URL: ${{ env.KLEIO_SITE_URL }}
         run: |
-          echo "Checking static export output..."
           test -d out
           test -f out/index.html
           touch out/.nojekyll
-          node scripts/audit-custom-domain-export.mjs
+          node scripts/audit-github-pages-export.mjs
 
-          echo "Top-level exported files:"
-          find out -maxdepth 2 -type f | sort | head -120
           echo "Checking signup and recovery exports..."
           test -f out/signup/artist/index.html
           test -f out/signup/institution/index.html
           test -f out/auth/callback/index.html
           test -f out/auth/forgot-password/index.html
           test -f out/auth/update-password/index.html
+
           echo "Checking core workspace exports..."
           test -f out/dashboard/index.html
           test -f out/artist-dashboard/index.html
@@ -103,6 +103,7 @@ jobs:
           test -f out/messages/index.html
           test -f out/activity-log/index.html
           test -f out/reports/index.html
+
           echo "Checking profile and entity exports..."
           test -f out/demo/index.html
           test -f out/artists/index.html
@@ -110,27 +111,19 @@ jobs:
           test -f out/artists/amina-el-badri/index.html
           test -f out/artist/amina-el-badri/index.html
           test -f out/institution/kleio-arthouse/index.html
-          echo "Checking artist opportunity detail export..."
           test -f out/artist-dashboard/opportunities/lumen-arts-grant/index.html
-          echo "Checking submission detail export..."
           test -f out/submissions/amina-el-badri/index.html
-          echo "Checking program detail export..."
           test -f out/programs/residency-2026/index.html
 
       - name: Verify production and demo separation
         id: production_separation
         if: steps.pages_build.outcome == 'success'
         run: |
-          echo "Checking that the public homepage contains the live authentication gateway..."
           grep -Fq "Enter your KLEIO workspace" out/index.html
-
-          echo "Checking that demo credentials and synthetic-product labels are absent from the public homepage..."
           if grep -Eq "institution@kleio\.demo|artist@kleio\.demo|reviewer@kleio\.demo|kleio2026|Prototype · Synthetic data" out/index.html; then
             echo "The public homepage contains demo-only content. Refusing to deploy."
             exit 1
           fi
-
-          echo "Checking that the guided demo remains available as a separate destination..."
           test -f out/demo/index.html
 
       - name: Audit internal navigation
@@ -186,7 +179,8 @@ jobs:
 
       - name: Verify live production routes and assets
         env:
-          SITE_URL: https://www.kleioarthouse.com
+          SITE_URL: ${{ env.KLEIO_SITE_URL }}
+          BASE_PATH: ${{ env.KLEIO_BASE_PATH }}
         run: |
           set -euo pipefail
           SITE_URL="${SITE_URL%/}"
@@ -224,8 +218,11 @@ jobs:
             html="$(mktemp)"
             curl --silent --show-error --location --fail --max-time 30 "${SITE_URL}/?asset_verification=${GITHUB_SHA}" > "$html"
 
-            if grep -Fq '/KLEIO-dashboard/_next/' "$html"; then
-              echo "The live custom-domain HTML still contains project-path asset URLs."
+            expected_prefix="${BASE_PATH}/_next/"
+            duplicate_prefix="${BASE_PATH}${BASE_PATH}/_next/"
+            grep -Fq "$expected_prefix" "$html"
+            if grep -Fq "$duplicate_prefix" "$html"; then
+              echo "The live HTML contains a duplicated GitHub Pages base path."
               exit 1
             fi
 
@@ -239,7 +236,7 @@ jobs:
               test "$status" = "200"
               grep -Eiq '^content-type:.*text/css' "$headers"
               test -s "$body"
-            done < <(grep -oE 'href="/_next/static/css/[^"]+\.css"' "$html" | cut -d'"' -f2 | sort -u)
+            done < <(grep -oE "href=\"${BASE_PATH}/_next/static/css/[^\"]+\.css\"" "$html" | cut -d'"' -f2 | sort -u)
             test "$css_count" -gt 0
 
             js_count=0
@@ -248,7 +245,7 @@ jobs:
               js_count=$((js_count + 1))
               status="$(curl --silent --show-error --location --output /dev/null --write-out '%{http_code}' --max-time 30 "${SITE_ORIGIN}${src}?asset_verification=${GITHUB_SHA}")"
               test "$status" = "200"
-            done < <(grep -oE 'src="/_next/static/chunks/[^"]+\.js"' "$html" | cut -d'"' -f2 | sort -u)
+            done < <(grep -oE "src=\"${BASE_PATH}/_next/static/chunks/[^\"]+\.js\"" "$html" | cut -d'"' -f2 | sort -u)
             test "$js_count" -gt 0
           }
 
