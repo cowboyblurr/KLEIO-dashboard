@@ -1,0 +1,154 @@
+name: Diagnose Live GitHub Pages Assets
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - ".github/workflows/pages-live-diagnostic.yml"
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: write
+  deployments: read
+  pages: write
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Inspect Pages configuration and live assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SITE_URL: https://cowboyblurr.github.io/KLEIO-dashboard/
+          EXPECTED_BASE_PATH: /KLEIO-dashboard
+        run: |
+          set -euo pipefail
+          mkdir -p docs
+          gh api "repos/${GITHUB_REPOSITORY}/pages" > /tmp/pages-config.json
+          gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/deploy.yml/runs?event=push&branch=main&per_page=10" > /tmp/workflow-runs.json
+          gh api "repos/${GITHUB_REPOSITORY}/deployments?environment=github-pages&per_page=10" > /tmp/deployments.json
+          python - <<'PY'
+          import datetime
+          import json
+          import os
+          import re
+          import urllib.error
+          import urllib.parse
+          import urllib.request
+
+          site_url = os.environ["SITE_URL"]
+          expected_base = os.environ["EXPECTED_BASE_PATH"]
+          origin = urllib.parse.urlsplit(site_url)
+          origin_url = f"{origin.scheme}://{origin.netloc}"
+
+          def fetch(url):
+              request = urllib.request.Request(url, headers={"User-Agent": "KLEIO-Pages-Diagnostic/1.0", "Cache-Control": "no-cache"})
+              try:
+                  with urllib.request.urlopen(request, timeout=30) as response:
+                      body = response.read()
+                      return {
+                          "url": url,
+                          "final_url": response.geturl(),
+                          "status": response.status,
+                          "content_type": response.headers.get("content-type"),
+                          "content_length": len(body),
+                          "body": body,
+                      }
+              except urllib.error.HTTPError as error:
+                  body = error.read()
+                  return {
+                      "url": url,
+                      "final_url": error.geturl(),
+                      "status": error.code,
+                      "content_type": error.headers.get("content-type"),
+                      "content_length": len(body),
+                      "body": body,
+                  }
+              except Exception as error:
+                  return {"url": url, "status": None, "error": repr(error), "body": b""}
+
+          home = fetch(site_url + "?diagnostic=" + datetime.datetime.now(datetime.timezone.utc).strftime("%Y%m%d%H%M%S"))
+          html = home.pop("body", b"").decode("utf-8", errors="replace")
+          references = re.findall(r'(?:href|src)="([^"]+)"', html)
+          css_refs = sorted({value for value in references if "/_next/" in value and re.search(r"\.css(?:\?|$)", value)})
+          js_refs = sorted({value for value in references if "/_next/" in value and re.search(r"\.js(?:\?|$)", value)})
+
+          def absolute(value):
+              if value.startswith("http://") or value.startswith("https://"):
+                  return value
+              if value.startswith("/"):
+                  return origin_url + value
+              return urllib.parse.urljoin(site_url, value)
+
+          assets = []
+          for kind, values in (("css", css_refs), ("js", js_refs)):
+              for value in values:
+                  result = fetch(absolute(value) + ("&" if "?" in value else "?") + "diagnostic=1")
+                  result.pop("body", None)
+                  result["kind"] = kind
+                  result["reference"] = value
+                  assets.append(result)
+
+          with open("/tmp/pages-config.json") as file:
+              pages_config = json.load(file)
+          with open("/tmp/workflow-runs.json") as file:
+              workflow_runs = json.load(file)
+          with open("/tmp/deployments.json") as file:
+              deployments = json.load(file)
+
+          report = {
+              "generated_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+              "commit_sha": os.environ.get("GITHUB_SHA"),
+              "site_url": site_url,
+              "expected_base_path": expected_base,
+              "pages_config": {
+                  key: pages_config.get(key) for key in ("build_type", "html_url", "cname", "source", "status")
+              },
+              "home": home,
+              "html": {
+                  "length": len(html.encode("utf-8")),
+                  "contains_expected_next_prefix": f'{expected_base}/_next/' in html,
+                  "contains_duplicate_next_prefix": f'{expected_base}{expected_base}/_next/' in html,
+                  "contains_root_next_prefix": 'href="/_next/' in html or 'src="/_next/' in html,
+                  "css_references": css_refs,
+                  "js_reference_count": len(js_refs),
+                  "title": (re.search(r"<title>(.*?)</title>", html, re.I | re.S).group(1) if re.search(r"<title>(.*?)</title>", html, re.I | re.S) else None),
+              },
+              "assets": assets,
+              "recent_deploy_workflow_runs": [
+                  {key: run.get(key) for key in ("id", "head_sha", "status", "conclusion", "run_number", "created_at", "updated_at", "html_url")}
+                  for run in workflow_runs.get("workflow_runs", [])[:10]
+              ],
+              "recent_pages_deployments": [
+                  {key: deployment.get(key) for key in ("id", "sha", "ref", "environment", "created_at", "updated_at", "statuses_url")}
+                  for deployment in deployments[:10]
+              ],
+          }
+
+          report["summary"] = {
+              "home_ok": home.get("status") == 200,
+              "css_count": len(css_refs),
+              "js_count": len(js_refs),
+              "all_css_ok": bool(css_refs) and all(asset.get("status") == 200 and "text/css" in (asset.get("content_type") or "") for asset in assets if asset["kind"] == "css"),
+              "all_js_ok": bool(js_refs) and all(asset.get("status") == 200 for asset in assets if asset["kind"] == "js"),
+          }
+
+          with open("docs/pages-live-diagnostic.json", "w") as file:
+              json.dump(report, file, indent=2, sort_keys=True)
+              file.write("\n")
+          PY
+
+      - name: Commit diagnostic report
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/pages-live-diagnostic.json
+          if git diff --cached --quiet; then
+            echo "No diagnostic changes to commit."
+          else
+            git commit -m "Record live GitHub Pages asset diagnostic"
+            git push
+          fi
