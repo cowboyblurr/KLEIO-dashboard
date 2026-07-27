@@ -1,6 +1,8 @@
 name: Repair GitHub Pages Publishing Source
 
 on:
+  push:
+    branches: ["main"]
   pull_request:
     branches: ["main"]
   workflow_dispatch:
