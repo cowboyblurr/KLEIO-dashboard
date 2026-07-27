@@ -1,4 +1,4 @@
-const DEFAULT_PRODUCTION_SITE_URL = "https://cowboyblurr.github.io/KLEIO-dashboard"
+const DEFAULT_PRODUCTION_SITE_URL = "https://www.kleioarthouse.com"
 
 function normalizeBasePath(value: string) {
   const trimmed = value.trim()
