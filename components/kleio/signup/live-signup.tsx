@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation"
 import { CheckCircle2, Eye, EyeOff, Loader2 } from "lucide-react"
 import { EntityAutocomplete } from "@/components/kleio/signup/entity-autocomplete"
 import { SignupShell, SignupStepCard, SignupTextArea } from "@/components/kleio/signup/signup-shell"
-import { PrimaryTaxonomySelect, TaxonomyMultiSelect } from "@/components/kleio/forms/artist-beta-taxonomy-fields"
 import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
 import { clearDemoSession, getDashboardForRole } from "@/lib/kleio-demo-auth"
 import type { KleioEntitySuggestion } from "@/lib/kleio-entity-search"
@@ -23,10 +22,7 @@ import {
 import { setKleioMode } from "@/lib/kleio-mode"
 import { getKleioAuthErrorMessage, resendKleioSignupConfirmation } from "@/lib/kleio-auth"
 import { loadKleioAccount, type KleioAccountRole } from "@/lib/kleio-supabase"
-import {
-  ARTIST_DISCIPLINE_OPTIONS,
-  ARTIST_MEDIUM_MATERIAL_OPTIONS,
-} from "@/lib/kleio-artist-taxonomy"
+import { ARTIST_DISCIPLINE_OPTIONS } from "@/lib/kleio-artist-taxonomy"
 
 const inputClassName = "h-11 w-full rounded-xl border border-border bg-background px-3 text-sm text-foreground outline-none transition-colors focus:border-primary/40 focus:ring-4 focus:ring-primary/10 disabled:cursor-not-allowed disabled:bg-muted/50 disabled:text-muted-foreground"
 
@@ -107,6 +103,22 @@ function InstitutionTypeField({ value, onChange, es }: { value: string; onChange
   )
 }
 
+function ArtistDisciplineField({ value, onChange, es }: { value: string; onChange: (value: string) => void; es: boolean }) {
+  const id = useId()
+  return (
+    <div>
+      <label htmlFor={id} className="mb-1.5 block text-xs font-medium text-muted-foreground">{es ? "Disciplina principal" : "Primary discipline"} *</label>
+      <select id={id} value={value} onChange={(event) => onChange(event.target.value)} required className={inputClassName}>
+        <option value="">{es ? "Selecciona una disciplina" : "Select a discipline"}</option>
+        {ARTIST_DISCIPLINE_OPTIONS.map((option) => (
+          <option key={option.value} value={option.value}>{es ? option.labelEs : option.label}</option>
+        ))}
+      </select>
+      <p className="mt-1 text-[0.68rem] leading-relaxed text-muted-foreground">{es ? "Podrás añadir disciplinas secundarias y materiales en el Pasaporte Creativo." : "You can add secondary disciplines and materials in the Creative Passport."}</p>
+    </div>
+  )
+}
+
 export function LiveSignup({ role }: { role: "artist" | "institution" }) {
   const router = useRouter()
   const { locale } = useKleioLocale()
@@ -127,11 +139,10 @@ export function LiveSignup({ role }: { role: "artist" | "institution" }) {
   const [selectedLocation, setSelectedLocation] = useState<KleioEntitySuggestion | null>(null)
   const [website, setWebsite] = useState("")
 
-  const [primaryDiscipline, setPrimaryDiscipline] = useState("")
-  const [secondaryDisciplines, setSecondaryDisciplines] = useState<string[]>([])
-  const [mediumValues, setMediumValues] = useState<string[]>([])
+  const [discipline, setDiscipline] = useState("")
   const [shortBio, setShortBio] = useState("")
   const [artistStatement, setArtistStatement] = useState("")
+  const [mediums, setMediums] = useState("")
 
   const [institutionName, setInstitutionName] = useState("")
   const [selectedInstitution, setSelectedInstitution] = useState<KleioEntitySuggestion | null>(null)
@@ -155,9 +166,9 @@ export function LiveSignup({ role }: { role: "artist" | "institution" }) {
   const requiredReady = useMemo(() => {
     const credentialsReady = recoveringExistingAccount || (password.length >= 8 && password === confirmPassword)
     const common = displayName.trim() && email.trim() && credentialsReady && location.trim()
-    if (role === "artist") return Boolean(common && primaryDiscipline.trim())
+    if (role === "artist") return Boolean(common && discipline.trim())
     return Boolean(common && institutionName.trim() && institutionType.trim())
-  }, [confirmPassword, displayName, email, institutionName, institutionType, location, password, primaryDiscipline, recoveringExistingAccount, role])
+  }, [confirmPassword, discipline, displayName, email, institutionName, institutionType, location, password, recoveringExistingAccount, role])
 
   function routeToWorkspace(targetRole: KleioAccountRole = role) {
     clearDemoSession()
@@ -209,19 +220,7 @@ export function LiveSignup({ role }: { role: "artist" | "institution" }) {
 
   function buildPayload(): ArtistOnboardingPayload | InstitutionOnboardingPayload {
     if (role === "artist") {
-      const disciplines = [primaryDiscipline, ...secondaryDisciplines.filter((item) => item !== primaryDiscipline)]
-      return {
-        role,
-        email,
-        displayName,
-        location,
-        selectedLocation,
-        discipline: disciplines.join(", "),
-        website,
-        shortBio,
-        artistStatement,
-        mediums: mediumValues.join(", "),
-      }
+      return { role, email, displayName, location, selectedLocation, discipline, website, shortBio, artistStatement, mediums }
     }
 
     return { role, email, displayName, institutionName, selectedInstitution, institutionType, location, selectedLocation, website, publicDescription, missionStatement }
@@ -379,37 +378,9 @@ export function LiveSignup({ role }: { role: "artist" | "institution" }) {
           {role === "artist" ? (
             <div className="mt-5 space-y-5">
               <div className="grid gap-5 sm:grid-cols-2">
-                <PrimaryTaxonomySelect
-                  label={es ? "Disciplina principal" : "Primary discipline"}
-                  value={primaryDiscipline}
-                  onChange={setPrimaryDiscipline}
-                  options={ARTIST_DISCIPLINE_OPTIONS}
-                  locale={locale}
-                  required
-                  placeholder={es ? "Selecciona una disciplina" : "Select a discipline"}
-                  helper={es ? "La disciplina principal ayuda a organizar oportunidades y tu perfil." : "Your primary discipline helps organize opportunities and your profile."}
-                />
-                <TaxonomyMultiSelect
-                  label={es ? "Disciplinas secundarias" : "Secondary disciplines"}
-                  values={secondaryDisciplines}
-                  onChange={setSecondaryDisciplines}
-                  options={ARTIST_DISCIPLINE_OPTIONS}
-                  locale={locale}
-                  placeholder={es ? "Busca y selecciona" : "Search and select"}
-                  helper={es ? "Añade todas las prácticas que describan tu trabajo." : "Add the practices that genuinely describe your work."}
-                  kind="discipline"
-                />
+                <ArtistDisciplineField value={discipline} onChange={setDiscipline} es={es} />
+                <Field label={es ? "Medios y materiales" : "Mediums and materials"} value={mediums} onChange={setMediums} placeholder={es ? "Arcilla, película, textil…" : "Clay, film, textile…"} />
               </div>
-              <TaxonomyMultiSelect
-                label={es ? "Medios y materiales" : "Mediums and materials"}
-                values={mediumValues}
-                onChange={setMediumValues}
-                options={ARTIST_MEDIUM_MATERIAL_OPTIONS}
-                locale={locale}
-                placeholder={es ? "Arcilla, película, textil…" : "Clay, film, textile…"}
-                helper={es ? "Los medios y materiales se mantienen separados de las disciplinas." : "Mediums and materials remain separate from disciplines."}
-                kind="medium"
-              />
               <SignupTextArea label={es ? "Biografía corta" : "Short bio"} value={shortBio} onChange={setShortBio} rows={3} />
               <SignupTextArea label={es ? "Declaración artística" : "Artist statement"} value={artistStatement} onChange={setArtistStatement} rows={5} />
             </div>
