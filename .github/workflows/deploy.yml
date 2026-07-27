@@ -60,15 +60,22 @@ jobs:
         run: pnpm run audit:auth-redirect
 
       - name: Build static site
+        id: pages_build
+        continue-on-error: true
+        shell: bash
         env:
           GITHUB_ACTIONS: "true"
           NEXT_PUBLIC_BASE_PATH: /KLEIO-dashboard
           NEXT_PUBLIC_SITE_URL: https://cowboyblurr.github.io/KLEIO-dashboard
           NEXT_PUBLIC_SUPABASE_URL: https://trekynurdgxgtaaqqtyq.supabase.co
           NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_XdYXvd0fQm3IJKxNrFXgUQ_M4RgDj1M
-        run: pnpm run build
+        run: |
+          set -o pipefail
+          pnpm run build 2>&1 | tee pages-build.log
 
       - name: Verify static export output
+        id: export_output
+        if: steps.pages_build.outcome == 'success'
         run: |
           echo "Checking static export output..."
           test -d out
@@ -85,6 +92,8 @@ jobs:
           echo "Checking core workspace exports..."
           test -f out/dashboard/index.html
           test -f out/artist-dashboard/index.html
+          test -f out/collaborator-dashboard/index.html
+          test -f out/collaborator-dashboard/review-queue/index.html
           test -f out/review-queue/index.html
           test -f out/review-room/index.html
           test -f out/shortlist/index.html
@@ -107,6 +116,8 @@ jobs:
           test -f out/programs/residency-2026/index.html
 
       - name: Verify production and demo separation
+        id: production_separation
+        if: steps.pages_build.outcome == 'success'
         run: |
           echo "Checking that the public homepage contains the live authentication gateway..."
           grep -Fq "Enter your KLEIO workspace" out/index.html
@@ -121,13 +132,40 @@ jobs:
           test -f out/demo/index.html
 
       - name: Audit internal navigation
-        run: pnpm run audit:navigation
+        id: navigation
+        if: steps.pages_build.outcome == 'success'
+        shell: bash
+        run: |
+          set -o pipefail
+          pnpm run audit:navigation 2>&1 | tee pages-navigation.log
+
+      - name: Upload GitHub Pages diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: github-pages-diagnostics
+          path: |
+            pages-build.log
+            pages-navigation.log
+          if-no-files-found: warn
 
       - name: Upload GitHub Pages artifact
-        if: github.event_name != 'pull_request'
+        if: github.event_name != 'pull_request' && steps.pages_build.outcome == 'success' && steps.export_output.outcome == 'success' && steps.production_separation.outcome == 'success' && steps.navigation.outcome == 'success'
         uses: actions/upload-pages-artifact@v3
         with:
           path: ./out
+
+      - name: Enforce GitHub Pages validation
+        if: always()
+        run: |
+          echo "pages_build=${{ steps.pages_build.outcome }}"
+          echo "export_output=${{ steps.export_output.outcome }}"
+          echo "production_separation=${{ steps.production_separation.outcome }}"
+          echo "navigation=${{ steps.navigation.outcome }}"
+          test "${{ steps.pages_build.outcome }}" = "success"
+          test "${{ steps.export_output.outcome }}" = "success"
+          test "${{ steps.production_separation.outcome }}" = "success"
+          test "${{ steps.navigation.outcome }}" = "success"
 
   deploy:
     if: github.event_name != 'pull_request'
