@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
@@ -13,18 +14,26 @@ import {
 import { cn } from "@/lib/utils"
 import { collaboratorAnalytics } from "@/lib/kleio-collaborator-analytics"
 import { collaboratorNavLabelKeys } from "@/lib/kleio-nav-i18n"
+import { loadInstitutionMessengerContexts, loadKleioAccount } from "@/lib/kleio-supabase"
 import { InitialAvatar } from "@/components/kleio/initial-avatar"
 import { KleioWordmarkLink } from "@/components/kleio/kleio-wordmark-link"
 import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
 import { persistDemoGuideState } from "@/components/kleio/use-demo-guide"
+import { useKleioMode } from "@/components/kleio/use-kleio-mode"
+import { AccountSignOutButton } from "@/components/kleio/account-sign-out-button"
 
-const navItems = [
+const demoNavItems = [
   { href: "/collaborator-dashboard/", label: "Overview", icon: LayoutDashboard },
   { href: "/collaborator-dashboard/assignments/", label: "My Assignments", icon: FileText },
   { href: "/collaborator-dashboard/review-queue/", label: "Review Queue", icon: ListChecks },
   { href: "/collaborator-dashboard/guidelines/", label: "Guidelines", icon: ClipboardList },
   { href: "/collaborator-dashboard/messages/", label: "Messages", icon: MessageSquare },
   { href: "/collaborator-dashboard/submitted/", label: "Submitted Reviews", icon: CheckCircle2 },
+]
+
+const liveNavItems = [
+  { href: "/collaborator-dashboard/", label: "Overview", icon: LayoutDashboard },
+  { href: "/collaborator-dashboard/review-queue/", label: "Review Queue", icon: ListChecks },
 ]
 
 function institutionLabel(organization: string) {
@@ -42,14 +51,49 @@ function openPageGuide() {
   })
 }
 
+type LiveReviewerIdentity = {
+  name: string
+  role: string
+  institution: string
+}
+
 export function CollaboratorSidebar() {
   const pathname = usePathname()
   const { collaborator } = collaboratorAnalytics
   const { t } = useKleioLocale()
+  const { isLive } = useKleioMode()
+  const [liveIdentity, setLiveIdentity] = useState<LiveReviewerIdentity | null>(null)
+
+  useEffect(() => {
+    let active = true
+    if (!isLive) {
+      setLiveIdentity(null)
+      return () => { active = false }
+    }
+
+    Promise.all([loadKleioAccount(), loadInstitutionMessengerContexts()])
+      .then(([account, contexts]) => {
+        if (!active || !account) return
+        const context = contexts[0]
+        setLiveIdentity({
+          name: account.profile.display_name || account.user.email?.split("@")[0] || "Reviewer",
+          role: context?.member_role || "Reviewer",
+          institution: context?.institution_name || "Institution review seat",
+        })
+      })
+      .catch(() => { if (active) setLiveIdentity(null) })
+
+    return () => { active = false }
+  }, [isLive])
+
+  const navItems = isLive ? liveNavItems : demoNavItems
+  const name = isLive ? liveIdentity?.name || "Reviewer account" : collaborator.name
+  const role = isLive ? liveIdentity?.role || "Reviewer" : collaborator.role
+  const organization = isLive ? liveIdentity?.institution || "Institution review seat" : institutionLabel(collaborator.organization)
 
   return (
     <aside className="flex h-full w-[220px] shrink-0 flex-col border-r border-[#E7E1F7] bg-white">
-      <div className="flex items-center justify-between px-6 pt-6 pb-5">
+      <div className="flex items-center justify-between px-6 pb-5 pt-6">
         <KleioWordmarkLink href="/collaborator-dashboard/" className="rounded-md bg-white px-2.5 py-1.5 shadow-sm ring-1 ring-border" />
       </div>
 
@@ -59,17 +103,16 @@ export function CollaboratorSidebar() {
         </p>
         <ul className="space-y-0.5">
           {navItems.map((item) => {
-            const active =
-              item.href === "/collaborator-dashboard/"
-                ? pathname === item.href || pathname === "/collaborator-dashboard"
-                : pathname.startsWith(item.href.replace(/\/$/, ""))
+            const active = item.href === "/collaborator-dashboard/"
+              ? pathname === item.href || pathname === "/collaborator-dashboard"
+              : pathname.startsWith(item.href.replace(/\/$/, ""))
             const Icon = item.icon
 
             return (
               <li key={item.label}>
                 <Link
                   href={item.href}
-                  onClick={openPageGuide}
+                  onClick={isLive ? undefined : openPageGuide}
                   aria-current={active ? "page" : undefined}
                   className={cn(
                     "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
@@ -89,19 +132,20 @@ export function CollaboratorSidebar() {
 
       <div className="border-t border-[#E7E1F7] px-4 py-4">
         <div className="rounded-xl border border-[#E7E1F7] bg-[#F7F4FF] p-3">
-          <p className="text-xs font-medium text-[#5B4B8A]">{t("nav.collaborator.focusedSeat.title")}</p>
+          <p className="text-xs font-medium text-[#5B4B8A]">{isLive ? "Focused reviewer access" : t("nav.collaborator.focusedSeat.title")}</p>
           <p className="mt-1 text-[0.7rem] leading-relaxed text-muted-foreground">
-            {t("nav.collaborator.focusedSeat.body")}
+            {isLive ? "Only applications assigned to this account can be reviewed." : t("nav.collaborator.focusedSeat.body")}
           </p>
         </div>
         <div className="mt-4 flex items-center gap-3">
-          <InitialAvatar name={collaborator.name} className="size-9 text-xs" />
+          <InitialAvatar name={name} className="size-9 text-xs" />
           <div className="min-w-0">
-            <p className="truncate text-sm font-medium text-foreground">{collaborator.name}</p>
-            <p className="truncate text-xs text-muted-foreground">{collaborator.role}</p>
-            <p className="truncate text-xs text-muted-foreground">{institutionLabel(collaborator.organization)}</p>
+            <p className="truncate text-sm font-medium text-foreground">{name}</p>
+            <p className="truncate text-xs text-muted-foreground">{role}</p>
+            <p className="truncate text-xs text-muted-foreground">{organization}</p>
           </div>
         </div>
+        {isLive && <AccountSignOutButton className="mt-3 w-full justify-start" />}
       </div>
     </aside>
   )
