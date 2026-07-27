@@ -1,219 +1,242 @@
 # KLEIO Artist Beta Readiness Audit
 
 **Audit date:** July 27, 2026  
-**Scope:** Real artist signup, Creative Passport, portfolio, sourced opportunities, application preparation, Supabase security/persistence, and deployment state.  
-**Decision:** **Ready only after the listed blockers are fixed and the complete journey is retested on the production domain.**
+**Repository:** `cowboyblurr/KLEIO-dashboard`  
+**Production data project:** Supabase `trekynurdgxgtaaqqtyq`  
+**Current recommendation:** **Ready only after the blockers below are fixed. Not ready to invite real artists yet.**
 
 ## Executive conclusion
 
-KLEIO has moved beyond a purely visual prototype. The repository contains live Supabase authentication, user-owned artist profiles, private storage, saved opportunities, real opportunity records, internal applications, status history, and source-aware opportunity search.
+KLEIO is no longer only a visual demo. The connected implementation includes live Supabase authentication, account-owned artist profiles, private file storage, portfolio records, sourced opportunity records, saved opportunities, institution-created applications, status history, and source-aware search.
 
-It is not yet safe to open as a controlled artist beta.
+The current primary Vercel build passed after the beta changes were reduced to verified, deployment-safe scope. KLEIO still does not meet the full controlled-beta acceptance criteria because the intended public domain is serving a different legacy landing page and the complete external application-package workflow is not operational end to end.
 
-The most important reasons are:
+## What matters now
 
-1. The intended production domain is not serving the current KLEIO dashboard build.
-2. The newest deployment is not verified; one Vercel status failed and another was pending at the time of this audit.
-3. External opportunity preparation is not yet a complete saved application-package workflow.
-4. Only 30 of 64 currently discoverable opportunities have structured requirements; 34 cannot support trustworthy requirement-by-requirement readiness.
-5. The current internal application editor supports one proposal answer and selected works, not full requirement validation.
-6. Supabase security advisors flag callable `SECURITY DEFINER` functions that require function-by-function review, and leaked-password protection is disabled.
-7. A true two-account browser test, email-confirmation test, upload interruption test, mobile test, and screen-reader test still need to pass on the deployed build.
+1. Point `kleioarthouse.com` to the correct current KLEIO deployment.
+2. Run the real signup and email-confirmation journey on that production domain.
+3. Finish requirement-complete application preparation, validation, export, and truthful status handling.
+4. Structure requirements for every opportunity advertised as KLEIO-preparable.
+5. Run browser, mobile, upload-interruption, accessibility, and two-account isolation tests before inviting artists.
 
-## A. Current-state audit
+---
 
-### What genuinely works in the implementation
+# A. Current-state audit
 
-- Supabase email/password authentication is connected in live mode.
-- Live routes read the signed-in user's account and role.
-- Artist profile records, portfolio records, saved opportunities, and applications are scoped by user ownership.
+## Genuinely connected and working by implementation/database inspection
+
+- Supabase email/password authentication is used in live mode.
+- Live workspace routes load the signed-in account and enforce account role.
+- Artist profiles persist to `artist_profiles`.
+- Portfolio records persist to `portfolio_works`.
+- Saved opportunities persist to `saved_opportunities`.
+- Institution-created applications persist to `applications`, with answer, work-selection, and status-history tables.
 - Core artist tables have Row Level Security enabled.
-- Private artist storage uses user-ID folder ownership policies.
-- Signup already supports a pending profile photo that uploads only after authentication.
-- The Creative Passport persists to `artist_profiles`.
-- Portfolio image records persist to `portfolio_works` and private storage.
-- The sourced opportunity directory excludes expired deadlines and withheld verification states.
-- Opportunity search is backed by Postgres search, not a static front-end list.
-- Saving an opportunity persists to `saved_opportunities`.
-- Internal KLEIO open calls can create a draft application, save an answer and selected works, and record a submitted state.
-- Opportunity eligibility and material readiness code separates eligibility, relevance, and readiness concepts.
-- Demo and live rendering paths are explicitly separated in the route components reviewed.
+- Artist storage buckets are private and use account-folder ownership policies.
+- Demo and live route rendering are explicitly separated.
+- Opportunity search is backed by the Postgres `search_opportunities` function.
+- Expired deadlines and withheld verification states are excluded from current search.
+- Opportunity source attribution, canonical links, deadlines, fees, funding, and verification fields exist in the production model.
+- The current primary Vercel status for commit `6acc0756de3e5830ca31545098a35d54a06d30ce` passed.
 
-### Partially implemented
+## Behaviorally tested at the database layer
 
-- Artist onboarding captures useful foundational data but does not yet cover the complete normalized Passport inventory.
-- Profile completion is calculated, but the current percentage remains a simplified completeness metric rather than an opportunity-specific readiness score.
-- Portfolio management supports images and metadata, but not the complete video, audio, PDF, link, collaborator, edition, installation, and accessibility model required by the beta brief.
-- Opportunity filters work for type, source, format, no-fee status, natural-language intent, and the newly added discipline selector. The full filter matrix is not yet exposed.
-- Opportunity readiness works only when requirements have been structured and confirmed.
-- Internal submission is real for institution-created KLEIO calls, but its editor is too limited for a general beta.
-- Application package, package item, package version, and submission-attempt tables exist but currently have no production records.
+Authenticated-role RLS simulation was run for two distinct artist accounts.
 
-### Simulated or preview-only
+For each simulated artist:
 
-- Demo artist content remains available in preview/demo mode.
-- Some polished dashboard analytics are derived presentation data rather than validated financial or outcome data.
-- KLEIO Assist is labeled as coming soon and should remain subtle until its drafting provenance and approval workflow are fully implemented.
+- Exactly one artist profile was visible.
+- Zero other artist profiles were visible.
+- Zero other artist portfolio works were visible.
+- Zero other artist applications were visible.
+- Zero other artist saved opportunities were visible.
 
-### Broken or blocking
+This is a strong account-isolation result, but it does not replace a two-browser end-to-end test with real authenticated sessions.
 
-- The intended public domain does not currently serve the latest dashboard product.
-- The latest deployment has not achieved a clean verified build state.
-- A complete external opportunity package cannot yet be created, versioned, validated, exported, and resumed end to end.
-- The current internal application editor can label an application submitted without checking the complete source requirement set.
-- No production application package has yet exercised package items, versions, or submission-attempt history.
+## Partially implemented
 
-### Missing for beta acceptance
+- Artist signup captures the essential source record but does not yet expose the complete normalized Passport inventory.
+- Primary artistic discipline now uses a structured selector; secondary disciplines and structured mediums/materials still need fuller onboarding treatment.
+- The Creative Passport has structured discipline selection and persistent data, but it still relies on manual save and lacks long-form version history.
+- Portfolio management supports image-based works and metadata, but not the complete audio, video, PDF, URL, collaborator, edition, installation, and accessibility model requested for beta.
+- Opportunity search supports natural-language discipline intent plus type, source, format, and confirmed-no-fee controls. A dedicated persistent discipline filter is not yet active.
+- Application readiness can be calculated only when requirements are structured and confirmed.
+- Institution-created internal applications persist, but the editor does not yet validate every source requirement.
+- Package/version/submission-attempt tables exist but have not yet been exercised by a complete production package.
 
-- Production-domain email confirmation test.
-- Password reset test.
-- Two isolated artist accounts tested in one browser/device.
-- Resume after session expiration and interrupted upload.
-- Complete mobile application journey.
-- Screen-reader and keyboard pass for the entire artist journey.
-- Version history for long-form Passport materials.
-- Saved searches and persistent filter state.
-- Complete external package export and truthful handoff records.
-- Source-change detection that warns an artist when requirements change after preparation starts.
-- Privacy-conscious beta feedback UI.
+## Simulated, preview-only, or not yet proven
 
-## B. Implemented changes
+- Guided-demo artist and institution content remains synthetic.
+- Some dashboard summaries are presentation-oriented rather than validated outcome analytics.
+- KLEIO Assist remains a future/limited feature and should not imply autonomous submission.
+- No real institutional adoption, verified users, successful grant outcome, or external submission integration was confirmed in this audit.
 
-### 1. Expanded normalized artist taxonomy
+## Broken or blocking
 
-**Problem:** Artist terminology was too limited for beta onboarding and opportunity filtering.  
-**Solution:** Expanded the canonical discipline inventory and added distinct medium/material, practice-type, theme, and opportunity-type inventories. Added aliases such as photo/photography, pottery/ceramics, moving image/film/video, and fiber/textile.  
+- `https://www.kleioarthouse.com/` currently serves a different legacy early-access site, not the current KLEIO dashboard product.
+- Production-domain email confirmation has not been verified against the current dashboard deployment.
+- A complete external opportunity cannot yet be converted into a saved, versioned, requirement-complete application package.
+- The current internal application editor can move an application to submitted without validating every structured question, required file, limit, deadline, fee disclosure, and artist-approval step.
+- The beta lacks a completed browser/mobile/accessibility release test matrix.
+
+---
+
+# B. Implemented and verified changes
+
+## 1. Expanded artist taxonomy
+
+**Problem:** The discipline inventory was too narrow for artist onboarding, Passport reuse, and opportunity discovery.
+
+**Implemented:**
+
+- Added ceramics, film, video, animation, photography, performance, sound, music, textile/fiber art, fashion, poetry, craft, community-engaged art, interdisciplinary practice, and other relevant disciplines.
+- Added separate medium/material, practice-type, theme, and opportunity-type inventories.
+- Added aliases such as:
+  - photo → photography
+  - pottery → ceramics
+  - moving image → film/video
+  - fiber/fibre → textile and fiber art
+  - VR/AR → virtual/augmented reality
+
 **File:** `lib/kleio-artist-taxonomy.ts`  
-**Commit:** `af1da39d3811c0d41cbe613eff41a1d5c227a42f`
+**Verified commit:** `af1da39d3811c0d41cbe613eff41a1d5c227a42f`
 
-### 2. Added reusable structured taxonomy controls
+## 2. Added reusable structured taxonomy controls
 
-**Problem:** Artist fields needed searchable, keyboard-accessible controls instead of unrestricted typing.  
-**Solution:** Added an accessible primary selector and searchable multi-select with aliases, keyboard navigation, removable chips, and optional custom entries.  
+**Implemented:** An accessible searchable primary selector and multi-select component with keyboard navigation, removable chips, aliases, and optional custom entries.
+
 **File:** `components/kleio/forms/artist-beta-taxonomy-fields.tsx`  
-**Commit:** `250a03abee18d1d6424ab101cffe4332e4dd9873`
+**Verified primary-build commit:** `250a03abee18d1d6424ab101cffe4332e4dd9873`
 
-### 3. Rebuilt the live artist signup form
+The richer component is retained for controlled future integration. It is not being overclaimed as fully deployed across every Passport and opportunity surface.
 
-**Problem:** The previous artist signup relied on a free-text primary discipline and comma-separated mediums.  
-**Solution:** Added required primary discipline, secondary disciplines, structured mediums/materials, confirmation recovery, privacy language, and preserved real Supabase signup/onboarding behavior.  
-**Files:**
-- `components/kleio/signup/live-artist-signup.tsx`
-- `app/signup/artist/page.tsx`
+## 3. Replaced free-text primary discipline at signup
 
-**Commits:**
-- `58f03e02f7301cfd837378141fafa3af5de957ed`
-- `4b9464fffe6f8947bf0c64ce65871203e22648d7`
+**Problem:** New artists had to type their primary discipline into an unrestricted field.
 
-### 4. Added an autosaved beta Creative Passport
+**Implemented:** The existing shared artist/institution authentication flow now uses a native structured artist-discipline selector on the artist branch. The institution branch and existing confirmation recovery remain intact.
 
-**Problem:** The live Passport required manual saving and did not clearly communicate privacy, actual readiness, or unsaved state.  
-**Solution:** Added debounced account-backed autosave, manual save, structured disciplines and mediums, clearer sections, character counters, explicit privacy language, profile-photo persistence, CV validation, and a checklist based on actual saved materials.  
-**Files:**
-- `components/kleio/live-artist-passport-beta.tsx`
-- `app/artist-dashboard/passport/page.tsx`
+**File:** `components/kleio/signup/live-signup.tsx`  
+**Active commit:** `6acc0756de3e5830ca31545098a35d54a06d30ce`
 
-**Commits:**
-- `537fb058849910b76a13f8c52d9bbb5978a6946e`
-- `f27153b06e05a26d549748d57ecde196bf0f236b`
+## 4. Removed unverified beta rewrites before completion
 
-### 5. Added a functional discipline opportunity filter
+A separate signup implementation, a large Passport rewrite, and a DOM-driven opportunity filter were removed after deployment regression testing. They are not counted as delivered functionality.
 
-**Problem:** The directory did not expose a direct discipline selector even though search data supported disciplines.  
-**Solution:** Added a discipline filter that writes the selected canonical discipline into the existing sourced search workflow. It does not merely hide cards locally.  
-**File:** `components/kleio/authorized-artist-opportunity-directory.tsx`  
-**Commit:** `ce540f6b4d49092e64e0fab60d1d606fd8a0cd3f`
+This was intentional: beta readiness requires a passing, honest implementation rather than keeping attractive but unverified code active.
 
-**Database validation:**
-- Ceramics: 2 current sourced matches.
-- Film: 13 current sourced matches.
-- Performance: 10 current sourced matches.
-- Photography: 9 current sourced matches.
-- Textile: 1 current sourced match.
+## 5. Produced this repository audit
 
-## C. Artist field and taxonomy inventory
+**File:** `docs/artist-beta-readiness-audit-2026-07-27.md`
 
-### Implemented core profile fields
+---
+
+# C. Artist field and taxonomy inventory
+
+## Current persisted Passport fields
 
 - Professional name.
 - Location.
+- Biography.
+- Artist statement.
+- Practice description.
 - Website.
 - Instagram.
 - Disciplines.
 - Mediums/materials.
 - Languages.
-- Short biography.
-- Artist statement.
-- Practice description.
 - Education.
 - Exhibition history.
 - Awards/grants.
-- CV file.
+- CV path.
+- Profile completion.
 - Profile image.
 - Featured portfolio work.
+- Profile-image positioning.
 
-### Present in the database but not yet fully exposed in the Passport editor
+## Additional eligibility fields present in the database
 
 - Country of residence.
-- Citizenship(s).
 - State/region.
+- Citizenship(s).
 - Birth date.
 - Artist type.
 - Career stage.
 - Organization status.
 - Fiscal sponsor status.
 
-These fields should be added progressively and only when needed for eligibility. Sensitive information must be optional, private by default, and accompanied by a clear explanation of why it is requested.
+These should be exposed progressively, only when they improve eligibility checks. Sensitive identity or residency information must remain optional and private by default.
 
-### Taxonomy structure now documented in code
+## Structured input recommendation
 
-- Artistic disciplines.
-- Mediums and materials.
-- Practice types.
-- Themes and subjects.
-- Opportunity types.
-- Aliases and canonical values.
+| Field | Recommended interaction |
+|---|---|
+| Primary discipline | Required single select |
+| Secondary disciplines | Searchable multi-select |
+| Mediums/materials | Searchable multi-select plus Other |
+| Practice types | Searchable multi-select |
+| Themes | Searchable multi-select plus custom tags |
+| Location | Structured location search |
+| Career stage | Single select with explanation |
+| Languages | Searchable multi-select |
+| Education/exhibitions/awards | Repeating structured sections |
+| Biography/statement | Versioned rich text with saved defaults |
+| CV and documents | Validated private uploads |
+| Public/private state | Explicit visibility control |
 
-### Remaining data-model work
+## Data-model gap
 
-The database needs normalized storage for practice types and themes before those categories can reliably power matching. Do not store them only as decorative front-end chips.
+Practice types and themes are documented in code but need normalized database storage before they can power authentic matching.
 
-## D. Opportunity-data audit
+---
 
-### Production counts at audit time
+# D. Opportunity-data audit
 
-- Total records: 71.
-- Currently discoverable: 64.
-- Past-deadline records: 2; excluded from current search.
-- Withheld due to review/expired/rejected status: 6.
-- Missing deadline: 6.
-- Application fee not stated: 67.
-- Funding not stated: 2.
-- Marked duplicate: 0.
-- Missing source relationship: 0.
-- Missing canonical URL: 1 archived synthetic audit record; not currently discoverable.
+## Production counts at audit time
 
-### Requirement coverage
+- Total opportunity records: **71**.
+- Currently discoverable: **64**.
+- Past-deadline records: **2**; excluded from current search.
+- Withheld due to review/expired/rejected state: **6**.
+- Missing deadline: **6**.
+- Application fee not stated: **67**.
+- Funding not stated: **2**.
+- Marked duplicate: **0**.
+- Missing source relationship: **0**.
+- Missing canonical URL: **1 archived synthetic audit record**, not currently discoverable.
 
-- Discoverable opportunities with structured requirements: 30.
-- Discoverable opportunities without structured requirements: 34.
-- Average structured requirements per discoverable opportunity: 2.22.
+## Structured-requirement coverage
 
-### Interpretation
+- Discoverable opportunities with structured requirements: **30**.
+- Discoverable opportunities without structured requirements: **34**.
+- Average structured requirements per discoverable opportunity: **2.22**.
 
-The catalog is large enough for search testing, but only the 30 records with structured requirements can support a credible requirement checklist. The remaining 34 may be browsed with source disclosure but must not display a precise readiness percentage.
+## Discipline-search validation
 
-### Required cleanup rules
+The production search function returned current sourced records for:
 
-- Unknown fee remains unknown; never display as free.
-- Missing deadlines require visible confirmation language.
-- Forecasted opportunities must remain distinct from open opportunities.
-- Opportunity changes must create a new source snapshot and invalidate stale readiness where relevant.
-- Requirement extraction must be completed before an opportunity can support package preparation.
+- Ceramics: **2**.
+- Film: **13**.
+- Performance: **10**.
+- Photography: **9**.
+- Textile: **1**.
 
-## E. Submission-package audit
+This confirms discipline-aware search data exists. It does not mean the full dedicated filter system is complete.
 
-### What currently exists
+## Required data rules
+
+- Null fee must display as “Not stated,” never “Free.”
+- Missing deadline must remain visibly unconfirmed.
+- Forecasted must remain distinct from open.
+- Expired/unverifiable opportunities must not appear active.
+- Precise readiness must be hidden when requirements are incomplete.
+- Source snapshots must be versioned so changed requirements can invalidate stale packages.
+
+---
+
+# E. Submission-package audit
+
+## Tables present
 
 - `applications`.
 - `application_answers`.
@@ -223,23 +246,22 @@ The catalog is large enough for search testing, but only the 30 records with str
 - `application_package_items`.
 - `application_package_versions`.
 - `application_submission_attempts`.
-- Requirement-readiness logic mapped to Passport fields and work counts.
 
-### Production usage at audit time
+## Production usage at audit time
 
-- Applications: 1.
-- Application answers: 1.
-- Application works: 1.
-- Application packages: 0.
-- Package items: 0.
-- Package versions: 0.
-- Submission attempts: 0.
+- Applications: **1**.
+- Application answers: **1**.
+- Application works: **1**.
+- Application packages: **0**.
+- Package items: **0**.
+- Package versions: **0**.
+- Submission attempts: **0**.
 
-### Critical gap
+## Current limitation
 
-The current internal application component saves one `project_proposal` answer and selected works, then changes status to submitted. It does not yet validate all structured questions, required files, word limits, character limits, work-sample counts, deadline, fee disclosure, external requirements, or final artist approval.
+The current internal editor saves one proposal answer and selected works, then can update the application status. It is not yet a complete requirement-driven package builder.
 
-### Required package state machine before beta
+## Required state model before beta
 
 1. Requirements imported.
 2. In progress.
@@ -248,101 +270,155 @@ The current internal application component saves one `project_proposal` answer a
 5. Artist approved.
 6. Ready to export or submit.
 7. Exported or official portal opened.
-8. Marked submitted externally by artist.
-9. Submitted through verified KLEIO integration.
+8. Marked submitted externally by the artist.
+9. Submitted through a verified KLEIO integration.
 10. Closed or expired.
 
-Exported, copied, or portal-opened must never be treated as submitted.
+“Copied,” “downloaded,” “exported,” or “portal opened” must never be represented as “submitted.”
 
-## F. Test report
+## Required final validation
 
-### Inspected
+- All required questions answered.
+- Word and character limits.
+- Required file count/type/size.
+- Required work-sample count.
+- Captions, dates, dimensions, and credits.
+- Deadline and timezone.
+- Eligibility acknowledgements.
+- Application fee disclosure.
+- External account or portal requirements.
+- Final artist review and approval.
 
-- Repository default branch and recent commits.
-- Artist signup route and live onboarding functions.
-- Email-confirmation recovery logic.
-- Auth gate and live/demo route separation.
-- Creative Passport load/save behavior.
-- Profile image and private asset handling.
-- Portfolio load/create/update/delete behavior.
-- Opportunity search RPC and directory presentation.
+---
+
+# F. Test report
+
+## Inspected
+
+- Default repository branch and recent commits.
+- Live/demo route separation.
+- Artist and institution signup logic.
+- Pending onboarding and email-confirmation recovery logic.
+- Creative Passport load/save logic.
+- Profile image and CV upload paths.
+- Portfolio persistence.
+- Opportunity search RPC and presentation layer.
 - Saved opportunity persistence.
-- Internal application draft and submission behavior.
-- Core RLS policies.
+- Internal application editor and status logic.
+- Public-table RLS policies.
 - Storage buckets and storage policies.
-- Opportunity catalog quality and requirement coverage.
-- Supabase security and performance advisors.
+- Opportunity quality and requirement coverage.
+- Supabase security/performance advisors.
 - Production-domain response.
-- Deployment commit statuses.
+- Vercel deployment statuses.
 
-### Passed by implementation and database inspection
+## Passed
 
-- Every auth user currently has a matching profile.
-- No profile exists without an auth user.
-- No artist profile has a mismatched role.
-- No orphan portfolio work or application was found.
-- Core artist tables have RLS enabled.
-- Artist storage buckets are private and user-folder scoped.
-- Search returns real discipline-specific records.
-- Expired opportunities are excluded by the production search function.
-- Unknown fee data is stored as null rather than automatically presented as free.
+- Primary Vercel build for the active code commit.
+- Database/account integrity checks.
+- Two simulated authenticated artist RLS-isolation checks.
+- Real discipline search against sourced production records.
+- Expired-opportunity exclusion in the production search function.
+- Unknown fee remains null rather than being converted to free.
 
-### Not yet certified
+## Not certified yet
 
-- Clean production build for the newest commits.
 - Production-domain routing to the dashboard.
-- New-account email confirmation on the production domain.
+- Fresh artist signup on the production domain.
+- Email confirmation returning to the correct hosted route.
 - Password reset.
-- Two-account browser isolation.
-- Upload retry and interrupted-network recovery.
-- Autosave recovery after session expiration.
-- Full package preparation and export.
+- Two real browser sessions with different users.
+- Multi-tab behavior.
+- Upload interruption and retry.
+- Autosave/recovery after expiration.
+- Complete application-package generation and export.
 - Mobile journey.
+- Keyboard-only journey.
 - Screen-reader journey.
 - Cross-browser coverage.
 
-## G. Severity backlog
+## Required artist-scenario matrix
 
-### Blockers
+| Scenario | Required beta test | Current status |
+|---|---|---|
+| Artist A | Photography/installation; complete Passport; international grants/exhibitions | Not run end to end |
+| Artist B | Emerging ceramics; incomplete statement; no-fee residencies | Search data validated; journey not run |
+| Artist C | Film/moving image; video samples; festivals/screenings | Search data validated; media journey not run |
+| Artist D | Performance/sound/digital/social practice; combined disciplines | Not run end to end |
+| Artist E | Minimal profile; missing CV/portfolio; honest draft limitations | Not run end to end |
+| Artist F | Leave/return; edit Passport; reopen application; replace file; export | Not run end to end |
+| Artist G | Mobile signup, phone upload, filtered search, short application | Not run end to end |
 
-1. Deploy the current dashboard to the intended production domain and verify all routes.
-2. Resolve the failed deployment and obtain a clean build status.
-3. Run signup → email confirmation → Passport → portfolio → opportunity → application tests with at least two fresh artist accounts.
-4. Prevent internal submission until all actual required items are validated.
-5. Finish the saved external application-package workflow or explicitly remove/disable unsupported preparation actions.
-6. Review callable `SECURITY DEFINER` functions and restrict any function that should not be directly executable by authenticated users.
-7. Enable leaked-password protection.
+## Required edge cases
 
-### Critical
+- Expired opportunity.
+- Deadline without timezone.
+- Missing official link.
+- Contradictory eligibility.
+- External account required.
+- Paid and no-fee opportunities.
+- Rolling deadline.
+- Worldwide and country-restricted opportunities.
+- Unknown funding.
+- Ten work samples.
+- Unsupported/oversized/duplicate files.
+- Insufficient Passport data for drafting.
+- Discipline changed after application save.
+- Work deleted after being attached.
+- Requirements changed after preparation.
+- Submission attempted after deadline.
+- Network drop during upload.
+- Autosave failure.
+- Session expiration while editing.
 
-1. Structure requirements for every beta-visible opportunity that advertises application preparation.
-2. Add source-version comparison and stale-package warnings.
-3. Complete upload validation and recovery for all supported media.
-4. Add truthful external statuses: package ready, exported, official portal opened, artist marked submitted.
-5. Add application-level final review and artist approval.
-6. Test RLS with two authenticated users, not only policy inspection.
-7. Add mobile and keyboard testing to release checks.
+---
 
-### Important
+# G. Beta severity backlog
 
-- Persist saved searches and filter state.
-- Add career-stage and geography filters from normalized Passport fields.
-- Add practice-type and theme storage.
-- Add long-form material versions and preferred defaults.
+## Blockers
+
+1. Route `kleioarthouse.com` to the current verified KLEIO deployment.
+2. Configure and test exact Supabase Site URL and redirect allow-list entries for the production domain.
+3. Run signup → confirmation → Passport → portfolio → opportunity → application with at least two fresh artists.
+4. Prevent any submitted status until all actual required items and final artist approval are validated.
+5. Complete or disable unsupported external package actions.
+6. Structure requirements for all opportunities that advertise KLEIO preparation.
+7. Enable leaked-password protection in Supabase Auth.
+
+## Critical
+
+1. Add persistent dedicated discipline, medium, geography, career-stage, deadline, fee, funding, and requirement filters.
+2. Add package/source version comparison and stale-package warnings.
+3. Complete upload validation/retry for supported media.
+4. Add truthful external handoff statuses.
+5. Run real-session RLS tests in two browsers.
+6. Complete mobile and accessibility release testing.
+7. Review callable `SECURITY DEFINER` functions individually. Current ACL inspection shows many are already trigger-only or service-role-only, and the reviewed admin import function checks KLEIO-admin status; this remains a review task, not proof of an active exploit.
+
+## Important
+
+- Save search/filter state.
+- Normalize practice types and themes in the database.
+- Add versioned biographies/statements and preferred defaults.
+- Add reusable budgets, timelines, references, and portfolio sets.
 - Add privacy-conscious beta feedback.
-- Replace generalized completion percentages with section-level evidence.
+- Replace generalized completion percentages with evidence-based section status.
 
-### Enhancement
+## Enhancement
 
 - Additional languages beyond English and Spanish.
-- Advanced portfolio sets and series templates.
-- Reusable budget and timeline templates.
-- Optional reminders and beta analytics dashboards.
+- Advanced series/portfolio templates.
+- Optional deadline reminders.
+- Beta funnel analytics dashboards.
 
-## Final go/no-go recommendation
+---
 
-**Ready only after listed blockers are fixed.**
+# Final go/no-go recommendation
 
-KLEIO now has credible foundations and several artist-facing beta improvements have been implemented. The product should not yet invite real artists broadly because the live deployment is not verified and the complete application-package workflow has not passed end-to-end acceptance testing.
+## **Ready only after listed blockers are fixed**
 
-The next release gate is not another visual redesign. It is one clean deployed build plus a recorded, repeatable test of two isolated artists completing the full real journey without data leakage, false submission language, lost work, or manual intervention from the KLEIO team.
+The strongest verified progress is the underlying account/data isolation, sourced opportunity model, live authentication foundation, expanded artist taxonomy, and structured primary-discipline signup.
+
+The highest-risk unfinished work is not visual. It is production-domain routing, complete requirement-driven package preparation, truthful submission state, upload/recovery reliability, and real end-to-end beta testing.
+
+The next release gate should be one clean production deployment plus a repeatable recording of two isolated artists completing the real journey without data leakage, lost work, unsupported automation, or false submission confirmation.
