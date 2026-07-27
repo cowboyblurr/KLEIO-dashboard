@@ -55,8 +55,8 @@ jobs:
       - name: Audit production auth redirects
         env:
           CI: "true"
-          NEXT_PUBLIC_BASE_PATH: /KLEIO-dashboard
-          NEXT_PUBLIC_SITE_URL: https://cowboyblurr.github.io/KLEIO-dashboard
+          NEXT_PUBLIC_BASE_PATH: ""
+          NEXT_PUBLIC_SITE_URL: https://www.kleioarthouse.com
         run: pnpm run audit:auth-redirect
 
       - name: Build static site
@@ -65,8 +65,8 @@ jobs:
         shell: bash
         env:
           GITHUB_ACTIONS: "true"
-          NEXT_PUBLIC_BASE_PATH: /KLEIO-dashboard
-          NEXT_PUBLIC_SITE_URL: https://cowboyblurr.github.io/KLEIO-dashboard
+          NEXT_PUBLIC_BASE_PATH: ""
+          NEXT_PUBLIC_SITE_URL: https://www.kleioarthouse.com
           NEXT_PUBLIC_SUPABASE_URL: https://trekynurdgxgtaaqqtyq.supabase.co
           NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_XdYXvd0fQm3IJKxNrFXgUQ_M4RgDj1M
         run: |
@@ -81,6 +81,21 @@ jobs:
           test -d out
           test -f out/index.html
           touch out/.nojekyll
+          test -f out/CNAME
+          grep -Fxq "www.kleioarthouse.com" out/CNAME
+
+          echo "Checking custom-domain asset paths..."
+          if grep -Rqs '/KLEIO-dashboard/_next/' out --include='*.html'; then
+            echo "Project-path assets were found in the custom-domain export."
+            exit 1
+          fi
+          grep -Eq 'href="/_next/static/css/[^\"]+\.css"' out/index.html
+          grep -Eq 'src="/_next/static/chunks/[^\"]+\.js"' out/index.html
+          while IFS= read -r asset; do
+            relative_path="${asset#/}"
+            test -f "out/${relative_path}"
+          done < <(grep -oE '(href|src)="/_next/[^"]+\.(css|js)"' out/index.html | cut -d'"' -f2 | sort -u)
+
           echo "Top-level exported files:"
           find out -maxdepth 2 -type f | sort | head -120
           echo "Checking signup and recovery exports..."
@@ -182,13 +197,14 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@v4
 
-      - name: Verify live production routes
+      - name: Verify live production routes and assets
         env:
-          SITE_URL: https://cowboyblurr.github.io/KLEIO-dashboard
+          SITE_URL: https://www.kleioarthouse.com
         run: |
           set -euo pipefail
           SITE_URL="${SITE_URL%/}"
           SITE_ORIGIN="$(printf '%s' "$SITE_URL" | sed -E 's#(https?://[^/]+).*#\1#')"
+
           check_route() {
             route="$1"
             required="$2"
@@ -196,7 +212,7 @@ jobs:
             url="${SITE_URL}${route}?verification=${GITHUB_SHA}"
             body="$(mktemp)"
             success="false"
-            for attempt in $(seq 1 18); do
+            for attempt in $(seq 1 24); do
               status="$(curl --silent --show-error --location --output "$body" --write-out '%{http_code}' --max-time 30 "$url" || true)"
               if [ "$status" = "200" ] && grep -Fq "$required" "$body"; then
                 if [ -n "$forbidden" ] && grep -Eq "$forbidden" "$body"; then
@@ -207,7 +223,7 @@ jobs:
                 success="true"
                 break
               fi
-              echo "Waiting for ${route} to serve the deployed export (attempt ${attempt}/18, HTTP ${status})..."
+              echo "Waiting for ${route} to serve the deployed export (attempt ${attempt}/24, HTTP ${status})..."
               sleep 10
             done
             if [ "$success" != "true" ]; then
@@ -215,6 +231,38 @@ jobs:
               cat "$body"
               exit 1
             fi
+          }
+
+          check_static_assets() {
+            html="$(mktemp)"
+            curl --silent --show-error --location --fail --max-time 30 "${SITE_URL}/?asset_verification=${GITHUB_SHA}" > "$html"
+
+            if grep -Fq '/KLEIO-dashboard/_next/' "$html"; then
+              echo "The live custom-domain HTML still contains project-path asset URLs."
+              exit 1
+            fi
+
+            css_count=0
+            while IFS= read -r href; do
+              [ -n "$href" ] || continue
+              css_count=$((css_count + 1))
+              headers="$(mktemp)"
+              body="$(mktemp)"
+              status="$(curl --silent --show-error --location --dump-header "$headers" --output "$body" --write-out '%{http_code}' --max-time 30 "${SITE_ORIGIN}${href}?asset_verification=${GITHUB_SHA}")"
+              test "$status" = "200"
+              grep -Eiq '^content-type:.*text/css' "$headers"
+              test -s "$body"
+            done < <(grep -oE 'href="/_next/static/css/[^"]+\.css"' "$html" | cut -d'"' -f2 | sort -u)
+            test "$css_count" -gt 0
+
+            js_count=0
+            while IFS= read -r src; do
+              [ -n "$src" ] || continue
+              js_count=$((js_count + 1))
+              status="$(curl --silent --show-error --location --output /dev/null --write-out '%{http_code}' --max-time 30 "${SITE_ORIGIN}${src}?asset_verification=${GITHUB_SHA}")"
+              test "$status" = "200"
+            done < <(grep -oE 'src="/_next/static/chunks/[^"]+\.js"' "$html" | cut -d'"' -f2 | sort -u)
+            test "$js_count" -gt 0
           }
 
           check_client_bundle() {
@@ -240,4 +288,5 @@ jobs:
           check_route "/signup/artist/" "LiveSignup" "Prototype · Synthetic data"
           check_route "/signup/institution/" "LiveSignup" "Prototype · Synthetic data"
           check_route "/auth/callback/" "Confirming your account" "localhost:3000"
+          check_static_assets
           check_client_bundle "/artist-dashboard/opportunities/" "How KLEIO works here" "Worldwide sourced search" "Translation protocol:|Messaging boundary:|Worldwide discovery:"
