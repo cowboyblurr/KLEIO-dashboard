@@ -62,41 +62,39 @@ export type ReviewerWorkspaceData = {
   assignments: ReviewerAssignment[]
 }
 
+type RawCall = {
+  id: string
+  title: string
+  summary: string
+  deadline_at: string | null
+  institution_id: string
+  institution_name: string
+  review_configuration: Record<string, unknown> | null
+}
+
+type RawApplicationWorkSelection = {
+  sort_order: number
+  portfolio_works: ReviewerPortfolioWork | ReviewerPortfolioWork[] | null
+}
+
+type RawApplication = {
+  id: string
+  artist_name: string
+  profile_snapshot: Record<string, unknown> | null
+  status: string
+  submitted_at: string | null
+  open_calls: RawCall | RawCall[] | null
+  application_answers: ReviewerApplicationAnswer[] | null
+  application_works: RawApplicationWorkSelection[] | null
+}
+
 type RawAssignment = {
   id: string
   application_id: string
   due_at: string | null
   status: string
   created_at: string
-  applications: {
-    id: string
-    artist_name: string
-    profile_snapshot: Record<string, unknown> | null
-    status: string
-    submitted_at: string | null
-    open_calls: {
-      id: string
-      title: string
-      summary: string
-      deadline_at: string | null
-      institution_id: string
-      institution_name: string
-      review_configuration: Record<string, unknown> | null
-    } | Array<{
-      id: string
-      title: string
-      summary: string
-      deadline_at: string | null
-      institution_id: string
-      institution_name: string
-      review_configuration: Record<string, unknown> | null
-    }> | null
-    application_answers: ReviewerApplicationAnswer[] | null
-    application_works: Array<{
-      sort_order: number
-      portfolio_works: ReviewerPortfolioWork | ReviewerPortfolioWork[] | null
-    }> | null
-  } | RawAssignment["applications"][] | null
+  applications: RawApplication | RawApplication[] | null
 }
 
 function relationOne<T>(value: T | T[] | null | undefined): T | null {
@@ -183,6 +181,12 @@ export async function loadReviewerWorkspace(): Promise<ReviewerWorkspaceData> {
     const application = relationOne(row.applications)
     if (!application) return []
     const call = relationOne(application.open_calls)
+    const works = (application.application_works ?? [])
+      .map((selection: RawApplicationWorkSelection) => ({
+        sort_order: selection.sort_order,
+        work: relationOne(selection.portfolio_works),
+      }))
+      .sort((first, second) => first.sort_order - second.sort_order)
 
     return [{
       id: row.id,
@@ -201,10 +205,7 @@ export async function loadReviewerWorkspace(): Promise<ReviewerWorkspaceData> {
           review_configuration: call.review_configuration ?? {},
         } : null,
         answers: application.application_answers ?? [],
-        works: (application.application_works ?? []).map((selection) => ({
-          sort_order: selection.sort_order,
-          work: relationOne(selection.portfolio_works),
-        })).sort((a, b) => a.sort_order - b.sort_order),
+        works,
       },
       review: reviewByApplication.get(application.id) ?? null,
     }]
