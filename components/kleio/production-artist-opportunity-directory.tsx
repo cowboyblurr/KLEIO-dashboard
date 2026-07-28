@@ -13,6 +13,7 @@ import {
   RotateCcw,
   Search,
   ShieldCheck,
+  SlidersHorizontal,
   XCircle,
 } from "lucide-react"
 import { WorkspacePageHeader } from "@/components/kleio/workspace-page-header"
@@ -58,9 +59,7 @@ type FilterState = {
   format: string
   discipline: string
   geography: string
-  careerStage: string
   deadlineWindow: string
-  funding: string
   noFeeOnly: boolean
   requirementsOnly: boolean
 }
@@ -72,9 +71,7 @@ const defaultFilters: FilterState = {
   format: "all",
   discipline: "all",
   geography: "",
-  careerStage: "all",
   deadlineWindow: "all",
-  funding: "all",
   noFeeOnly: false,
   requirementsOnly: false,
 }
@@ -169,7 +166,6 @@ function deadlineTo(windowValue: string) {
 }
 
 function toDirectoryFilters(filters: FilterState): PersistentOpportunityFilters {
-  const fundingNumber = Number(filters.funding)
   return {
     query: filters.query,
     opportunityTypes: filters.type === "all" ? undefined : [filters.type],
@@ -177,19 +173,33 @@ function toDirectoryFilters(filters: FilterState): PersistentOpportunityFilters 
     participationFormats: filters.format === "all" ? undefined : [filters.format],
     disciplines: filters.discipline === "all" ? undefined : [filters.discipline],
     eligibleCountry: filters.geography,
-    careerStages: filters.careerStage === "all" ? undefined : [filters.careerStage],
     deadlineTo: filters.deadlineWindow === "all" ? null : deadlineTo(filters.deadlineWindow),
-    minimumFunding: Number.isFinite(fundingNumber) && fundingNumber > 0 ? fundingNumber : null,
-    fundingKnownOnly: filters.funding === "known",
     structuredRequirementsOnly: filters.requirementsOnly,
     noFeeOnly: filters.noFeeOnly,
     limit: 100,
   }
 }
 
+function restoreFilters(value: unknown): FilterState {
+  if (!value || typeof value !== "object") return defaultFilters
+  const stored = value as Record<string, unknown>
+  return {
+    query: typeof stored.query === "string" ? stored.query : "",
+    type: typeof stored.type === "string" ? stored.type : "all",
+    source: typeof stored.source === "string" ? stored.source : "all",
+    format: typeof stored.format === "string" ? stored.format : "all",
+    discipline: typeof stored.discipline === "string" ? stored.discipline : "all",
+    geography: typeof stored.geography === "string" ? stored.geography : "",
+    deadlineWindow: typeof stored.deadlineWindow === "string" ? stored.deadlineWindow : "all",
+    noFeeOnly: stored.noFeeOnly === true,
+    requirementsOnly: stored.requirementsOnly === true,
+  }
+}
+
 export function ProductionArtistOpportunityDirectory() {
   const requestIdRef = useRef(0)
   const [filters, setFilters] = useState<FilterState>(defaultFilters)
+  const [filtersOpen, setFiltersOpen] = useState(false)
   const [hydrated, setHydrated] = useState(false)
   const [directory, setDirectory] = useState<OpportunityDirectoryDataWithSources | null>(null)
   const [expanded, setExpanded] = useState<string | null>(null)
@@ -201,7 +211,7 @@ export function ProductionArtistOpportunityDirectory() {
   useEffect(() => {
     try {
       const stored = window.localStorage.getItem(STORAGE_KEY)
-      if (stored) setFilters({ ...defaultFilters, ...(JSON.parse(stored) as Partial<FilterState>) })
+      if (stored) setFilters(restoreFilters(JSON.parse(stored)))
     } catch {
       window.localStorage.removeItem(STORAGE_KEY)
     } finally {
@@ -231,9 +241,7 @@ export function ProductionArtistOpportunityDirectory() {
             participation_format: filters.format,
             discipline: filters.discipline,
             geography: filters.geography,
-            career_stage: filters.careerStage,
             deadline_window: filters.deadlineWindow,
-            funding: filters.funding,
             no_fee_only: filters.noFeeOnly,
             structured_requirements_only: filters.requirementsOnly,
             result_count: result.items.length,
@@ -270,7 +278,7 @@ export function ProductionArtistOpportunityDirectory() {
   return (
     <main className="h-full overflow-y-auto px-4 py-5 sm:px-6 sm:py-6">
       <div className="mx-auto max-w-[1180px] space-y-5">
-        <WorkspacePageHeader eyebrow="Artist workspace" title="Opportunities" description="Search sourced opportunity records with persistent filters. KLEIO shows readiness only when application requirements are structured." />
+        <WorkspacePageHeader eyebrow="Artist workspace" title="Opportunities" description="Search worldwide sourced opportunity records. Refine only when needed; KLEIO shows readiness only when application requirements are structured." />
 
         <section className={`${card} space-y-4`} aria-label="Opportunity filters">
           <div>
@@ -279,36 +287,43 @@ export function ProductionArtistOpportunityDirectory() {
               <Search className="pointer-events-none absolute left-3 top-3 size-4 text-muted-foreground" />
               <input type="search" value={filters.query} onChange={(event) => setFilters((current) => ({ ...current, query: event.target.value }))} placeholder="Try “ceramics residencies in Asia”" className={`${input} pl-9`} />
             </label>
-            <p className="mt-2 text-xs leading-relaxed text-muted-foreground">Search terms and every control below are sent to the opportunity database. KLEIO never invents a listing to satisfy a query.</p>
+            <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
+              <p className="text-xs leading-relaxed text-muted-foreground">Search naturally. KLEIO never invents a listing to satisfy a query.</p>
+              <button type="button" className={secondary} onClick={() => setFiltersOpen((current) => !current)} aria-expanded={filtersOpen} aria-controls="opportunity-refinement-controls">
+                <SlidersHorizontal className="size-4" />
+                {filtersOpen ? "Hide filters" : "Refine search"}
+                <ChevronDown className={`size-4 transition-transform ${filtersOpen ? "rotate-180" : ""}`} />
+              </button>
+            </div>
           </div>
 
-          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-            <label className="grid gap-1 text-xs font-semibold text-muted-foreground"><span>Discipline</span><select className={input} value={filters.discipline} onChange={(event) => setFilters((current) => ({ ...current, discipline: event.target.value }))}><option value="all">All disciplines</option>{ARTIST_DISCIPLINE_OPTIONS.map((option) => <option key={option.value} value={option.label}>{option.label}</option>)}</select></label>
-            <label className="grid gap-1 text-xs font-semibold text-muted-foreground"><span>Opportunity type</span><select className={input} value={filters.type} onChange={(event) => setFilters((current) => ({ ...current, type: event.target.value }))}><option value="all">All types</option><option value="grant">Grant</option><option value="residency">Residency</option><option value="fellowship">Fellowship</option><option value="commission">Commission</option><option value="open_call">Open call</option><option value="prize_award">Prize or award</option><option value="professional_development">Professional development</option></select></label>
-            <label className="grid gap-1 text-xs font-semibold text-muted-foreground"><span>Participation</span><select className={input} value={filters.format} onChange={(event) => setFilters((current) => ({ ...current, format: event.target.value }))}><option value="all">All formats</option><option value="online">Online</option><option value="in_person">In person</option><option value="hybrid">Hybrid</option><option value="other">Other / confirm source</option></select></label>
-            <label className="grid gap-1 text-xs font-semibold text-muted-foreground"><span>Career stage</span><select className={input} value={filters.careerStage} onChange={(event) => setFilters((current) => ({ ...current, careerStage: event.target.value }))}><option value="all">All career stages</option><option value="emerging">Emerging</option><option value="early-career">Early-career</option><option value="mid-career">Mid-career</option><option value="established">Established</option></select></label>
-            <label className="grid gap-1 text-xs font-semibold text-muted-foreground"><span>Eligible country or region</span><input className={input} value={filters.geography} onChange={(event) => setFilters((current) => ({ ...current, geography: event.target.value }))} placeholder="United States, Europe, worldwide…" /></label>
-            <label className="grid gap-1 text-xs font-semibold text-muted-foreground"><span>Deadline</span><select className={input} value={filters.deadlineWindow} onChange={(event) => setFilters((current) => ({ ...current, deadlineWindow: event.target.value }))}><option value="all">Any future deadline</option><option value="30">Next 30 days</option><option value="60">Next 60 days</option><option value="90">Next 90 days</option><option value="180">Next 6 months</option></select></label>
-            <label className="grid gap-1 text-xs font-semibold text-muted-foreground"><span>Funding</span><select className={input} value={filters.funding} onChange={(event) => setFilters((current) => ({ ...current, funding: event.target.value }))}><option value="all">Any funding status</option><option value="known">Funding stated by source</option><option value="1000">At least 1,000</option><option value="5000">At least 5,000</option><option value="10000">At least 10,000</option></select></label>
-            <label className="grid gap-1 text-xs font-semibold text-muted-foreground"><span>Source</span><select className={input} value={filters.source} onChange={(event) => setFilters((current) => ({ ...current, source: event.target.value }))}><option value="all">All approved sources</option>{(directory?.sources ?? []).map((source) => <option key={source.id} value={source.slug}>{source.name}</option>)}</select></label>
-          </div>
+          {filtersOpen && <div id="opportunity-refinement-controls" className="space-y-3 border-t border-[#E7E1F7] pt-4">
+            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+              <label className="grid gap-1 text-xs font-semibold text-muted-foreground"><span>Discipline</span><select className={input} value={filters.discipline} onChange={(event) => setFilters((current) => ({ ...current, discipline: event.target.value }))}><option value="all">All disciplines</option>{ARTIST_DISCIPLINE_OPTIONS.map((option) => <option key={option.value} value={option.label}>{option.label}</option>)}</select></label>
+              <label className="grid gap-1 text-xs font-semibold text-muted-foreground"><span>Opportunity type</span><select className={input} value={filters.type} onChange={(event) => setFilters((current) => ({ ...current, type: event.target.value }))}><option value="all">All types</option><option value="grant">Grant</option><option value="residency">Residency</option><option value="fellowship">Fellowship</option><option value="commission">Commission</option><option value="open_call">Open call</option><option value="prize_award">Prize or award</option><option value="professional_development">Professional development</option></select></label>
+              <label className="grid gap-1 text-xs font-semibold text-muted-foreground"><span>Participation</span><select className={input} value={filters.format} onChange={(event) => setFilters((current) => ({ ...current, format: event.target.value }))}><option value="all">All formats</option><option value="online">Online</option><option value="in_person">In person</option><option value="hybrid">Hybrid</option><option value="other">Other / confirm source</option></select></label>
+              <label className="grid gap-1 text-xs font-semibold text-muted-foreground"><span>Eligible country or region</span><input className={input} value={filters.geography} onChange={(event) => setFilters((current) => ({ ...current, geography: event.target.value }))} placeholder="United States, Europe, worldwide…" /></label>
+              <label className="grid gap-1 text-xs font-semibold text-muted-foreground"><span>Deadline</span><select className={input} value={filters.deadlineWindow} onChange={(event) => setFilters((current) => ({ ...current, deadlineWindow: event.target.value }))}><option value="all">Any future deadline</option><option value="30">Next 30 days</option><option value="60">Next 60 days</option><option value="90">Next 90 days</option><option value="180">Next 6 months</option></select></label>
+              <label className="grid gap-1 text-xs font-semibold text-muted-foreground"><span>Source</span><select className={input} value={filters.source} onChange={(event) => setFilters((current) => ({ ...current, source: event.target.value }))}><option value="all">All approved sources</option>{(directory?.sources ?? []).map((source) => <option key={source.id} value={source.slug}>{source.name}</option>)}</select></label>
+            </div>
 
-          <div className="flex flex-wrap items-center gap-3">
-            <label className="flex h-10 items-center gap-2 rounded-xl border border-[#E7E1F7] px-3 text-sm"><input type="checkbox" checked={filters.noFeeOnly} onChange={(event) => setFilters((current) => ({ ...current, noFeeOnly: event.target.checked }))} />Confirmed no application fee</label>
-            <label className="flex h-10 items-center gap-2 rounded-xl border border-[#E7E1F7] px-3 text-sm"><input type="checkbox" checked={filters.requirementsOnly} onChange={(event) => setFilters((current) => ({ ...current, requirementsOnly: event.target.checked }))} />Structured requirements available</label>
-            <button type="button" className={secondary} onClick={() => setFilters(defaultFilters)}><RotateCcw className="size-4" />Reset filters</button>
-          </div>
+            <div className="flex flex-wrap items-center gap-3">
+              <label className="flex h-10 items-center gap-2 rounded-xl border border-[#E7E1F7] px-3 text-sm"><input type="checkbox" checked={filters.noFeeOnly} onChange={(event) => setFilters((current) => ({ ...current, noFeeOnly: event.target.checked }))} />Confirmed no application fee</label>
+              <label className="flex h-10 items-center gap-2 rounded-xl border border-[#E7E1F7] px-3 text-sm"><input type="checkbox" checked={filters.requirementsOnly} onChange={(event) => setFilters((current) => ({ ...current, requirementsOnly: event.target.checked }))} />Structured requirements available</label>
+              <button type="button" className={secondary} onClick={() => setFilters(defaultFilters)}><RotateCcw className="size-4" />Reset filters</button>
+            </div>
+          </div>}
         </section>
 
-        {intent.hasStructuredIntent && <section className="px-1" aria-label="Interpreted search terms"><div className="flex flex-wrap items-center gap-2"><p className="mr-1 text-[0.68rem] font-semibold uppercase tracking-wide text-[#625C70]">KLEIO understood</p>{intent.chips.map((chip) => <span key={chip.key} className="rounded-full bg-[#F7F4FF] px-2.5 py-1 text-xs font-semibold text-[#5B4B8A]">{chip.label}</span>)}</div><InlineHelper className="mt-2">These chips explain the natural-language search. The structured controls above remain the authoritative database filters.</InlineHelper></section>}
+        {intent.hasStructuredIntent && <section className="px-1" aria-label="Interpreted search terms"><div className="flex flex-wrap items-center gap-2"><p className="mr-1 text-[0.68rem] font-semibold uppercase tracking-wide text-[#625C70]">KLEIO understood</p>{intent.chips.map((chip) => <span key={chip.key} className="rounded-full bg-[#F7F4FF] px-2.5 py-1 text-xs font-semibold text-[#5B4B8A]">{chip.label}</span>)}</div><InlineHelper className="mt-2">These chips explain the natural-language search. Open Refine search only when you need narrower database controls.</InlineHelper></section>}
 
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 px-1" aria-label="Opportunity trust indicators"><TrustIndicator>Worldwide sourced search</TrustIndicator><TrustIndicator>Database-backed filters</TrustIndicator><TrustIndicator>Artist review before submission</TrustIndicator></div>
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 px-1" aria-label="Opportunity trust indicators"><TrustIndicator>Worldwide sourced search</TrustIndicator><TrustIndicator>Visual-first when equally relevant</TrustIndicator><TrustIndicator>Artist review before submission</TrustIndicator></div>
 
-        <ExpandableInfo label="How KLEIO works here" summary="search, readiness, and submission boundaries" className="px-1"><div className="grid gap-3 md:grid-cols-3"><section><p className="font-semibold text-[#292631]">Sourced discovery</p><p className="mt-1">Only approved records are searched. Unknown fee, funding, deadline, or eligibility details remain unknown.</p></section><section><p className="font-semibold text-[#292631]">Readiness</p><p className="mt-1">A percentage appears only when source requirements are structured and can be compared with actual Passport materials.</p></section><section><p className="font-semibold text-[#292631]">Submission</p><p className="mt-1">Preparing or exporting a package is not submission. Native submission requires explicit artist approval and database validation.</p></section></div></ExpandableInfo>
+        <ExpandableInfo label="How KLEIO works here" summary="search, readiness, visuals, and submission boundaries" className="px-1"><div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4"><section><p className="font-semibold text-[#292631]">Sourced discovery</p><p className="mt-1">Only approved records are searched. Unknown fee, funding, deadline, or eligibility details remain unknown.</p></section><section><p className="font-semibold text-[#292631]">Visual priority</p><p className="mt-1">When results are equally relevant, verified official visuals appear first. Missing visuals use a KLEIO fallback until rights-safe imagery is confirmed.</p></section><section><p className="font-semibold text-[#292631]">Readiness</p><p className="mt-1">A percentage appears only when source requirements are structured and can be compared with actual Passport materials.</p></section><section><p className="font-semibold text-[#292631]">Submission</p><p className="mt-1">Preparing or exporting a package is not submission. Native submission requires explicit artist approval and database validation.</p></section></div></ExpandableInfo>
 
         {loading && <p className="flex items-center gap-2 px-1 text-sm text-muted-foreground"><Loader2 className="size-4 animate-spin" />Searching sourced opportunity records…</p>}
         {error && <div role="alert" className={`${card} border-red-200 text-sm text-red-700`}>{error}</div>}
-        {!loading && !error && <p aria-live="polite" className="px-1 text-sm text-muted-foreground"><strong className="text-foreground">{items.length} verified result{items.length === 1 ? "" : "s"}.</strong>{items.length === 0 ? " No exact database match is currently available. Broaden one filter or review the official source directory later." : " Filters remain saved on this device."}</p>}
+        {!loading && !error && <p aria-live="polite" className="px-1 text-sm text-muted-foreground"><strong className="text-foreground">{items.length} verified result{items.length === 1 ? "" : "s"}.</strong>{items.length === 0 ? " No exact database match is currently available. Broaden one filter or review the official source directory later." : " Search refinements remain saved on this device."}</p>}
 
         <div className="space-y-4">
           {items.map((rawItem) => {
