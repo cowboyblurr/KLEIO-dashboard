@@ -1,0 +1,26 @@
+{
+  "contains_project_path_assets": false,
+  "generated_at": "2026-07-28T00:02:31.508216+00:00",
+  "home_status": "200",
+  "latest_deploy_run": {
+    "conclusion": null,
+    "created_at": "2026-07-28T00:02:18Z",
+    "head_sha": "3614d0d73afbbf0eefa920485685bd2f249c4c7b",
+    "html_url": "https://github.com/cowboyblurr/KLEIO-dashboard/actions/runs/30316070470",
+    "id": 30316070470,
+    "status": "in_progress",
+    "updated_at": "2026-07-28T00:02:22Z"
+  },
+  "pages_config": {
+    "build_type": "workflow",
+    "cname": "www.kleioarthouse.com",
+    "html_url": "https://www.kleioarthouse.com/"
+  },
+  "passed": true,
+  "ready": true,
+  "root_css_count": 3,
+  "root_css_failures": 0,
+  "root_js_count": 13,
+  "root_js_failures": 0,
+  "site_url": "https://www.kleioarthouse.com"
+}
