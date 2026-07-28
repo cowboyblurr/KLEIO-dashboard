@@ -10,7 +10,7 @@ on:
 permissions:
   actions: read
   contents: write
-  pages: read
+  pages: write
 
 jobs:
   verify:
@@ -18,22 +18,32 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Wait for the production deployment
-        run: sleep 45
-
-      - name: Verify live HTML, CSS, and JavaScript
+      - name: Wait for root-level production assets
         env:
-          GH_TOKEN: ${{ github.token }}
           SITE_URL: https://www.kleioarthouse.com
         run: |
-          set -euo pipefail
+          set -u
           mkdir -p docs
           html="$(mktemp)"
-          curl --silent --show-error --location --fail --max-time 30 "${SITE_URL}/?after_fix=${GITHUB_SHA}" > "$html"
+          ready="false"
+          home_status="000"
 
-          root_css="$(grep -oE 'href="/_next/static/(css|chunks)/[^"]+\.css"' "$html" | cut -d'"' -f2 | sort -u)"
-          root_js="$(grep -oE 'src="/_next/static/chunks/[^"]+\.js"' "$html" | cut -d'"' -f2 | sort -u)"
-          project_css="$(grep -oE 'href="/KLEIO-dashboard/_next/static/[^"]+\.css"' "$html" | cut -d'"' -f2 | sort -u || true)"
+          for attempt in $(seq 1 30); do
+            home_status="$(curl --silent --show-error --location --output "$html" --write-out '%{http_code}' --max-time 30 "${SITE_URL}/?after_fix=${GITHUB_SHA}-${attempt}" || true)"
+            if [ "$home_status" = "200" ] \
+              && grep -Eq 'href="/_next/static/(css|chunks)/[^"]+\.css"' "$html" \
+              && grep -Eq 'src="/_next/static/chunks/[^"]+\.js"' "$html" \
+              && ! grep -Fq '/KLEIO-dashboard/_next/' "$html"; then
+              ready="true"
+              break
+            fi
+            echo "Waiting for root-level custom-domain assets (attempt ${attempt}/30, HTTP ${home_status})..."
+            sleep 10
+          done
+
+          root_css="$(grep -oE 'href="/_next/static/(css|chunks)/[^"]+\.css"' "$html" | cut -d'"' -f2 | sort -u || true)"
+          root_js="$(grep -oE 'src="/_next/static/chunks/[^"]+\.js"' "$html" | cut -d'"' -f2 | sort -u || true)"
+          project_assets="$(grep -oE '(href|src)="/KLEIO-dashboard/_next/static/[^"]+"' "$html" | cut -d'"' -f2 | sort -u || true)"
 
           css_count=0
           css_failures=0
@@ -58,8 +68,25 @@ jobs:
             fi
           done <<< "$root_js"
 
-          latest_run="$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/deploy.yml/runs?event=push&branch=main&per_page=1" --jq '.workflow_runs[0] | {id, head_sha, status, conclusion, html_url, created_at, updated_at}')"
-          pages_config="$(gh api "repos/${GITHUB_REPOSITORY}/pages" --jq '{build_type, html_url, cname}')"
+          {
+            echo "READY=${ready}"
+            echo "HOME_STATUS=${home_status}"
+            echo "CSS_COUNT=${css_count}"
+            echo "CSS_FAILURES=${css_failures}"
+            echo "JS_COUNT=${js_count}"
+            echo "JS_FAILURES=${js_failures}"
+            if [ -n "$project_assets" ]; then echo "PROJECT_ASSETS=true"; else echo "PROJECT_ASSETS=false"; fi
+          } > /tmp/live-values.env
+
+      - name: Record verification evidence
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SITE_URL: https://www.kleioarthouse.com
+        run: |
+          set -u
+          source /tmp/live-values.env
+          latest_run="$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/deploy.yml/runs?event=push&branch=main&per_page=1" --jq '.workflow_runs[0] | {id, head_sha, status, conclusion, html_url, created_at, updated_at}' || echo '{}')"
+          pages_config="$(gh api "repos/${GITHUB_REPOSITORY}/pages" --jq '{build_type, html_url, cname}' || echo '{}')"
 
           python - <<PY
           import json
@@ -67,21 +94,24 @@ jobs:
           report = {
             "generated_at": datetime.now(timezone.utc).isoformat(),
             "site_url": "${SITE_URL}",
-            "home_status": 200,
-            "root_css_count": ${css_count},
-            "root_css_failures": ${css_failures},
-            "root_js_count": ${js_count},
-            "root_js_failures": ${js_failures},
-            "contains_project_path_css": bool("""${project_css}""".strip()),
+            "ready": "${READY}" == "true",
+            "home_status": "${HOME_STATUS}",
+            "root_css_count": int("${CSS_COUNT}"),
+            "root_css_failures": int("${CSS_FAILURES}"),
+            "root_js_count": int("${JS_COUNT}"),
+            "root_js_failures": int("${JS_FAILURES}"),
+            "contains_project_path_assets": "${PROJECT_ASSETS}" == "true",
             "latest_deploy_run": json.loads('''${latest_run}'''),
             "pages_config": json.loads('''${pages_config}'''),
           }
           report["passed"] = (
-            report["root_css_count"] > 0
+            report["ready"]
+            and report["home_status"] == "200"
+            and report["root_css_count"] > 0
             and report["root_css_failures"] == 0
             and report["root_js_count"] > 0
             and report["root_js_failures"] == 0
-            and not report["contains_project_path_css"]
+            and not report["contains_project_path_assets"]
           )
           with open("docs/pages-live-after-fix.json", "w") as file:
             json.dump(report, file, indent=2, sort_keys=True)
