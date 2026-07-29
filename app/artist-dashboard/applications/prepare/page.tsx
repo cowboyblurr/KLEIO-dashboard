@@ -4,6 +4,7 @@ import { ArtistShell } from "@/components/kleio/artist-shell"
 import { ApplicationPreparationWorkspace } from "@/components/kleio/application-preparation-workspace"
 import { ApplicationArtistIdentityBar } from "@/components/kleio/application-artist-identity-bar"
 import { ApplicationSubmissionCover } from "@/components/kleio/application-submission-cover"
+import { VerifiedApplicationPreparationGate } from "@/components/kleio/verified-application-preparation-gate"
 
 export const metadata: Metadata = {
   title: "KLEIO — Prepare application",
@@ -24,7 +25,9 @@ export default function Page() {
         </Suspense>
         <div className="min-h-0 flex-1">
           <Suspense fallback={<PreparationFallback />}>
-            <ApplicationPreparationWorkspace />
+            <VerifiedApplicationPreparationGate>
+              <ApplicationPreparationWorkspace />
+            </VerifiedApplicationPreparationGate>
           </Suspense>
         </div>
       </div>
