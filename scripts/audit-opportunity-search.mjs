@@ -57,48 +57,62 @@ function assert(condition, message) {
   if (!condition) throw new Error(message)
 }
 
-function assertCeramicsOnly(query, rows) {
-  assert(rows.length >= ceramicsIds.size, `${query}: expected at least ${ceramicsIds.size} verified ceramics results.`)
-  for (const expectedId of ceramicsIds) {
-    assert(rows.some((row) => row.external_id === expectedId), `${query}: missing ${expectedId}.`)
-  }
+function assertRowsAreCeramics(query, rows) {
+  assert(rows.length > 0, `${query}: expected at least one verified ceramics result.`)
   assert(
     rows.every((row) => Array.isArray(row.disciplines) && row.disciplines.includes("Ceramics")),
     `${query}: returned a record without verified Ceramics taxonomy.`,
   )
 }
 
-const broadQueries = [
+function assertAllKnownCeramics(query, rows) {
+  assert(rows.length >= ceramicsIds.size, `${query}: expected at least ${ceramicsIds.size} verified ceramics results.`)
+  for (const expectedId of ceramicsIds) {
+    assert(rows.some((row) => row.external_id === expectedId), `${query}: missing ${expectedId}.`)
+  }
+  assertRowsAreCeramics(query, rows)
+}
+
+const broadPracticeQueries = [
   "pottery",
   "pottery opportunities",
   "looking for pottery opportunities",
   "ceramic opportunities",
   "ceramics grants",
   "grants for potters",
-  "porcelain competitions",
   "potery opportunities",
   "cermaics grants",
   "alfarería oportunidades",
-  "poterie résidence",
   "陶芸",
 ]
 
-for (const query of broadQueries) {
+for (const query of broadPracticeQueries) {
   const rows = await search(query)
-  assertCeramicsOnly(query, rows)
+  assertAllKnownCeramics(query, rows)
 }
 
-const residencyRows = await search("clay residencies")
-assertCeramicsOnly("clay residencies", residencyRows)
-assert(
-  residencyRows[0]?.external_id === "goethe-confluence-of-myths-residency-2026",
-  "clay residencies: the verified ceramics residency must rank first.",
-)
+for (const query of ["clay residencies", "poterie résidence"]) {
+  const rows = await search(query)
+  assertRowsAreCeramics(query, rows)
+  assert(
+    rows[0]?.external_id === "goethe-confluence-of-myths-residency-2026",
+    `${query}: the verified ceramics residency must rank first.`,
+  )
+  assert(
+    rows.every((row) => row.opportunity_type === "residency"),
+    `${query}: exact residency results should be preferred over broader ceramics matches.`,
+  )
+}
 
 const competitionRows = await search("porcelain competitions")
+assertRowsAreCeramics("porcelain competitions", competitionRows)
 assert(
   competitionRows[0]?.opportunity_type === "prize_award",
   "porcelain competitions: a ceramics prize or award must rank first.",
+)
+assert(
+  competitionRows.every((row) => row.opportunity_type === "prize_award"),
+  "porcelain competitions: exact competition results should be preferred over broader ceramics matches.",
 )
 
 const overlapInterpretation = await interpret("ceramic sculpture open calls")
@@ -113,6 +127,16 @@ assert(
   "cermaics grants: typo correction was not explained.",
 )
 
+const filmmakerInterpretation = await interpret("opportunities for a filmmaker in Jamaica")
+assert(
+  filmmakerInterpretation?.canonical_disciplines?.includes("Film"),
+  "filmmaker: the query was not mapped to Film.",
+)
+assert(
+  filmmakerInterpretation?.locations?.includes("Jamaica"),
+  "Jamaica: the location was not interpreted.",
+)
+
 const protectedRows = await search("pottery")
 assert(
   protectedRows.every((row) => !["needs_review", "expired", "rejected"].includes(row.verification_status)),
@@ -121,9 +145,9 @@ assert(
 
 console.log(JSON.stringify({
   status: "passed",
-  broad_queries: broadQueries.length,
+  broad_queries: broadPracticeQueries.length,
   pottery_result_ids: protectedRows.map((row) => row.external_id),
-  residency_first: residencyRows[0]?.external_id,
+  residency_first: (await search("clay residencies"))[0]?.external_id,
   competition_first: competitionRows[0]?.external_id,
   interpretation: await interpret("looking for pottery opportunities"),
 }, null, 2))
