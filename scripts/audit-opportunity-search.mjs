@@ -127,7 +127,8 @@ assert(
   "cermaics grants: typo correction was not explained.",
 )
 
-const filmmakerInterpretation = await interpret("opportunities for a filmmaker in Jamaica")
+const jamaicaQuery = "opportunities for a filmmaker in Jamaica"
+const filmmakerInterpretation = await interpret(jamaicaQuery)
 assert(
   filmmakerInterpretation?.canonical_disciplines?.includes("Film"),
   "filmmaker: the query was not mapped to Film.",
@@ -135,6 +136,17 @@ assert(
 assert(
   filmmakerInterpretation?.locations?.includes("Jamaica"),
   "Jamaica: the location was not interpreted.",
+)
+
+const jamaicaRows = await search(jamaicaQuery)
+assert(jamaicaRows.length > 0, "Jamaica film search: expected at least one explicitly worldwide fallback.")
+assert(
+  jamaicaRows.every((row) => {
+    const markers = [...(row.eligible_countries ?? []), ...(row.eligible_regions ?? [])]
+      .map((value) => String(value).trim().toLowerCase())
+    return markers.some((value) => ["worldwide", "global", "all countries", "all nationalities"].includes(value))
+  }),
+  "Jamaica film search: returned a region-restricted programme without explicit worldwide eligibility.",
 )
 
 const protectedRows = await search("pottery")
@@ -149,5 +161,6 @@ console.log(JSON.stringify({
   pottery_result_ids: protectedRows.map((row) => row.external_id),
   residency_first: (await search("clay residencies"))[0]?.external_id,
   competition_first: competitionRows[0]?.external_id,
+  jamaica_film_fallback_ids: jamaicaRows.map((row) => row.external_id),
   interpretation: await interpret("looking for pottery opportunities"),
 }, null, 2))
