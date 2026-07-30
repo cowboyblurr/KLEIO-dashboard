@@ -16,15 +16,35 @@ function walk(directory) {
 for (const root of roots) walk(root)
 
 const failures = []
-const bannedCopy = ["Worldwide discovery:", "Translation protocol:", "Messaging boundary:"]
+const bannedCopy = [
+  "Worldwide discovery:",
+  "Translation protocol:",
+  "Messaging boundary:",
+  "How KLEIO works here",
+  "These chips explain the natural-language search",
+  "These criteria come from your wording",
+  "search, readiness, visuals, and submission boundaries",
+  "search, translation, readiness, and messaging",
+]
+const productDirectoryFiles = new Set([
+  "components/kleio/production-artist-opportunity-directory.tsx",
+  "components/kleio/live-global-artist-opportunities-with-images.tsx",
+])
 
 for (const file of files) {
   const source = fs.readFileSync(file, "utf8")
+  const normalizedFile = file.split(path.sep).join("/")
   for (const phrase of bannedCopy) {
-    if (source.includes(phrase)) failures.push(file + ": warning-style policy block returned: " + phrase)
+    if (source.includes(phrase)) failures.push(file + ": persistent walkthrough copy returned: " + phrase)
   }
   if (source.includes("<AlertCircle") && (source.includes('"Current priority"') || source.includes('"Cycle priority"'))) {
     failures.push(file + ": ordinary workflow focus is still paired with alert iconography")
+  }
+  if (productDirectoryFiles.has(normalizedFile) && source.includes("<ExpandableInfo")) {
+    failures.push(file + ": methodology walkthrough returned to a live opportunity directory")
+  }
+  if (productDirectoryFiles.has(normalizedFile) && source.includes("<TrustIndicator")) {
+    failures.push(file + ": persistent trust strip returned to a live opportunity directory")
   }
 }
 

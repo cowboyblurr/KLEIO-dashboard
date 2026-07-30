@@ -17,7 +17,6 @@ import {
   XCircle,
 } from "lucide-react"
 import { WorkspacePageHeader } from "@/components/kleio/workspace-page-header"
-import { ExpandableInfo, InlineHelper, TrustIndicator } from "@/components/kleio/guidance-system"
 import { OpportunityPreviewImage } from "@/components/kleio/opportunity-preview-image"
 import {
   evaluateOpportunity,
@@ -59,7 +58,7 @@ type VisualOpportunity = OpportunityDirectoryItem & OpportunityImageMetadata & {
 type ResultMode = "browse" | "exact" | "partial" | "none"
 
 function LiveShell({ children }: { children: React.ReactNode }) {
-  return <main className="h-full overflow-y-auto px-4 py-5 sm:px-6 sm:py-6"><div className="mx-auto max-w-[1180px] space-y-5"><WorkspacePageHeader eyebrow="Artist workspace" title="Opportunities" description="Describe what you are looking for naturally. KLEIO translates your words into visible search criteria and searches only sourced opportunity records." />{children}</div></main>
+  return <main className="h-full overflow-y-auto px-4 py-5 sm:px-6 sm:py-6"><div className="mx-auto max-w-[1180px] space-y-5"><WorkspacePageHeader eyebrow="Artist workspace" title="Opportunities" description="Search sourced artist opportunities by medium, location, type, or format." />{children}</div></main>
 }
 
 function StateNotice({ loading, error }: { loading: boolean; error: string }) {
@@ -194,7 +193,7 @@ function broaderQuery(intent: OpportunitySearchIntent, omit: "location" | "disci
 
 function ResultSummary({ mode, intent, count }: { mode: ResultMode; intent: OpportunitySearchIntent; count: number }) {
   if (!intent.rawQuery.trim()) return null
-  if (mode === "exact") return <p aria-live="polite" className="px-1 text-sm text-emerald-700"><strong>{count} exact database match{count === 1 ? "" : "es"}.</strong> Every displayed record matches the interpreted criteria KLEIO could verify.</p>
+  if (mode === "exact") return <p aria-live="polite" className="px-1 text-sm text-muted-foreground"><strong className="text-foreground">{count} verified result{count === 1 ? "" : "s"}.</strong></p>
   if (mode === "partial") return <div aria-live="polite" className="border-l-2 border-amber-200 pl-3 text-sm leading-relaxed text-amber-900"><strong>No exact verified match is currently available.</strong> Broader sourced results are labeled with the part of your request they do not match.</div>
   if (mode === "none") return <div aria-live="polite" className="border-l-2 border-[#D8D0F2] pl-3 text-sm leading-relaxed text-[#625C70]"><strong className="text-[#292631]">Your request was understood, but KLEIO found no verified matching record.</strong><p className="mt-1">No opportunity was created or inferred from your wording. Broaden one part of the search or return as verified coverage expands.</p></div>
   return null
@@ -316,7 +315,6 @@ export function LiveGlobalArtistOpportunitiesWithImages() {
     <section className={`${card} space-y-4`}>
       <div>
         <label className="relative block"><span className="sr-only">Describe the opportunity you want</span><Search className="pointer-events-none absolute left-3 top-3 size-4 text-muted-foreground" /><input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Try “ceramics residencies in Asia”" className={`${input} pl-9`} /></label>
-        <p className="mt-2 text-xs leading-relaxed text-muted-foreground">Use normal language. KLEIO interprets your words as search filters; it never turns your request into a new opportunity listing.</p>
       </div>
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-[180px_210px_170px_auto]">
         <label><span className="sr-only">Opportunity type</span><select className={input} value={type} onChange={(event) => setType(event.target.value)}><option value="all">All types</option><option value="grant">Grants</option><option value="residency">Residencies</option><option value="fellowship">Fellowships</option><option value="commission">Commissions</option><option value="prize_award">Prizes and awards</option><option value="open_call">Open calls</option><option value="professional_development">Professional development</option><option value="other">Other opportunities</option></select></label>
@@ -328,26 +326,11 @@ export function LiveGlobalArtistOpportunitiesWithImages() {
 
     {intent.hasStructuredIntent && <section className="px-1" aria-label="Interpreted search filters">
       <div className="flex flex-wrap items-center gap-2">
-        <p className="mr-1 text-[0.68rem] font-semibold uppercase tracking-wide text-[#625C70]">KLEIO understood</p>
+        <p className="mr-1 text-[0.68rem] font-semibold uppercase tracking-wide text-[#625C70]">Search interpreted as</p>
         {intent.chips.map((item) => <span key={item.key} className="rounded-full bg-[#F7F4FF] px-2.5 py-1 text-xs font-semibold text-[#5B4B8A]">{item.label}</span>)}
       </div>
-      <InlineHelper className="mt-2">These criteria come from your wording. The controls above can refine the interpreted type, source, format, and fee.</InlineHelper>
     </section>}
 
-    <div className="flex flex-wrap items-center gap-x-4 gap-y-2 px-1" aria-label="Opportunity trust indicators">
-      <TrustIndicator>Worldwide sourced search</TrustIndicator>
-      <TrustIndicator>Original source preserved</TrustIndicator>
-      <TrustIndicator>Artist review before submission</TrustIndicator>
-    </div>
-
-    <ExpandableInfo label="How KLEIO works here" summary="search, translation, readiness, and messaging" className="px-1">
-      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-        <section><p className="font-semibold text-[#292631]">Worldwide discovery</p><p className="mt-1">KLEIO searches sourced records across regions and languages. Eligibility is checked separately against stated rules and Creative Passport data.</p></section>
-        <section><p className="font-semibold text-[#292631]">Translation</p><p className="mt-1">Original titles, deadlines, currencies, requirements, and official sources remain authoritative. Binding language needs human review when a translation is not verified.</p></section>
-        <section><p className="font-semibold text-[#292631]">Readiness</p><p className="mt-1">Readiness uses confirmed source requirements and actual Passport materials. Preparing a package does not submit it.</p></section>
-        <section><p className="font-semibold text-[#292631]">Messaging</p><p className="mt-1">Conversations follow an invitation or submitted application. A listing alone does not open unsolicited institution messaging.</p></section>
-      </div>
-    </ExpandableInfo>
     <StateNotice loading={loading} error={error} />
     {!loading && !error && <ResultSummary mode={resultMode} intent={intent} count={items.length} />}
 
