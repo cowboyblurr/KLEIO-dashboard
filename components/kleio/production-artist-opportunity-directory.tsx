@@ -17,7 +17,6 @@ import {
   XCircle,
 } from "lucide-react"
 import { WorkspacePageHeader } from "@/components/kleio/workspace-page-header"
-import { ExpandableInfo, InlineHelper, TrustIndicator } from "@/components/kleio/guidance-system"
 import { OpportunityPreviewImage } from "@/components/kleio/opportunity-preview-image"
 import { ARTIST_DISCIPLINE_OPTIONS } from "@/lib/kleio-artist-taxonomy"
 import {
@@ -278,7 +277,7 @@ export function ProductionArtistOpportunityDirectory() {
   return (
     <main className="h-full overflow-y-auto px-4 py-5 sm:px-6 sm:py-6">
       <div className="mx-auto max-w-[1180px] space-y-5">
-        <WorkspacePageHeader eyebrow="Artist workspace" title="Opportunities" description="Search worldwide sourced opportunity records. Refine only when needed; KLEIO shows readiness only when application requirements are structured." />
+        <WorkspacePageHeader eyebrow="Artist workspace" title="Opportunities" description="Search sourced artist opportunities by medium, location, type, or format." />
 
         <section className={`${card} space-y-4`} aria-label="Opportunity filters">
           <div>
@@ -287,8 +286,7 @@ export function ProductionArtistOpportunityDirectory() {
               <Search className="pointer-events-none absolute left-3 top-3 size-4 text-muted-foreground" />
               <input type="search" value={filters.query} onChange={(event) => setFilters((current) => ({ ...current, query: event.target.value }))} placeholder="Try “ceramics residencies in Asia”" className={`${input} pl-9`} />
             </label>
-            <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
-              <p className="text-xs leading-relaxed text-muted-foreground">Search naturally. KLEIO never invents a listing to satisfy a query.</p>
+            <div className="mt-2 flex justify-end">
               <button type="button" className={secondary} onClick={() => setFiltersOpen((current) => !current)} aria-expanded={filtersOpen} aria-controls="opportunity-refinement-controls">
                 <SlidersHorizontal className="size-4" />
                 {filtersOpen ? "Hide filters" : "Refine search"}
@@ -315,15 +313,11 @@ export function ProductionArtistOpportunityDirectory() {
           </div>}
         </section>
 
-        {intent.hasStructuredIntent && <section className="px-1" aria-label="Interpreted search terms"><div className="flex flex-wrap items-center gap-2"><p className="mr-1 text-[0.68rem] font-semibold uppercase tracking-wide text-[#625C70]">KLEIO understood</p>{intent.chips.map((chip) => <span key={chip.key} className="rounded-full bg-[#F7F4FF] px-2.5 py-1 text-xs font-semibold text-[#5B4B8A]">{chip.label}</span>)}</div><InlineHelper className="mt-2">These chips explain the natural-language search. Open Refine search only when you need narrower database controls.</InlineHelper></section>}
-
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 px-1" aria-label="Opportunity trust indicators"><TrustIndicator>Worldwide sourced search</TrustIndicator><TrustIndicator>Visual-first when equally relevant</TrustIndicator><TrustIndicator>Artist review before submission</TrustIndicator></div>
-
-        <ExpandableInfo label="How KLEIO works here" summary="search, readiness, visuals, and submission boundaries" className="px-1"><div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4"><section><p className="font-semibold text-[#292631]">Sourced discovery</p><p className="mt-1">Only approved records are searched. Unknown fee, funding, deadline, or eligibility details remain unknown.</p></section><section><p className="font-semibold text-[#292631]">Visual priority</p><p className="mt-1">When results are equally relevant, verified official visuals appear first. Missing visuals use a KLEIO fallback until rights-safe imagery is confirmed.</p></section><section><p className="font-semibold text-[#292631]">Readiness</p><p className="mt-1">A percentage appears only when source requirements are structured and can be compared with actual Passport materials.</p></section><section><p className="font-semibold text-[#292631]">Submission</p><p className="mt-1">Preparing or exporting a package is not submission. Native submission requires explicit artist approval and database validation.</p></section></div></ExpandableInfo>
+        {intent.hasStructuredIntent && <section className="px-1" aria-label="Interpreted search terms"><div className="flex flex-wrap items-center gap-2"><p className="mr-1 text-[0.68rem] font-semibold uppercase tracking-wide text-[#625C70]">Search interpreted as</p>{intent.chips.map((chip) => <span key={chip.key} className="rounded-full bg-[#F7F4FF] px-2.5 py-1 text-xs font-semibold text-[#5B4B8A]">{chip.label}</span>)}</div></section>}
 
         {loading && <p className="flex items-center gap-2 px-1 text-sm text-muted-foreground"><Loader2 className="size-4 animate-spin" />Searching sourced opportunity records…</p>}
         {error && <div role="alert" className={`${card} border-red-200 text-sm text-red-700`}>{error}</div>}
-        {!loading && !error && <p aria-live="polite" className="px-1 text-sm text-muted-foreground"><strong className="text-foreground">{items.length} verified result{items.length === 1 ? "" : "s"}.</strong>{items.length === 0 ? " No exact database match is currently available. Broaden one filter or review the official source directory later." : " Search refinements remain saved on this device."}</p>}
+        {!loading && !error && <p aria-live="polite" className="px-1 text-sm text-muted-foreground"><strong className="text-foreground">{items.length} verified result{items.length === 1 ? "" : "s"}.</strong>{items.length === 0 ? " Broaden one filter or return later as verified coverage expands." : ""}</p>}
 
         <div className="space-y-4">
           {items.map((rawItem) => {
