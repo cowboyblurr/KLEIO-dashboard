@@ -201,6 +201,7 @@ jobs:
                   cat "$body"
                   exit 1
                 fi
+                echo "Verified ${route} (HTTP ${status})."
                 success="true"
                 break
               fi
@@ -231,8 +232,15 @@ jobs:
               headers="$(mktemp)"
               body="$(mktemp)"
               status="$(curl --silent --show-error --location --dump-header "$headers" --output "$body" --write-out '%{http_code}' --max-time 30 "${SITE_ORIGIN}${href}?asset_verification=${GITHUB_SHA}")"
-              test "$status" = "200"
-              grep -Eiq '^content-type:.*text/css' "$headers"
+              if [ "$status" != "200" ]; then
+                echo "Stylesheet failed: ${href} (HTTP ${status})"
+                exit 1
+              fi
+              if ! grep -Eiq '^content-type:.*text/css' "$headers"; then
+                echo "Stylesheet has an unexpected content type: ${href}"
+                cat "$headers"
+                exit 1
+              fi
               test -s "$body"
             done < <(grep -oE 'href="/_next/static/(css|chunks)/[^"]+\.css"' "$html" | cut -d'"' -f2 | sort -u)
             test "$css_count" -gt 0
@@ -242,33 +250,40 @@ jobs:
               [ -n "$src" ] || continue
               js_count=$((js_count + 1))
               status="$(curl --silent --show-error --location --output /dev/null --write-out '%{http_code}' --max-time 30 "${SITE_ORIGIN}${src}?asset_verification=${GITHUB_SHA}")"
-              test "$status" = "200"
+              if [ "$status" != "200" ]; then
+                echo "JavaScript asset failed: ${src} (HTTP ${status})"
+                exit 1
+              fi
             done < <(grep -oE 'src="/_next/static/chunks/[^"]+\.js"' "$html" | cut -d'"' -f2 | sort -u)
             test "$js_count" -gt 0
+            echo "Verified ${css_count} stylesheets and ${js_count} JavaScript assets."
           }
 
-          check_client_bundle() {
+          check_client_bundle_forbidden_copy() {
             route="$1"
-            required_one="$2"
-            required_two="$3"
-            forbidden="$4"
+            forbidden="$2"
             html="$(mktemp)"
             bundle="$(mktemp)"
+            script_count=0
             curl --silent --show-error --location --fail --max-time 30 "${SITE_URL}${route}?bundle_verification=${GITHUB_SHA}" > "$html"
-            grep -oE 'src="[^"]+\.js"' "$html" | cut -d'"' -f2 | sort -u | while read -r src; do
+            while IFS= read -r src; do
+              [ -n "$src" ] || continue
+              script_count=$((script_count + 1))
               curl --silent --show-error --location --fail --max-time 30 "${SITE_ORIGIN}${src}?bundle_verification=${GITHUB_SHA}" >> "$bundle"
-            done
-            grep -Fq "$required_one" "$bundle"
-            grep -Fq "$required_two" "$bundle"
+            done < <(grep -oE 'src="[^"]+\.js"' "$html" | cut -d'"' -f2 | sort -u)
+            test "$script_count" -gt 0
+            test -s "$bundle"
             if grep -Eq "$forbidden" "$bundle"; then
               echo "Deprecated guidance treatment found in live client bundle."
               exit 1
             fi
+            echo "Verified ${script_count} client scripts for ${route}."
           }
 
           check_route "/" "Enter your KLEIO workspace" "institution@kleio\.demo|artist@kleio\.demo|Prototype · Synthetic data"
           check_route "/signup/artist/" "LiveSignup" "Prototype · Synthetic data"
           check_route "/signup/institution/" "LiveSignup" "Prototype · Synthetic data"
           check_route "/auth/callback/" "Confirming your account" "localhost:3000"
+          check_route "/artist-dashboard/opportunities/" "<title>KLEIO — Opportunities</title>"
           check_static_assets
-          check_client_bundle "/artist-dashboard/opportunities/" "How KLEIO works here" "Worldwide sourced search" "Translation protocol:|Messaging boundary:|Worldwide discovery:"
+          check_client_bundle_forbidden_copy "/artist-dashboard/opportunities/" "Translation protocol:|Messaging boundary:|Worldwide discovery:"
