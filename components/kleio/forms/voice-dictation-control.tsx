@@ -55,13 +55,19 @@ export function VoiceDictationControl({
   const finalTranscriptRef = useRef("")
   const [supported, setSupported] = useState<boolean | null>(null)
   const [listening, setListening] = useState(false)
+  const [hasDictation, setHasDictation] = useState(false)
   const [status, setStatus] = useState("")
   const [error, setError] = useState("")
 
   useEffect(() => {
-    const voiceWindow = window as VoiceWindow
-    setSupported(Boolean(voiceWindow.SpeechRecognition || voiceWindow.webkitSpeechRecognition))
-    return () => recognitionRef.current?.abort()
+    const timer = window.setTimeout(() => {
+      const voiceWindow = window as VoiceWindow
+      setSupported(Boolean(voiceWindow.SpeechRecognition || voiceWindow.webkitSpeechRecognition))
+    }, 0)
+    return () => {
+      window.clearTimeout(timer)
+      recognitionRef.current?.abort()
+    }
   }, [])
 
   function start() {
@@ -79,6 +85,7 @@ export function VoiceDictationControl({
     recognition.lang = locale === "es" ? "es-ES" : "en-US"
     baseValueRef.current = value
     finalTranscriptRef.current = ""
+    setHasDictation(true)
     setError("")
     setStatus(locale === "es" ? "Escuchando. Habla con naturalidad." : "Listening. Speak naturally.")
 
@@ -120,6 +127,7 @@ export function VoiceDictationControl({
     recognitionRef.current?.abort()
     onChange(baseValueRef.current)
     finalTranscriptRef.current = ""
+    setHasDictation(false)
     setListening(false)
     setStatus(locale === "es" ? "Se descartó este dictado." : "This dictation was discarded.")
   }
@@ -140,7 +148,7 @@ export function VoiceDictationControl({
           {listening ? <MicOff className="size-4" /> : <Mic className="size-4" />}
           {listening ? (locale === "es" ? "Detener y revisar" : "Stop and review") : (locale === "es" ? "Hablar en vez de escribir" : "Speak instead of typing")}
         </button>
-        {(listening || finalTranscriptRef.current.trim()) && (
+        {(listening || hasDictation) && (
           <button type="button" onClick={discardSession} className="inline-flex min-h-10 items-center gap-2 px-2 text-xs font-semibold text-[#746E80] hover:text-[#292631]">
             <RotateCcw className="size-3.5" />{locale === "es" ? "Descartar este dictado" : "Discard this dictation"}
           </button>
