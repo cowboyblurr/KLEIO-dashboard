@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useState } from "react"
 import { Check, ChevronLeft, ChevronRight, FileText, FileUp, FormInput, Loader2, Save, Sparkles } from "lucide-react"
 import { LiveArtistPassportEditor } from "@/components/kleio/live-artist-passport-editor"
 import { DisciplineMultiSelect, TagEntryField } from "@/components/kleio/forms/artist-term-fields"
@@ -62,6 +62,16 @@ function modeFromStorage(): PassportMode {
   return stored === "guided" || stored === "import" || stored === "full" ? stored : "full"
 }
 
+function guidedCopy(es: boolean) {
+  return [
+    { title: es ? "Empecemos con lo esencial" : "Start with the essentials", caption: es ? "Solo necesitamos suficiente información para que tu Pasaporte sea útil. Puedes omitir lo demás." : "Add only enough information to make your Passport useful. Everything else can wait." },
+    { title: es ? "¿Cómo describirías tu práctica?" : "How would you describe your practice?", caption: es ? "Selecciona lo que encaje. No tienes que limitar tu trabajo a una sola categoría." : "Choose what fits. You do not have to reduce your work to one category." },
+    { title: es ? "¿Con qué trabajas?" : "What do you work with?", caption: es ? "Elige sugerencias o escribe tus propios medios y materiales." : "Choose suggestions or add your own mediums and materials." },
+    { title: es ? "Cuéntanos sobre tu práctica" : "Tell us about your practice", caption: es ? "Escribe, pega o habla. La transcripción siempre queda editable antes de guardar." : "Type, paste, or speak. Your transcript remains editable before saving." },
+    { title: es ? "Tu base está lista" : "Your foundation is ready", caption: es ? "Puedes seguir con el formulario completo, importar materiales o volver más tarde." : "Continue with the full form, import materials, or return later." },
+  ]
+}
+
 function ModeButton({
   active,
   icon: Icon,
@@ -100,6 +110,7 @@ function savePayload(record: ArtistPassportRecord) {
 export function AdaptiveArtistPassportExperience() {
   const { locale } = useKleioLocale()
   const es = locale === "es"
+  const guidedSteps = guidedCopy(es)
   const [mode, setMode] = useState<PassportMode>("full")
   const [record, setRecord] = useState(blankPassport)
   const [loading, setLoading] = useState(true)
@@ -111,8 +122,8 @@ export function AdaptiveArtistPassportExperience() {
   const [cvName, setCvName] = useState("")
 
   useEffect(() => {
-    setMode(modeFromStorage())
     let active = true
+    const modeTimer = window.setTimeout(() => setMode(modeFromStorage()), 0)
     void loadArtistPassport()
       .then((profile) => {
         if (active && profile) setRecord(profile)
@@ -123,7 +134,10 @@ export function AdaptiveArtistPassportExperience() {
       .finally(() => {
         if (active) setLoading(false)
       })
-    return () => { active = false }
+    return () => {
+      active = false
+      window.clearTimeout(modeTimer)
+    }
   }, [])
 
   function chooseMode(nextMode: PassportMode) {
@@ -181,21 +195,11 @@ export function AdaptiveArtistPassportExperience() {
     }
   }
 
-  const guidedSteps = useMemo(() => [
-    { title: es ? "Empecemos con lo esencial" : "Start with the essentials", caption: es ? "Solo necesitamos suficiente información para que tu Pasaporte sea útil. Puedes omitir lo demás." : "Add only enough information to make your Passport useful. Everything else can wait." },
-    { title: es ? "¿Cómo describirías tu práctica?" : "How would you describe your practice?", caption: es ? "Selecciona lo que encaje. No tienes que limitar tu trabajo a una sola categoría." : "Choose what fits. You do not have to reduce your work to one category." },
-    { title: es ? "¿Con qué trabajas?" : "What do you work with?", caption: es ? "Elige sugerencias o escribe tus propios medios y materiales." : "Choose suggestions or add your own mediums and materials." },
-    { title: es ? "Cuéntanos sobre tu práctica" : "Tell us about your practice", caption: es ? "Escribe, pega o habla. La transcripción siempre queda editable antes de guardar." : "Type, paste, or speak. Your transcript remains editable before saving." },
-    { title: es ? "Tu base está lista" : "Your foundation is ready", caption: es ? "Puedes seguir con el formulario completo, importar materiales o volver más tarde." : "Continue with the full form, import materials, or return later." },
-  ], [es])
-
   return (
     <div className="flex h-full min-h-0 flex-col bg-white">
       <section className="shrink-0 border-b border-[#E7E1F7] bg-[#FDFCFF] px-4 py-3 sm:px-6" aria-label="Creative Passport entry mode">
         <div className="mx-auto max-w-[1180px]">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div><p className="text-xs font-semibold uppercase tracking-[0.15em] text-[#6A5896]">{es ? "Cómo quieres trabajar" : "How you want to work"}</p><p className="mt-1 text-xs text-[#746E80]">{es ? "Cambia de modo cuando quieras. Todos editan el mismo Pasaporte." : "Switch whenever you need. Every mode edits the same Passport."}</p></div>
-          </div>
+          <div><p className="text-xs font-semibold uppercase tracking-[0.15em] text-[#6A5896]">{es ? "Cómo quieres trabajar" : "How you want to work"}</p><p className="mt-1 text-xs text-[#746E80]">{es ? "Cambia de modo cuando quieras. Todos editan el mismo Pasaporte." : "Switch whenever you need. Every mode edits the same Passport."}</p></div>
           <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
             <ModeButton active={mode === "guided"} icon={Sparkles} title={es ? "Guíame paso a paso" : "Guide me step by step"} description={es ? "Preguntas breves, opciones y ayuda por voz." : "Short prompts, choices, and optional voice help."} onClick={() => chooseMode("guided")} />
             <ModeButton active={mode === "full"} icon={FormInput} title={es ? "Déjame completarlo" : "Let me fill it out"} description={es ? "Formulario completo para trabajar rápido." : "The complete form for fast, direct entry."} onClick={() => chooseMode("full")} />
