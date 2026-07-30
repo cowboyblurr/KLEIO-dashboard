@@ -1,5 +1,6 @@
 import type { Metadata } from "next"
 import { LandingPage } from "@/components/kleio/landing-page"
+import "./landing-page.css"
 
 /** Public KLEIO homepage — the marketing landing page. */
 export const metadata: Metadata = {
