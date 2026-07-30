@@ -1,0 +1,30 @@
+name: Audit Opportunity-First Acquisition
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "app/**"
+      - "components/kleio/**"
+      - "lib/**"
+      - "scripts/audit-opportunity-first-acquisition.mjs"
+      - "supabase/**"
+      - "package.json"
+      - ".github/workflows/opportunity-first-audit.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Run opportunity-first source audit
+        run: node scripts/audit-opportunity-first-acquisition.mjs

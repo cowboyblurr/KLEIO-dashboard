@@ -17,6 +17,16 @@ const eslintConfig = defineConfig([
       "react-hooks/static-components": "warn",
     },
   },
+  {
+    files: ["supabase/functions/**/*.ts"],
+    rules: {
+      // Supabase Edge Functions are checked and bundled by Deno rather than the
+      // Next.js TypeScript project. Some npm CommonJS packages do not publish
+      // Deno-compatible declaration metadata, so keep the local compatibility
+      // annotation available inside this isolated server runtime.
+      "@typescript-eslint/ban-ts-comment": "off",
+    },
+  },
   globalIgnores([
     ".next/**",
     "out/**",

@@ -1,6 +1,6 @@
 import type { Metadata } from "next"
 import { LiveModeView } from "@/components/kleio/live-mode-view"
-import { LiveSignup } from "@/components/kleio/signup/live-signup"
+import { IntentAwareLiveSignup } from "@/components/kleio/signup/intent-aware-live-signup"
 import { GuidedSignup } from "@/components/kleio/signup/guided-signup"
 
 export const metadata: Metadata = {
@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 export default function Page() {
   return (
     <LiveModeView
-      live={<LiveSignup role="artist" />}
+      live={<IntentAwareLiveSignup role="artist" />}
       preview={<GuidedSignup role="artist" />}
     />
   )
