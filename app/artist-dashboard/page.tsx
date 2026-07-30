@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 import { ArtistShell } from "@/components/kleio/artist-shell"
 import { ArtistDashboardView } from "@/components/kleio/artist-dashboard-view"
+import { ArtistIntentRedirector } from "@/components/kleio/artist-intent-redirector"
 
 /** Artist dashboard overview — private workspace, not the public homepage. */
 export const metadata: Metadata = {
@@ -12,6 +13,7 @@ export const metadata: Metadata = {
 export default function Page() {
   return (
     <ArtistShell>
+      <ArtistIntentRedirector />
       <ArtistDashboardView />
     </ArtistShell>
   )
