@@ -12,7 +12,8 @@
     "audit:user-copy": "node scripts/audit-user-facing-copy.mjs",
     "audit:auth-redirect": "node scripts/audit-auth-redirect.mjs",
     "audit:guidance": "node scripts/audit-guidance-hierarchy.mjs",
-    "audit:opportunity-search": "node scripts/audit-opportunity-search.mjs"
+    "audit:opportunity-search": "node scripts/audit-opportunity-search.mjs",
+    "audit:opportunity-first": "node scripts/audit-opportunity-first-acquisition.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.5.0",
