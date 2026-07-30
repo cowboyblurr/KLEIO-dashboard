@@ -1,0 +1,17 @@
+#institutions li {
+  color: #f0edf5;
+}
+
+#institutions li > span:first-child {
+  background: rgba(255, 255, 255, 0.1);
+  color: #d9d0f2;
+}
+
+#institutions li > span:last-child {
+  color: inherit;
+}
+
+#landing-visual-title + * video,
+#landing-visual-title ~ * video {
+  background: #ffffff;
+}
