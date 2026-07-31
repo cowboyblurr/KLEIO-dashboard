@@ -61,6 +61,12 @@ export function AuthCallbackClient() {
         const expectedRole = requestedRole === "artist" || requestedRole === "institution" ? requestedRole : undefined
         await resumePendingKleioOnboarding(expectedRole)
 
+        const account = await loadKleioAccount()
+        if (!account) throw new Error("KLEIO could not load the profile connected to this account.")
+        if (expectedRole && account.profile.role !== expectedRole) {
+          throw new Error(`This confirmation link is for a ${expectedRole} account, but the active KLEIO account is ${account.profile.role}. Sign out before opening a confirmation link for another account type.`)
+        }
+
         let profilePhotoNeedsAttention = false
         if (expectedRole === "artist") {
           try {
@@ -70,9 +76,6 @@ export function AuthCallbackClient() {
             profilePhotoNeedsAttention = true
           }
         }
-
-        const account = await loadKleioAccount()
-        if (!account) throw new Error("KLEIO could not load the profile connected to this account.")
 
         clearDemoSession()
         setKleioMode("live")
