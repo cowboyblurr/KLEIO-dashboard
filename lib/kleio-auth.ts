@@ -16,7 +16,9 @@ export function getKleioAuthErrorMessage(error: unknown, locale: "en" | "es" = "
     return es ? "Confirma tu correo antes de iniciar sesión." : "Confirm your email before signing in."
   }
   if (message.includes("user already registered") || message.includes("already been registered")) {
-    return es ? "Ya existe una cuenta con este correo. Inicia sesión o restablece la contraseña." : "An account already exists for this email. Sign in or reset the password."
+    return es
+      ? "No se pudo crear la cuenta con estos datos. Intenta iniciar sesión o solicita un enlace para restablecer la contraseña."
+      : "The account could not be created with these details. Try signing in or request a password-reset link."
   }
   if (message.includes("email address") && message.includes("invalid")) {
     return es ? "Ingresa una dirección de correo válida." : "Enter a valid email address."
