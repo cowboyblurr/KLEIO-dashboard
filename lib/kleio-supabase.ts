@@ -1,4 +1,9 @@
 import { createClient, type SupabaseClient, type User } from "@supabase/supabase-js"
+import {
+  clearKleioActiveUserScope,
+  clearKleioSensitiveBrowserState,
+  setKleioActiveUserScope,
+} from "@/lib/kleio-client-session"
 
 const SUPABASE_URL =
   process.env.NEXT_PUBLIC_SUPABASE_URL ?? "https://trekynurdgxgtaaqqtyq.supabase.co"
@@ -93,9 +98,13 @@ export async function loadKleioAccount(): Promise<KleioAccount | null> {
   const supabase = getSupabaseBrowserClient()
   const { data: userData, error: userError } = await supabase.auth.getUser()
 
-  if (userError || !userData.user) return null
+  if (userError || !userData.user) {
+    clearKleioActiveUserScope()
+    return null
+  }
   if (!isKleioEmailConfirmed(userData.user)) {
     await supabase.auth.signOut()
+    clearKleioSensitiveBrowserState()
     return null
   }
 
@@ -106,8 +115,12 @@ export async function loadKleioAccount(): Promise<KleioAccount | null> {
     .maybeSingle()
 
   if (profileError) throw profileError
-  if (!profile) return null
+  if (!profile) {
+    clearKleioActiveUserScope()
+    return null
+  }
 
+  setKleioActiveUserScope(userData.user.id)
   return {
     user: userData.user,
     profile: profile as KleioAccount["profile"],
@@ -124,12 +137,14 @@ export async function signInKleioAccount(email: string, password: string): Promi
   if (error) throw error
   if (!data.user || !isKleioEmailConfirmed(data.user)) {
     await supabase.auth.signOut()
+    clearKleioSensitiveBrowserState()
     throw new Error("Email not confirmed.")
   }
 
   const account = await loadKleioAccount()
   if (!account) {
     await supabase.auth.signOut()
+    clearKleioSensitiveBrowserState()
     throw new Error("This account does not have a KLEIO profile yet.")
   }
 
@@ -138,8 +153,12 @@ export async function signInKleioAccount(email: string, password: string): Promi
 
 export async function signOutKleioAccount(): Promise<void> {
   const supabase = getSupabaseBrowserClient()
-  const { error } = await supabase.auth.signOut()
-  if (error) throw error
+  try {
+    const { error } = await supabase.auth.signOut()
+    if (error) throw error
+  } finally {
+    clearKleioSensitiveBrowserState()
+  }
 }
 
 export async function loadInstitutionMessengerContexts(): Promise<InstitutionMessengerContext[]> {

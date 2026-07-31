@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import { LiveModeView } from "@/components/kleio/live-mode-view"
 import { IntentAwareLiveSignup } from "@/components/kleio/signup/intent-aware-live-signup"
 import { GuidedSignup } from "@/components/kleio/signup/guided-signup"
+import { AccountRoleSignupBoundary } from "@/components/kleio/signup/account-role-signup-boundary"
 
 export const metadata: Metadata = {
   title: "KLEIO — Artist signup",
@@ -11,7 +12,7 @@ export const metadata: Metadata = {
 export default function Page() {
   return (
     <LiveModeView
-      live={<IntentAwareLiveSignup role="artist" />}
+      live={<AccountRoleSignupBoundary role="artist"><IntentAwareLiveSignup role="artist" /></AccountRoleSignupBoundary>}
       preview={<GuidedSignup role="artist" />}
     />
   )
