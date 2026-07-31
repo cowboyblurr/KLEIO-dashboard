@@ -1,0 +1,41 @@
+name: Audit Auth and Role Isolation
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "app/signup/**"
+      - "components/kleio/auth/**"
+      - "components/kleio/signup/**"
+      - "components/kleio/auth-gate.tsx"
+      - "lib/kleio-auth.ts"
+      - "lib/kleio-client-session.ts"
+      - "lib/kleio-live-onboarding.ts"
+      - "lib/kleio-passport-drafts.ts"
+      - "lib/kleio-return-intent.ts"
+      - "lib/kleio-supabase.ts"
+      - "lib/kleio-url.ts"
+      - "scripts/audit-auth-role-isolation.mjs"
+      - "supabase/migrations/**"
+      - "package.json"
+      - "vercel.json"
+      - ".github/workflows/auth-role-isolation-audit.yml"
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Run auth and role-isolation source audit
+        run: node scripts/audit-auth-role-isolation.mjs
