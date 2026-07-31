@@ -1,6 +1,8 @@
+import { getKleioActiveUserScope } from "@/lib/kleio-client-session"
 import { getSupabaseBrowserClient } from "@/lib/kleio-supabase"
 
-const LOCAL_PREFIX = "kleio:artist:draft:v1:"
+const LOCAL_PREFIX = "kleio:artist:draft:v2:"
+const LEGACY_LOCAL_PREFIX = "kleio:artist:draft:v1:"
 const LOCAL_RETENTION_MS = 7 * 24 * 60 * 60 * 1000
 
 export type KleioDraftKind = "creative_passport" | "import_review" | "voice_transcript" | "opportunity_questions"
@@ -27,12 +29,17 @@ type DraftRow = {
   expires_at: string
 }
 
-function storageKey(draftKey: string) {
-  return `${LOCAL_PREFIX}${draftKey}`
-}
-
 function cleanDraftKey(value: string) {
   return value.replace(/[^a-zA-Z0-9:_-]/g, "").slice(0, 120)
+}
+
+function storageKey(draftKey: string) {
+  const userId = getKleioActiveUserScope()
+  return userId ? `${LOCAL_PREFIX}${userId}:${draftKey}` : null
+}
+
+function clearLegacyUnscopedDraft(draftKey: string) {
+  if (typeof window !== "undefined") window.localStorage.removeItem(`${LEGACY_LOCAL_PREFIX}${draftKey}`)
 }
 
 function normalizeEnvelope<T extends Record<string, unknown>>(value: unknown): KleioDraftEnvelope<T> | null {
@@ -60,7 +67,10 @@ export function readLocalKleioDraft<T extends Record<string, unknown>>(draftKey:
   if (typeof window === "undefined") return null
   const key = cleanDraftKey(draftKey)
   if (!key) return null
-  const raw = window.localStorage.getItem(storageKey(key))
+  clearLegacyUnscopedDraft(key)
+  const scopedKey = storageKey(key)
+  if (!scopedKey) return null
+  const raw = window.localStorage.getItem(scopedKey)
   if (!raw) return null
   try {
     const draft = normalizeEnvelope<T>(JSON.parse(raw))
@@ -68,7 +78,7 @@ export function readLocalKleioDraft<T extends Record<string, unknown>>(draftKey:
   } catch {
     // Invalid data is removed below.
   }
-  window.localStorage.removeItem(storageKey(key))
+  window.localStorage.removeItem(scopedKey)
   return null
 }
 
@@ -83,6 +93,9 @@ export function saveLocalKleioDraft<T extends Record<string, unknown>>(input: {
   if (typeof window === "undefined") return null
   const draftKey = cleanDraftKey(input.draftKey)
   if (!draftKey) return null
+  const scopedKey = storageKey(draftKey)
+  if (!scopedKey) return null
+  clearLegacyUnscopedDraft(draftKey)
   const clientUpdatedAt = new Date().toISOString()
   const envelope: KleioDraftEnvelope<T> = {
     draftKey,
@@ -94,12 +107,17 @@ export function saveLocalKleioDraft<T extends Record<string, unknown>>(input: {
     serverUpdatedAt: input.serverUpdatedAt ?? null,
     expiresAt: new Date(Date.now() + LOCAL_RETENTION_MS).toISOString(),
   }
-  window.localStorage.setItem(storageKey(draftKey), JSON.stringify(envelope))
+  window.localStorage.setItem(scopedKey, JSON.stringify(envelope))
   return envelope
 }
 
 export function clearLocalKleioDraft(draftKey: string) {
-  if (typeof window !== "undefined") window.localStorage.removeItem(storageKey(cleanDraftKey(draftKey)))
+  if (typeof window === "undefined") return
+  const key = cleanDraftKey(draftKey)
+  if (!key) return
+  clearLegacyUnscopedDraft(key)
+  const scopedKey = storageKey(key)
+  if (scopedKey) window.localStorage.removeItem(scopedKey)
 }
 
 export async function loadRemoteKleioDraft<T extends Record<string, unknown>>(draftKey: string): Promise<KleioDraftEnvelope<T> | null> {
