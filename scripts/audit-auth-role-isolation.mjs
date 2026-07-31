@@ -39,9 +39,17 @@ requireText("lib/kleio-passport-drafts.ts", "getKleioActiveUserScope", "local Pa
 requireText("lib/kleio-passport-drafts.ts", "clearLegacyUnscopedDraft", "legacy unscoped drafts must be discarded rather than restored into another account")
 forbidText("lib/kleio-passport-drafts.ts", "window.localStorage.setItem(storageKey(", "draft writes must not use an unscoped key")
 
+requireText("app/settings/page.tsx", "LiveInstitutionSettingsBeta", "live settings must not expose the incomplete invitation flow")
+requireText("components/kleio/live-institution-settings-beta.tsx", "Team invitations: not enabled for the initial beta", "the beta invitation boundary must be explicit")
+forbidText("app/auth/accept-invite/page.tsx", "AcceptInvitation", "invitation links must not mutate membership while acceptance is paused")
+requireText("app/auth/accept-invite/page.tsx", "No membership change was made from this link", "paused invitation links must explain that no membership changed")
+requireText("supabase/migrations/20260730235900_pause_institution_invitation_acceptance.sql", "revoke all on function public.accept_institution_invitation(uuid) from public, anon, authenticated", "invitation acceptance must be blocked at the database boundary")
+
 requireText("lib/kleio-return-intent.ts", "const MAX_INTENT_AGE_MS = 72 * 60 * 60 * 1000", "return intents must remain time-limited")
 requireText("lib/kleio-return-intent.ts", "if (parsed.pathname !== \"/opportunities/\") return null", "legacy return routes must remain same-origin and allowlisted")
 requireText("lib/kleio-url.ts", "KLEIO refused to create a localhost URL in production", "production auth redirects must reject localhost")
+requireText("vercel.json", "Content-Security-Policy", "production must declare a Content Security Policy")
+requireText("vercel.json", "Strict-Transport-Security", "production must enforce HTTPS persistence")
 
 const clientDirectories = ["app", "components", "lib"]
 const clientFiles = []
