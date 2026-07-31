@@ -12,6 +12,7 @@
     "audit:user-copy": "node scripts/audit-user-facing-copy.mjs",
     "audit:auth-redirect": "node scripts/audit-auth-redirect.mjs",
     "audit:auth-isolation": "node scripts/audit-auth-role-isolation.mjs",
+    "audit:uploads": "node scripts/audit-file-upload-safety.mjs",
     "audit:guidance": "node scripts/audit-guidance-hierarchy.mjs",
     "audit:opportunity-search": "node scripts/audit-opportunity-search.mjs",
     "audit:opportunity-first": "node scripts/audit-opportunity-first-acquisition.mjs"
