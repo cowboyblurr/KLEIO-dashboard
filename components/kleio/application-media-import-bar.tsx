@@ -1,7 +1,7 @@
 "use client"
 
 import { useSearchParams } from "next/navigation"
-import { FilePlus2, ImagePlus, ShieldCheck } from "lucide-react"
+import { ShieldCheck } from "lucide-react"
 import { ArtistImportStudio } from "@/components/kleio/artist-import-studio"
 import { QuickMediaImport } from "@/components/kleio/media-import/quick-media-import"
 import { recordMediaUsage } from "@/lib/kleio-universal-media"
