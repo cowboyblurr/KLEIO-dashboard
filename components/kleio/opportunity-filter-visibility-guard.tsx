@@ -69,6 +69,8 @@ function activeFilterLabels(filters: StoredOpportunityFilters) {
 
 export function OpportunityFilterVisibilityGuard() {
   const lastStoredValue = useRef("")
+  const syncTimeout = useRef<number | null>(null)
+  const syncFiltersRef = useRef<() => void>(() => undefined)
   const [filters, setFilters] = useState<StoredOpportunityFilters>(defaultFilters)
   const [hydrated, setHydrated] = useState(false)
   const activeFilters = useMemo(() => activeFilterLabels(filters), [filters])
@@ -90,17 +92,22 @@ export function OpportunityFilterVisibilityGuard() {
       }
     }
 
+    syncFiltersRef.current = syncFilters
     syncFilters()
-    const intervalId = window.setInterval(syncFilters, 500)
     window.addEventListener("focus", syncFilters)
     window.addEventListener("storage", syncFilters)
 
     return () => {
-      window.clearInterval(intervalId)
+      if (syncTimeout.current !== null) window.clearTimeout(syncTimeout.current)
       window.removeEventListener("focus", syncFilters)
       window.removeEventListener("storage", syncFilters)
     }
   }, [])
+
+  function scheduleFilterSync() {
+    if (syncTimeout.current !== null) window.clearTimeout(syncTimeout.current)
+    syncTimeout.current = window.setTimeout(() => syncFiltersRef.current(), 75)
+  }
 
   function clearAllFilters() {
     const serializedDefaults = JSON.stringify(defaultFilters)
@@ -111,7 +118,7 @@ export function OpportunityFilterVisibilityGuard() {
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-col bg-[#FCFBFE]">
+    <div className="flex h-full min-h-0 flex-col bg-[#FCFBFE]" onInputCapture={scheduleFilterSync} onChangeCapture={scheduleFilterSync} onClickCapture={scheduleFilterSync}>
       {hydrated && activeFilters.length > 0 && (
         <section className="shrink-0 border-b border-[#E7E1F7] bg-white px-4 py-3 sm:px-6" aria-label="Active opportunity filters">
           <div className="mx-auto flex max-w-[1180px] flex-wrap items-center gap-3">
