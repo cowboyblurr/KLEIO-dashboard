@@ -5,6 +5,8 @@ import { RotateCcw, SlidersHorizontal } from "lucide-react"
 import { ProductionArtistOpportunityDirectory } from "@/components/kleio/production-artist-opportunity-directory"
 
 const STORAGE_KEY = "kleio_opportunity_filters_v1"
+const FILTER_VISIBILITY_MIGRATION_KEY = "kleio_opportunity_filter_visibility_v1"
+const TRANSIENT_PRESET_KEY = "kleio_opportunity_filter_preset"
 
 const defaultFilters = {
   query: "",
@@ -67,6 +69,18 @@ function activeFilterLabels(filters: StoredOpportunityFilters) {
   return labels
 }
 
+function isFundingPreset(filters: StoredOpportunityFilters) {
+  return filters.query.trim().toLowerCase() === "funding"
+    && filters.type === "all"
+    && filters.source === "all"
+    && filters.format === "all"
+    && filters.discipline === "all"
+    && filters.geography.trim() === ""
+    && filters.deadlineWindow === "all"
+    && !filters.noFeeOnly
+    && !filters.requirementsOnly
+}
+
 export function OpportunityFilterVisibilityGuard() {
   const lastStoredValue = useRef("")
   const syncTimeout = useRef<number | null>(null)
@@ -79,10 +93,44 @@ export function OpportunityFilterVisibilityGuard() {
     function syncFilters() {
       try {
         const storedValue = window.localStorage.getItem(STORAGE_KEY) ?? ""
-        if (storedValue === lastStoredValue.current) return
+        const restored = storedValue ? restoreFilters(JSON.parse(storedValue)) : defaultFilters
+        const isFundingView = new URLSearchParams(window.location.search).get("view") === "funding"
+        const transientPreset = window.sessionStorage.getItem(TRANSIENT_PRESET_KEY)
 
+        if (transientPreset === "funding") {
+          if (!isFundingView && isFundingPreset(restored)) {
+            const serializedDefaults = JSON.stringify(defaultFilters)
+            window.sessionStorage.removeItem(TRANSIENT_PRESET_KEY)
+            window.localStorage.setItem(STORAGE_KEY, serializedDefaults)
+            lastStoredValue.current = serializedDefaults
+            setFilters(defaultFilters)
+            setHydrated(true)
+            window.location.reload()
+            return
+          }
+
+          if (isFundingView && !isFundingPreset(restored)) {
+            window.sessionStorage.removeItem(TRANSIENT_PRESET_KEY)
+          }
+        }
+
+        const migrationComplete = window.localStorage.getItem(FILTER_VISIBILITY_MIGRATION_KEY) === "complete"
+        if (!migrationComplete && !isFundingView) {
+          window.localStorage.setItem(FILTER_VISIBILITY_MIGRATION_KEY, "complete")
+          if (activeFilterLabels(restored).length > 0) {
+            const serializedDefaults = JSON.stringify(defaultFilters)
+            window.localStorage.setItem(STORAGE_KEY, serializedDefaults)
+            lastStoredValue.current = serializedDefaults
+            setFilters(defaultFilters)
+            setHydrated(true)
+            window.location.reload()
+            return
+          }
+        }
+
+        if (storedValue === lastStoredValue.current) return
         lastStoredValue.current = storedValue
-        setFilters(storedValue ? restoreFilters(JSON.parse(storedValue)) : defaultFilters)
+        setFilters(restored)
       } catch {
         window.localStorage.removeItem(STORAGE_KEY)
         lastStoredValue.current = ""
@@ -111,6 +159,8 @@ export function OpportunityFilterVisibilityGuard() {
 
   function clearAllFilters() {
     const serializedDefaults = JSON.stringify(defaultFilters)
+    window.sessionStorage.removeItem(TRANSIENT_PRESET_KEY)
+    window.localStorage.setItem(FILTER_VISIBILITY_MIGRATION_KEY, "complete")
     window.localStorage.setItem(STORAGE_KEY, serializedDefaults)
     lastStoredValue.current = serializedDefaults
     setFilters(defaultFilters)
