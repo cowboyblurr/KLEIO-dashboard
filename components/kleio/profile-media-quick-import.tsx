@@ -3,7 +3,7 @@
 /* eslint-disable @next/next/no-img-element -- profile previews use private signed URLs */
 
 import { useEffect, useState } from "react"
-import { ImageIcon, Loader2, ShieldCheck } from "lucide-react"
+import { Loader2, ShieldCheck } from "lucide-react"
 import { QuickMediaImport } from "@/components/kleio/media-import/quick-media-import"
 import { InitialAvatar } from "@/components/kleio/initial-avatar"
 import { loadArtistPassport } from "@/lib/kleio-live-data"
