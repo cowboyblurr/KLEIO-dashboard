@@ -82,6 +82,8 @@ export type VisualEvidenceObservation = {
   confidence: "high" | "medium" | "low"
   evidence_image_ids: string[]
   evidence_page_refs: string[]
+  review_id?: string
+  use_in_drafting?: boolean
 }
 
 export type VisualPracticeAnalysis = {
@@ -106,20 +108,47 @@ export type VisualPracticeAnalysis = {
   limitations: string[]
 }
 
+export type VisualReviewDecision = "confirmed" | "edited" | "rejected"
+export type VisualReviewItem = {
+  id: string
+  decision: VisualReviewDecision
+  observation: string
+  interpretation: string
+  use_in_drafting: boolean
+}
+export type VisualAnalysisReviewResult = {
+  approvedAnalysis: VisualPracticeAnalysis
+  draft: KleioAssistStoredDraft
+}
+
+export type ApprovedProfileEvidence = {
+  field: string
+  value: string | string[]
+  source: string
+  sourceUrl: string
+}
+
 export type KleioAssistDraftType =
   | "short_bio"
   | "professional_bio"
   | "artist_statement"
   | "practice_description"
   | "artwork_description"
+  | "series_description"
+  | "project_description"
   | "submission_letter"
+  | "letter_of_interest"
   | "application_answer"
+  | "exhibition_proposal_summary"
+  | "grant_residency_response"
 
 export type KleioDraftOption = {
   label: string
   text: string
   facts_used: string[]
   interpretations_used: string[]
+  evidence_refs: string[]
+  interpretation_refs: string[]
   word_count: number
 }
 
@@ -130,10 +159,28 @@ export type KleioDraftResult = {
   safety_notes: string[]
 }
 
+export type KleioAssistCapabilities = {
+  configured: boolean
+  provider: string
+  primary_model: string
+  fallback_model: string
+  prompt_version: string
+  max_images_per_analysis: number
+  daily_visual_analysis_limit: number
+  daily_draft_limit: number
+  paid_billing_automatic: false
+  requires_artist_review: true
+}
+
 export type KleioAssistStoredDraft = {
   id: string
   draft_type: KleioAssistDraftType | "practice_analysis"
+  status?: "generated" | "edited" | "approved" | "rejected"
+  provider?: string
+  model?: string
   generated_output: Record<string, unknown>
+  artist_review?: Record<string, unknown>
+  artist_edited_text?: string
   created_at: string
 }
 
@@ -146,10 +193,26 @@ async function requireArtist() {
 
 function functionError(error: unknown, fallback: string) {
   if (!(error instanceof Error)) return fallback
-  if (/kleio_assist_not_configured/i.test(error.message)) return "KLEIO Assist is ready in the product, but its private AI provider key has not been configured yet."
-  if (/website_disallows_automated_access/i.test(error.message)) return "This website does not permit automated analysis. Upload the work directly or use another public portfolio page."
-  if (/private_network_url_blocked|https_required|invalid_website_url/i.test(error.message)) return "Enter a public HTTPS artist website. Private, local, or internal addresses cannot be analyzed."
+  const message = error.message.replaceAll("_", " ")
+  if (/kleio assist not configured/i.test(message)) return "KLEIO Assist is capability-gated until the private Cloudflare Workers AI credentials are added."
+  if (/beta fair use limit reached|ai daily capacity reached/i.test(message)) return "Today’s free AI capacity has been reached. Your website evidence and edits remain saved; continue manually or return after the daily allowance resets."
+  if (/visual analysis review required|complete visual review required/i.test(message)) return "Confirm, edit, or reject every visual observation before using it in a draft."
+  if (/approved evidence required/i.test(message)) return "Select at least one artist-reviewed profile field, add artist context, or approve visual observations before drafting."
+  if (/ai provider timeout/i.test(message)) return "The free AI provider took too long to respond. Your progress is safe; try again without changing the approved evidence."
+  if (/ai provider returned invalid output|ai output/i.test(message)) return "The AI response did not meet KLEIO’s evidence and formatting checks, so it was not saved as a usable draft."
+  if (/website disallows automated access/i.test(message)) return "This website does not permit automated analysis. Upload the work directly or use another public portfolio page."
+  if (/private network url blocked|https required|invalid website url/i.test(message)) return "Enter a public HTTPS artist website. Private, local, or internal addresses cannot be analyzed."
   return error.message || fallback
+}
+
+export async function loadKleioAssistCapabilities(): Promise<KleioAssistCapabilities> {
+  await requireArtist()
+  const supabase = getSupabaseBrowserClient()
+  const { data, error } = await supabase.functions.invoke("kleio-assist", {
+    body: { action: "capabilities" },
+  })
+  if (error) throw new Error(functionError(error, "KLEIO Assist availability could not be checked."))
+  return data as KleioAssistCapabilities
 }
 
 export async function analyzeArtistWebsite(websiteUrl: string, ownershipConfirmed: boolean) {
@@ -174,6 +237,36 @@ export async function analyzeVisualPractice(sessionId: string, candidateIds: str
   return {
     draftId: String(data.draft?.id ?? ""),
     analysis: data.analysis as VisualPracticeAnalysis,
+    cached: data.cached === true,
+  }
+}
+
+export async function reviewVisualPracticeAnalysis(input: {
+  draftId: string
+  summary: string
+  items: VisualReviewItem[]
+}): Promise<VisualAnalysisReviewResult> {
+  await requireArtist()
+  const supabase = getSupabaseBrowserClient()
+  const { data, error } = await supabase.functions.invoke("kleio-assist", {
+    body: {
+      action: "review_analysis",
+      draftId: input.draftId,
+      summary: input.summary,
+      items: input.items.map((item) => ({
+        id: item.id,
+        decision: item.decision,
+        observation: item.observation,
+        interpretation: item.interpretation,
+        use_in_drafting: item.use_in_drafting,
+      })),
+    },
+  })
+  if (error) throw new Error(functionError(error, "The visual-practice review could not be saved."))
+  if (data?.error) throw new Error(functionError(new Error(String(data.error)), "The visual-practice review could not be saved."))
+  return {
+    approvedAnalysis: data.approvedAnalysis as VisualPracticeAnalysis,
+    draft: data.draft as KleioAssistStoredDraft,
   }
 }
 
@@ -185,6 +278,7 @@ export async function generateKleioAssistDraft(input: {
   tone?: string
   artistContext?: string
   opportunityContext?: string
+  approvedProfileEvidence: ApprovedProfileEvidence[]
 }) {
   await requireArtist()
   const supabase = getSupabaseBrowserClient()
@@ -204,7 +298,44 @@ function fieldString(field: WebsiteField | undefined) {
 }
 
 function fieldList(field: WebsiteField | undefined) {
-  return Array.isArray(field?.value) ? field.value.filter((value): value is string => typeof value === "string").map((value) => value.trim()).filter(Boolean) : []
+  return Array.isArray(field?.value)
+    ? field.value.filter((value): value is string => typeof value === "string").map((value) => value.trim()).filter(Boolean)
+    : []
+}
+
+export function buildApprovedProfileEvidence(input: {
+  suggestions: WebsiteProfileSuggestions
+  selectedFields: string[]
+  editedValues: Record<string, string>
+}): ApprovedProfileEvidence[] {
+  const selected = new Set(input.selectedFields)
+  const fields = [
+    "professional_name",
+    "location",
+    "bio",
+    "artist_statement",
+    "practice_description",
+    "website_url",
+    "disciplines",
+    "mediums",
+  ] as const
+  return fields.flatMap((key) => {
+    if (!selected.has(key)) return []
+    const original = input.suggestions[key]
+    const edited = input.editedValues[key]
+    const value = key === "disciplines" || key === "mediums"
+      ? (edited !== undefined
+          ? edited.split(/[,;\n]/).map((entry) => entry.trim()).filter(Boolean)
+          : fieldList(original))
+      : (edited !== undefined ? edited.trim() : fieldString(original))
+    if (Array.isArray(value) ? !value.length : !value) return []
+    return [{
+      field: key,
+      value,
+      source: original.source,
+      sourceUrl: original.sourceUrl,
+    }]
+  })
 }
 
 export async function applyWebsiteProfileSuggestions(input: {
@@ -216,14 +347,16 @@ export async function applyWebsiteProfileSuggestions(input: {
   const current = await loadArtistPassport()
   if (!current) throw new Error("Your Creative Passport profile could not be found.")
   const selected = new Set(input.selectedFields)
-  const value = (key: keyof WebsiteProfileSuggestions, fallback: string) => {
+  const value = (key: "professional_name" | "location" | "bio" | "artist_statement" | "practice_description" | "website_url", fallback: string) => {
     if (!selected.has(key)) return fallback
     return input.editedValues[key] ?? fieldString(input.suggestions[key])
   }
   const list = (key: "disciplines" | "mediums", fallback: string[]) => {
     if (!selected.has(key)) return fallback
     const edited = input.editedValues[key]
-    return edited !== undefined ? edited.split(/[,;\n]/).map((entry) => entry.trim()).filter(Boolean) : fieldList(input.suggestions[key])
+    return edited !== undefined
+      ? edited.split(/[,;\n]/).map((entry) => entry.trim()).filter(Boolean)
+      : fieldList(input.suggestions[key])
   }
   return saveArtistPassport({
     professional_name: value("professional_name", current.professional_name),
@@ -304,4 +437,15 @@ export async function updateKleioAssistDraft(input: {
   }).eq("id", input.draftId).eq("artist_user_id", account.user.id).select("*").single()
   if (error) throw error
   return data as KleioAssistStoredDraft
+}
+
+export async function deleteKleioAssistDraft(draftId: string) {
+  const account = await requireArtist()
+  const supabase = getSupabaseBrowserClient()
+  const { error } = await supabase
+    .from("artist_ai_drafts")
+    .delete()
+    .eq("id", draftId)
+    .eq("artist_user_id", account.user.id)
+  if (error) throw error
 }
