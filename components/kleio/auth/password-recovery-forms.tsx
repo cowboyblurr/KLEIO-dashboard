@@ -12,6 +12,7 @@ import {
   signOutAfterKleioPasswordReset,
   updateKleioPassword,
 } from "@/lib/kleio-auth"
+import { isKleioPasswordStrong, KLEIO_PASSWORD_MIN_LENGTH } from "@/lib/kleio-password-security"
 import { getSupabaseBrowserClient } from "@/lib/kleio-supabase"
 
 const inputClassName = "h-11 w-full rounded-xl border border-border bg-background px-3 text-sm text-foreground outline-none transition-colors focus:border-primary/40 focus:ring-4 focus:ring-primary/10"
@@ -126,8 +127,8 @@ export function UpdatePasswordForm() {
     event.preventDefault()
     if (submitting || state !== "ready") return
     setError("")
-    if (password.length < 8) {
-      setError(es ? "La contraseña debe tener al menos 8 caracteres." : "The password must be at least 8 characters.")
+    if (!isKleioPasswordStrong(password)) {
+      setError(es ? "Usa al menos 12 caracteres e incluye mayúscula, minúscula, número y símbolo." : "Use at least 12 characters and include uppercase, lowercase, a number, and a symbol.")
       return
     }
     if (password !== confirmPassword) {
@@ -168,16 +169,16 @@ export function UpdatePasswordForm() {
 
   return (
     <form onSubmit={handleSubmit} className="rounded-2xl border border-border bg-card p-6 shadow-sm" noValidate>
-      <div className="flex items-start gap-3 rounded-xl border border-[#E7E1F7] bg-[#F7F4FF] p-4"><ShieldCheck className="mt-0.5 size-5 shrink-0 text-[#5B4B8A]" /><p className="text-xs leading-relaxed text-[#6F6882]">{es ? "Crea una contraseña única de al menos 8 caracteres. Después volverás al inicio de sesión para comprobarla." : "Create a unique password with at least 8 characters. You will return to sign in afterward to verify it."}</p></div>
+      <div className="flex items-start gap-3 rounded-xl border border-[#E7E1F7] bg-[#F7F4FF] p-4"><ShieldCheck className="mt-0.5 size-5 shrink-0 text-[#5B4B8A]" /><p className="text-xs leading-relaxed text-[#6F6882]">{es ? "Crea una contraseña única de al menos 12 caracteres con mayúscula, minúscula, número y símbolo. KLEIO también bloquea contraseñas filtradas." : "Create a unique password with at least 12 characters, including uppercase, lowercase, a number, and a symbol. KLEIO also blocks breached passwords."}</p></div>
       <label htmlFor={passwordId} className="mt-5 block text-xs font-medium text-muted-foreground">{es ? "Nueva contraseña" : "New password"}</label>
       <div className="relative mt-1.5">
-        <input id={passwordId} type={showPassword ? "text" : "password"} value={password} onChange={(event) => setPassword(event.target.value)} required minLength={8} autoComplete="new-password" className={`${inputClassName} pr-11`} aria-invalid={Boolean(error)} />
+        <input id={passwordId} type={showPassword ? "text" : "password"} value={password} onChange={(event) => setPassword(event.target.value)} required minLength={KLEIO_PASSWORD_MIN_LENGTH} autoComplete="new-password" className={`${inputClassName} pr-11`} aria-invalid={Boolean(error)} />
         <button type="button" onClick={() => setShowPassword((visible) => !visible)} className="absolute right-2 top-1/2 grid size-8 -translate-y-1/2 place-items-center rounded-lg text-muted-foreground hover:bg-accent/50 hover:text-foreground" aria-label={showPassword ? (es ? "Ocultar contraseña" : "Hide password") : (es ? "Mostrar contraseña" : "Show password")}>{showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}</button>
       </div>
       <label htmlFor={confirmId} className="mt-4 block text-xs font-medium text-muted-foreground">{es ? "Confirmar contraseña" : "Confirm password"}</label>
-      <input id={confirmId} type={showPassword ? "text" : "password"} value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} required minLength={8} autoComplete="new-password" className={`${inputClassName} mt-1.5`} aria-invalid={Boolean(error)} />
+      <input id={confirmId} type={showPassword ? "text" : "password"} value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} required minLength={KLEIO_PASSWORD_MIN_LENGTH} autoComplete="new-password" className={`${inputClassName} mt-1.5`} aria-invalid={Boolean(error)} />
       {error && <p role="alert" className="mt-3 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
-      <button type="submit" disabled={submitting || password.length < 8 || confirmPassword.length < 8} className="mt-5 inline-flex h-11 w-full items-center justify-center rounded-xl bg-primary px-5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50">
+      <button type="submit" disabled={submitting || !isKleioPasswordStrong(password) || confirmPassword.length < KLEIO_PASSWORD_MIN_LENGTH} className="mt-5 inline-flex h-11 w-full items-center justify-center rounded-xl bg-primary px-5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50">
         {submitting && <Loader2 className="mr-2 size-4 animate-spin" />}
         {submitting ? (es ? "Actualizando…" : "Updating…") : (es ? "Actualizar contraseña" : "Update password")}
       </button>
