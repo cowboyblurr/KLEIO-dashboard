@@ -34,3 +34,62 @@ alter table public.institutions
       ]
     )
   );
+
+alter table public.product_events
+  drop constraint if exists product_events_event_name_check;
+
+alter table public.product_events
+  add constraint product_events_event_name_check
+  check (
+    event_name = any (
+      array[
+        'landing_viewed'::text,
+        'carousel_viewed'::text,
+        'carousel_manual_advanced'::text,
+        'carousel_card_selected'::text,
+        'explore_opportunities_selected'::text,
+        'creative_passport_selected'::text,
+        'institution_section_viewed'::text,
+        'institution_signup_selected'::text,
+        'login_selected'::text,
+        'public_directory_viewed'::text,
+        'search_performed'::text,
+        'filter_applied'::text,
+        'opportunity_opened'::text,
+        'official_source_opened'::text,
+        'check_fit_selected'::text,
+        'save_selected'::text,
+        'prepare_selected'::text,
+        'signup_prompted'::text,
+        'signup_started'::text,
+        'signup_submitted'::text,
+        'signup_validation_failed'::text,
+        'account_created'::text,
+        'confirmation_required'::text,
+        'confirmation_completed'::text,
+        'opportunity_restoration_completed'::text,
+        'opportunity_restoration_failed'::text,
+        'passport_mode_selected'::text,
+        'guided_step_completed'::text,
+        'guided_step_skipped'::text,
+        'onboarding_resumed'::text,
+        'onboarding_save_failed'::text,
+        'onboarding_step_viewed'::text,
+        'onboarding_validation_failed'::text,
+        'onboarding_step_completed'::text,
+        'onboarding_step_skipped'::text,
+        'onboarding_completed'::text,
+        'import_started'::text,
+        'import_completed'::text,
+        'proposal_approved'::text,
+        'proposal_rejected'::text,
+        'voice_capability_detected'::text,
+        'voice_started'::text,
+        'voice_completed'::text,
+        'autosave_succeeded'::text,
+        'autosave_failed'::text,
+        'draft_restored'::text,
+        'conflict_detected'::text
+      ]
+    )
+  );
