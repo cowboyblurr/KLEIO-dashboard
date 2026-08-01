@@ -3,7 +3,7 @@
 /* eslint-disable @next/next/no-img-element -- private media uses short-lived signed URLs */
 
 import { useEffect, useMemo, useRef, useState } from "react"
-import { Check, Cloud, FileText, FolderOpen, ImageIcon, Instagram, Library, Loader2, Search, ShieldCheck, Upload, X } from "lucide-react"
+import { AtSign, Check, Cloud, FileText, FolderOpen, ImageIcon, Library, Loader2, Search, ShieldCheck, Upload, X } from "lucide-react"
 import {
   MEDIA_SOURCE_ADAPTERS,
   chooseGoogleDriveFiles,
@@ -37,7 +37,7 @@ function sourceIcon(source: MediaSourceType) {
   if (source === "device") return Upload
   if (source === "google_drive") return Cloud
   if (source === "kleio_library") return Library
-  return Instagram
+  return AtSign
 }
 
 function sourceTitle(source: MediaSourceType) {
