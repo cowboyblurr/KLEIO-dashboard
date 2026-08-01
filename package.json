@@ -14,7 +14,8 @@
     "audit:auth-isolation": "node scripts/audit-auth-role-isolation.mjs",
     "audit:guidance": "node scripts/audit-guidance-hierarchy.mjs",
     "audit:opportunity-search": "node scripts/audit-opportunity-search.mjs",
-    "audit:opportunity-first": "node scripts/audit-opportunity-first-acquisition.mjs"
+    "audit:opportunity-first": "node scripts/audit-opportunity-first-acquisition.mjs",
+    "audit:artist-import": "node scripts/audit-artist-import-studio.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.5.0",
