@@ -14,5 +14,9 @@ export function IntentAwareLiveSignup({ role }: { role: "artist" | "institution"
     if (role === "artist" && returnTo) storeKleioReturnIntent(returnTo)
   }, [returnTo, role])
 
-  return role === "artist" ? <LightweightArtistSignup /> : <LiveSignup role="institution" />
+  if (role === "artist" && returnTo) {
+    return <LightweightArtistSignup />
+  }
+
+  return <LiveSignup role={role} />
 }
