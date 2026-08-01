@@ -10,12 +10,15 @@ const studio = "components/kleio/artist-import-studio.tsx"
 const importLib = "lib/kleio-artwork-import.ts"
 const signup = "components/kleio/signup/lightweight-artist-signup.tsx"
 const signupLib = "lib/kleio-lightweight-artist-signup.ts"
+const googleCapabilities = "lib/kleio-google-capabilities.ts"
 const callback = "components/kleio/auth/auth-callback-client.tsx"
 const sidebar = "components/kleio/artist-sidebar.tsx"
 const migration = "supabase/migrations/20260801160000_artist_import_studio.sql"
 
-requireText(signup, "Continue with Google", "artist signup must expose Google authentication")
-requireText(signup, "does not grant Drive access", "signup must explain that Drive permission is separate")
+requireText(signup, "Continue with Google", "artist signup must expose Google authentication when configured")
+requireText(signup, "isGoogleAuthenticationConfigured", "artist signup must not enable an unconfigured Google provider")
+requireText(googleCapabilities, "Drive access is requested separately", "signup must explain that Drive permission is separate")
+requireText(googleCapabilities, "NEXT_PUBLIC_GOOGLE_AUTH_ENABLED", "Google authentication must use an explicit deployment capability gate")
 requireText(signupLib, 'provider: "google"', "Google login must use the configured Supabase provider")
 requireText(signupLib, "signInWithOAuth", "Google login must use Supabase OAuth")
 requireText(signupLib, "assertKleioPasswordIsSafe", "email signup must enforce KLEIO's breached-password safeguard")
@@ -52,9 +55,9 @@ forbidText(migration, "artist_import_sources_owner_provider_idx", "the beta migr
 forbidText(migration, "portfolio_works_owner_approval_idx", "the beta migration must not add an unused approval lookup index")
 forbidText(migration, "disable row level security", "the import migration must not weaken RLS")
 
-for (const file of [studio, importLib, signup, signupLib, callback, sidebar, migration]) {
+for (const file of [studio, importLib, signup, signupLib, googleCapabilities, callback, sidebar, migration]) {
   forbidText(file, "AIzaSy", "Google API keys must not be committed")
   forbidText(file, "GOCSPX-", "Google client secrets must not be committed")
 }
 
-console.log("Artist Import Studio audit passed: separate Google auth and Drive consent, breached-password checks, owner-scoped private files, server-side artwork MIME integrity, deterministic metadata suggestions, explicit artist approval, autosave recovery, idempotent portfolio creation, workspace access, and accessibility safeguards are present.")
+console.log("Artist Import Studio audit passed: capability-gated Google auth, separate Drive consent, breached-password checks, owner-scoped private files, server-side artwork MIME integrity, deterministic metadata suggestions, explicit artist approval, autosave recovery, idempotent portfolio creation, workspace access, and accessibility safeguards are present.")
