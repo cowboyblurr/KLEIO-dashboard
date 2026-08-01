@@ -30,7 +30,13 @@ export function ArtistMediaLibrary() {
     const search = query.trim().toLowerCase()
     return items.filter((item) => {
       const matchesSearch = !search || `${item.title} ${item.originalFilename} ${item.associatedWorkTitle}`.toLowerCase().includes(search)
-      const matchesFilter = filter === "all" || filter === "approved" ? item.approvalState === "approved" : filter === "unattached" ? item.usageCount === 0 && !item.associatedWorkId : item.mediaKind === filter
+      const matchesFilter = filter === "all"
+        ? true
+        : filter === "approved"
+          ? item.approvalState === "approved"
+          : filter === "unattached"
+            ? item.usageCount === 0 && !item.associatedWorkId
+            : item.mediaKind === filter
       return matchesSearch && matchesFilter
     })
   }, [filter, items, query])
