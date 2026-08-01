@@ -7,7 +7,9 @@ const requireText = (file, text, message) => { if (!read(file).includes(text)) t
 const forbidText = (file, text, message) => { if (read(file).includes(text)) throw new Error(`${message} (${file})`) }
 
 const architecture = "lib/kleio-universal-media.ts"
+const googleCapabilities = "lib/kleio-google-capabilities.ts"
 const quick = "components/kleio/media-import/quick-media-import.tsx"
+const signup = "components/kleio/signup/lightweight-artist-signup.tsx"
 const portfolio = "components/kleio/visual-artist-portfolio-studio.tsx"
 const profile = "components/kleio/profile-media-quick-import.tsx"
 const passport = "components/kleio/creative-passport-media-panel.tsx"
@@ -30,11 +32,23 @@ requireText(architecture, "createPortfolioWorkFromMedia", "portfolio must reuse 
 requireText(architecture, "attachMediaToCreativePassportCv", "Creative Passport documents must reuse library media")
 forbidText(architecture, "localStorage.setItem(\"google", "Drive tokens must not be written to local storage")
 
+requireText(googleCapabilities, "NEXT_PUBLIC_GOOGLE_AUTH_ENABLED", "Google authentication must use an explicit deployment capability gate")
+requireText(googleCapabilities, "NEXT_PUBLIC_GOOGLE_DRIVE_CLIENT_ID", "Drive availability must require its public OAuth client configuration")
+requireText(googleCapabilities, "NEXT_PUBLIC_GOOGLE_PICKER_API_KEY", "Drive availability must require its restricted Picker key")
+requireText(googleCapabilities, "without losing any Creative Passport features", "pending Google authentication must explain the email fallback")
+requireText(googleCapabilities, "Upload from this device or reuse your private KLEIO Library", "pending Drive setup must provide working alternatives")
+forbidText(googleCapabilities, "GOCSPX-", "Google client secrets must never enter client capability code")
+
 requireText(quick, "<dialog", "Quick Import must use accessible dialog semantics")
 requireText(quick, "Choose from KLEIO Library", "Quick Import must support private-media reuse")
+requireText(quick, "Setup pending", "unconfigured Drive must be disabled honestly rather than fail after selection")
+requireText(quick, "isGoogleDriveConfigured", "Quick Import must evaluate Drive deployment capability before enabling it")
 requireText(quick, "Planned after beta", "Instagram must be clearly non-functional during beta")
 requireText(quick, "nothing has changed yet", "Quick Import must distinguish selection from confirmation")
 requireText(quick, "h-dvh", "Quick Import must use a full viewport on mobile")
+requireText(signup, "isGoogleAuthenticationConfigured", "artist signup must gate Google authentication until the provider is configured")
+requireText(signup, "Google sign-in setup pending", "artist signup must show a truthful pending state")
+requireText(signup, "Create with email", "email signup must remain available while Google authentication is pending")
 
 requireText(portfolio, "Choose the work first. Add details second.", "portfolio creation must be image-first")
 requireText(portfolio, "New work queue", "portfolio must show uploaded media before metadata entry")
@@ -54,9 +68,9 @@ requireText(migration, "artist_media_usages_manage_own", "media usage associatio
 requireText(migration, "existing_kleio_media", "source constraints must support existing KLEIO media reuse")
 forbidText(migration, "disable row level security", "universal media migration must not weaken RLS")
 
-for (const file of [architecture, quick, portfolio, profile, passport, application, library, sidebar, migration]) {
+for (const file of [architecture, googleCapabilities, quick, signup, portfolio, profile, passport, application, library, sidebar, migration]) {
   forbidText(file, "AIzaSy", "Google API keys must not be committed")
   forbidText(file, "GOCSPX-", "Google client secrets must not be committed")
 }
 
-console.log("Universal Media Import audit passed: shared contexts and adapters, visual-first portfolio creation, private library reuse, separate Drive consent, explicit destination usage, profile and Passport Quick Import, application media support, and owner-scoped RLS are present.")
+console.log("Universal Media Import audit passed: shared contexts and adapters, graceful Google capability gates, visual-first portfolio creation, private library reuse, separate Drive consent, explicit destination usage, profile and Passport Quick Import, application media support, and owner-scoped RLS are present.")
