@@ -277,7 +277,7 @@ function buildFields(file: File, inspection: ImageInspection): ArtworkImportItem
     dimensions,
     series,
     description,
-    tags: tags ? field(tags, embedded.keywords.length ? "extracted" : "suggested", embedded.keywords.length ? "Keywords found in image metadata; visual format added" : "Suggested from image format and palette", embedded.keywords.length ? "strong_source_match" : "possible_suggestion") : blankField("Keywords not found"),
+    tags: tags ? field(tags, "suggested", embedded.keywords.length ? "Embedded keywords combined with image-format suggestions" : "Suggested from image format and palette", "needs_artist_confirmation") : blankField("Keywords not found"),
     altText,
   }
 }
@@ -433,7 +433,8 @@ export async function approveArtworkImportItem(item: ArtworkImportItem) {
     .single()
   if (error) {
     if (error.code === "23505") {
-      const { data: raced } = await supabase.from("portfolio_works").select("id").eq("artist_user_id", artistUserId).eq("import_source_id", item.sourceId).single()
+      const { data: raced, error: racedError } = await supabase.from("portfolio_works").select("id").eq("artist_user_id", artistUserId).eq("import_source_id", item.sourceId).maybeSingle()
+      if (racedError || !raced?.id) throw racedError ?? error
       return String(raced.id)
     }
     throw error
