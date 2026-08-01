@@ -1,0 +1,39 @@
+name: Instagram Import Validation
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "components/kleio/instagram-import-assist.tsx"
+      - "components/kleio/artist-import-studio-page.tsx"
+      - "lib/kleio-instagram-import.ts"
+      - "scripts/audit-instagram-import.mjs"
+      - "supabase/functions/instagram-import/**"
+      - "supabase/migrations/20260802010000_instagram_import.sql"
+      - "package.json"
+      - "pnpm-lock.yaml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+          run_install: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Audit Instagram import boundaries
+        run: pnpm audit:instagram-import
+      - run: pnpm typecheck
+      - run: pnpm lint
+      - run: pnpm build
