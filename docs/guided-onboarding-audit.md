@@ -25,6 +25,7 @@ This implementation applies the guided onboarding brief to KLEIO's artist and in
 6. **Draft risk.** Auth recovery existed, but in-progress page answers were not progressively autosaved.
 7. **Password inconsistency.** The legacy full form still described an older minimum while the active KLEIO policy requires 12 characters, complexity, and breach screening.
 8. **Schema-option mismatch.** The institution interface needed a grantmaking-organization option, but the production constraint did not permit that value.
+9. **Analytics-contract mismatch.** Guided-onboarding events were initially absent from the typed registry and database event allowlist.
 
 ## Revised onboarding map
 
@@ -88,6 +89,7 @@ Artists arriving from a specific opportunity retain the lightweight account path
 - User-scoped upserts prevent duplicate artist or institution profile records.
 - Demo and live state remain separate.
 - Demo hydration completes before autosave begins, preventing restored answers from being overwritten by seed data.
+- A localized **Save & exit** action gives users an explicit interruption-safe exit; navigation is delayed long enough for the current browser draft write to complete.
 
 ## Accessibility implementation
 
@@ -97,14 +99,16 @@ Artists arriving from a specific opportunity retain the lightweight account path
 - Save status uses a polite live region.
 - Validation errors use `role="alert"`.
 - Focus states do not depend on color alone.
-- Back, skip, edit, dismiss, and primary actions are keyboard operable.
+- Back, skip, edit, dismiss, save-and-exit, and primary actions are keyboard operable in source.
 - Skip actions appear only on steps explicitly marked optional.
 - Motion respects reduced-motion preferences.
 - Primary controls and choice cards use mobile-appropriate touch targets.
 
+Source semantics are implemented, but screen-reader and physical keyboard behavior remain unverified until manual testing is completed.
+
 ## Analytics
 
-Non-sensitive events cover step views, completion, skips, validation failures, draft-save failures, resume, confirmation, and final completion. Private answers are not sent in analytics metadata.
+Non-sensitive events cover step views, completion, skips, validation failures, draft-save failures, resume, confirmation, and final completion. Private answers are not sent in analytics metadata. The TypeScript event registry, safe metadata allowlist, and Supabase `product_events_event_name_check` constraint were updated and verified together.
 
 ## Database change
 
@@ -113,31 +117,48 @@ The migration adds non-null JSONB columns with `{}` defaults:
 - `artist_profiles.onboarding_preferences`
 - `institutions.onboarding_preferences`
 
-It also aligns `institutions_organization_type_check` with the implemented organization-type options by allowing `grantmaking_organization`. The columns and revised constraint were executed and verified against `information_schema`. Existing rows remain valid.
+It also:
+
+- aligns `institutions_organization_type_check` with the implemented organization-type options by allowing `grantmaking_organization`
+- extends the product-event allowlist for guided-onboarding lifecycle events
+
+The columns and revised constraints were executed and verified against `information_schema`. Existing rows remain valid.
 
 ## QA completed
 
 - Source audit of signup, auth recovery, password security, role isolation, navigation routes, and persistence
-- TypeScript syntax transpilation of new and replaced local files before commit
-- Isolated strict TypeScript compilation of the authored onboarding modules with their internal contracts connected
-- Database migration execution, column verification, and constraint verification
-- Supabase security and performance advisor review after the initial migration
+- Database migration execution, column verification, institution-type constraint verification, and analytics-event constraint verification
+- Supabase RLS ownership-policy review for `profiles`, `artist_profiles`, and `institutions`
+- Supabase security and performance advisor review; returned findings are broader pre-existing project items, not new onboarding findings
+- Full-project TypeScript check passed
+- Full-project ESLint check passed
+- Production static export passed
+- Critical authentication and workspace-export audit passed
+- Internal navigation audit passed
+- User-facing public-copy audit passed
+- Zero-finding enforcement passed
+- Independent guided-onboarding CI passed dependency installation, lint, typecheck, and production build
+- Auth and role-isolation source audit passed
+- Opportunity-first acquisition audit passed
+- GitHub Pages publishing audit passed
 - Route-target review against current artist and institution navigation
 - Preservation of the opportunity-first lightweight artist path
 - Guided synthetic demo parity in English and Spanish
+- Primary Vercel preview reached **Ready** status
 
 ## QA still required before merge
 
-Do not mark the following complete until a runnable preview is available and tested:
+The Browser plugin was not available in the execution environment, and the container could not resolve external hosts, so rendered Playwright evidence could not be captured from the Vercel preview. Do not mark the following complete until manually tested:
 
-- Next.js production build, repository lint, and full-project typecheck
-- Desktop Chrome, Safari, and Firefox walkthroughs
+- Desktop Chrome onboarding walkthroughs for both roles
+- Desktop Safari and Firefox walkthroughs
 - Physical iPhone Safari and Android Chrome tests
+- Tablet and small-mobile visual comparison
 - Keyboard-only completion of both role paths
 - VoiceOver and NVDA walkthroughs
 - Refresh, tab closure, expired session, offline, multiple-tab, and email-confirmation interruption tests
-- Desktop, tablet, and small-mobile visual comparison
+- Visual inspection for clipping, browser overlays, console errors, mobile keyboard obstruction, and safe-area behavior
 
 ## Release gate
 
-Do not merge solely because the interface is visually improved. Merge only after the active deployment check passes and the remaining browser, accessibility, and interruption scenarios have actual recorded results. Untested devices must remain labeled **not tested**.
+The branch is build-clean and has a ready preview, but it remains a draft. Do not merge solely because automated checks passed. Merge only after the browser, physical-device, accessibility, and interruption scenarios above have actual recorded results. Untested environments must remain labeled **not tested**.
