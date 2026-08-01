@@ -1,0 +1,81 @@
+name: Apply Instagram event logging hotfix
+
+on:
+  push:
+    branches:
+      - hotfix/instagram-event-logging
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: hotfix/instagram-event-logging
+          fetch-depth: 0
+
+      - name: Patch event logging and user-facing fallback
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          edge_path = Path('supabase/functions/instagram-import/index.ts')
+          edge = edge_path.read_text()
+          pattern = re.compile(
+              r'async function logEvent\(artistUserId: string, eventType: string, instagramUserId: string \| null, mediaCount = 0, metadata: JsonRecord = \{\}\) \{.*?\n\}\n\nfunction popupHtml',
+              re.S,
+          )
+          replacement = '''async function logEvent(artistUserId: string, eventType: string, instagramUserId: string | null, mediaCount = 0, metadata: JsonRecord = {}) {
+            try {
+              const { error } = await admin.from("artist_instagram_import_events").insert({
+                artist_user_id: artistUserId,
+                event_type: eventType,
+                instagram_user_id: instagramUserId,
+                media_count: mediaCount,
+                metadata,
+              })
+              if (error) console.warn("instagram_event_log_failed", error.code || "unknown")
+            } catch {
+              console.warn("instagram_event_log_failed")
+            }
+          }
+
+          function popupHtml'''
+          patched, count = pattern.subn(replacement, edge, count=1)
+          if count != 1:
+              raise SystemExit('Could not locate logEvent function')
+          edge_path.write_text(patched)
+
+          client_path = Path('lib/kleio-instagram-import.ts')
+          client = client_path.read_text()
+          old = '  return code || fallback\n}'
+          new = '  return fallback\n}'
+          if old not in client:
+              raise SystemExit('Could not locate Instagram fallback')
+          client_path.write_text(client.replace(old, new, 1))
+
+          workflow_path = Path('.github/workflows/hotfix-instagram-event-logging.yml')
+          workflow_path.unlink()
+          PY
+
+      - name: Validate focused changes
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm audit:instagram-import
+          pnpm typecheck
+          pnpm lint
+          pnpm build
+
+      - name: Commit hotfix
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add supabase/functions/instagram-import/index.ts lib/kleio-instagram-import.ts .github/workflows/hotfix-instagram-event-logging.yml
+          git commit -m "Fix Instagram event logging failure"
+          git push origin hotfix/instagram-event-logging
