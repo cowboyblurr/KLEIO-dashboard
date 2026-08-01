@@ -1,29 +1,26 @@
 "use client"
 
-/* eslint-disable @next/next/no-img-element -- public website previews are reviewed before private import */
+/* eslint-disable @next/next/no-img-element -- external previews remain temporary and artist-reviewed */
 
-import { useMemo, useState } from "react"
-import {
-  Check,
-  Eye,
-  Globe2,
-  ImagePlus,
-  Loader2,
-  PenLine,
-  ShieldCheck,
-  Sparkles,
-} from "lucide-react"
+import { useEffect, useMemo, useState } from "react"
+import { Check, Eye, Globe2, ImagePlus, Loader2, PenLine, ShieldCheck, Sparkles, Trash2, X } from "lucide-react"
 import {
   analyzeArtistWebsite,
   analyzeVisualPractice,
   applyWebsiteProfileSuggestions,
   approveWebsiteArtworkImports,
+  buildApprovedProfileEvidence,
+  deleteKleioAssistDraft,
   generateKleioAssistDraft,
+  loadKleioAssistCapabilities,
+  reviewVisualPracticeAnalysis,
   updateKleioAssistDraft,
+  type KleioAssistCapabilities,
   type KleioAssistDraftType,
   type KleioDraftResult,
   type VisualEvidenceObservation,
   type VisualPracticeAnalysis,
+  type VisualReviewDecision,
   type WebsiteArtworkDraft,
   type WebsiteField,
   type WebsiteImageCandidate,
@@ -31,378 +28,191 @@ import {
 } from "@/lib/kleio-website-import"
 
 const primary = "inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#5B4B8A] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#4F407B] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#A997E8]/25 disabled:cursor-not-allowed disabled:opacity-50"
-const secondary = "inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-[#D8D0F2] bg-white px-4 py-2 text-sm font-semibold text-[#5B4B8A] transition hover:border-[#B9A9DE] hover:bg-[#FBFAFE] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#A997E8]/20 disabled:cursor-not-allowed disabled:opacity-50"
-const input = "min-h-11 w-full rounded-xl border border-[#DED7EF] bg-white px-3 py-2 text-sm text-[#292631] outline-none transition focus:border-[#A997E8] focus:ring-4 focus:ring-[#A997E8]/12"
+const secondary = "inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-[#D8D0F2] bg-white px-4 py-2 text-sm font-semibold text-[#5B4B8A] transition hover:bg-[#FBFAFE] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#A997E8]/20 disabled:opacity-50"
+const input = "min-h-11 w-full rounded-xl border border-[#DED7EF] bg-white px-3 py-2 text-sm text-[#292631] outline-none focus:border-[#A997E8] focus:ring-4 focus:ring-[#A997E8]/12"
 const textarea = `${input} min-h-24 resize-y leading-6`
-
-const PROFILE_FIELDS = [
-  ["professional_name", "Professional name"],
-  ["location", "Location"],
-  ["bio", "Biography"],
-  ["artist_statement", "Artist statement"],
-  ["practice_description", "Practice description"],
-  ["website_url", "Website"],
-  ["disciplines", "Disciplines"],
-  ["mediums", "Mediums"],
+const profileFields = [
+  ["professional_name", "Professional name"], ["location", "Location"], ["bio", "Biography"],
+  ["artist_statement", "Artist statement"], ["practice_description", "Practice description"],
+  ["website_url", "Website"], ["disciplines", "Disciplines"], ["mediums", "Mediums"],
 ] as const
-
-const ANALYSIS_SECTIONS: Array<[keyof VisualPracticeAnalysis, string]> = [
-  ["visual_language", "Visual language"],
-  ["recurring_themes", "Recurring themes"],
-  ["motifs", "Recurring motifs"],
-  ["palette", "Palette"],
-  ["composition", "Composition"],
-  ["materials_and_techniques", "Materials and techniques"],
-  ["mood_and_atmosphere", "Mood and atmosphere"],
-  ["subject_matter", "Subject matter"],
-  ["presentation_style", "Presentation style"],
-  ["tensions_or_variations", "Tensions and variations"],
+const analysisSections: Array<[keyof VisualPracticeAnalysis, string]> = [
+  ["visual_language", "Visual language"], ["recurring_themes", "Recurring themes"], ["motifs", "Motifs"],
+  ["palette", "Palette"], ["composition", "Composition"], ["materials_and_techniques", "Materials and techniques"],
+  ["mood_and_atmosphere", "Mood and atmosphere"], ["subject_matter", "Subject matter"],
+  ["presentation_style", "Presentation style"], ["tensions_or_variations", "Tensions and variations"],
 ]
+type Review = { decision: VisualReviewDecision | "pending"; observation: string; interpretation: string; useInDrafting: boolean }
 
-function message(error: unknown, fallback: string) {
-  return error instanceof Error && error.message ? error.message : fallback
+function fieldValue(field: WebsiteField) { return Array.isArray(field.value) ? field.value.join(", ") : field.value }
+function reviewId(section: string, index: number) { return `${section}:${index}` }
+function errorText(error: unknown, fallback: string) { return error instanceof Error && error.message ? error.message : fallback }
+function initialArtwork(candidate: WebsiteImageCandidate): WebsiteArtworkDraft {
+  return { title: candidate.proposed.title || "", year: candidate.proposed.year || "", medium: candidate.proposed.medium || "", dimensions: candidate.proposed.dimensions || "", description: candidate.proposed.description || "", tags: candidate.proposed.tags || [], altText: candidate.proposed.altText || "" }
 }
-
-function fieldValue(field: WebsiteField) {
-  return Array.isArray(field.value) ? field.value.join(", ") : field.value
-}
-
-function initialArtworkDraft(candidate: WebsiteImageCandidate): WebsiteArtworkDraft {
-  return {
-    title: candidate.proposed.title ?? "",
-    year: candidate.proposed.year ?? "",
-    medium: candidate.proposed.medium ?? "",
-    dimensions: candidate.proposed.dimensions ?? "",
-    description: candidate.proposed.description ?? "",
-    tags: candidate.proposed.tags ?? [],
-    altText: candidate.proposed.altText ?? "",
+function initialReviews(analysis: VisualPracticeAnalysis) {
+  const result: Record<string, Review> = {}
+  for (const [section] of analysisSections) {
+    const values = analysis[section]
+    if (!Array.isArray(values)) continue
+    ;(values as VisualEvidenceObservation[]).forEach((item, index) => {
+      result[reviewId(String(section), index)] = { decision: "pending", observation: item.observation, interpretation: item.interpretation, useInDrafting: false }
+    })
   }
-}
-
-function EvidenceBadge({ field }: { field: WebsiteField }) {
-  const label = field.status === "extracted" ? "Found on website" : field.status === "suggested" ? "KLEIO suggestion" : "Needs artist input"
-  return <span className="rounded-full border border-[#E3DDF2] bg-[#FAF9FD] px-2.5 py-1 text-[0.68rem] font-semibold text-[#6B6477]">{label}</span>
-}
-
-function ObservationCard({ item, imageById }: { item: VisualEvidenceObservation; imageById: Map<string, WebsiteImageCandidate> }) {
-  return (
-    <article className="rounded-2xl border border-[#E7E1F7] bg-white p-4">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <h4 className="font-semibold text-[#292631]">{item.label}</h4>
-        <span className="text-[0.68rem] font-semibold uppercase tracking-[0.12em] text-[#81788E]">{item.confidence} confidence</span>
-      </div>
-      <p className="mt-2 text-sm leading-6 text-[#514B5B]"><strong>Observed:</strong> {item.observation}</p>
-      <p className="mt-2 text-sm leading-6 text-[#746E80]"><strong>Interpretation to review:</strong> {item.interpretation}</p>
-      {item.evidence_image_ids.length > 0 && (
-        <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
-          {item.evidence_image_ids.flatMap((id) => {
-            const image = imageById.get(id)
-            return image ? [<img key={id} src={image.url} alt={image.alt || "Website evidence"} referrerPolicy="no-referrer" className="size-20 shrink-0 rounded-xl border border-[#E7E1F7] object-cover" />] : []
-          })}
-        </div>
-      )}
-    </article>
-  )
+  return result
 }
 
 export function WebsiteImportAssist() {
-  const [websiteUrl, setWebsiteUrl] = useState("")
-  const [ownershipConfirmed, setOwnershipConfirmed] = useState(false)
+  const [capabilities, setCapabilities] = useState<KleioAssistCapabilities | null>(null)
+  const [url, setUrl] = useState("")
+  const [permission, setPermission] = useState(false)
+  const [rights, setRights] = useState(false)
   const [session, setSession] = useState<WebsiteImportSession | null>(null)
-  const [selectedProfileFields, setSelectedProfileFields] = useState<Set<string>>(new Set())
+  const [selectedFields, setSelectedFields] = useState<Set<string>>(new Set())
   const [profileEdits, setProfileEdits] = useState<Record<string, string>>({})
   const [selectedImages, setSelectedImages] = useState<Set<string>>(new Set())
-  const [artworkDrafts, setArtworkDrafts] = useState<Record<string, WebsiteArtworkDraft>>({})
+  const [artworks, setArtworks] = useState<Record<string, WebsiteArtworkDraft>>({})
   const [analysis, setAnalysis] = useState<VisualPracticeAnalysis | null>(null)
-  const [analysisDraftId, setAnalysisDraftId] = useState("")
+  const [analysisId, setAnalysisId] = useState("")
+  const [analysisSummary, setAnalysisSummary] = useState("")
+  const [reviews, setReviews] = useState<Record<string, Review>>({})
+  const [reviewSaved, setReviewSaved] = useState(false)
   const [draftType, setDraftType] = useState<KleioAssistDraftType>("professional_bio")
-  const [wordLimit, setWordLimit] = useState(200)
   const [artistContext, setArtistContext] = useState("")
   const [opportunityContext, setOpportunityContext] = useState("")
-  const [draftResult, setDraftResult] = useState<KleioDraftResult | null>(null)
+  const [wordLimit, setWordLimit] = useState(200)
+  const [draft, setDraft] = useState<KleioDraftResult | null>(null)
   const [draftId, setDraftId] = useState("")
-  const [selectedDraftOption, setSelectedDraftOption] = useState(0)
   const [editedDraft, setEditedDraft] = useState("")
   const [working, setWorking] = useState("")
-  const [status, setStatus] = useState("")
+  const [notice, setNotice] = useState("")
   const [error, setError] = useState("")
 
-  const imageById = useMemo(() => new Map((session?.image_candidates ?? []).map((item) => [item.id, item])), [session])
+  const imageById = useMemo(() => new Map((session?.image_candidates || []).map((image) => [image.id, image])), [session])
+  const maxImages = capabilities?.max_images_per_analysis || 8
+  const reviewEntries = Object.entries(reviews)
+  const reviewComplete = reviewEntries.length > 0 && reviewEntries.every(([, item]) => item.decision !== "pending")
+  const providerReady = capabilities?.configured === true
+
+  useEffect(() => { void loadKleioAssistCapabilities().then(setCapabilities).catch(() => setCapabilities(null)) }, [])
 
   async function analyze() {
-    if (!websiteUrl.trim() || !ownershipConfirmed || working) return
-    setWorking("website")
-    setError("")
-    setStatus("KLEIO is reviewing the public pages, text, metadata, captions, and portfolio images…")
+    if (!url.trim() || !permission || working) return
+    setWorking("website"); setError(""); setNotice("Connecting securely and reviewing public pages, captions, metadata, and images…")
     try {
-      const next = await analyzeArtistWebsite(websiteUrl.trim(), ownershipConfirmed)
+      const next = await analyzeArtistWebsite(url.trim(), true)
       setSession(next)
-      const profileFields = PROFILE_FIELDS.filter(([key]) => next.profile_suggestions[key].status !== "missing").map(([key]) => key)
-      setSelectedProfileFields(new Set(profileFields))
-      setProfileEdits(Object.fromEntries(PROFILE_FIELDS.map(([key]) => [key, fieldValue(next.profile_suggestions[key])])))
-      const candidates = next.image_candidates.slice(0, 12)
-      setSelectedImages(new Set(candidates.map((item) => item.id)))
-      setArtworkDrafts(Object.fromEntries(next.image_candidates.map((item) => [item.id, initialArtworkDraft(item)])))
-      setAnalysis(null)
-      setDraftResult(null)
-      setStatus(`Analysis ready: ${next.pages.length} public page${next.pages.length === 1 ? "" : "s"} and ${next.image_candidates.length} image candidate${next.image_candidates.length === 1 ? "" : "s"} found. Nothing has been saved to the Passport.`)
-    } catch (reason) {
-      setError(message(reason, "KLEIO could not analyze this website."))
-      setStatus("")
-    } finally {
-      setWorking("")
-    }
+      const available = profileFields.filter(([key]) => next.profile_suggestions[key].status !== "missing").map(([key]) => key)
+      setSelectedFields(new Set(available))
+      setProfileEdits(Object.fromEntries(profileFields.map(([key]) => [key, fieldValue(next.profile_suggestions[key])])))
+      setSelectedImages(new Set(next.image_candidates.slice(0, maxImages).map((item) => item.id)))
+      setArtworks(Object.fromEntries(next.image_candidates.map((item) => [item.id, initialArtwork(item)])))
+      setAnalysis(null); setReviews({}); setReviewSaved(false); setDraft(null)
+      setNotice(`Review ready: ${next.pages.length} public pages and ${next.image_candidates.length} image candidates found. Nothing has been saved or published.`)
+    } catch (reason) { setError(errorText(reason, "KLEIO could not analyze this website.")); setNotice("") }
+    finally { setWorking("") }
   }
 
-  function toggleProfileField(key: string) {
-    setSelectedProfileFields((current) => {
-      const next = new Set(current)
-      if (next.has(key)) next.delete(key)
-      else next.add(key)
-      return next
-    })
-  }
-
-  function toggleImage(id: string) {
-    setSelectedImages((current) => {
-      const next = new Set(current)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      return next
-    })
-  }
-
-  function updateArtwork(id: string, key: keyof WebsiteArtworkDraft, value: string) {
-    setArtworkDrafts((current) => ({
-      ...current,
-      [id]: {
-        ...(current[id] ?? initialArtworkDraft(imageById.get(id)!)),
-        [key]: key === "tags" ? value.split(/[,;\n]/).map((entry) => entry.trim()).filter(Boolean) : value,
-      },
-    }))
-  }
-
-  async function applyProfile() {
+  async function saveProfile() {
     if (!session || working) return
-    setWorking("profile")
-    setError("")
+    setWorking("profile"); setError("")
     try {
-      await applyWebsiteProfileSuggestions({
-        suggestions: session.profile_suggestions,
-        selectedFields: Array.from(selectedProfileFields),
-        editedValues: profileEdits,
-      })
-      setStatus("The selected, artist-reviewed profile fields were saved privately to your Creative Passport.")
-    } catch (reason) {
-      setError(message(reason, "The selected profile fields could not be saved."))
-    } finally {
-      setWorking("")
-    }
+      await applyWebsiteProfileSuggestions({ suggestions: session.profile_suggestions, selectedFields: [...selectedFields], editedValues: profileEdits })
+      setNotice("The selected, artist-reviewed profile fields were saved privately.")
+    } catch (reason) { setError(errorText(reason, "Profile fields could not be saved.")) }
+    finally { setWorking("") }
   }
 
-  async function runVisualAnalysis() {
-    if (!session || !selectedImages.size || working) return
-    setWorking("vision")
-    setError("")
-    setStatus("KLEIO Assist is examining the selected works together for recurring visual language, themes, motifs, palette, composition, and atmosphere…")
+  async function runVision() {
+    if (!session || !selectedImages.size || !providerReady || working) return
+    setWorking("vision"); setError(""); setNotice("Examining the selected works together for recurring visual language, motifs, palette, composition, and atmosphere…")
     try {
-      const result = await analyzeVisualPractice(session.id, Array.from(selectedImages).slice(0, 12))
-      setAnalysis(result.analysis)
-      setAnalysisDraftId(result.draftId)
-      setStatus("Visual-practice analysis is ready for artist review. Every interpretation remains editable and unconfirmed.")
-    } catch (reason) {
-      setError(message(reason, "KLEIO Assist could not analyze the selected body of work."))
-      setStatus("")
-    } finally {
-      setWorking("")
-    }
+      const result = await analyzeVisualPractice(session.id, [...selectedImages].slice(0, maxImages))
+      setAnalysis(result.analysis); setAnalysisId(result.draftId); setAnalysisSummary(result.analysis.summary)
+      setReviews(initialReviews(result.analysis)); setReviewSaved(false)
+      setNotice("Visual analysis is ready. Confirm, edit, or reject every item before it may influence writing.")
+    } catch (reason) { setError(errorText(reason, "The visual analysis could not be completed.")); setNotice("") }
+    finally { setWorking("") }
+  }
+
+  async function saveReview() {
+    if (!analysisId || !reviewComplete || working) return
+    setWorking("review"); setError("")
+    try {
+      const result = await reviewVisualPracticeAnalysis({
+        draftId: analysisId,
+        summary: analysisSummary,
+        items: reviewEntries.map(([id, item]) => ({ id, decision: item.decision as VisualReviewDecision, observation: item.observation, interpretation: item.interpretation, use_in_drafting: item.useInDrafting })),
+      })
+      setAnalysis(result.approvedAnalysis); setReviewSaved(true)
+      setNotice("Your review was saved. Only the observations you allowed may influence drafts.")
+    } catch (reason) { setError(errorText(reason, "The visual review could not be saved.")) }
+    finally { setWorking("") }
   }
 
   async function generateDraft() {
-    if (!session || working) return
-    setWorking("draft")
-    setError("")
-    setStatus("KLEIO Assist is preparing three evidence-grounded draft directions…")
+    if (!session || !providerReady || working || (analysisId && !reviewSaved)) return
+    setWorking("draft"); setError(""); setNotice("Preparing two evidence-grounded writing directions…")
     try {
       const result = await generateKleioAssistDraft({
-        sessionId: session.id,
-        analysisDraftId,
-        draftType,
-        wordLimit,
-        artistContext,
-        opportunityContext,
+        sessionId: session.id, analysisDraftId: reviewSaved ? analysisId : undefined, draftType, wordLimit,
+        artistContext, opportunityContext,
+        approvedProfileEvidence: buildApprovedProfileEvidence({ suggestions: session.profile_suggestions, selectedFields: [...selectedFields], editedValues: profileEdits }),
       })
-      setDraftId(result.draftId)
-      setDraftResult(result.result)
-      setSelectedDraftOption(result.result.recommended_option)
-      setEditedDraft(result.result.options[result.result.recommended_option]?.text ?? "")
-      setStatus("Three draft directions are ready. Choose one, edit it, and approve only when it reflects the artist accurately.")
-    } catch (reason) {
-      setError(message(reason, "KLEIO Assist could not prepare this draft."))
-      setStatus("")
-    } finally {
-      setWorking("")
-    }
+      setDraftId(result.draftId); setDraft(result.result)
+      setEditedDraft(result.result.options[result.result.recommended_option]?.text || "")
+      setNotice("Two distinct drafts are ready. Edit and approve only the version that represents the artist accurately.")
+    } catch (reason) { setError(errorText(reason, "A draft could not be prepared.")); setNotice("") }
+    finally { setWorking("") }
   }
 
-  async function approveDraft() {
+  async function saveDraft() {
     if (!draftId || !editedDraft.trim() || working) return
-    setWorking("approve-draft")
-    setError("")
-    try {
-      await updateKleioAssistDraft({ draftId, artistEditedText: editedDraft.trim(), status: "approved" })
-      setStatus("This version was marked artist-approved and remains private. It has not been submitted anywhere.")
-    } catch (reason) {
-      setError(message(reason, "The approved draft could not be saved."))
-    } finally {
-      setWorking("")
-    }
+    setWorking("approve-draft"); setError("")
+    try { await updateKleioAssistDraft({ draftId, artistEditedText: editedDraft.trim(), status: "approved" }); setNotice("The artist-approved draft remains private and was not submitted anywhere.") }
+    catch (reason) { setError(errorText(reason, "The draft could not be approved.")) }
+    finally { setWorking("") }
   }
 
-  async function approveWorks() {
-    if (!session || !selectedImages.size || working) return
-    setWorking("works")
-    setError("")
-    setStatus("KLEIO is copying and approving the selected website images one at a time…")
-    const works = Array.from(selectedImages).flatMap((id) => {
-      const candidate = imageById.get(id)
-      const draft = artworkDrafts[id]
-      return candidate && draft ? [{ candidate, draft }] : []
-    })
+  async function removeDraft() {
+    if (!draftId || working || !window.confirm("Delete this private generated draft?")) return
+    setWorking("delete-draft")
+    try { await deleteKleioAssistDraft(draftId); setDraftId(""); setDraft(null); setEditedDraft(""); setNotice("The generated draft was deleted.") }
+    catch (reason) { setError(errorText(reason, "The draft could not be deleted.")) }
+    finally { setWorking("") }
+  }
+
+  async function saveWorks() {
+    if (!session || !rights || !selectedImages.size || working) return
+    setWorking("works"); setError("")
     try {
+      const works = [...selectedImages].flatMap((id) => { const candidate = imageById.get(id); const record = artworks[id]; return candidate && record ? [{ candidate, draft: record }] : [] })
       const results = await approveWebsiteArtworkImports({ sessionId: session.id, works })
-      const failures = results.filter((result) => result.error)
-      const successes = results.length - failures.length
-      if (failures.length) setError(failures.map((failure) => failure.error).filter(Boolean).join(" "))
-      setStatus(`${successes} artist-reviewed work${successes === 1 ? " was" : "s were"} added to the private Creative Passport portfolio.${failures.length ? ` ${failures.length} need attention.` : ""}`)
-    } catch (reason) {
-      setError(message(reason, "The selected works could not be approved."))
-      setStatus("")
-    } finally {
-      setWorking("")
-    }
+      const failed = results.filter((item) => item.error)
+      if (failed.length) setError(failed.map((item) => item.error).filter(Boolean).join(" "))
+      setNotice(`${results.length - failed.length} artist-reviewed works were added privately.${failed.length ? ` ${failed.length} need attention.` : ""}`)
+    } catch (reason) { setError(errorText(reason, "The selected works could not be approved.")) }
+    finally { setWorking("") }
   }
 
-  return (
-    <section className="rounded-[28px] border border-[#E2DCF1] bg-white p-5 shadow-[0_22px_70px_rgba(82,64,130,0.07)] sm:p-7" aria-labelledby="website-import-title">
-      <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-        <div className="max-w-3xl">
-          <p className="text-[0.68rem] font-semibold uppercase tracking-[0.17em] text-[#75639E]">Website Import Assist</p>
-          <h2 id="website-import-title" className="mt-2 font-serif text-2xl font-semibold tracking-[-0.03em] text-[#292631] sm:text-3xl">Let KLEIO review your existing artist website</h2>
-          <p className="mt-3 text-sm leading-7 text-[#746E80]">KLEIO collects public evidence first, then can examine selected works with a visual eye. Extracted facts, visual interpretations, and polished drafts stay clearly separated until you edit and approve them.</p>
-        </div>
-        <div className="grid gap-2 text-xs font-semibold text-[#625C70]">
-          <span className="inline-flex items-center gap-2"><ShieldCheck className="size-4 text-[#6A5896]" />Nothing imports or publishes automatically</span>
-          <span className="inline-flex items-center gap-2"><Eye className="size-4 text-[#6A5896]" />Interpretations always require artist review</span>
-        </div>
-      </div>
+  return <section className="rounded-[28px] border border-[#E2DCF1] bg-white p-5 shadow-[0_22px_70px_rgba(82,64,130,0.07)] sm:p-7" aria-labelledby="website-import-title">
+    <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+      <div className="max-w-3xl"><p className="text-[0.68rem] font-semibold uppercase tracking-[0.17em] text-[#75639E]">Website Import Assist</p><h2 id="website-import-title" className="mt-2 font-serif text-3xl font-semibold">Let KLEIO review your artist website</h2><p className="mt-3 text-sm leading-7 text-[#746E80]">KLEIO separates exact source evidence, visual interpretation, and writing. You decide what is accurate and what may be used.</p></div>
+      <div className="grid gap-2 text-xs font-semibold text-[#625C70]"><span className="inline-flex items-center gap-2"><ShieldCheck className="size-4" />Nothing imports or publishes automatically</span><span className="inline-flex items-center gap-2"><Eye className="size-4" />Interpretations require artist review</span></div>
+    </div>
+    <div className="mt-5 rounded-2xl border border-[#E7E1F7] bg-[#FAF9FD] p-4 text-xs leading-5 text-[#625C70]"><strong>Beta AI status:</strong> {capabilities ? capabilities.configured ? `${capabilities.provider} is ready. Paid billing never activates automatically.` : "Website extraction works now; visual analysis and drafting remain capability-gated until private Cloudflare credentials are configured." : "Checking the private AI capability…"}</div>
+    <div className="mt-5 grid gap-3 lg:grid-cols-[1fr_auto]"><label className="grid gap-1.5 text-xs font-semibold">Public artist website<input className={input} type="url" autoComplete="url" placeholder="https://yourportfolio.com" value={url} onChange={(event) => setUrl(event.target.value)} /></label><button className={`${primary} lg:self-end`} disabled={!url.trim() || !permission || Boolean(working)} onClick={() => void analyze()}>{working === "website" ? <Loader2 className="size-4 animate-spin" /> : <Globe2 className="size-4" />}Analyze website</button></div>
+    <label className="mt-3 flex items-start gap-3 rounded-xl border border-[#E7E1F7] bg-[#FAF9FD] p-3 text-xs leading-5"><input type="checkbox" className="mt-0.5 size-4 accent-[#5B4B8A]" checked={permission} onChange={(event) => setPermission(event.target.checked)} /><span>I own this website or have permission to analyze its public content inside my private KLEIO workspace.</span></label>
+    {(notice || error) && <div className={`mt-4 rounded-xl border p-3 text-sm ${error ? "border-red-200 bg-red-50 text-red-700" : "border-[#E2DCF1] bg-[#F9F7FC] text-[#625C70]"}`} role={error ? "alert" : "status"} aria-live="polite">{error || notice}</div>}
 
-      <div className="mt-6 grid gap-3 lg:grid-cols-[1fr_auto]">
-        <label className="grid gap-1.5 text-xs font-semibold text-[#625C70]">Public artist website
-          <input className={input} type="url" inputMode="url" placeholder="https://yourportfolio.com" value={websiteUrl} onChange={(event) => setWebsiteUrl(event.target.value)} />
-        </label>
-        <button type="button" className={`${primary} lg:self-end`} disabled={!websiteUrl.trim() || !ownershipConfirmed || Boolean(working)} onClick={() => void analyze()}>
-          {working === "website" ? <Loader2 className="size-4 animate-spin" /> : <Globe2 className="size-4" />}Analyze website
-        </button>
-      </div>
-      <label className="mt-3 flex items-start gap-3 rounded-xl border border-[#E7E1F7] bg-[#FAF9FD] p-3 text-xs leading-5 text-[#625C70]">
-        <input type="checkbox" className="mt-0.5 size-4 accent-[#5B4B8A]" checked={ownershipConfirmed} onChange={(event) => setOwnershipConfirmed(event.target.checked)} />
-        <span>I own this website or have permission to import its public content and images into my private KLEIO workspace.</span>
-      </label>
+    {session && <div className="mt-8 space-y-8">
+      <section><div className="flex flex-wrap items-end justify-between gap-3"><div><p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#75639E]">1 · Source evidence</p><h3 className="mt-1 font-serif text-2xl font-semibold">Review profile information</h3></div><button className={secondary} disabled={!selectedFields.size || Boolean(working)} onClick={() => void saveProfile()}>{working === "profile" ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />}Save selected fields</button></div><div className="mt-4 grid gap-4 lg:grid-cols-2">{profileFields.map(([key, label]) => { const field = session.profile_suggestions[key]; const multiline = ["bio", "artist_statement", "practice_description"].includes(key); return <article key={key} className="rounded-2xl border border-[#E7E1F7] p-4"><label className="flex items-center gap-2 text-sm font-semibold"><input type="checkbox" checked={selectedFields.has(key)} disabled={field.status === "missing"} onChange={() => setSelectedFields((current) => { const next = new Set(current); next.has(key) ? next.delete(key) : next.add(key); return next })} />{label}<span className="ml-auto text-[0.65rem] text-[#81788E]">{field.status === "extracted" ? "Found on website" : field.status === "suggested" ? "KLEIO suggestion" : "Missing"}</span></label>{multiline ? <textarea className={`${textarea} mt-3`} value={profileEdits[key] || ""} onChange={(event) => setProfileEdits((current) => ({ ...current, [key]: event.target.value }))} /> : <input className={`${input} mt-3`} value={profileEdits[key] || ""} onChange={(event) => setProfileEdits((current) => ({ ...current, [key]: event.target.value }))} />}<p className="mt-2 text-xs text-[#81788E]">{field.source}</p></article> })}</div></section>
 
-      {(status || error) && <div className={`mt-5 rounded-xl border p-3 text-sm ${error ? "border-red-200 bg-red-50 text-red-700" : "border-[#E2DCF1] bg-[#F9F7FC] text-[#625C70]"}`} role={error ? "alert" : "status"}>{error || status}</div>}
+      <section><div className="flex flex-wrap items-end justify-between gap-3"><div><p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#75639E]">2 · Visual evidence</p><h3 className="mt-1 font-serif text-2xl font-semibold">Choose representative works</h3><p className="mt-2 text-sm text-[#746E80]">Select up to {maxImages} images. Confirm titles before adding works.</p></div><div className="flex flex-wrap gap-2"><button className={secondary} disabled={!providerReady || !selectedImages.size || Boolean(working)} onClick={() => void runVision()}>{working === "vision" ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}Analyze selected works</button><button className={primary} disabled={!rights || !selectedImages.size || Boolean(working)} onClick={() => void saveWorks()}>{working === "works" ? <Loader2 className="size-4 animate-spin" /> : <ImagePlus className="size-4" />}Approve and add works</button></div></div><div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">{session.image_candidates.map((candidate) => { const selected = selectedImages.has(candidate.id); const record = artworks[candidate.id] || initialArtwork(candidate); return <article key={candidate.id} className={`overflow-hidden rounded-2xl border ${selected ? "border-[#A997E8]" : "border-[#E7E1F7]"}`}><button className="relative aspect-[4/3] w-full bg-[#F3F0F8]" aria-pressed={selected} onClick={() => setSelectedImages((current) => { const next = new Set(current); next.has(candidate.id) ? next.delete(candidate.id) : next.size < maxImages && next.add(candidate.id); return next })}><img src={candidate.url} alt={candidate.alt || "Website artwork candidate"} referrerPolicy="no-referrer" className="size-full object-cover" /><span className="absolute right-3 top-3 rounded-full bg-white p-2">{selected ? <Check className="size-4" /> : <span className="block size-2 rounded-full bg-[#746E80]" />}</span></button><div className="grid gap-3 p-4"><label className="grid gap-1 text-xs font-semibold">Artist-confirmed title<input className={input} value={record.title} onChange={(event) => setArtworks((current) => ({ ...current, [candidate.id]: { ...record, title: event.target.value } }))} /></label><label className="grid gap-1 text-xs font-semibold">Year and medium<div className="grid grid-cols-2 gap-2"><input className={input} value={record.year} onChange={(event) => setArtworks((current) => ({ ...current, [candidate.id]: { ...record, year: event.target.value } }))} /><input className={input} value={record.medium} onChange={(event) => setArtworks((current) => ({ ...current, [candidate.id]: { ...record, medium: event.target.value } }))} /></div></label><p className="break-all text-[0.7rem] text-[#81788E]">{candidate.sourcePage}</p></div></article> })}</div><label className="mt-4 flex items-start gap-3 rounded-xl border border-[#E7E1F7] bg-[#FAF9FD] p-3 text-xs leading-5"><input type="checkbox" className="mt-0.5 size-4 accent-[#5B4B8A]" checked={rights} onChange={(event) => setRights(event.target.checked)} /><span>I confirm that I own or have permission to use the selected images and information in my KLEIO profile and applications.</span></label></section>
 
-      {session && (
-        <div className="mt-7 space-y-8">
-          <section aria-labelledby="website-profile-review">
-            <div className="flex flex-wrap items-end justify-between gap-3">
-              <div><p className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-[#75639E]">Exact text and structured evidence</p><h3 id="website-profile-review" className="mt-1 font-serif text-2xl font-semibold">Review profile information</h3></div>
-              <button type="button" className={secondary} disabled={!selectedProfileFields.size || Boolean(working)} onClick={() => void applyProfile()}>{working === "profile" ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />}Save selected fields</button>
-            </div>
-            <div className="mt-4 grid gap-4 lg:grid-cols-2">
-              {PROFILE_FIELDS.map(([key, label]) => {
-                const field = session.profile_suggestions[key]
-                const multiline = ["bio", "artist_statement", "practice_description"].includes(key)
-                return (
-                  <article key={key} className={`rounded-2xl border p-4 ${selectedProfileFields.has(key) ? "border-[#B9A9DE] bg-[#FCFAFF]" : "border-[#E7E1F7] bg-white"}`}>
-                    <div className="flex items-start gap-3">
-                      <input type="checkbox" className="mt-1 size-4 accent-[#5B4B8A]" checked={selectedProfileFields.has(key)} disabled={field.status === "missing"} onChange={() => toggleProfileField(key)} aria-label={`Use ${label}`} />
-                      <div className="min-w-0 flex-1">
-                        <div className="flex flex-wrap items-center justify-between gap-2"><label htmlFor={`website-${key}`} className="text-sm font-semibold text-[#292631]">{label}</label><EvidenceBadge field={field} /></div>
-                        {multiline ? <textarea id={`website-${key}`} className={`${textarea} mt-3`} value={profileEdits[key] ?? ""} onChange={(event) => setProfileEdits((current) => ({ ...current, [key]: event.target.value }))} /> : <input id={`website-${key}`} className={`${input} mt-3`} value={profileEdits[key] ?? ""} onChange={(event) => setProfileEdits((current) => ({ ...current, [key]: event.target.value }))} />}
-                        <p className="mt-2 text-xs leading-5 text-[#81788E]">{field.source}</p>
-                      </div>
-                    </div>
-                  </article>
-                )
-              })}
-            </div>
-          </section>
+      {analysis && <section className="rounded-[24px] border border-[#DCD4EF] bg-[#FAF8FE] p-5"><div className="flex flex-wrap items-end justify-between gap-3"><div><p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#75639E]">3 · Artist interpretation review</p><h3 className="mt-1 font-serif text-2xl font-semibold">Confirm, edit, or reject KLEIO’s reading</h3></div><button className={primary} disabled={!reviewComplete || Boolean(working)} onClick={() => void saveReview()}>{working === "review" ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />}Save completed review</button></div><label className="mt-4 grid gap-1 text-xs font-semibold">Artist-reviewed summary<textarea className={textarea} value={analysisSummary} onChange={(event) => { setAnalysisSummary(event.target.value); setReviewSaved(false) }} /></label><p className="mt-2 text-xs text-[#81788E]">{reviewEntries.filter(([, item]) => item.decision !== "pending").length} of {reviewEntries.length} observations reviewed</p><div className="mt-5 space-y-5">{analysisSections.map(([section, label]) => { const items = analysis[section]; if (!Array.isArray(items) || !items.length) return null; return <div key={section}><h4 className="mb-3 text-sm font-semibold uppercase tracking-[0.1em]">{label}</h4><div className="grid gap-3 lg:grid-cols-2">{(items as VisualEvidenceObservation[]).map((item, index) => { const id = reviewId(String(section), index); const review = reviews[id]; if (!review) return null; const set = (next: Partial<Review>) => { setReviews((current) => ({ ...current, [id]: { ...review, ...next } })); setReviewSaved(false) }; return <article key={id} className={`rounded-2xl border bg-white p-4 ${review.decision === "pending" ? "border-amber-300" : "border-[#B9A9DE]"}`}><div className="flex justify-between gap-2"><strong>{item.label}</strong><span className="text-xs">{review.decision === "pending" ? "Review required" : review.decision}</span></div><label className="mt-3 grid gap-1 text-xs font-semibold">Direct observation<textarea className={textarea} value={review.observation} onChange={(event) => set({ observation: event.target.value, decision: "edited" })} /></label><label className="mt-3 grid gap-1 text-xs font-semibold">KLEIO interpretation — confirm, edit, or reject<textarea className={textarea} value={review.interpretation} onChange={(event) => set({ interpretation: event.target.value, decision: "edited" })} /></label><div className="mt-3 flex flex-wrap gap-2"><button className={review.decision === "confirmed" ? primary : secondary} onClick={() => set({ decision: "confirmed" })}><Check className="size-4" />Confirm</button><button className={review.decision === "edited" ? primary : secondary} onClick={() => set({ decision: "edited" })}><PenLine className="size-4" />Use edits</button><button className={review.decision === "rejected" ? primary : secondary} onClick={() => set({ decision: "rejected", useInDrafting: false })}><X className="size-4" />Reject</button></div><label className="mt-3 flex gap-2 text-xs"><input type="checkbox" disabled={review.decision === "pending" || review.decision === "rejected"} checked={review.useInDrafting} onChange={(event) => set({ useInDrafting: event.target.checked })} />Allow this reviewed item to influence writing drafts.</label></article> })}</div></div> })}</div></section>}
 
-          <section aria-labelledby="website-image-review">
-            <div className="flex flex-wrap items-end justify-between gap-3">
-              <div><p className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-[#75639E]">Visual portfolio evidence</p><h3 id="website-image-review" className="mt-1 font-serif text-2xl font-semibold">Choose and edit portfolio images</h3><p className="mt-2 text-sm text-[#746E80]">Select the works that represent the artist. Titles, dates, mediums, dimensions, descriptions, and alt text remain editable before approval.</p></div>
-              <div className="flex flex-wrap gap-2"><button type="button" className={secondary} disabled={!selectedImages.size || Boolean(working)} onClick={() => void runVisualAnalysis()}>{working === "vision" ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}Analyze selected works</button><button type="button" className={primary} disabled={!selectedImages.size || Boolean(working)} onClick={() => void approveWorks()}>{working === "works" ? <Loader2 className="size-4 animate-spin" /> : <ImagePlus className="size-4" />}Approve and add works</button></div>
-            </div>
-            <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-              {session.image_candidates.map((candidate) => {
-                const draft = artworkDrafts[candidate.id] ?? initialArtworkDraft(candidate)
-                const selected = selectedImages.has(candidate.id)
-                return (
-                  <article key={candidate.id} className={`overflow-hidden rounded-2xl border ${selected ? "border-[#A997E8] shadow-[0_12px_40px_rgba(82,64,130,0.10)]" : "border-[#E7E1F7]"}`}>
-                    <button type="button" className="relative block aspect-[4/3] w-full overflow-hidden bg-[#F3F0F8] text-left" onClick={() => toggleImage(candidate.id)} aria-pressed={selected}>
-                      <img src={candidate.url} alt={candidate.alt || candidate.proposed.altText || "Website portfolio candidate"} referrerPolicy="no-referrer" className="size-full object-cover" />
-                      <span className={`absolute right-3 top-3 grid size-8 place-items-center rounded-full border ${selected ? "border-[#5B4B8A] bg-[#5B4B8A] text-white" : "border-white/80 bg-white/90 text-[#746E80]"}`}>{selected ? <Check className="size-4" /> : <span className="size-2 rounded-full bg-current" />}</span>
-                    </button>
-                    <div className="grid gap-3 p-4">
-                      <label className="grid gap-1 text-xs font-semibold text-[#625C70]">Artist-confirmed title<input className={input} value={draft.title} onChange={(event) => updateArtwork(candidate.id, "title", event.target.value)} /></label>
-                      <div className="grid grid-cols-2 gap-3"><label className="grid gap-1 text-xs font-semibold text-[#625C70]">Year<input className={input} value={draft.year} onChange={(event) => updateArtwork(candidate.id, "year", event.target.value)} /></label><label className="grid gap-1 text-xs font-semibold text-[#625C70]">Medium<input className={input} value={draft.medium} onChange={(event) => updateArtwork(candidate.id, "medium", event.target.value)} /></label></div>
-                      <label className="grid gap-1 text-xs font-semibold text-[#625C70]">Dimensions<input className={input} value={draft.dimensions} onChange={(event) => updateArtwork(candidate.id, "dimensions", event.target.value)} /></label>
-                      <label className="grid gap-1 text-xs font-semibold text-[#625C70]">Description<textarea className={textarea} value={draft.description} onChange={(event) => updateArtwork(candidate.id, "description", event.target.value)} /></label>
-                      <label className="grid gap-1 text-xs font-semibold text-[#625C70]">Accessible image description<textarea className={textarea} value={draft.altText} onChange={(event) => updateArtwork(candidate.id, "altText", event.target.value)} /></label>
-                      <p className="text-[0.7rem] leading-5 text-[#8A8296]">Source: {candidate.sourcePage}</p>
-                    </div>
-                  </article>
-                )
-              })}
-            </div>
-          </section>
-
-          {analysis && (
-            <section aria-labelledby="visual-practice-review" className="rounded-[24px] border border-[#DCD4EF] bg-[#FAF8FE] p-5 sm:p-6">
-              <p className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-[#75639E]">KLEIO interpretation — confirm or edit</p>
-              <h3 id="visual-practice-review" className="mt-1 font-serif text-2xl font-semibold">Visual-practice reading</h3>
-              <p className="mt-3 max-w-4xl text-sm leading-7 text-[#625C70]">{analysis.summary}</p>
-              <div className="mt-5 space-y-6">
-                {ANALYSIS_SECTIONS.map(([key, label]) => {
-                  const items = analysis[key]
-                  if (!Array.isArray(items) || !items.length) return null
-                  return <div key={key}><h4 className="mb-3 text-sm font-semibold uppercase tracking-[0.1em] text-[#625C70]">{label}</h4><div className="grid gap-3 lg:grid-cols-2">{(items as VisualEvidenceObservation[]).map((item, index) => <ObservationCard key={`${key}-${index}`} item={item} imageById={imageById} />)}</div></div>
-                })}
-              </div>
-              {analysis.questions_for_artist.length > 0 && <div className="mt-6 rounded-2xl border border-[#E7E1F7] bg-white p-4"><h4 className="font-semibold">Questions that would make the writing more accurate</h4><ul className="mt-2 list-disc space-y-1 pl-5 text-sm leading-6 text-[#746E80]">{analysis.questions_for_artist.map((question) => <li key={question}>{question}</li>)}</ul></div>}
-            </section>
-          )}
-
-          <section aria-labelledby="kleio-drafting-studio" className="rounded-[24px] border border-[#DCD4EF] bg-white p-5 sm:p-6">
-            <div className="flex flex-wrap items-end justify-between gap-3"><div><p className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-[#75639E]">Evidence-grounded writing</p><h3 id="kleio-drafting-studio" className="mt-1 font-serif text-2xl font-semibold">KLEIO Assist Drafting Studio</h3><p className="mt-2 text-sm leading-6 text-[#746E80]">Create polished options from the collected facts and artist-reviewed visual analysis. Nothing is submitted automatically.</p></div><button type="button" className={primary} disabled={Boolean(working)} onClick={() => void generateDraft()}>{working === "draft" ? <Loader2 className="size-4 animate-spin" /> : <PenLine className="size-4" />}Generate three options</button></div>
-            <div className="mt-5 grid gap-4 md:grid-cols-3">
-              <label className="grid gap-1.5 text-xs font-semibold text-[#625C70]">Draft type<select className={input} value={draftType} onChange={(event) => setDraftType(event.target.value as KleioAssistDraftType)}><option value="short_bio">Short bio</option><option value="professional_bio">Professional bio</option><option value="artist_statement">Artist statement</option><option value="practice_description">Practice description</option><option value="artwork_description">Artwork description</option><option value="submission_letter">Submission letter</option><option value="application_answer">Application answer</option></select></label>
-              <label className="grid gap-1.5 text-xs font-semibold text-[#625C70]">Maximum words<input className={input} type="number" min={40} max={1200} value={wordLimit} onChange={(event) => setWordLimit(Number(event.target.value))} /></label>
-              <label className="grid gap-1.5 text-xs font-semibold text-[#625C70]">Artist context<textarea className={textarea} placeholder="Add facts, intentions, preferred language, or corrections the website does not contain." value={artistContext} onChange={(event) => setArtistContext(event.target.value)} /></label>
-            </div>
-            {(draftType === "submission_letter" || draftType === "application_answer") && <label className="mt-4 grid gap-1.5 text-xs font-semibold text-[#625C70]">Opportunity prompt or context<textarea className={textarea} placeholder="Paste the verified opportunity prompt, question, or organization context." value={opportunityContext} onChange={(event) => setOpportunityContext(event.target.value)} /></label>}
-
-            {draftResult && (
-              <div className="mt-6 space-y-4">
-                <div className="grid gap-3 lg:grid-cols-3">{draftResult.options.map((option, index) => <button key={`${option.label}-${index}`} type="button" onClick={() => { setSelectedDraftOption(index); setEditedDraft(option.text) }} className={`rounded-2xl border p-4 text-left ${selectedDraftOption === index ? "border-[#A997E8] bg-[#FAF8FE]" : "border-[#E7E1F7] bg-white"}`}><p className="font-semibold text-[#292631]">{option.label}</p><p className="mt-2 line-clamp-5 text-sm leading-6 text-[#746E80]">{option.text}</p><p className="mt-3 text-[0.7rem] font-semibold text-[#81788E]">{option.word_count} words</p></button>)}</div>
-                <label className="grid gap-1.5 text-xs font-semibold text-[#625C70]">Artist-edited final version<textarea className={`${textarea} min-h-56`} value={editedDraft} onChange={(event) => setEditedDraft(event.target.value)} /></label>
-                <div className="flex flex-wrap items-center justify-between gap-3"><p className="text-xs leading-5 text-[#81788E]">Saving approval keeps the draft private and records that the artist reviewed it. It does not send an application.</p><button type="button" className={secondary} disabled={!editedDraft.trim() || Boolean(working)} onClick={() => void approveDraft()}>{working === "approve-draft" ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />}Mark artist-approved</button></div>
-              </div>
-            )}
-          </section>
-        </div>
-      )}
-    </section>
-  )
+      <section className="rounded-[24px] border border-[#DCD4EF] p-5"><div className="flex flex-wrap items-end justify-between gap-3"><div><p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#75639E]">4 · Evidence-grounded writing</p><h3 className="mt-1 font-serif text-2xl font-semibold">KLEIO Assist Drafting Studio</h3></div><button className={primary} disabled={!providerReady || Boolean(working) || Boolean(analysisId && !reviewSaved)} onClick={() => void generateDraft()}>{working === "draft" ? <Loader2 className="size-4 animate-spin" /> : <PenLine className="size-4" />}Generate two options</button></div>{analysisId && !reviewSaved && <p className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs">Complete the visual review before its interpretations can influence writing.</p>}<div className="mt-4 grid gap-3 md:grid-cols-3"><label className="grid gap-1 text-xs font-semibold">Draft type<select className={input} value={draftType} onChange={(event) => setDraftType(event.target.value as KleioAssistDraftType)}><option value="short_bio">Short bio</option><option value="professional_bio">Professional bio</option><option value="artist_statement">Artist statement</option><option value="practice_description">Practice description</option><option value="artwork_description">Artwork description</option><option value="series_description">Series description</option><option value="project_description">Project description</option><option value="submission_letter">Submission letter</option><option value="letter_of_interest">Letter of interest</option><option value="application_answer">Application answer</option><option value="exhibition_proposal_summary">Exhibition proposal summary</option><option value="grant_residency_response">Grant or residency response</option></select></label><label className="grid gap-1 text-xs font-semibold">Maximum words<input className={input} type="number" min={40} max={1200} value={wordLimit} onChange={(event) => setWordLimit(Number(event.target.value))} /></label><label className="grid gap-1 text-xs font-semibold">Artist context<textarea className={textarea} value={artistContext} onChange={(event) => setArtistContext(event.target.value)} placeholder="Add confirmed facts, intent, voice preferences, or corrections." /></label></div>{["submission_letter", "letter_of_interest", "application_answer", "exhibition_proposal_summary", "grant_residency_response"].includes(draftType) && <label className="mt-3 grid gap-1 text-xs font-semibold">Opportunity prompt or context<textarea className={textarea} value={opportunityContext} onChange={(event) => setOpportunityContext(event.target.value)} /></label>}{draft && <div className="mt-5 space-y-4"><div className="grid gap-3 lg:grid-cols-2">{draft.options.map((option, index) => <button key={`${option.label}-${index}`} className="rounded-2xl border border-[#E7E1F7] p-4 text-left" onClick={() => setEditedDraft(option.text)}><strong>{option.label}</strong><p className="mt-2 line-clamp-6 text-sm leading-6 text-[#746E80]">{option.text}</p><p className="mt-2 text-xs text-[#81788E]">{option.word_count} words · {option.evidence_refs.length} evidence references</p></button>)}</div><label className="grid gap-1 text-xs font-semibold">Artist-edited final version<textarea className={`${textarea} min-h-56`} value={editedDraft} onChange={(event) => setEditedDraft(event.target.value)} /></label><div className="flex flex-wrap justify-end gap-2"><button className={secondary} onClick={() => void removeDraft()}>{working === "delete-draft" ? <Loader2 className="size-4 animate-spin" /> : <Trash2 className="size-4" />}Delete draft</button><button className={primary} disabled={!editedDraft.trim()} onClick={() => void saveDraft()}>{working === "approve-draft" ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />}Mark artist-approved</button></div></div>}</section>
+    </div>}
+  </section>
 }
