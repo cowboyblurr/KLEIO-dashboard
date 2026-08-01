@@ -14,7 +14,7 @@ create table if not exists public.artist_ai_drafts (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   constraint artist_ai_drafts_type_check check (
-    draft_type = any (array['short_bio','professional_bio','artist_statement','practice_description','artwork_description','submission_letter','application_answer'])
+    draft_type = any (array['practice_analysis','short_bio','professional_bio','artist_statement','practice_description','artwork_description','submission_letter','application_answer'])
   ),
   constraint artist_ai_drafts_status_check check (
     status = any (array['generated','edited','approved','rejected'])
