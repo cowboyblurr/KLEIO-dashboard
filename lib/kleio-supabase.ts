@@ -4,6 +4,7 @@ import {
   clearKleioSensitiveBrowserState,
   setKleioActiveUserScope,
 } from "@/lib/kleio-client-session"
+import { assertKleioPasswordIsSafe } from "@/lib/kleio-password-security"
 
 const SUPABASE_URL =
   process.env.NEXT_PUBLIC_SUPABASE_URL ?? "https://trekynurdgxgtaaqqtyq.supabase.co"
@@ -12,6 +13,7 @@ const SUPABASE_PUBLISHABLE_KEY =
   "sb_publishable_XdYXvd0fQm3IJKxNrFXgUQ_M4RgDj1M"
 
 let browserClient: SupabaseClient | null = null
+let passwordSecurityInstalled = false
 
 export type KleioAccountRole = "artist" | "institution" | "collaborator"
 
@@ -67,6 +69,38 @@ export type InstitutionMessage = {
   created_at: string
 }
 
+function installKleioPasswordSecurity(client: SupabaseClient) {
+  if (passwordSecurityInstalled) return
+
+  const auth = client.auth
+  const originalSignUp = auth.signUp.bind(auth)
+  const securedSignUp: typeof auth.signUp = async (credentials) => {
+    if ("password" in credentials && typeof credentials.password === "string") {
+      await assertKleioPasswordIsSafe(credentials.password)
+    }
+    return originalSignUp(credentials)
+  }
+
+  const originalUpdateUser = auth.updateUser.bind(auth)
+  const securedUpdateUser: typeof auth.updateUser = async (attributes, options) => {
+    if (typeof attributes.password === "string") {
+      await assertKleioPasswordIsSafe(attributes.password)
+    }
+    return originalUpdateUser(attributes, options)
+  }
+
+  Object.defineProperty(auth, "signUp", {
+    configurable: true,
+    value: securedSignUp,
+  })
+  Object.defineProperty(auth, "updateUser", {
+    configurable: true,
+    value: securedUpdateUser,
+  })
+
+  passwordSecurityInstalled = true
+}
+
 export function isKleioEmailConfirmed(user: User) {
   return Boolean(user.email_confirmed_at ?? user.confirmed_at)
 }
@@ -89,6 +123,7 @@ export function getSupabaseBrowserClient(): SupabaseClient {
         },
       },
     })
+    installKleioPasswordSecurity(browserClient)
   }
 
   return browserClient
