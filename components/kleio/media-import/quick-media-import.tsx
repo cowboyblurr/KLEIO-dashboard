@@ -18,6 +18,7 @@ import {
   type MediaSelectionResult,
   type MediaSourceType,
 } from "@/lib/kleio-universal-media"
+import { googleDriveAvailabilityMessage, isGoogleDriveConfigured } from "@/lib/kleio-google-capabilities"
 import { trackKleioProductEvent } from "@/lib/kleio-product-analytics"
 
 const primary = "inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#5B4B8A] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#4F407B] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#A997E8]/25 disabled:cursor-not-allowed disabled:opacity-50"
@@ -47,6 +48,11 @@ function sourceTitle(source: MediaSourceType) {
   return "Instagram Professional Account"
 }
 
+function sourceExplanation(source: MediaSourceType, config: MediaImportConfig) {
+  if (source === "google_drive") return googleDriveAvailabilityMessage()
+  return MEDIA_SOURCE_ADAPTERS.find((adapter) => adapter.type === source)?.getPermissionExplanation(config) ?? ""
+}
+
 function readableBytes(bytes: number | null) {
   if (bytes === null) return "Size unavailable"
   if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`
@@ -58,6 +64,7 @@ export function QuickMediaImport({ context, config: configOverrides, label, clas
   const headingRef = useRef<HTMLHeadingElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const config = useMemo(() => mediaImportConfig(context, configOverrides), [context, configOverrides])
+  const googleDriveConfigured = isGoogleDriveConfigured()
   const [view, setView] = useState<"sources" | "library" | "review">("sources")
   const [library, setLibrary] = useState<ArtistMediaLibraryItem[]>([])
   const [selected, setSelected] = useState<ArtistMediaLibraryItem[]>([])
@@ -154,6 +161,10 @@ export function QuickMediaImport({ context, config: configOverrides, label, clas
   }
 
   async function chooseDrive() {
+    if (!googleDriveConfigured) {
+      setError("Google Drive setup is pending. Upload from this device or reuse your private KLEIO Library for now.")
+      return
+    }
     setLoading(true)
     setError("")
     let token = ""
@@ -214,12 +225,12 @@ export function QuickMediaImport({ context, config: configOverrides, label, clas
             {view === "sources" && <div className="grid gap-4 sm:grid-cols-2">
               {MEDIA_SOURCE_ADAPTERS.filter((adapter) => config.availableSources.includes(adapter.type)).map((adapter) => {
                 const Icon = sourceIcon(adapter.type)
-                const available = adapter.isAvailable(config)
+                const available = adapter.isAvailable(config) && (adapter.type !== "google_drive" || googleDriveConfigured)
                 return <button key={adapter.type} type="button" disabled={!available || loading} className={sourceCard} onClick={() => {
                   if (adapter.type === "device") fileInputRef.current?.click()
                   else if (adapter.type === "google_drive") void chooseDrive()
                   else if (adapter.type === "kleio_library") void loadLibrary()
-                }}><span className="grid size-10 shrink-0 place-items-center rounded-xl bg-[#F0EAFB] text-[#5B4B8A]"><Icon className="size-5" /></span><span><span className="block text-sm font-semibold text-[#292631]">{sourceTitle(adapter.type)}</span><span className="mt-1 block text-xs leading-5 text-[#746E80]">{adapter.getPermissionExplanation(config)}</span>{!available && adapter.type === "instagram" && <span className="mt-2 inline-flex rounded-full bg-[#F7F4FF] px-2 py-1 text-[0.65rem] font-semibold text-[#75639E]">Planned after beta</span>}</span></button>
+                }}><span className="grid size-10 shrink-0 place-items-center rounded-xl bg-[#F0EAFB] text-[#5B4B8A]"><Icon className="size-5" /></span><span><span className="block text-sm font-semibold text-[#292631]">{sourceTitle(adapter.type)}</span><span className="mt-1 block text-xs leading-5 text-[#746E80]">{sourceExplanation(adapter.type, config)}</span>{!available && adapter.type === "google_drive" && <span className="mt-2 inline-flex rounded-full bg-[#F7F4FF] px-2 py-1 text-[0.65rem] font-semibold text-[#75639E]">Setup pending</span>}{!available && adapter.type === "instagram" && <span className="mt-2 inline-flex rounded-full bg-[#F7F4FF] px-2 py-1 text-[0.65rem] font-semibold text-[#75639E]">Planned after beta</span>}</span></button>
               })}
               <input ref={fileInputRef} type="file" multiple={config.allowMultiple} accept={accept} className="sr-only" onChange={(event) => void importFiles(Array.from(event.target.files ?? []), "device")} />
               <div className="sm:col-span-2 rounded-2xl border border-[#E7E1F7] bg-white p-4 text-xs leading-5 text-[#746E80]"><ShieldCheck className="mr-2 inline size-4 text-[#5B4B8A]" />Selecting or uploading media does not attach, publish, or replace anything. The destination action happens only after confirmation.</div>
