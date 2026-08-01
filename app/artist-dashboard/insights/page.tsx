@@ -1,16 +1,16 @@
 import type { Metadata } from "next"
 import { ArtistShell } from "@/components/kleio/artist-shell"
-import { ArtistInsightsPageView } from "@/components/kleio/artist-workspace/artist-insights-page-view"
+import { ArtistOverviewRedirect } from "@/components/kleio/artist-overview-redirect"
 
 export const metadata: Metadata = {
-  title: "KLEIO — Quiet Insights",
-  description: "Review practical signals about materials, opportunities, deadlines, and application readiness.",
+  title: "KLEIO — Readiness & Next Steps",
+  description: "Readiness guidance now lives directly on the artist Overview.",
 }
 
 export default function Page() {
   return (
     <ArtistShell>
-      <ArtistInsightsPageView />
+      <ArtistOverviewRedirect message="Readiness & Next Steps now lives on your Overview. Returning to your workspace…" />
     </ArtistShell>
   )
 }
