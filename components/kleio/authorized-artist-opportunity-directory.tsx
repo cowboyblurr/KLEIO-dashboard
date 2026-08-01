@@ -1,7 +1,7 @@
 "use client"
 
-import { ProductionArtistOpportunityDirectory } from "@/components/kleio/production-artist-opportunity-directory"
+import { OpportunityFilterVisibilityGuard } from "@/components/kleio/opportunity-filter-visibility-guard"
 
 export function AuthorizedArtistOpportunityDirectory() {
-  return <ProductionArtistOpportunityDirectory />
+  return <OpportunityFilterVisibilityGuard />
 }
