@@ -42,11 +42,28 @@ const analysisSections: Array<[keyof VisualPracticeAnalysis, string]> = [
   ["mood_and_atmosphere", "Mood and atmosphere"], ["subject_matter", "Subject matter"],
   ["presentation_style", "Presentation style"], ["tensions_or_variations", "Tensions and variations"],
 ]
+const unsupportedSocialHosts = [
+  "instagram.com", "facebook.com", "threads.net", "tiktok.com", "x.com", "twitter.com", "pinterest.com", "linkedin.com",
+]
 type Review = { decision: VisualReviewDecision | "pending"; observation: string; interpretation: string; useInDrafting: boolean }
 
 function fieldValue(field: WebsiteField) { return Array.isArray(field.value) ? field.value.join(", ") : field.value }
 function reviewId(section: string, index: number) { return `${section}:${index}` }
-function errorText(error: unknown, fallback: string) { return error instanceof Error && error.message ? error.message : fallback }
+function errorText(error: unknown, fallback: string) {
+  if (!(error instanceof Error) || !error.message) return fallback
+  if (/edge function returned a non-2xx status code/i.test(error.message)) return "KLEIO could not access this site’s public pages. The site may block automated review. Try a public portfolio website, or upload the work directly from your device."
+  return error.message
+}
+function websiteInputError(value: string) {
+  let parsed: URL
+  try { parsed = new URL(value.trim()) } catch { return "Enter a complete public website address, such as https://yourportfolio.com." }
+  if (parsed.protocol !== "https:") return "Use the secure HTTPS version of the artist website."
+  const hostname = parsed.hostname.toLowerCase().replace(/^www\./, "")
+  if (unsupportedSocialHosts.some((host) => hostname === host || hostname.endsWith(`.${host}`))) {
+    return "Social profiles cannot be analyzed through Website Import Assist. Use a public portfolio or personal website, or upload artwork from your device. Connected social import will be handled separately."
+  }
+  return ""
+}
 function initialArtwork(candidate: WebsiteImageCandidate): WebsiteArtworkDraft {
   return { title: candidate.proposed.title || "", year: candidate.proposed.year || "", medium: candidate.proposed.medium || "", dimensions: candidate.proposed.dimensions || "", description: candidate.proposed.description || "", tags: candidate.proposed.tags || [], altText: candidate.proposed.altText || "" }
 }
@@ -98,6 +115,8 @@ export function WebsiteImportAssist() {
 
   async function analyze() {
     if (!url.trim() || !permission || working) return
+    const inputError = websiteInputError(url)
+    if (inputError) { setError(inputError); setNotice(""); return }
     setWorking("website"); setError(""); setNotice("Connecting securely and reviewing public pages, captions, metadata, and images…")
     try {
       const next = await analyzeArtistWebsite(url.trim(), true)
@@ -200,8 +219,7 @@ export function WebsiteImportAssist() {
       <div className="max-w-3xl"><p className="text-[0.68rem] font-semibold uppercase tracking-[0.17em] text-[#75639E]">Website Import Assist</p><h2 id="website-import-title" className="mt-2 font-serif text-3xl font-semibold">Let KLEIO review your artist website</h2><p className="mt-3 text-sm leading-7 text-[#746E80]">KLEIO separates exact source evidence, visual interpretation, and writing. You decide what is accurate and what may be used.</p></div>
       <div className="grid gap-2 text-xs font-semibold text-[#625C70]"><span className="inline-flex items-center gap-2"><ShieldCheck className="size-4" />Nothing imports or publishes automatically</span><span className="inline-flex items-center gap-2"><Eye className="size-4" />Interpretations require artist review</span></div>
     </div>
-    <div className="mt-5 rounded-2xl border border-[#E7E1F7] bg-[#FAF9FD] p-4 text-xs leading-5 text-[#625C70]"><strong>Beta AI status:</strong> {capabilities ? capabilities.configured ? `${capabilities.provider} is ready. Paid billing never activates automatically.` : "Website extraction works now; visual analysis and drafting remain capability-gated until private Cloudflare credentials are configured." : "Checking the private AI capability…"}</div>
-    <div className="mt-5 grid gap-3 lg:grid-cols-[1fr_auto]"><label className="grid gap-1.5 text-xs font-semibold">Public artist website<input className={input} type="url" autoComplete="url" placeholder="https://yourportfolio.com" value={url} onChange={(event) => setUrl(event.target.value)} /></label><button className={`${primary} lg:self-end`} disabled={!url.trim() || !permission || Boolean(working)} onClick={() => void analyze()}>{working === "website" ? <Loader2 className="size-4 animate-spin" /> : <Globe2 className="size-4" />}Analyze website</button></div>
+    <div className="mt-5 grid gap-3 lg:grid-cols-[1fr_auto]"><label className="grid gap-1.5 text-xs font-semibold">Public artist website<input className={input} type="url" autoComplete="url" placeholder="https://yourportfolio.com" value={url} onChange={(event) => { setUrl(event.target.value); if (error) setError("") }} /><span className="font-normal leading-5 text-[#81788E]">Use a portfolio or personal website. Instagram and other social profiles require a separate connected import.</span></label><button className={`${primary} lg:self-end`} disabled={!url.trim() || !permission || Boolean(working)} onClick={() => void analyze()}>{working === "website" ? <Loader2 className="size-4 animate-spin" /> : <Globe2 className="size-4" />}Analyze website</button></div>
     <label className="mt-3 flex items-start gap-3 rounded-xl border border-[#E7E1F7] bg-[#FAF9FD] p-3 text-xs leading-5"><input type="checkbox" className="mt-0.5 size-4 accent-[#5B4B8A]" checked={permission} onChange={(event) => setPermission(event.target.checked)} /><span>I own this website or have permission to analyze its public content inside my private KLEIO workspace.</span></label>
     {(notice || error) && <div className={`mt-4 rounded-xl border p-3 text-sm ${error ? "border-red-200 bg-red-50 text-red-700" : "border-[#E2DCF1] bg-[#F9F7FC] text-[#625C70]"}`} role={error ? "alert" : "status"} aria-live="polite">{error || notice}</div>}
 
