@@ -3,6 +3,7 @@
 import type { ChangeEvent, ReactNode } from "react"
 import { Check, ChevronLeft, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
 
 export type OnboardingOption = {
   value: string
@@ -235,6 +236,12 @@ export function OnboardingNavigation({
   disabled?: boolean
   showBack?: boolean
 }) {
+  const { locale } = useKleioLocale()
+  const exitAction = onExit ?? (() => {
+    if (typeof window !== "undefined") window.location.assign("/")
+  })
+  const resolvedExitLabel = exitLabel ?? (locale === "es" ? "Guardar y salir" : "Save & exit")
+
   return (
     <div className="mt-8 flex flex-col-reverse gap-3 border-t border-border pt-5 sm:flex-row sm:items-center sm:justify-between">
       <div className="flex flex-wrap items-center gap-1">
@@ -248,13 +255,13 @@ export function OnboardingNavigation({
             {backLabel}
           </button>
         ) : null}
-        {onExit && exitLabel ? (
+        {resolvedExitLabel ? (
           <button
             type="button"
-            onClick={onExit}
+            onClick={exitAction}
             className="h-11 rounded-xl px-3 text-sm font-semibold text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10"
           >
-            {exitLabel}
+            {resolvedExitLabel}
           </button>
         ) : null}
       </div>
