@@ -18,6 +18,15 @@ const eslintConfig = defineConfig([
     },
   },
   {
+    files: ["lib/kleio-universal-media.ts"],
+    rules: {
+      // Google Identity Services and Picker are loaded as external browser globals
+      // and do not publish a package-level TypeScript contract. Keep the escape
+      // hatch isolated to this adapter boundary rather than spreading it through UI code.
+      "@typescript-eslint/no-explicit-any": "off",
+    },
+  },
+  {
     files: ["supabase/functions/**/*.ts"],
     rules: {
       // Supabase Edge Functions are checked and bundled by Deno rather than the

@@ -1,0 +1,79 @@
+name: Audit Artist Media Import
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "app/artist-dashboard/import/**"
+      - "app/artist-dashboard/media/**"
+      - "app/artist-dashboard/portfolio/**"
+      - "app/artist-dashboard/passport/**"
+      - "app/artist-dashboard/settings/**"
+      - "app/artist-dashboard/applications/prepare/**"
+      - "components/kleio/artist-import-studio*.tsx"
+      - "components/kleio/media-import/**"
+      - "components/kleio/visual-artist-portfolio-studio.tsx"
+      - "components/kleio/artist-media-library.tsx"
+      - "components/kleio/passport-updates-inbox.tsx"
+      - "components/kleio/application-requirement-media.tsx"
+      - "components/kleio/profile-media-quick-import.tsx"
+      - "components/kleio/creative-passport-media-panel.tsx"
+      - "components/kleio/application-media-import-bar.tsx"
+      - "components/kleio/live-artist-discovery-settings.tsx"
+      - "components/kleio/artist-sidebar.tsx"
+      - "components/kleio/signup/lightweight-artist-signup.tsx"
+      - "components/kleio/auth/auth-callback-client.tsx"
+      - "lib/kleio-artwork-import.ts"
+      - "lib/kleio-artist-import.ts"
+      - "lib/kleio-universal-media.ts"
+      - "lib/kleio-google-capabilities.ts"
+      - "lib/kleio-upload-to-passport.ts"
+      - "lib/kleio-application-preparation.ts"
+      - "lib/kleio-product-analytics.ts"
+      - "lib/kleio-media-destinations.ts"
+      - "lib/kleio-profile-presentation.ts"
+      - "lib/kleio-lightweight-artist-signup.ts"
+      - "scripts/audit-artist-import-studio.mjs"
+      - "scripts/audit-universal-media-import.mjs"
+      - "scripts/audit-upload-to-passport-intelligence.mjs"
+      - "supabase/functions/extract-artist-materials/**"
+      - "supabase/migrations/20260801160000_artist_import_studio.sql"
+      - "supabase/migrations/20260801183000_universal_media_import.sql"
+      - "supabase/migrations/20260801210000_upload_to_passport_intelligence.sql"
+      - "supabase/migrations/20260801213000_upload_to_passport_fk_indexes.sql"
+      - "supabase/migrations/20260801214500_upload_to_passport_analytics_events.sql"
+      - "docs/google-auth-drive-tuesday-checklist.md"
+      - "package.json"
+      - ".github/workflows/artist-import-studio-audit.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+          run_install: false
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Typecheck
+        run: pnpm typecheck
+      - name: Artist Import Studio audit
+        run: pnpm audit:artist-import
+      - name: Universal Media Import audit
+        run: pnpm audit:universal-media
+      - name: Upload-to-Passport intelligence audit
+        run: pnpm audit:upload-to-passport

@@ -13,9 +13,11 @@ import {
   FileText,
   FolderOpen,
   LayoutDashboard,
+  Library,
   MessageSquare,
   Settings,
   Sparkles,
+  UploadCloud,
   UserRound,
   UsersRound,
 } from "lucide-react"
@@ -47,6 +49,8 @@ const navSections: NavSection[] = [
       { href: "/artist-dashboard/opportunities/", label: "Opportunities", icon: Briefcase, activeMatch: "/artist-dashboard/opportunities" },
       { href: "/artist-dashboard/applications/", label: "Applications", icon: FileText, activeMatch: "/artist-dashboard/applications" },
       { href: "/artist-dashboard/portfolio/", label: "Portfolio", icon: FolderOpen, activeMatch: "/artist-dashboard/portfolio" },
+      { href: "/artist-dashboard/media/", label: "Media Library", icon: Library, activeMatch: "/artist-dashboard/media" },
+      { href: "/artist-dashboard/import/", label: "Import Studio", icon: UploadCloud, activeMatch: "/artist-dashboard/import" },
       { href: "/artist-dashboard/funding/", label: "Funding", icon: DollarSign, activeMatch: "/artist-dashboard/funding" },
     ],
   },
@@ -117,7 +121,15 @@ export function ArtistSidebar() {
                 {section.items.map((item) => {
                   const active = item.activeMatch ? pathname.startsWith(item.activeMatch) : pathname === item.href || `${pathname}/` === item.href
                   const Icon = item.icon
-                  const label = item.href === "/artist-dashboard/collaborators/" ? (locale === "es" ? "Coincidencias de artistas" : "Artist Matches") : item.href === "/artist-dashboard/profile/" ? (locale === "es" ? "Perfil de artista" : "Artist Profile") : t(artistNavLabelKeys[item.href] ?? item.label)
+                  const label = item.href === "/artist-dashboard/collaborators/"
+                    ? (locale === "es" ? "Coincidencias de artistas" : "Artist Matches")
+                    : item.href === "/artist-dashboard/profile/"
+                      ? (locale === "es" ? "Perfil de artista" : "Artist Profile")
+                      : item.href === "/artist-dashboard/import/"
+                        ? (locale === "es" ? "Estudio de importación" : "Import Studio")
+                        : item.href === "/artist-dashboard/media/"
+                          ? (locale === "es" ? "Biblioteca de medios" : "Media Library")
+                          : t(artistNavLabelKeys[item.href] ?? item.label)
                   return <li key={item.label}><Link href={item.href} onClick={isLive ? undefined : openPageGuide} aria-current={active ? "page" : undefined} className={cn("group flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-[0.82rem] font-medium transition-colors", active ? "bg-sidebar-accent text-sidebar-accent-foreground" : "text-foreground/70 hover:bg-accent/60 hover:text-foreground")}><Icon className={cn("size-3.5 shrink-0", active ? "text-primary" : "text-muted-foreground")} /><span className="flex-1">{label}</span>{item.comingSoon && <span className="rounded-full bg-[#F7F4FF] px-1.5 py-0.5 text-[0.52rem] font-semibold uppercase tracking-wide text-[#7F7890]">{locale === "es" ? "Pronto" : "Soon"}</span>}</Link></li>
                 })}
               </ul>

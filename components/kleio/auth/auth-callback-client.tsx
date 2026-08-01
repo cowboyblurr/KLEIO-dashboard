@@ -8,7 +8,12 @@ import { Loader2, MailCheck, TriangleAlert } from "lucide-react"
 import { clearDemoSession, getDashboardForRole } from "@/lib/kleio-demo-auth"
 import { getKleioAuthErrorMessage } from "@/lib/kleio-auth"
 import { resumePendingKleioOnboarding } from "@/lib/kleio-live-onboarding"
+import {
+  consumePendingArtistImportWelcome,
+  ensureLightweightArtistWorkspace,
+} from "@/lib/kleio-lightweight-artist-signup"
 import { finalizePendingArtistProfileImage } from "@/lib/kleio-pending-profile-image"
+import { getKleioReturnRoute, readKleioReturnIntent } from "@/lib/kleio-return-intent"
 import { setKleioMode } from "@/lib/kleio-mode"
 import {
   getSupabaseBrowserClient,
@@ -60,6 +65,7 @@ export function AuthCallbackClient() {
         const requestedRole = params.get("role")
         const expectedRole = requestedRole === "artist" || requestedRole === "institution" ? requestedRole : undefined
         await resumePendingKleioOnboarding(expectedRole)
+        if (expectedRole === "artist") await ensureLightweightArtistWorkspace()
 
         const account = await loadKleioAccount()
         if (!account) throw new Error("KLEIO could not load the profile connected to this account.")
@@ -81,18 +87,28 @@ export function AuthCallbackClient() {
         setKleioMode("live")
 
         const role = account.profile.role
+        const returnIntent = role === "artist" ? readKleioReturnIntent() : null
+        const openImportStudio = role === "artist" ? consumePendingArtistImportWelcome() : false
+        if (openImportStudio && !returnIntent) window.localStorage.setItem("kleio:artist:passport-mode:v1", "import")
+
         const destination =
           profilePhotoNeedsAttention && role === "artist" && account.profile.onboarding_completed
             ? "/artist-dashboard/settings/"
             : !account.profile.onboarding_completed && SIGNUP_ROLES.has(role)
               ? `/signup/${role}/`
-              : getDashboardForRole(role)
+              : returnIntent
+                ? getKleioReturnRoute(returnIntent)
+                : openImportStudio
+                  ? "/artist-dashboard/import/"
+                  : getDashboardForRole(role)
 
         if (!active) return
         setMessage(
           profilePhotoNeedsAttention
             ? "Email confirmed. Your workspace is ready, but the selected profile photo needs to be added again in Settings."
-            : "Email confirmed. Opening your workspace…",
+            : openImportStudio && !returnIntent
+              ? "Account confirmed. Opening the private Import Studio…"
+              : "Email confirmed. Opening your workspace…",
         )
         window.setTimeout(() => router.replace(destination), profilePhotoNeedsAttention ? 1400 : 250)
       } catch (error) {

@@ -1,7 +1,10 @@
+import { assertKleioPasswordIsSafe } from "@/lib/kleio-password-security"
 import { getKleioAuthCallbackUrl } from "@/lib/kleio-url"
 import { getSupabaseBrowserClient } from "@/lib/kleio-supabase"
 
 const PENDING_KEY = "kleio:artist:lightweight-signup:v1"
+const IMPORT_WELCOME_KEY = "kleio:artist:open-import-after-auth:v1"
+const OAUTH_CONSENT_KEY = "kleio:artist:oauth-consent:v1"
 const RECOVERY_KEY = "kleio_artist_account_recovery"
 export const KLEIO_POLICY_VERSION = "2026-07-30"
 
@@ -31,6 +34,25 @@ function normalizePending(value: unknown): PendingArtistAccount | null {
   }
 }
 
+function googleDisplayName(metadata: Record<string, unknown> | undefined, email: string | undefined) {
+  const candidates = [metadata?.display_name, metadata?.full_name, metadata?.name, metadata?.given_name]
+  const first = candidates.find((value) => typeof value === "string" && value.trim())
+  if (typeof first === "string") return first.trim().slice(0, 160)
+  const emailPrefix = email?.split("@")[0]?.trim()
+  return emailPrefix ? emailPrefix.slice(0, 160) : "Artist"
+}
+
+export function markPendingArtistImportWelcome() {
+  if (typeof window !== "undefined") window.localStorage.setItem(IMPORT_WELCOME_KEY, "1")
+}
+
+export function consumePendingArtistImportWelcome() {
+  if (typeof window === "undefined") return false
+  const pending = window.localStorage.getItem(IMPORT_WELCOME_KEY) === "1"
+  if (pending) window.localStorage.removeItem(IMPORT_WELCOME_KEY)
+  return pending
+}
+
 export function savePendingLightweightArtistAccount(input: PendingArtistAccount) {
   if (typeof window === "undefined") return
   window.localStorage.setItem(PENDING_KEY, JSON.stringify(normalizePending(input)))
@@ -54,6 +76,26 @@ export function clearPendingLightweightArtistAccount() {
   if (typeof window !== "undefined") window.localStorage.removeItem(PENDING_KEY)
 }
 
+export async function signInWithGoogleArtistAccount(input: { acceptedAt: string }) {
+  if (typeof window !== "undefined") {
+    window.localStorage.setItem(OAUTH_CONSENT_KEY, JSON.stringify({
+      acceptedAt: new Date(input.acceptedAt).toISOString(),
+      policyVersion: KLEIO_POLICY_VERSION,
+    }))
+  }
+  markPendingArtistImportWelcome()
+  const supabase = getSupabaseBrowserClient()
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: {
+      redirectTo: getKleioAuthCallbackUrl("artist"),
+      queryParams: { prompt: "select_account" },
+    },
+  })
+  if (error) throw error
+  return data
+}
+
 export async function signUpLightweightArtistAccount(input: {
   email: string
   password: string
@@ -68,7 +110,9 @@ export async function signUpLightweightArtistAccount(input: {
   })
   if (!pending) throw new Error("The artist account details are incomplete.")
 
+  await assertKleioPasswordIsSafe(input.password)
   savePendingLightweightArtistAccount(pending)
+  markPendingArtistImportWelcome()
   const supabase = getSupabaseBrowserClient()
   const { data, error } = await supabase.auth.signUp({
     email: pending.email,
@@ -108,7 +152,7 @@ export async function ensureLightweightArtistWorkspace() {
   const metadataPending = normalizePending(user.user_metadata?.[RECOVERY_KEY])
   const localPending = readPendingLightweightArtistAccount()
   const pending = localPending && normalizeEmail(user.email ?? "") === localPending.email ? localPending : metadataPending
-  const displayName = pending?.displayName || profile.display_name || "Artist"
+  const displayName = pending?.displayName || profile.display_name || googleDisplayName(user.user_metadata, user.email) || "Artist"
 
   const { error: artistError } = await supabase.from("artist_profiles").upsert(
     {
@@ -128,19 +172,32 @@ export async function ensureLightweightArtistWorkspace() {
     if (updateError) throw updateError
   }
 
-  if (pending) {
+  let consent = pending ? { acceptedAt: pending.acceptedAt, policyVersion: pending.policyVersion } : null
+  if (!consent && typeof window !== "undefined") {
+    const raw = window.localStorage.getItem(OAUTH_CONSENT_KEY)
+    try {
+      const parsed = raw ? JSON.parse(raw) as Record<string, unknown> : null
+      if (parsed?.policyVersion === KLEIO_POLICY_VERSION && typeof parsed.acceptedAt === "string" && !Number.isNaN(new Date(parsed.acceptedAt).getTime())) {
+        consent = { acceptedAt: new Date(parsed.acceptedAt).toISOString(), policyVersion: KLEIO_POLICY_VERSION }
+      }
+    } catch {
+      // Invalid browser consent data is ignored and cleared below.
+    }
+  }
+  if (consent) {
     const { error: consentError } = await supabase.from("user_consents").upsert(
       {
         user_id: user.id,
         consent_type: "terms_and_privacy",
-        policy_version: pending.policyVersion,
-        accepted_at: pending.acceptedAt,
+        policy_version: consent.policyVersion,
+        accepted_at: consent.acceptedAt,
       },
       { onConflict: "user_id,consent_type,policy_version", ignoreDuplicates: true },
     )
     if (consentError) throw consentError
   }
 
+  if (typeof window !== "undefined") window.localStorage.removeItem(OAUTH_CONSENT_KEY)
   clearPendingLightweightArtistAccount()
   await supabase.auth.updateUser({ data: { [RECOVERY_KEY]: null } }).catch(() => undefined)
   return { userId: user.id, displayName }

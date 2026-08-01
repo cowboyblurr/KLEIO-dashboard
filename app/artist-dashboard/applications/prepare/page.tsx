@@ -4,10 +4,12 @@ import { ArtistShell } from "@/components/kleio/artist-shell"
 import { ApplicationPreparationWorkspace } from "@/components/kleio/application-preparation-workspace"
 import { ApplicationArtistIdentityBar } from "@/components/kleio/application-artist-identity-bar"
 import { ApplicationSubmissionCover } from "@/components/kleio/application-submission-cover"
+import { ApplicationMediaImportBar } from "@/components/kleio/application-media-import-bar"
+import { ApplicationRequirementMedia } from "@/components/kleio/application-requirement-media"
 
 export const metadata: Metadata = {
   title: "KLEIO — Prepare application",
-  description: "Review source requirements, assemble Creative Passport materials, and approve an artist-controlled application package.",
+  description: "Review source requirements, assemble reusable artist media, and approve an artist-controlled application package.",
 }
 
 function PreparationFallback() {
@@ -22,10 +24,18 @@ export default function Page() {
         <Suspense fallback={null}>
           <ApplicationSubmissionCover />
         </Suspense>
-        <div className="min-h-0 flex-1">
-          <Suspense fallback={<PreparationFallback />}>
-            <ApplicationPreparationWorkspace />
-          </Suspense>
+        <Suspense fallback={null}>
+          <ApplicationMediaImportBar />
+        </Suspense>
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          <div className="mx-auto max-w-[1120px] space-y-5 px-4 py-5 sm:px-6">
+            <Suspense fallback={null}>
+              <ApplicationRequirementMedia />
+            </Suspense>
+            <Suspense fallback={<PreparationFallback />}>
+              <ApplicationPreparationWorkspace />
+            </Suspense>
+          </div>
         </div>
       </div>
     </ArtistShell>

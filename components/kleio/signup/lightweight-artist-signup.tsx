@@ -8,13 +8,31 @@ import { SignupShell, SignupStepCard } from "@/components/kleio/signup/signup-sh
 import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
 import { clearDemoSession } from "@/lib/kleio-demo-auth"
 import { getKleioAuthErrorMessage, resendKleioSignupConfirmation } from "@/lib/kleio-auth"
+import { googleAuthenticationAvailabilityMessage, isGoogleAuthenticationConfigured } from "@/lib/kleio-google-capabilities"
 import { setKleioMode } from "@/lib/kleio-mode"
 import { isKleioPasswordStrong, KLEIO_PASSWORD_MIN_LENGTH } from "@/lib/kleio-password-security"
 import { getKleioReturnRoute, readKleioReturnIntent } from "@/lib/kleio-return-intent"
-import { ensureLightweightArtistWorkspace, signUpLightweightArtistAccount } from "@/lib/kleio-lightweight-artist-signup"
+import {
+  consumePendingArtistImportWelcome,
+  ensureLightweightArtistWorkspace,
+  signInWithGoogleArtistAccount,
+  signUpLightweightArtistAccount,
+} from "@/lib/kleio-lightweight-artist-signup"
 import { trackKleioProductEvent } from "@/lib/kleio-product-analytics"
 
 const inputClassName = "h-11 w-full rounded-xl border border-border bg-background px-3 text-sm text-foreground outline-none transition-colors focus:border-primary/40 focus:ring-4 focus:ring-primary/10 disabled:cursor-not-allowed disabled:bg-muted/50"
+const googleButton = "inline-flex h-11 w-full items-center justify-center gap-3 rounded-xl border border-[#D8D0F2] bg-white px-5 text-sm font-semibold text-[#292631] shadow-sm transition-colors hover:bg-[#FBFAFE] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#A997E8]/20 disabled:cursor-not-allowed disabled:opacity-50"
+
+function GoogleMark() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24" className="size-5">
+      <path fill="#4285F4" d="M21.6 12.23c0-.71-.06-1.4-.18-2.07H12v3.91h5.38a4.6 4.6 0 0 1-2 3.02v2.54h3.24c1.9-1.75 2.98-4.33 2.98-7.4Z" />
+      <path fill="#34A853" d="M12 22c2.7 0 4.97-.9 6.62-2.37l-3.24-2.54c-.9.6-2.05.96-3.38.96-2.61 0-4.82-1.76-5.61-4.13H3.04v2.62A10 10 0 0 0 12 22Z" />
+      <path fill="#FBBC05" d="M6.39 13.92A6.02 6.02 0 0 1 6.08 12c0-.67.12-1.32.31-1.92V7.46H3.04A10 10 0 0 0 2 12c0 1.62.39 3.15 1.04 4.54l3.35-2.62Z" />
+      <path fill="#EA4335" d="M12 5.95c1.47 0 2.8.5 3.84 1.5l2.88-2.88A9.65 9.65 0 0 0 12 2a10 10 0 0 0-8.96 5.46l3.35 2.62C7.18 7.71 9.39 5.95 12 5.95Z" />
+    </svg>
+  )
+}
 
 function PasswordField({ label, value, onChange, confirmation = false }: { label: string; value: string; onChange: (value: string) => void; confirmation?: boolean }) {
   const id = useId()
@@ -34,23 +52,35 @@ export function LightweightArtistSignup() {
   const router = useRouter()
   const { locale } = useKleioLocale()
   const es = locale === "es"
+  const googleAuthConfigured = isGoogleAuthenticationConfigured()
   const [displayName, setDisplayName] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [accepted, setAccepted] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const [googleSubmitting, setGoogleSubmitting] = useState(false)
   const [checking, setChecking] = useState(true)
   const [confirmationEmail, setConfirmationEmail] = useState("")
   const [resending, setResending] = useState(false)
   const [confirmationStatus, setConfirmationStatus] = useState("")
   const [error, setError] = useState("")
 
-  function routeAfterAccountReady() {
+  function routeAfterAccountReady(openImport = false) {
     clearDemoSession()
     setKleioMode("live")
     const intent = readKleioReturnIntent()
-    router.replace(intent ? getKleioReturnRoute(intent) : "/artist-dashboard/")
+    if (intent) {
+      router.replace(getKleioReturnRoute(intent))
+      return
+    }
+    const shouldOpenImport = openImport || consumePendingArtistImportWelcome()
+    if (shouldOpenImport) {
+      window.localStorage.setItem("kleio:artist:passport-mode:v1", "import")
+      router.replace("/artist-dashboard/import/")
+      return
+    }
+    router.replace("/artist-dashboard/")
   }
 
   useEffect(() => {
@@ -69,11 +99,32 @@ export function LightweightArtistSignup() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  async function handleGoogleSignup() {
+    if (googleSubmitting || submitting) return
+    setError("")
+    if (!googleAuthConfigured) {
+      setError(googleAuthenticationAvailabilityMessage(es ? "es" : "en"))
+      return
+    }
+    if (!accepted) {
+      setError(es ? "Acepta el aviso de cuenta antes de continuar con Google." : "Accept the account notice before continuing with Google.")
+      return
+    }
+    setGoogleSubmitting(true)
+    void trackKleioProductEvent("signup_submitted", { surface: "artist_signup", metadata: { role: "artist", provider: "google" } })
+    try {
+      await signInWithGoogleArtistAccount({ acceptedAt: new Date().toISOString() })
+    } catch (reason) {
+      setError(getKleioAuthErrorMessage(reason, es ? "es" : "en"))
+      setGoogleSubmitting(false)
+    }
+  }
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    if (submitting) return
+    if (submitting || googleSubmitting) return
     setError("")
-    void trackKleioProductEvent("signup_submitted", { surface: "artist_signup", metadata: { role: "artist" } })
+    void trackKleioProductEvent("signup_submitted", { surface: "artist_signup", metadata: { role: "artist", provider: "email" } })
 
     if (!displayName.trim() || !email.trim() || !isKleioPasswordStrong(password) || password !== confirmPassword || !accepted) {
       setError(es ? "Completa los campos, acepta el aviso y usa al menos 12 caracteres con mayúscula, minúscula, número y símbolo." : "Complete the fields, accept the notice, and use at least 12 characters with uppercase, lowercase, a number, and a symbol.")
@@ -96,7 +147,7 @@ export function LightweightArtistSignup() {
         return
       }
       await ensureLightweightArtistWorkspace()
-      routeAfterAccountReady()
+      routeAfterAccountReady(true)
     } catch (reason) {
       setError(getKleioAuthErrorMessage(reason, es ? "es" : "en"))
     } finally {
@@ -147,6 +198,12 @@ export function LightweightArtistSignup() {
       <form onSubmit={handleSubmit} noValidate>
         <SignupStepCard>
           {intent && <div className="mb-5 rounded-2xl border border-[#D9D0F2] bg-[#F8F5FF] px-4 py-3 text-sm leading-6 text-[#5B4B8A]">{es ? "Tu selección está guardada en este navegador durante 72 horas. Después de confirmar tu correo volverás a la oportunidad exacta." : "Your selection is saved in this browser for 72 hours. After confirming your email, you will return to the exact opportunity."}</div>}
+          <button type="button" className={googleButton} disabled={!googleAuthConfigured || googleSubmitting || submitting} onClick={() => void handleGoogleSignup()} aria-describedby="google-signup-availability">
+            {googleSubmitting ? <Loader2 className="size-5 animate-spin" /> : <GoogleMark />}
+            {googleSubmitting ? (es ? "Abriendo Google…" : "Opening Google…") : googleAuthConfigured ? (es ? "Continuar con Google" : "Continue with Google") : (es ? "Acceso con Google en configuración" : "Google sign-in setup pending")}
+          </button>
+          <p id="google-signup-availability" className="mt-2 text-center text-xs leading-5 text-muted-foreground">{googleAuthenticationAvailabilityMessage(es ? "es" : "en")}</p>
+          <div className="my-6 flex items-center gap-3" aria-hidden="true"><span className="h-px flex-1 bg-border" /><span className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">{es ? "o usa correo" : "or use email"}</span><span className="h-px flex-1 bg-border" /></div>
           <div className="grid gap-5 sm:grid-cols-2">
             <label className="grid gap-1.5 text-xs font-medium text-muted-foreground"><span>{es ? "Nombre profesional" : "Professional or display name"} *</span><input className={inputClassName} value={displayName} onChange={(event) => setDisplayName(event.target.value)} required autoComplete="name" /></label>
             <label className="grid gap-1.5 text-xs font-medium text-muted-foreground"><span>{es ? "Correo" : "Email"} *</span><input className={inputClassName} type="email" value={email} onChange={(event) => setEmail(event.target.value)} required autoComplete="email" /></label>
@@ -159,7 +216,7 @@ export function LightweightArtistSignup() {
           {error && <p role="alert" className="mt-5 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
           <div className="mt-6 flex flex-col gap-3 border-t border-border pt-5 sm:flex-row sm:items-center sm:justify-between">
             <div className="text-xs leading-5 text-muted-foreground"><p>{es ? "Tu Creative Passport empieza vacío y permanece privado hasta que decidas compartir información." : "Your Creative Passport starts empty and remains private until you choose to share information."}</p><Link href="/#login" className="mt-2 inline-flex font-semibold text-primary hover:underline">{es ? "¿Ya tienes una cuenta? Inicia sesión" : "Already have an account? Sign in"}</Link></div>
-            <button type="submit" disabled={submitting} className="inline-flex h-11 min-w-44 items-center justify-center rounded-xl bg-primary px-5 text-sm font-semibold text-primary-foreground disabled:opacity-50">{submitting && <Loader2 className="mr-2 size-4 animate-spin" />}{submitting ? (es ? "Creando…" : "Creating…") : (es ? "Crear cuenta" : "Create free account")}</button>
+            <button type="submit" disabled={submitting || googleSubmitting} className="inline-flex h-11 min-w-44 items-center justify-center rounded-xl bg-primary px-5 text-sm font-semibold text-primary-foreground disabled:opacity-50">{submitting && <Loader2 className="mr-2 size-4 animate-spin" />}{submitting ? (es ? "Creando…" : "Creating…") : (es ? "Crear con correo" : "Create with email")}</button>
           </div>
         </SignupStepCard>
       </form>
