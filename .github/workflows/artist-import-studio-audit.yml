@@ -38,6 +38,7 @@ on:
       - "supabase/migrations/20260801160000_artist_import_studio.sql"
       - "supabase/migrations/20260801183000_universal_media_import.sql"
       - "supabase/migrations/20260801210000_upload_to_passport_intelligence.sql"
+      - "supabase/migrations/20260801213000_upload_to_passport_fk_indexes.sql"
       - "package.json"
       - ".github/workflows/artist-import-studio-audit.yml"
 
