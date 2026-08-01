@@ -4,10 +4,10 @@
 
 import { useEffect, useMemo, useRef, useState } from "react"
 import {
+  Camera,
   Check,
   ExternalLink,
   ImagePlus,
-  Instagram,
   Loader2,
   LogOut,
   RefreshCw,
@@ -297,7 +297,7 @@ export function InstagramImportAssist() {
           {connection?.connected ? <>
             <button type="button" className={secondary} disabled={Boolean(working)} onClick={() => void refreshGallery(true)}>{working === "gallery" ? <Loader2 className="size-4 animate-spin" /> : <RefreshCw className="size-4" />}Open media gallery</button>
             <button type="button" className={quiet} disabled={Boolean(working)} onClick={() => void disconnect()}><LogOut className="size-4" />Disconnect</button>
-          </> : <button type="button" className={primary} disabled={Boolean(working) || connection?.configured === false} onClick={() => void connect()}>{working === "connect" ? <Loader2 className="size-4 animate-spin" /> : <Instagram className="size-4" />}Connect Instagram</button>}
+          </> : <button type="button" className={primary} disabled={Boolean(working) || connection?.configured === false} onClick={() => void connect()}>{working === "connect" ? <Loader2 className="size-4 animate-spin" /> : <Camera className="size-4" />}Connect Instagram</button>}
         </div>
       </div>
 
