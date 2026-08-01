@@ -34,6 +34,12 @@ export type KleioProductEventName =
   | "import_completed"
   | "proposal_approved"
   | "proposal_rejected"
+  | "review_opened"
+  | "claim_confirmed"
+  | "claim_rejected"
+  | "claim_deferred"
+  | "duplicate_merged"
+  | "claims_bulk_confirmed"
   | "voice_capability_detected"
   | "voice_started"
   | "voice_completed"
@@ -46,11 +52,14 @@ const SESSION_KEY = "kleio:analytics:anonymous-session:v1"
 const SAFE_METADATA_KEYS = new Set([
   "action",
   "capability",
+  "count",
+  "edited",
   "filter_count",
   "intent_source",
   "mode",
   "reason",
   "reduced_motion",
+  "relationship",
   "result_count",
   "role",
   "source",
