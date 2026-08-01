@@ -1,4 +1,5 @@
 import { getSupabaseBrowserClient, loadKleioAccount } from "@/lib/kleio-supabase"
+import { mediaImportConfig, recordMediaUsage, uploadMediaToLibrary } from "@/lib/kleio-universal-media"
 
 export type ArtistProfilePresentationRecord = {
   profile_image_path: string | null
@@ -7,9 +8,6 @@ export type ArtistProfilePresentationRecord = {
   profile_image_position_x: number
   profile_image_position_y: number
 }
-
-const PROFILE_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp"])
-const PROFILE_IMAGE_MAX_BYTES = 5 * 1024 * 1024
 
 async function requireArtistAccount() {
   const account = await loadKleioAccount()
@@ -50,23 +48,15 @@ export async function loadArtistProfilePresentation(): Promise<ArtistProfilePres
 }
 
 export async function uploadArtistProfileImage(file: File) {
-  if (!PROFILE_IMAGE_TYPES.has(file.type)) throw new Error("Choose a JPG, PNG, or WebP profile image.")
-  if (file.size > PROFILE_IMAGE_MAX_BYTES) throw new Error("Profile images must be 5 MB or smaller.")
-
-  const account = await requireArtistAccount()
-  const supabase = getSupabaseBrowserClient()
-  const extension = file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpg"
-  const path = `${account.user.id}/profile/${crypto.randomUUID()}.${extension}`
-  const { error } = await supabase.storage.from("artist-assets").upload(path, file, {
-    cacheControl: "3600",
-    contentType: file.type,
-    upsert: false,
+  const result = await uploadMediaToLibrary({
+    file,
+    source: "device",
+    config: mediaImportConfig("profile_image"),
   })
-  if (error) throw error
-
   return {
-    path,
-    signedUrl: await signedArtistProfileImageUrl(path),
+    path: result.item.storagePath,
+    signedUrl: result.item.previewUrl ?? await signedArtistProfileImageUrl(result.item.storagePath),
+    mediaItem: result.item,
   }
 }
 
@@ -104,10 +94,42 @@ export async function saveArtistProfilePresentation(input: {
 
   const previousPath = typeof current?.profile_image_path === "string" ? current.profile_image_path : null
   if (previousPath && previousPath !== input.profile_image_path) {
-    await supabase.storage.from("artist-assets").remove([previousPath])
+    const { data: previousSource } = await supabase.from("artist_import_sources").select("id").eq("artist_user_id", account.user.id).eq("storage_path", previousPath).maybeSingle()
+    if (previousSource?.id) {
+      await supabase.from("artist_media_usages").delete().eq("artist_user_id", account.user.id).eq("source_id", previousSource.id).eq("usage_context", "profile_image")
+      await supabase.from("artist_import_sources").update({ library_status: "available", updated_at: new Date().toISOString() }).eq("id", previousSource.id)
+    }
   }
 
   const profileImagePath = typeof data.profile_image_path === "string" && data.profile_image_path ? data.profile_image_path : null
+  if (profileImagePath) {
+    const { data: source } = await supabase.from("artist_import_sources").select("*").eq("artist_user_id", account.user.id).eq("storage_path", profileImagePath).maybeSingle()
+    if (source?.id) {
+      const item = {
+        id: String(source.id),
+        sourceId: String(source.id),
+        storagePath: profileImagePath,
+        originalFilename: String(source.original_filename || source.label || "Profile image"),
+        title: "Profile image",
+        mimeType: String(source.mime_type || "image/jpeg"),
+        byteSize: source.byte_size === null ? null : Number(source.byte_size),
+        checksum: String(source.checksum || ""),
+        sourceType: String(source.source_type || "existing_kleio_media"),
+        mediaKind: "image" as const,
+        width: source.width ? Number(source.width) : null,
+        height: source.height ? Number(source.height) : null,
+        createdAt: String(source.created_at || new Date().toISOString()),
+        libraryStatus: "attached" as const,
+        usageCount: 0,
+        associatedWorkId: null,
+        associatedWorkTitle: "",
+        previewUrl: null,
+        approvalState: "available" as const,
+      }
+      await recordMediaUsage({ item, context: "profile_image", destinationId: account.user.id, role: "profile" })
+    }
+  }
+
   return {
     profile_image_path: profileImagePath,
     featured_work_id: typeof data.featured_work_id === "string" ? data.featured_work_id : null,
