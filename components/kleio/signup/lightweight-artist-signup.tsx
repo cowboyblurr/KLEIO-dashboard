@@ -9,6 +9,7 @@ import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
 import { clearDemoSession } from "@/lib/kleio-demo-auth"
 import { getKleioAuthErrorMessage, resendKleioSignupConfirmation } from "@/lib/kleio-auth"
 import { setKleioMode } from "@/lib/kleio-mode"
+import { isKleioPasswordStrong, KLEIO_PASSWORD_MIN_LENGTH } from "@/lib/kleio-password-security"
 import { getKleioReturnRoute, readKleioReturnIntent } from "@/lib/kleio-return-intent"
 import { ensureLightweightArtistWorkspace, signUpLightweightArtistAccount } from "@/lib/kleio-lightweight-artist-signup"
 import { trackKleioProductEvent } from "@/lib/kleio-product-analytics"
@@ -22,7 +23,7 @@ function PasswordField({ label, value, onChange, confirmation = false }: { label
     <label htmlFor={id} className="grid gap-1.5 text-xs font-medium text-muted-foreground">
       <span>{label} *</span>
       <span className="relative">
-        <input id={id} type={visible ? "text" : "password"} value={value} onChange={(event) => onChange(event.target.value)} required minLength={8} autoComplete={confirmation ? "new-password" : "new-password"} className={`${inputClassName} pr-11`} />
+        <input id={id} type={visible ? "text" : "password"} value={value} onChange={(event) => onChange(event.target.value)} required minLength={KLEIO_PASSWORD_MIN_LENGTH} autoComplete={confirmation ? "new-password" : "new-password"} className={`${inputClassName} pr-11`} />
         <button type="button" onClick={() => setVisible((current) => !current)} className="absolute right-2 top-1/2 grid size-8 -translate-y-1/2 place-items-center rounded-lg text-muted-foreground hover:bg-accent/50" aria-label={visible ? "Hide password" : "Show password"}>{visible ? <EyeOff className="size-4" /> : <Eye className="size-4" />}</button>
       </span>
     </label>
@@ -74,8 +75,8 @@ export function LightweightArtistSignup() {
     setError("")
     void trackKleioProductEvent("signup_submitted", { surface: "artist_signup", metadata: { role: "artist" } })
 
-    if (!displayName.trim() || !email.trim() || password.length < 8 || password !== confirmPassword || !accepted) {
-      setError(es ? "Completa los campos, acepta el aviso y confirma una contraseña de al menos 8 caracteres." : "Complete the fields, accept the notice, and confirm a password of at least 8 characters.")
+    if (!displayName.trim() || !email.trim() || !isKleioPasswordStrong(password) || password !== confirmPassword || !accepted) {
+      setError(es ? "Completa los campos, acepta el aviso y usa al menos 12 caracteres con mayúscula, minúscula, número y símbolo." : "Complete the fields, accept the notice, and use at least 12 characters with uppercase, lowercase, a number, and a symbol.")
       void trackKleioProductEvent("signup_validation_failed", { surface: "artist_signup", metadata: { reason: "required_fields" } })
       return
     }
@@ -152,7 +153,8 @@ export function LightweightArtistSignup() {
             <PasswordField label={es ? "Contraseña" : "Password"} value={password} onChange={setPassword} />
             <PasswordField label={es ? "Confirmar contraseña" : "Confirm password"} value={confirmPassword} onChange={setConfirmPassword} confirmation />
           </div>
-          <p className="mt-3 text-xs leading-5 text-muted-foreground">{es ? "La ubicación, disciplina, biografía, portafolio y preferencias se añaden progresivamente solo cuando sean útiles." : "Location, discipline, biography, portfolio, and preferences are added progressively only when they become useful."}</p>
+          <p className="mt-3 text-xs leading-5 text-muted-foreground">{es ? "La contraseña debe tener al menos 12 caracteres e incluir mayúscula, minúscula, número y símbolo. KLEIO también bloquea contraseñas encontradas en filtraciones conocidas." : "Use at least 12 characters with uppercase, lowercase, a number, and a symbol. KLEIO also blocks passwords found in known data breaches."}</p>
+          <p className="mt-2 text-xs leading-5 text-muted-foreground">{es ? "La ubicación, disciplina, biografía, portafolio y preferencias se añaden progresivamente solo cuando sean útiles." : "Location, discipline, biography, portfolio, and preferences are added progressively only when they become useful."}</p>
           <label className="mt-5 flex items-start gap-3 rounded-xl border border-border bg-background p-4 text-xs leading-5 text-muted-foreground"><input type="checkbox" className="mt-0.5 size-4" checked={accepted} onChange={(event) => setAccepted(event.target.checked)} /><span>{es ? "Acepto crear una cuenta KLEIO y entiendo que mi perfil, borradores privados y materiales aprobados se almacenarán para ofrecer las funciones que elija. Nada se publica automáticamente." : "I agree to create a KLEIO account and understand that my profile, private drafts, and approved materials will be stored to provide the features I choose. Nothing is published automatically."}</span></label>
           {error && <p role="alert" className="mt-5 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
           <div className="mt-6 flex flex-col gap-3 border-t border-border pt-5 sm:flex-row sm:items-center sm:justify-between">
