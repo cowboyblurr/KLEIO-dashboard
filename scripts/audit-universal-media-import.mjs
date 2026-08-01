@@ -59,7 +59,8 @@ forbidText(portfolio, 'type=\"file\"', "visual portfolio page must not return to
 requireText(profile, 'context=\"profile_image\"', "profile media must use Quick Import")
 requireText(passport, "Choose CV", "Creative Passport must expose reusable document selection")
 requireText(application, 'context=\"application_material\"', "application preparation must expose requirement-aware media import")
-requireText(library, "KLEIO Media Library", "artists must have a private reusable media surface")
+requireText(library, 'title="Media Library"', "artists must have a private reusable media surface")
+requireText(library, 'href="/artist-dashboard/import/"', "guided importing must begin from the private Media Library surface")
 requireText(sidebar, 'href: \"/artist-dashboard/media/\"', "the private media library must be reachable from artist navigation")
 
 requireText(migration, "artist_media_usages", "database must record explicit destination usages")
@@ -73,4 +74,4 @@ for (const file of [architecture, googleCapabilities, quick, signup, portfolio, 
   forbidText(file, "GOCSPX-", "Google client secrets must not be committed")
 }
 
-console.log("Universal Media Import audit passed: shared contexts and adapters, graceful Google capability gates, visual-first portfolio creation, private library reuse, separate Drive consent, explicit destination usage, profile and Passport Quick Import, application media support, and owner-scoped RLS are present.")
+console.log("Universal Media Import audit passed: shared contexts and adapters, graceful Google capability gates, visual-first portfolio creation, private library reuse, guided import access, separate Drive consent, explicit destination usage, profile and Passport Quick Import, application media support, and owner-scoped RLS are present.")

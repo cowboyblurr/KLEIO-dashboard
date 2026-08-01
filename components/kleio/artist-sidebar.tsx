@@ -17,7 +17,6 @@ import {
   MessageSquare,
   Settings,
   Sparkles,
-  UploadCloud,
   UserRound,
   UsersRound,
 } from "lucide-react"
@@ -34,7 +33,7 @@ import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
 import { persistDemoGuideState } from "@/components/kleio/use-demo-guide"
 import { useKleioMode } from "@/components/kleio/use-kleio-mode"
 
-type NavItem = { href: string; label: string; icon: typeof LayoutDashboard; activeMatch?: string; comingSoon?: boolean }
+type NavItem = { href: string; label: string; icon: typeof LayoutDashboard; activeMatch?: string | string[]; comingSoon?: boolean }
 type NavSection = { heading: string; headingEs: string; items: NavItem[] }
 type LiveArtistIdentity = { name: string; discipline: string; imageUrl: string | null; positionX: number; positionY: number }
 
@@ -49,8 +48,7 @@ const navSections: NavSection[] = [
       { href: "/artist-dashboard/opportunities/", label: "Opportunities", icon: Briefcase, activeMatch: "/artist-dashboard/opportunities" },
       { href: "/artist-dashboard/applications/", label: "Applications", icon: FileText, activeMatch: "/artist-dashboard/applications" },
       { href: "/artist-dashboard/portfolio/", label: "Portfolio", icon: FolderOpen, activeMatch: "/artist-dashboard/portfolio" },
-      { href: "/artist-dashboard/media/", label: "Media Library", icon: Library, activeMatch: "/artist-dashboard/media" },
-      { href: "/artist-dashboard/import/", label: "Import Studio", icon: UploadCloud, activeMatch: "/artist-dashboard/import" },
+      { href: "/artist-dashboard/media/", label: "Media Library", icon: Library, activeMatch: ["/artist-dashboard/media", "/artist-dashboard/import"] },
       { href: "/artist-dashboard/funding/", label: "Funding", icon: DollarSign, activeMatch: "/artist-dashboard/funding" },
     ],
   },
@@ -69,6 +67,12 @@ const navSections: NavSection[] = [
 
 function openPageGuide() {
   persistDemoGuideState({ isOpen: true, isMinimized: false, dismissed: false, activeScenarioId: null, activeStepId: null, completedScenarioId: null })
+}
+
+function isNavItemActive(pathname: string, item: NavItem) {
+  const activeMatches = Array.isArray(item.activeMatch) ? item.activeMatch : item.activeMatch ? [item.activeMatch] : []
+  if (activeMatches.length) return activeMatches.some((match) => pathname.startsWith(match))
+  return pathname === item.href || `${pathname}/` === item.href
 }
 
 export function ArtistSidebar() {
@@ -107,7 +111,7 @@ export function ArtistSidebar() {
       <div className="fixed inset-x-0 top-0 z-40 flex h-14 items-center gap-3 border-b border-[#E7E1F7] bg-white px-3 md:hidden">
         <KleioWordmarkLink href="/" className="shrink-0 rounded-md bg-white px-2 py-1 shadow-sm ring-1 ring-border" />
         <nav aria-label="Artist workspace" className="flex min-w-0 flex-1 gap-1 overflow-x-auto">
-          {mobileItems.map((item) => { const active = item.activeMatch ? pathname.startsWith(item.activeMatch) : pathname === item.href || `${pathname}/` === item.href; const Icon = item.icon; return <Link key={item.href} href={item.href} aria-current={active ? "page" : undefined} aria-label={item.label} className={cn("grid size-10 shrink-0 place-items-center rounded-lg", active ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-accent/60")}><Icon className="size-4" /></Link> })}
+          {mobileItems.map((item) => { const active = isNavItemActive(pathname, item); const Icon = item.icon; return <Link key={item.href} href={item.href} aria-current={active ? "page" : undefined} aria-label={item.label} className={cn("grid size-10 shrink-0 place-items-center rounded-lg", active ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-accent/60")}><Icon className="size-4" /></Link> })}
         </nav>
         <AccountSignOutButton compact className="border-[#E7E1F7] bg-white shadow-sm" />
       </div>
@@ -119,17 +123,15 @@ export function ArtistSidebar() {
               <p className="px-2.5 pb-1.5 text-[0.61rem] font-semibold uppercase tracking-[0.15em] text-muted-foreground/80">{locale === "es" ? section.headingEs : section.heading}</p>
               <ul className="space-y-0.5">
                 {section.items.map((item) => {
-                  const active = item.activeMatch ? pathname.startsWith(item.activeMatch) : pathname === item.href || `${pathname}/` === item.href
+                  const active = isNavItemActive(pathname, item)
                   const Icon = item.icon
                   const label = item.href === "/artist-dashboard/collaborators/"
                     ? (locale === "es" ? "Coincidencias de artistas" : "Artist Matches")
                     : item.href === "/artist-dashboard/profile/"
                       ? (locale === "es" ? "Perfil de artista" : "Artist Profile")
-                      : item.href === "/artist-dashboard/import/"
-                        ? (locale === "es" ? "Estudio de importación" : "Import Studio")
-                        : item.href === "/artist-dashboard/media/"
-                          ? (locale === "es" ? "Biblioteca de medios" : "Media Library")
-                          : t(artistNavLabelKeys[item.href] ?? item.label)
+                      : item.href === "/artist-dashboard/media/"
+                        ? (locale === "es" ? "Biblioteca de medios" : "Media Library")
+                        : t(artistNavLabelKeys[item.href] ?? item.label)
                   return <li key={item.label}><Link href={item.href} onClick={isLive ? undefined : openPageGuide} aria-current={active ? "page" : undefined} className={cn("group flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-[0.82rem] font-medium transition-colors", active ? "bg-sidebar-accent text-sidebar-accent-foreground" : "text-foreground/70 hover:bg-accent/60 hover:text-foreground")}><Icon className={cn("size-3.5 shrink-0", active ? "text-primary" : "text-muted-foreground")} /><span className="flex-1">{label}</span>{item.comingSoon && <span className="rounded-full bg-[#F7F4FF] px-1.5 py-0.5 text-[0.52rem] font-semibold uppercase tracking-wide text-[#7F7890]">{locale === "es" ? "Pronto" : "Soon"}</span>}</Link></li>
                 })}
               </ul>
