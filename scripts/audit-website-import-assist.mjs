@@ -15,6 +15,7 @@ function forbidText(content, pattern, message) {
 const websiteMigration = read("supabase/migrations/20260801223000_website_import_assist.sql")
 const assistMigration = read("supabase/migrations/20260801224000_kleio_assist_drafts.sql")
 const cloudflareMigration = read("supabase/migrations/20260801231500_kleio_assist_cloudflare_beta.sql")
+const rightsMigration = read("supabase/migrations/20260801234500_enforce_website_import_rights.sql")
 const collector = read("supabase/functions/analyze-artist-website/index.ts")
 const assist = read("supabase/functions/kleio-assist/index.ts")
 const client = read("lib/kleio-website-import.ts")
@@ -37,6 +38,13 @@ requireText(cloudflareMigration, /provider_request_id/, "AI provider requests mu
 requireText(cloudflareMigration, /input_units|total_units/, "AI usage must be measurable for beta evaluation.")
 requireText(cloudflareMigration, /grant select on table public\.artist_ai_usage_events to authenticated/, "Artists must have read-only access to their own AI usage.")
 forbidText(cloudflareMigration, /grant insert.*artist_ai_usage_events.*authenticated/i, "Browser clients must not write AI usage records.")
+
+requireText(rightsMigration, /rights_confirmed_at timestamptz/, "Website import sessions must retain artist rights confirmation.")
+requireText(rightsMigration, /private\.enforce_website_import_rights/, "Website artwork imports must be protected by a database trigger.")
+requireText(rightsMigration, /before insert on public\.artist_import_sources/, "Website rights must be enforced before a source is inserted.")
+requireText(rightsMigration, /session\.artist_user_id = new\.artist_user_id/, "Rights confirmation must belong to the same artist as the imported source.")
+requireText(rightsMigration, /session\.rights_confirmed_at is not null/, "Website source insertion must require recorded rights confirmation.")
+forbidText(rightsMigration, /security definer/i, "The rights-enforcement trigger must not bypass database access controls through SECURITY DEFINER.")
 
 requireText(collector, /ownershipConfirmed !== true/, "Website ownership or permission confirmation is missing.")
 requireText(collector, /private_network_url_blocked/, "Website collector lacks SSRF private-network blocking.")
@@ -77,6 +85,8 @@ requireText(client, /reviewVisualPracticeAnalysis/, "Missing artist-controlled i
 requireText(client, /buildApprovedProfileEvidence/, "Missing approved profile evidence builder.")
 requireText(client, /generateKleioAssistDraft/, "Missing KLEIO drafting client action.")
 requireText(client, /approveWebsiteArtworkImports/, "Missing artist-approved website artwork import.")
+requireText(client, /rights_confirmed_at: confirmedAt/, "The artist client must persist rights confirmation before website image import.")
+requireText(client, /\.eq\("artist_user_id", account\.user\.id\)/, "Rights confirmation must be scoped to the authenticated artist.")
 requireText(client, /updateKleioAssistDraft/, "Missing explicit draft approval action.")
 requireText(client, /deleteKleioAssistDraft/, "Artists must be able to delete generated drafts.")
 
@@ -98,4 +108,4 @@ for (const content of [collector, assist, client, studio]) {
 forbidText(studio, /first 50|51st user|user_count\s*[>=]+\s*50/i, "The proof-of-concept benchmark must not be hard-wired into product behavior.")
 forbidText(assist, /user_count\s*[>=]+\s*50|signup_number/i, "The proof-of-concept benchmark must not be hard-wired into backend behavior.")
 
-console.log("Website Import Assist audit passed: bounded public-source collection, SSRF and robots controls, private provenance, Cloudflare free-beta provider abstraction, structured multimodal output, artist-reviewed interpretations, approved-evidence-only drafting, configurable fair-use, usage measurement, explicit rights and draft approval, deletion controls, and no hard-wired user-count trigger.")
+console.log("Website Import Assist audit passed: bounded public-source collection, SSRF and robots controls, private provenance, database-enforced image rights, Cloudflare free-beta provider abstraction, structured multimodal output, artist-reviewed interpretations, approved-evidence-only drafting, configurable fair-use, usage measurement, explicit draft approval, deletion controls, and no hard-wired user-count trigger.")
