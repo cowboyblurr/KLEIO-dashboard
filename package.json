@@ -19,7 +19,8 @@
     "audit:universal-media": "node scripts/audit-universal-media-import.mjs",
     "audit:upload-to-passport": "node scripts/audit-upload-to-passport-intelligence.mjs",
     "audit:website-import": "node scripts/audit-website-import-assist.mjs",
-    "audit:instagram-import": "node scripts/audit-instagram-import.mjs"
+    "audit:instagram-import": "node scripts/audit-instagram-import.mjs",
+    "audit:import-sources": "node scripts/audit-import-source-hub.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.5.0",
