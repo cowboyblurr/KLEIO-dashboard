@@ -1,0 +1,372 @@
+name: Apply unified Import Studio source hub
+
+on:
+  push:
+    branches:
+      - agent/unified-import-source-hub
+    paths:
+      - .github/workflows/apply-unified-import-source-hub.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch-and-verify:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/unified-import-source-hub
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Implement the unified source hub and restricted-source guardrails
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          def replace_once(path: str, old: str, new: str) -> None:
+              file = Path(path)
+              text = file.read_text()
+              if old not in text:
+                  raise SystemExit(f"Could not locate expected content in {path}: {old[:120]!r}")
+              file.write_text(text.replace(old, new, 1))
+
+          Path("components/kleio/import-source-hub.tsx").write_text(r'''"use client"
+
+import { ArrowDown, Cloud, Globe2, Images, ShieldCheck, Upload } from "lucide-react"
+
+const sourceCard = "group flex min-h-52 flex-col rounded-[22px] border border-[#E2DCF1] bg-white p-5 text-left shadow-[0_14px_38px_rgba(82,64,130,0.05)] transition hover:-translate-y-0.5 hover:border-[#B9A9DE] hover:shadow-[0_20px_48px_rgba(82,64,130,0.09)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#A997E8]/20"
+const ready = "rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[0.65rem] font-semibold text-emerald-800"
+const gated = "rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-[0.65rem] font-semibold text-amber-800"
+
+export function ImportSourceHub() {
+  const driveConfigured = Boolean(
+    process.env.NEXT_PUBLIC_GOOGLE_DRIVE_CLIENT_ID
+    && process.env.NEXT_PUBLIC_GOOGLE_PICKER_API_KEY,
+  )
+
+  return (
+    <section className="rounded-[28px] border border-[#E2DCF1] bg-[linear-gradient(145deg,#F8F5FF,#FFFFFF)] p-5 shadow-[0_22px_70px_rgba(82,64,130,0.07)] sm:p-7" aria-labelledby="import-source-title">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <div className="max-w-3xl">
+          <p className="text-[0.68rem] font-semibold uppercase tracking-[0.17em] text-[#75639E]">Choose an import source</p>
+          <h2 id="import-source-title" className="mt-2 font-serif text-3xl font-semibold tracking-[-0.04em] text-[#292631]">Start with the source that already holds your work</h2>
+          <p className="mt-3 text-sm leading-7 text-[#746E80]">Each path prepares private, editable material for review. Saving an import draft is not approval, and nothing is published automatically.</p>
+        </div>
+        <div className="grid gap-2 text-xs font-semibold text-[#625C70]">
+          <span className="inline-flex items-center gap-2"><ShieldCheck className="size-4 text-[#6A5896]" />Artist review remains required</span>
+          <span className="inline-flex items-center gap-2"><Images className="size-4 text-[#6A5896]" />Original files stay distinct from previews</span>
+        </div>
+      </div>
+
+      <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <a className={sourceCard} href="#device-drive-import" aria-label="Go to device artwork upload">
+          <div className="flex items-start justify-between gap-3"><span className="grid size-11 place-items-center rounded-2xl bg-[#F0EAFB] text-[#5B4B8A]"><Upload className="size-5" /></span><span className={ready}>Ready now</span></div>
+          <h3 className="mt-5 font-serif text-xl font-semibold">Upload from device</h3>
+          <p className="mt-2 flex-1 text-sm leading-6 text-[#746E80]">Choose original artwork from a computer, phone, tablet, iCloud Drive, or a compatible Android file provider.</p>
+          <span className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-[#5B4B8A]">Open file import <ArrowDown className="size-4 transition group-hover:translate-y-0.5" /></span>
+        </a>
+
+        <a className={sourceCard} href="#device-drive-import" aria-label="Go to Google Drive artwork selection">
+          <div className="flex items-start justify-between gap-3"><span className="grid size-11 place-items-center rounded-2xl bg-[#F0EAFB] text-[#5B4B8A]"><Cloud className="size-5" /></span><span className={driveConfigured ? ready : gated}>{driveConfigured ? "Ready now" : "Configuration required"}</span></div>
+          <h3 className="mt-5 font-serif text-xl font-semibold">Choose from Google Drive</h3>
+          <p className="mt-2 flex-1 text-sm leading-6 text-[#746E80]">Use Google Picker to select specific files. Drive permission remains separate from Google sign-in and does not expose the rest of the account.</p>
+          <span className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-[#5B4B8A]">Open Drive import <ArrowDown className="size-4 transition group-hover:translate-y-0.5" /></span>
+        </a>
+
+        <a className={sourceCard} href="#website-import" aria-label="Go to personal portfolio website analysis">
+          <div className="flex items-start justify-between gap-3"><span className="grid size-11 place-items-center rounded-2xl bg-[#F0EAFB] text-[#5B4B8A]"><Globe2 className="size-5" /></span><span className={ready}>Ready now</span></div>
+          <h3 className="mt-5 font-serif text-xl font-semibold">Import from website</h3>
+          <p className="mt-2 flex-1 text-sm leading-6 text-[#746E80]">Review public pages from an artist-owned portfolio site, select likely works, and correct every field before anything is saved.</p>
+          <span className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-[#5B4B8A]">Analyze a website <ArrowDown className="size-4 transition group-hover:translate-y-0.5" /></span>
+        </a>
+
+        <a className={sourceCard} href="#pinterest-import" aria-label="Review Pinterest connection requirements">
+          <div className="flex items-start justify-between gap-3"><span className="grid size-11 place-items-center rounded-2xl bg-[#F0EAFB] text-[#5B4B8A]"><Images className="size-5" /></span><span className={gated}>App approval required</span></div>
+          <h3 className="mt-5 font-serif text-xl font-semibold">Connect Pinterest</h3>
+          <p className="mt-2 flex-1 text-sm leading-6 text-[#746E80]">Pinterest will use official read-only OAuth so artists can choose specific boards and Pins. KLEIO will not scrape Pinterest pages.</p>
+          <span className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-[#5B4B8A]">Review setup status <ArrowDown className="size-4 transition group-hover:translate-y-0.5" /></span>
+        </a>
+      </div>
+
+      <p className="mt-5 rounded-xl border border-[#E7E1F7] bg-white/80 px-4 py-3 text-xs leading-5 text-[#746E80]">Instagram remains available below as an additional read-only connected source. Behance and ArtStation remain external portfolio links only and are not analyzed, copied, synchronized, embedded, or used for AI analysis.</p>
+    </section>
+  )
+}
+''')
+
+          Path("components/kleio/pinterest-import-assist.tsx").write_text(r'''import { ArrowDown, Images, ShieldCheck } from "lucide-react"
+
+const secondary = "inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-[#D8D0F2] bg-white px-4 py-2 text-sm font-semibold text-[#5B4B8A] transition hover:border-[#B9A9DE] hover:bg-[#FBFAFE] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#A997E8]/20"
+
+export function PinterestImportAssist() {
+  return (
+    <section id="pinterest-import" data-integration-status="configuration-required" className="scroll-mt-6 rounded-[28px] border border-[#E2DCF1] bg-white p-5 shadow-[0_22px_70px_rgba(82,64,130,0.07)] sm:p-7" aria-labelledby="pinterest-import-title">
+      <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+        <div className="max-w-3xl">
+          <p className="text-[0.68rem] font-semibold uppercase tracking-[0.17em] text-[#75639E]">Pinterest import · setup required</p>
+          <h2 id="pinterest-import-title" className="mt-2 font-serif text-3xl font-semibold tracking-[-0.04em]">Connect only after the official read-only flow is approved</h2>
+          <p className="mt-3 text-sm leading-7 text-[#746E80]">Pinterest import is intentionally disabled in this build. KLEIO will not represent it as live until the Pinterest app, redirect URI, privacy surfaces, token exchange, revocation flow, and production access are verified.</p>
+        </div>
+        <span className="inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-800"><ShieldCheck className="size-4" />No scraping or password collection</span>
+      </div>
+
+      <div className="mt-6 grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
+        <div className="rounded-2xl border border-[#E7E1F7] bg-[#FAF9FD] p-5">
+          <h3 className="font-serif text-xl font-semibold">Production connection requirements</h3>
+          <ul className="mt-4 grid gap-3 text-sm leading-6 text-[#746E80]">
+            <li><strong className="text-[#292631]">Minimum permissions:</strong> request only <code>boards:read</code> and <code>pins:read</code>.</li>
+            <li><strong className="text-[#292631]">Artist selection:</strong> show boards and Pins in a selectable review grid; never import an entire account automatically.</li>
+            <li><strong className="text-[#292631]">Preview labeling:</strong> preserve the Pin URL and board source, and mark uncertain image quality as an external preview.</li>
+            <li><strong className="text-[#292631]">Original replacement:</strong> ask the artist to replace a Pin preview with an original application-quality file.</li>
+            <li><strong className="text-[#292631]">Account control:</strong> provide disconnect, token revocation, expiration recovery, and deletion of unfinished source data.</li>
+          </ul>
+        </div>
+
+        <div className="rounded-2xl border border-[#E7E1F7] bg-white p-5">
+          <span className="grid size-12 place-items-center rounded-2xl bg-[#F0EAFB] text-[#5B4B8A]"><Images className="size-5" /></span>
+          <h3 className="mt-4 font-serif text-xl font-semibold">Current beta path</h3>
+          <p className="mt-2 text-sm leading-6 text-[#746E80]">Use an original file from the artist’s device or Google Drive. Pinterest links can remain in the artist’s external-link fields, but their contents are not analyzed by Website Import Assist.</p>
+          <div className="mt-5 grid gap-2">
+            <button type="button" disabled aria-disabled="true" className="inline-flex min-h-11 items-center justify-center rounded-xl bg-[#E9E5EF] px-4 text-sm font-semibold text-[#81788E]">Connect Pinterest</button>
+            <a href="#device-drive-import" className={secondary}>Use device or Drive now <ArrowDown className="size-4" /></a>
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+''')
+
+          Path("components/kleio/artist-import-studio-page.tsx").write_text(r'''"use client"
+
+import Link from "next/link"
+import { ArrowLeft, ArrowRight, Images, ShieldCheck } from "lucide-react"
+import { ArtistImportStudio } from "@/components/kleio/artist-import-studio"
+import { ImportSourceHub } from "@/components/kleio/import-source-hub"
+import { InstagramImportAssist } from "@/components/kleio/instagram-import-assist"
+import { PinterestImportAssist } from "@/components/kleio/pinterest-import-assist"
+import { WebsiteImportAssist } from "@/components/kleio/website-import-assist"
+
+export function ArtistImportStudioPage() {
+  return (
+    <main className="h-full overflow-y-auto bg-[#FCFBFE] px-4 py-6 sm:px-6 sm:py-8">
+      <div className="mx-auto max-w-[1180px] space-y-5">
+        <Link href="/artist-dashboard/media/" className="inline-flex min-h-10 items-center gap-2 rounded-xl px-2 text-sm font-semibold text-[#5B4B8A] transition hover:bg-[#F3EFFB] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#A997E8]/20">
+          <ArrowLeft className="size-4" />Media Library
+        </Link>
+
+        <header className="rounded-[28px] border border-[#E2DCF1] bg-white p-6 shadow-[0_22px_70px_rgba(82,64,130,0.07)] sm:p-8">
+          <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+            <div className="max-w-3xl">
+              <p className="text-[0.68rem] font-semibold uppercase tracking-[0.17em] text-[#75639E]">Media Library · Import work</p>
+              <h1 className="mt-2 font-serif text-3xl font-semibold tracking-[-0.04em] text-[#292631] sm:text-4xl">Bring your existing work into KLEIO</h1>
+              <p className="mt-3 text-sm leading-7 text-[#746E80]">Start with original files, Google Drive, an artist-owned website, or a supported connected account. KLEIO stages editable records and waits for your approval before adding anything to the private Media Library or Creative Passport.</p>
+            </div>
+            <div className="grid gap-2 text-xs font-semibold text-[#625C70]">
+              <span className="inline-flex items-center gap-2"><ShieldCheck className="size-4 text-[#6A5896]" />Nothing publishes automatically</span>
+              <span className="inline-flex items-center gap-2"><Images className="size-4 text-[#6A5896]" />Every field and artwork stays editable</span>
+            </div>
+          </div>
+        </header>
+
+        <ImportSourceHub />
+
+        <section id="device-drive-import" className="scroll-mt-6" aria-label="Device and Google Drive import">
+          <ArtistImportStudio />
+        </section>
+
+        <section id="website-import" className="scroll-mt-6" aria-label="Personal portfolio website import">
+          <WebsiteImportAssist />
+        </section>
+
+        <PinterestImportAssist />
+
+        <section id="instagram-import" className="scroll-mt-6" aria-label="Instagram import">
+          <InstagramImportAssist />
+        </section>
+
+        <section className="rounded-2xl border border-[#E7E1F7] bg-white p-5 text-sm leading-6 text-[#746E80]">
+          <p><strong className="text-[#292631]">Prefer to continue manually?</strong> You can return to the Media Library, build your Creative Passport field by field, or add works directly from the Portfolio page.</p>
+          <div className="mt-4 flex flex-wrap gap-3">
+            <Link href="/artist-dashboard/media/" className="inline-flex min-h-10 items-center gap-2 rounded-xl bg-[#5B4B8A] px-4 text-sm font-semibold text-white transition hover:bg-[#4F407B]">Return to Media Library <ArrowRight className="size-4" /></Link>
+            <Link href="/artist-dashboard/passport/" className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-[#D8D0F2] bg-white px-4 text-sm font-semibold text-[#5B4B8A]">Creative Passport <ArrowRight className="size-4" /></Link>
+            <Link href="/artist-dashboard/portfolio/" className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-[#D8D0F2] bg-white px-4 text-sm font-semibold text-[#5B4B8A]">Portfolio <ArrowRight className="size-4" /></Link>
+          </div>
+        </section>
+      </div>
+    </main>
+  )
+}
+''')
+
+          replace_once(
+              "components/kleio/website-import-assist.tsx",
+              '  "instagram.com", "facebook.com", "threads.net", "tiktok.com", "x.com", "twitter.com", "pinterest.com", "linkedin.com",\n',
+              '  "instagram.com", "facebook.com", "threads.net", "tiktok.com", "x.com", "twitter.com", "pinterest.com", "linkedin.com", "behance.net", "artstation.com",\n',
+          )
+          replace_once(
+              "components/kleio/website-import-assist.tsx",
+              '    return "Social profiles cannot be analyzed through Website Import Assist. Use a public portfolio or personal website, or upload artwork from your device. Connected social import will be handled separately."\n',
+              '    return "Social platforms, Behance, and ArtStation cannot be analyzed through Website Import Assist. Behance and ArtStation may be saved only as external portfolio links. Use a public portfolio or personal website, or upload artwork directly."\n',
+          )
+          replace_once(
+              "components/kleio/website-import-assist.tsx",
+              'Use a portfolio or personal website. Instagram and other social profiles require a separate connected import.',
+              'Use a public portfolio or personal website. Behance and ArtStation remain external links only; supported social platforms use separate connected imports.',
+          )
+
+          replace_once(
+              "lib/kleio-website-import.ts",
+              '  if (/website import rights confirmation required/i.test(message)) return "Confirm that you own or have permission to use the selected website images before importing them."\n',
+              '  if (/website import rights confirmation required/i.test(message)) return "Confirm that you own or have permission to use the selected website images before importing them."\n  if (/unsupported import source/i.test(message)) return "This source cannot be analyzed through Website Import Assist. Behance and ArtStation remain external links only; supported social platforms use separate connected imports."\n',
+          )
+
+          replace_once(
+              "supabase/functions/analyze-artist-website/index.ts",
+              'const ALLOWED_ORIGINS = [\n  /^https:\\/\\/([a-z0-9-]+\\.)?kleioarthouse\\.com$/i,\n  /^https:\\/\\/cowboyblurr\\.github\\.io$/i,\n  /^http:\\/\\/localhost(?::\\d+)?$/i,\n  /^http:\\/\\/127\\.0\\.0\\.1(?::\\d+)?$/i,\n]\n',
+              'const ALLOWED_ORIGINS = [\n  /^https:\\/\\/([a-z0-9-]+\\.)?kleioarthouse\\.com$/i,\n  /^https:\\/\\/cowboyblurr\\.github\\.io$/i,\n  /^http:\\/\\/localhost(?::\\d+)?$/i,\n  /^http:\\/\\/127\\.0\\.0\\.1(?::\\d+)?$/i,\n]\nconst UNSUPPORTED_IMPORT_HOSTS = [\n  "instagram.com", "facebook.com", "threads.net", "tiktok.com", "x.com", "twitter.com",\n  "pinterest.com", "linkedin.com", "behance.net", "artstation.com",\n]\n',
+          )
+          replace_once(
+              "supabase/functions/analyze-artist-website/index.ts",
+              'function blockedHostname(hostname: string) {\n',
+              'function unsupportedImportHostname(hostname: string) {\n  const normalized = hostname.toLowerCase().replace(/^www\\./, "")\n  return UNSUPPORTED_IMPORT_HOSTS.some((host) => normalized === host || normalized.endsWith(`.${host}`))\n}\n\nfunction blockedHostname(hostname: string) {\n',
+          )
+          replace_once(
+              "supabase/functions/analyze-artist-website/index.ts",
+              '      const websiteUrl = cleanText(body.websiteUrl, 2_000)\n      const analysis = await analyzeWebsite(websiteUrl)\n',
+              '      const websiteUrl = cleanText(body.websiteUrl, 2_000)\n      let submittedUrl: URL\n      try { submittedUrl = new URL(websiteUrl) } catch { return json(request, { error: "invalid_website_url" }, 400) }\n      if (unsupportedImportHostname(submittedUrl.hostname)) return json(request, { error: "unsupported_import_source" }, 400)\n      const analysis = await analyzeWebsite(websiteUrl)\n',
+          )
+
+          Path("scripts/audit-import-source-hub.mjs").write_text(r'''import { readFileSync } from "node:fs"
+
+const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), "utf8")
+const requireText = (content, pattern, message) => { if (!pattern.test(content)) throw new Error(message) }
+const forbidText = (content, pattern, message) => { if (pattern.test(content)) throw new Error(message) }
+
+const page = read("components/kleio/artist-import-studio-page.tsx")
+const hub = read("components/kleio/import-source-hub.tsx")
+const pinterest = read("components/kleio/pinterest-import-assist.tsx")
+const website = read("components/kleio/website-import-assist.tsx")
+const client = read("lib/kleio-website-import.ts")
+const collector = read("supabase/functions/analyze-artist-website/index.ts")
+
+requireText(page, /<ImportSourceHub \/>/, "The artist import route must begin with one source-selection hub.")
+requireText(page, /id="device-drive-import"/, "Device and Drive import must have a stable source destination.")
+requireText(page, /id="website-import"/, "Website import must have a stable source destination.")
+requireText(page, /<PinterestImportAssist \/>/, "Pinterest setup status must be visible inside the Import Studio route.")
+requireText(page, /id="instagram-import"/, "The existing Instagram importer must remain available without displacing the four primary source choices.")
+
+for (const label of ["Upload from device", "Choose from Google Drive", "Import from website", "Connect Pinterest"]) {
+  requireText(hub, new RegExp(label), `Missing primary import source: ${label}`)
+}
+requireText(hub, /NEXT_PUBLIC_GOOGLE_DRIVE_CLIENT_ID/, "Drive readiness must reflect actual deployment configuration.")
+requireText(hub, /App approval required/, "Pinterest must not appear production-ready before app approval.")
+requireText(hub, /Behance and ArtStation remain external portfolio links only/, "Restricted portfolio platforms must be described honestly.")
+
+requireText(pinterest, /data-integration-status="configuration-required"/, "Pinterest must expose a machine-readable non-production status.")
+requireText(pinterest, /boards:read/, "Pinterest planning must request the minimum board read scope.")
+requireText(pinterest, /pins:read/, "Pinterest planning must request the minimum Pin read scope.")
+requireText(pinterest, /disabled aria-disabled="true"/, "Pinterest connection must remain disabled until the production flow exists.")
+requireText(pinterest, /No scraping or password collection/, "Pinterest must explicitly reject scraping and password collection.")
+forbidText(pinterest, /api\.pinterest\.com|www\.pinterest\.com\/oauth|client_secret|access_token|refresh_token/, "The status component must not contain a fake or client-side Pinterest OAuth implementation.")
+
+for (const host of ["behance.net", "artstation.com"]) {
+  requireText(website, new RegExp(host.replace(".", "\\.")), `Website UI must block ${host}.`)
+  requireText(collector, new RegExp(host.replace(".", "\\.")), `Website backend must block ${host}.`)
+}
+requireText(collector, /UNSUPPORTED_IMPORT_HOSTS/, "The backend must maintain a restricted-source host list.")
+requireText(collector, /unsupportedImportHostname/, "The backend must validate the submitted source before collection.")
+requireText(collector, /unsupported_import_source/, "The backend must return a stable restricted-source error.")
+requireText(client, /unsupported import source/, "The client must translate restricted-source errors into artist-facing guidance.")
+
+for (const content of [hub, pinterest, website, client, collector]) {
+  forbidText(content, /GOCSPX-|pina_[A-Za-z0-9_-]+|pinr_[A-Za-z0-9_-]+|client_secret\s*[:=]\s*["'][^"']+/, "A provider secret or token appears to be committed.")
+}
+
+console.log("Import source hub audit passed: four primary source choices, honest Drive readiness, Pinterest production gating, preserved Instagram access, and frontend/backend Behance and ArtStation restrictions are present.")
+''')
+
+          replace_once(
+              "package.json",
+              '    "audit:instagram-import": "node scripts/audit-instagram-import.mjs"\n',
+              '    "audit:instagram-import": "node scripts/audit-instagram-import.mjs",\n    "audit:import-sources": "node scripts/audit-import-source-hub.mjs"\n',
+          )
+
+          Path("docs/audits/2026-08-01-import-source-hub.md").write_text(r'''# KLEIO Import Studio source hub — August 1, 2026
+
+## Scope
+
+This focused improvement preserves the working Media Library and Import Studio implementation and closes the source-selection gaps identified in the KLEIO Import Studio brief.
+
+## Implemented
+
+- Added one visible source-selection hub with four primary choices: device, Google Drive, personal website, and Pinterest.
+- Kept the existing read-only Instagram importer available as an additional connected source.
+- Kept the existing device upload, Google Picker, autosave, private staging, editable artwork record, and explicit approval flows intact.
+- Added an honest Pinterest configuration state rather than a simulated connection.
+- Documented the required read-only Pinterest scopes (`boards:read`, `pins:read`), preview labeling, original-file replacement, disconnect, revocation, and expiration recovery requirements.
+- Blocked Behance and ArtStation in both the Website Import Assist interface and the authenticated website-analysis Edge Function.
+- Kept Behance and ArtStation available only as external portfolio links; their content is not crawled, copied, synchronized, embedded, or AI-analyzed.
+- Added a deployment audit covering source visibility, Pinterest gating, restricted-host enforcement, and secret scanning.
+
+## Verified existing implementation
+
+- Device image upload supports multiple selection, mobile-native file selection, progress messaging, validation, duplicate-aware source creation, and private storage.
+- Google Drive uses Google Picker and the narrow `drive.file` scope. It remains configuration-gated by deployment environment variables.
+- Import drafts autosave locally and to Supabase, preserve revisions, recover after refresh, and surface conflicts.
+- Artwork records remain editable and require explicit artist approval before a portfolio record is created.
+- Website collection is bounded, robots-aware, HTTPS-only, DNS/private-network protected, size-limited, signature-validated, and artist-confirmed.
+- Website artwork imports preserve source URLs and require recorded rights confirmation.
+
+## Intentionally not represented as complete
+
+- Pinterest OAuth is not live. KLEIO still needs an approved Pinterest app, registered redirect URI, server-side authorization-code exchange, encrypted token storage, refresh/revocation handling, and production access verification.
+- Google Drive cannot be called production-ready until the restricted client ID, API key, allowed origins, OAuth consent configuration, and real-account selection flow are verified in the deployed environment.
+- Physical Safari, Firefox, iPhone/iOS, Android, keyboard-only, screen-reader, interrupted-session, and expired-login testing remain separate release gates.
+- This change does not add TIFF, HEIC, PDF, MP4, or MOV artwork ingestion to the image-focused importer. Those formats require a separately verified processing and preview pipeline.
+
+## Release recommendation
+
+Merge only after the preview build passes and a signed-in artist verifies the source hub, device upload, Google Drive gating, website restrictions, autosave recovery, mobile layout, keyboard focus order, and screen-reader labels. Pinterest should remain disabled until the complete official OAuth flow is implemented and approved.
+''')
+
+          Path(".github/workflows/apply-unified-import-source-hub.yml").unlink()
+          PY
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run focused importer audits
+        run: |
+          pnpm audit:artist-import
+          pnpm audit:universal-media
+          pnpm audit:website-import
+          pnpm audit:instagram-import
+          pnpm audit:import-sources
+
+      - name: Run project validation
+        run: |
+          pnpm typecheck
+          pnpm lint
+          pnpm build
+
+      - name: Commit verified changes
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add components/kleio/import-source-hub.tsx components/kleio/pinterest-import-assist.tsx components/kleio/artist-import-studio-page.tsx components/kleio/website-import-assist.tsx lib/kleio-website-import.ts supabase/functions/analyze-artist-website/index.ts scripts/audit-import-source-hub.mjs package.json docs/audits/2026-08-01-import-source-hub.md .github/workflows/apply-unified-import-source-hub.yml
+          git commit -m "Unify Import Studio source selection"
+          git push origin HEAD
