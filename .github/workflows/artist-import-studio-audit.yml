@@ -26,6 +26,7 @@ on:
       - "lib/kleio-artwork-import.ts"
       - "lib/kleio-artist-import.ts"
       - "lib/kleio-universal-media.ts"
+      - "lib/kleio-google-capabilities.ts"
       - "lib/kleio-upload-to-passport.ts"
       - "lib/kleio-application-preparation.ts"
       - "lib/kleio-product-analytics.ts"
@@ -41,6 +42,7 @@ on:
       - "supabase/migrations/20260801210000_upload_to_passport_intelligence.sql"
       - "supabase/migrations/20260801213000_upload_to_passport_fk_indexes.sql"
       - "supabase/migrations/20260801214500_upload_to_passport_analytics_events.sql"
+      - "docs/google-auth-drive-tuesday-checklist.md"
       - "package.json"
       - ".github/workflows/artist-import-studio-audit.yml"
 
