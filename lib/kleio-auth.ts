@@ -21,8 +21,20 @@ export function getKleioAuthErrorMessage(error: unknown, locale: "en" | "es" = "
   if (message.includes("email address") && message.includes("invalid")) {
     return es ? "Ingresa una dirección de correo válida." : "Enter a valid email address."
   }
-  if (message.includes("password") && (message.includes("weak") || message.includes("least"))) {
-    return es ? "Usa una contraseña más segura de al menos 8 caracteres." : "Use a stronger password with at least 8 characters."
+  if (message.includes("known data breach") || message.includes("pwned password")) {
+    return es
+      ? "Esta contraseña apareció en una filtración de datos conocida. Elige una contraseña diferente."
+      : "This password has appeared in a known data breach. Choose a different password."
+  }
+  if (message.includes("verify password safety") || message.includes("password safety check")) {
+    return es
+      ? "KLEIO no pudo verificar la seguridad de la contraseña. Revisa tu conexión e inténtalo de nuevo."
+      : "KLEIO could not verify password safety. Check your connection and try again."
+  }
+  if (message.includes("password") && (message.includes("weak") || message.includes("least") || message.includes("uppercase"))) {
+    return es
+      ? "Usa al menos 12 caracteres e incluye mayúscula, minúscula, número y símbolo."
+      : "Use at least 12 characters and include uppercase, lowercase, a number, and a symbol."
   }
   if (message.includes("email rate limit") || message.includes("over_email_send_rate_limit")) {
     return es
