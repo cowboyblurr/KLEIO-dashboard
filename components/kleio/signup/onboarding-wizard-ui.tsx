@@ -214,9 +214,11 @@ export function OnboardingNavigation({
   onBack,
   onNext,
   onSkip,
+  onExit,
   backLabel,
   nextLabel,
   skipLabel,
+  exitLabel,
   submitting,
   disabled,
   showBack = true,
@@ -224,16 +226,18 @@ export function OnboardingNavigation({
   onBack: () => void
   onNext: () => void
   onSkip?: () => void
+  onExit?: () => void
   backLabel: string
   nextLabel: string
   skipLabel?: string
+  exitLabel?: string
   submitting?: boolean
   disabled?: boolean
   showBack?: boolean
 }) {
   return (
     <div className="mt-8 flex flex-col-reverse gap-3 border-t border-border pt-5 sm:flex-row sm:items-center sm:justify-between">
-      <div>
+      <div className="flex flex-wrap items-center gap-1">
         {showBack ? (
           <button
             type="button"
@@ -242,6 +246,15 @@ export function OnboardingNavigation({
           >
             <ChevronLeft className="size-4" />
             {backLabel}
+          </button>
+        ) : null}
+        {onExit && exitLabel ? (
+          <button
+            type="button"
+            onClick={onExit}
+            className="h-11 rounded-xl px-3 text-sm font-semibold text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10"
+          >
+            {exitLabel}
           </button>
         ) : null}
       </div>
