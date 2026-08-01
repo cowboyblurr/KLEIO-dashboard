@@ -1,3 +1,4 @@
+import { assertKleioPasswordIsSafe } from "@/lib/kleio-password-security"
 import { getKleioAuthCallbackUrl } from "@/lib/kleio-url"
 import { getSupabaseBrowserClient } from "@/lib/kleio-supabase"
 
@@ -109,6 +110,7 @@ export async function signUpLightweightArtistAccount(input: {
   })
   if (!pending) throw new Error("The artist account details are incomplete.")
 
+  await assertKleioPasswordIsSafe(input.password)
   savePendingLightweightArtistAccount(pending)
   markPendingArtistImportWelcome()
   const supabase = getSupabaseBrowserClient()
