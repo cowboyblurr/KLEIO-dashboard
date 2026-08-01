@@ -8,6 +8,7 @@ import { SignupShell, SignupStepCard } from "@/components/kleio/signup/signup-sh
 import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
 import { clearDemoSession } from "@/lib/kleio-demo-auth"
 import { getKleioAuthErrorMessage, resendKleioSignupConfirmation } from "@/lib/kleio-auth"
+import { googleAuthenticationAvailabilityMessage, isGoogleAuthenticationConfigured } from "@/lib/kleio-google-capabilities"
 import { setKleioMode } from "@/lib/kleio-mode"
 import { isKleioPasswordStrong, KLEIO_PASSWORD_MIN_LENGTH } from "@/lib/kleio-password-security"
 import { getKleioReturnRoute, readKleioReturnIntent } from "@/lib/kleio-return-intent"
@@ -51,6 +52,7 @@ export function LightweightArtistSignup() {
   const router = useRouter()
   const { locale } = useKleioLocale()
   const es = locale === "es"
+  const googleAuthConfigured = isGoogleAuthenticationConfigured()
   const [displayName, setDisplayName] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -100,6 +102,10 @@ export function LightweightArtistSignup() {
   async function handleGoogleSignup() {
     if (googleSubmitting || submitting) return
     setError("")
+    if (!googleAuthConfigured) {
+      setError(googleAuthenticationAvailabilityMessage(es ? "es" : "en"))
+      return
+    }
     if (!accepted) {
       setError(es ? "Acepta el aviso de cuenta antes de continuar con Google." : "Accept the account notice before continuing with Google.")
       return
@@ -192,11 +198,11 @@ export function LightweightArtistSignup() {
       <form onSubmit={handleSubmit} noValidate>
         <SignupStepCard>
           {intent && <div className="mb-5 rounded-2xl border border-[#D9D0F2] bg-[#F8F5FF] px-4 py-3 text-sm leading-6 text-[#5B4B8A]">{es ? "Tu selección está guardada en este navegador durante 72 horas. Después de confirmar tu correo volverás a la oportunidad exacta." : "Your selection is saved in this browser for 72 hours. After confirming your email, you will return to the exact opportunity."}</div>}
-          <button type="button" className={googleButton} disabled={googleSubmitting || submitting} onClick={() => void handleGoogleSignup()}>
+          <button type="button" className={googleButton} disabled={!googleAuthConfigured || googleSubmitting || submitting} onClick={() => void handleGoogleSignup()} aria-describedby="google-signup-availability">
             {googleSubmitting ? <Loader2 className="size-5 animate-spin" /> : <GoogleMark />}
-            {googleSubmitting ? (es ? "Abriendo Google…" : "Opening Google…") : (es ? "Continuar con Google" : "Continue with Google")}
+            {googleSubmitting ? (es ? "Abriendo Google…" : "Opening Google…") : googleAuthConfigured ? (es ? "Continuar con Google" : "Continue with Google") : (es ? "Acceso con Google en configuración" : "Google sign-in setup pending")}
           </button>
-          <p className="mt-2 text-center text-xs leading-5 text-muted-foreground">{es ? "Google crea o abre tu cuenta. No concede acceso a Drive; KLEIO pedirá ese permiso por separado solo cuando elijas archivos." : "Google creates or opens your account. It does not grant Drive access; KLEIO asks separately only when you choose files."}</p>
+          <p id="google-signup-availability" className="mt-2 text-center text-xs leading-5 text-muted-foreground">{googleAuthenticationAvailabilityMessage(es ? "es" : "en")}</p>
           <div className="my-6 flex items-center gap-3" aria-hidden="true"><span className="h-px flex-1 bg-border" /><span className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">{es ? "o usa correo" : "or use email"}</span><span className="h-px flex-1 bg-border" /></div>
           <div className="grid gap-5 sm:grid-cols-2">
             <label className="grid gap-1.5 text-xs font-medium text-muted-foreground"><span>{es ? "Nombre profesional" : "Professional or display name"} *</span><input className={inputClassName} value={displayName} onChange={(event) => setDisplayName(event.target.value)} required autoComplete="name" /></label>
