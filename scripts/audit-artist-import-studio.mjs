@@ -1,0 +1,53 @@
+import fs from "node:fs"
+import path from "node:path"
+
+const root = process.cwd()
+const read = (relative) => fs.readFileSync(path.join(root, relative), "utf8")
+const requireText = (file, text, message) => { if (!read(file).includes(text)) throw new Error(`${message} (${file})`) }
+const forbidText = (file, text, message) => { if (read(file).includes(text)) throw new Error(`${message} (${file})`) }
+
+const studio = "components/kleio/artist-import-studio.tsx"
+const importLib = "lib/kleio-artwork-import.ts"
+const signup = "components/kleio/signup/lightweight-artist-signup.tsx"
+const signupLib = "lib/kleio-lightweight-artist-signup.ts"
+const callback = "components/kleio/auth/auth-callback-client.tsx"
+const migration = "supabase/migrations/20260801160000_artist_import_studio.sql"
+
+requireText(signup, "Continue with Google", "artist signup must expose Google authentication")
+requireText(signup, "does not grant Drive access", "signup must explain that Drive permission is separate")
+requireText(signupLib, 'provider: "google"', "Google login must use the configured Supabase provider")
+requireText(signupLib, "signInWithOAuth", "Google login must use Supabase OAuth")
+forbidText(signupLib, "drive.file", "Google authentication must not request Drive access")
+requireText(callback, "ensureLightweightArtistWorkspace", "OAuth callbacks must create the artist workspace safely")
+requireText(callback, '"/artist-dashboard/import/"', "new artist authentication must open the import onboarding route")
+
+requireText(studio, "<dialog", "Import Studio must use native modal dialog semantics")
+requireText(studio, 'aria-labelledby="artwork-import-title"', "Import Studio must expose an accessible name")
+requireText(studio, "drive.file", "Drive selection must use the narrow file-specific scope")
+requireText(studio, "MULTISELECT_ENABLED", "Drive Picker must support intentional multiple selection")
+requireText(studio, "Approve and add to Creative Passport", "artwork approval must be explicit")
+requireText(studio, "saveArtworkImportDraftLocally", "import changes must be recoverable locally")
+requireText(studio, "saveArtworkImportDraft", "import changes must autosave remotely")
+requireText(studio, "aria-current", "the native-button artwork gallery must expose its current selection")
+requireText(studio, "h-dvh", "mobile Import Studio must use the full viewport")
+
+requireText(importLib, "extractEmbeddedMetadata", "image metadata extraction must be implemented")
+requireText(importLib, "filenameSuggestions", "filename suggestions must remain deterministic and reviewable")
+requireText(importLib, "inspection.palette", "image-assisted format and palette guidance must be implemented")
+requireText(importLib, "field_provenance", "approved fields must retain provenance")
+requireText(importLib, "import_source_id", "approved portfolio records must retain their source")
+requireText(importLib, "maybeSingle", "approval must include an idempotent existing-record check")
+requireText(importLib, "clearArtworkImportDraft", "artists must be able to delete import progress")
+
+requireText(migration, "device_image", "database constraints must accept device artwork sources")
+requireText(migration, "google_drive_image", "database constraints must accept Drive artwork sources")
+requireText(migration, "portfolio_works_import_source_unique", "one source must not create duplicate portfolio records")
+requireText(migration, "approval_status = 'approved'", "portfolio imports must be approval-only")
+forbidText(migration, "disable row level security", "the import migration must not weaken RLS")
+
+for (const file of [studio, importLib, signup, signupLib, callback, migration]) {
+  forbidText(file, "AIzaSy", "Google API keys must not be committed")
+  forbidText(file, "GOCSPX-", "Google client secrets must not be committed")
+}
+
+console.log("Artist Import Studio audit passed: separate Google auth and Drive consent, private file imports, deterministic metadata suggestions, explicit artist approval, autosave recovery, idempotent portfolio creation, and accessibility safeguards are present.")
