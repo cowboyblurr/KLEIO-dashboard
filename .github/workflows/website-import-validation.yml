@@ -12,6 +12,7 @@ on:
       - "supabase/functions/kleio-assist/**"
       - "supabase/migrations/20260801223000_website_import_assist.sql"
       - "supabase/migrations/20260801224000_kleio_assist_drafts.sql"
+      - "supabase/migrations/20260801231500_kleio_assist_cloudflare_beta.sql"
       - "package.json"
       - "pnpm-lock.yaml"
   workflow_dispatch:
@@ -22,7 +23,7 @@ permissions:
 jobs:
   validate:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -42,8 +43,12 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Run Website Import audit
-        run: pnpm audit:website-import
+      - name: Run import safety audits
+        run: |
+          pnpm audit:artist-import
+          pnpm audit:universal-media
+          pnpm audit:upload-to-passport
+          pnpm audit:website-import
 
       - name: Typecheck
         run: pnpm typecheck
