@@ -1,6 +1,6 @@
 "use client"
 
-import type { ReactNode } from "react"
+import type { ChangeEvent, ReactNode } from "react"
 import { Check, ChevronLeft, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -198,7 +198,7 @@ export function OnboardingTextField({
         id={id}
         type={type}
         value={value}
-        onChange={(event) => onChange(event.target.value)}
+        onChange={(event: ChangeEvent<HTMLInputElement>) => onChange(event.target.value)}
         placeholder={placeholder}
         required={required}
         autoComplete={autoComplete}
