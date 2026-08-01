@@ -6,6 +6,7 @@ const NUMBER_PATTERN = /[0-9]/
 const SYMBOL_PATTERN = /[^A-Za-z0-9]/
 const SHA1_HEX_LENGTH = 40
 const HIBP_PREFIX_LENGTH = 5
+const HIBP_RANGE_ENDPOINT = "https://api.pwnedpasswords.com/range"
 
 type PasswordRuleFailure = "length" | "uppercase" | "lowercase" | "number" | "symbol"
 
@@ -56,12 +57,13 @@ async function fetchPwnedPasswordRange(prefix: string) {
   const timeout = window.setTimeout(() => controller.abort(), 6000)
 
   try {
-    const response = await fetch("/api/security/pwned-password", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ prefix }),
+    const response = await fetch(`${HIBP_RANGE_ENDPOINT}/${prefix}`, {
+      method: "GET",
+      headers: {
+        Accept: "text/plain",
+        "Add-Padding": "true",
+      },
       cache: "no-store",
-      credentials: "same-origin",
       signal: controller.signal,
     })
 
