@@ -238,7 +238,8 @@ export function OnboardingNavigation({
 }) {
   const { locale } = useKleioLocale()
   const exitAction = onExit ?? (() => {
-    if (typeof window !== "undefined") window.location.assign("/")
+    if (typeof window === "undefined") return
+    window.setTimeout(() => window.location.assign("/"), 450)
   })
   const resolvedExitLabel = exitLabel ?? (locale === "es" ? "Guardar y salir" : "Save & exit")
 
