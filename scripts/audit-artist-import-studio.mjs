@@ -18,6 +18,7 @@ requireText(signup, "Continue with Google", "artist signup must expose Google au
 requireText(signup, "does not grant Drive access", "signup must explain that Drive permission is separate")
 requireText(signupLib, 'provider: "google"', "Google login must use the configured Supabase provider")
 requireText(signupLib, "signInWithOAuth", "Google login must use Supabase OAuth")
+requireText(signupLib, "assertKleioPasswordIsSafe", "email signup must enforce KLEIO's breached-password safeguard")
 forbidText(signupLib, "drive.file", "Google authentication must not request Drive access")
 requireText(callback, "ensureLightweightArtistWorkspace", "OAuth callbacks must create the artist workspace safely")
 requireText(callback, '"/artist-dashboard/import/"', "new artist authentication must open the import onboarding route")
@@ -53,4 +54,4 @@ for (const file of [studio, importLib, signup, signupLib, callback, sidebar, mig
   forbidText(file, "GOCSPX-", "Google client secrets must not be committed")
 }
 
-console.log("Artist Import Studio audit passed: separate Google auth and Drive consent, private file imports, deterministic metadata suggestions, explicit artist approval, autosave recovery, idempotent portfolio creation, workspace access, and accessibility safeguards are present.")
+console.log("Artist Import Studio audit passed: separate Google auth and Drive consent, breached-password checks, private file imports, deterministic metadata suggestions, explicit artist approval, autosave recovery, idempotent portfolio creation, workspace access, and accessibility safeguards are present.")
