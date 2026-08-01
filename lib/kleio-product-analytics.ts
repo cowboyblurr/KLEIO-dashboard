@@ -30,6 +30,13 @@ export type KleioProductEventName =
   | "passport_mode_selected"
   | "guided_step_completed"
   | "guided_step_skipped"
+  | "onboarding_resumed"
+  | "onboarding_save_failed"
+  | "onboarding_step_viewed"
+  | "onboarding_validation_failed"
+  | "onboarding_step_completed"
+  | "onboarding_step_skipped"
+  | "onboarding_completed"
   | "import_started"
   | "import_completed"
   | "proposal_approved"
@@ -56,6 +63,7 @@ const SAFE_METADATA_KEYS = new Set([
   "source",
   "status",
   "step",
+  "step_label",
   "viewport",
 ])
 
