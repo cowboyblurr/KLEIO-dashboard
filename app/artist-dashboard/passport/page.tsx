@@ -4,10 +4,11 @@ import { ArtistPassportPageView } from "@/components/kleio/artist-workspace/arti
 import { ArtistProfileContextBar } from "@/components/kleio/artist-profile-context-bar"
 import { LiveModeView } from "@/components/kleio/live-mode-view"
 import { AdaptiveArtistPassportExperience } from "@/components/kleio/adaptive-artist-passport-experience"
+import { CreativePassportMediaPanel } from "@/components/kleio/creative-passport-media-panel"
 
 export const metadata: Metadata = {
   title: "KLEIO — Creative Passport",
-  description: "Build a reusable Creative Passport through guided, full-form, or existing-material entry.",
+  description: "Build a reusable Creative Passport through guided, full-form, existing-material, and private media entry.",
 }
 
 export default function Page() {
@@ -16,6 +17,9 @@ export default function Page() {
       <div className="flex h-full min-h-0 flex-col bg-white">
         <div className="shrink-0 px-4 pt-4 sm:px-6">
           <ArtistProfileContextBar active="passport" showKleioAssistStatus />
+        </div>
+        <div className="shrink-0 px-4 py-4 sm:px-6">
+          <LiveModeView live={<CreativePassportMediaPanel />} preview={null} />
         </div>
         <div className="min-h-0 flex-1">
           <LiveModeView live={<AdaptiveArtistPassportExperience />} preview={<ArtistPassportPageView />} />
