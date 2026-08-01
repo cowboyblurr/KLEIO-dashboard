@@ -8,7 +8,7 @@ import { QuickMediaImport } from "@/components/kleio/media-import/quick-media-im
 import { InitialAvatar } from "@/components/kleio/initial-avatar"
 import { loadArtistPassport } from "@/lib/kleio-live-data"
 import { loadArtistProfilePresentation, type ArtistProfilePresentationRecord } from "@/lib/kleio-profile-presentation"
-import { useMediaAsProfileImage } from "@/lib/kleio-media-destinations"
+import { applyMediaAsProfileImage } from "@/lib/kleio-media-destinations"
 
 export function ProfileMediaQuickImport() {
   const [presentation, setPresentation] = useState<ArtistProfilePresentationRecord | null>(null)
@@ -47,7 +47,7 @@ export function ProfileMediaQuickImport() {
               onConfirm={async ({ items }) => {
                 const item = items[0]
                 if (!item) return
-                setPresentation(await useMediaAsProfileImage(item))
+                setPresentation(await applyMediaAsProfileImage(item))
                 setMessage("Profile image updated across your workspace and artist profile.")
                 setError("")
               }}
