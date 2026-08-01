@@ -1,16 +1,16 @@
 import type { Metadata } from "next"
 import { ArtistShell } from "@/components/kleio/artist-shell"
-import { ArtistCollaboratorsPageView } from "@/components/kleio/artist-workspace/artist-collaborators-page-view"
+import { ArtistOverviewRedirect } from "@/components/kleio/artist-overview-redirect"
 
 export const metadata: Metadata = {
-  title: "KLEIO — Collaborators",
-  description: "Discover artists and collaborators with related practices, themes, and opportunity interests.",
+  title: "KLEIO — Artist Matches coming soon",
+  description: "Artist Matches is not yet an active artist workspace feature.",
 }
 
 export default function Page() {
   return (
     <ArtistShell>
-      <ArtistCollaboratorsPageView />
+      <ArtistOverviewRedirect message="Artist Matches is coming soon. Returning to your workspace…" />
     </ArtistShell>
   )
 }
