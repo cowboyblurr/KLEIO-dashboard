@@ -16,7 +16,8 @@
     "audit:opportunity-search": "node scripts/audit-opportunity-search.mjs",
     "audit:opportunity-first": "node scripts/audit-opportunity-first-acquisition.mjs",
     "audit:artist-import": "node scripts/audit-artist-import-studio.mjs",
-    "audit:universal-media": "node scripts/audit-universal-media-import.mjs"
+    "audit:universal-media": "node scripts/audit-universal-media-import.mjs",
+    "audit:upload-to-passport": "node scripts/audit-upload-to-passport-intelligence.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.5.0",
@@ -41,7 +42,7 @@
     "eslint": "9.39.5",
     "eslint-config-next": "16.2.6",
     "postcss": "^8.5",
-    "tailwindcss": "^4.2.0",
+    "tailwindcss": "4.2.0",
     "typescript": "5.7.3"
   },
   "pnpm": {
