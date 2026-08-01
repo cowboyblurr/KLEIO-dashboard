@@ -10,7 +10,7 @@ async function requireArtistAccount() {
   return account
 }
 
-export async function useMediaAsProfileImage(item: ArtistMediaLibraryItem) {
+export async function applyMediaAsProfileImage(item: ArtistMediaLibraryItem) {
   if (!item.mimeType.startsWith("image/")) throw new Error("Choose an image for your profile photo.")
   const current = await loadArtistProfilePresentation()
   const saved = await saveArtistProfilePresentation({
