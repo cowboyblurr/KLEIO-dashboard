@@ -68,6 +68,7 @@ export type WebsiteImportSession = {
   profile_suggestions: WebsiteProfileSuggestions
   image_candidates: WebsiteImageCandidate[]
   imported_source_ids: string[]
+  rights_confirmed_at?: string | null
   error_code: string
   extractor_version: string
   expires_at: string
@@ -198,6 +199,7 @@ function functionError(error: unknown, fallback: string) {
   if (/beta fair use limit reached|ai daily capacity reached/i.test(message)) return "Today’s free AI capacity has been reached. Your website evidence and edits remain saved; continue manually or return after the daily allowance resets."
   if (/visual analysis review required|complete visual review required/i.test(message)) return "Confirm, edit, or reject every visual observation before using it in a draft."
   if (/approved evidence required/i.test(message)) return "Select at least one artist-reviewed profile field, add artist context, or approve visual observations before drafting."
+  if (/website import rights confirmation required/i.test(message)) return "Confirm that you own or have permission to use the selected website images before importing them."
   if (/ai provider timeout/i.test(message)) return "The free AI provider took too long to respond. Your progress is safe; try again without changing the approved evidence."
   if (/ai provider returned invalid output|ai output/i.test(message)) return "The AI response did not meet KLEIO’s evidence and formatting checks, so it was not saved as a usable draft."
   if (/website disallows automated access/i.test(message)) return "This website does not permit automated analysis. Upload the work directly or use another public portfolio page."
@@ -395,7 +397,18 @@ export async function approveWebsiteArtworkImports(input: {
   sessionId: string
   works: Array<{ candidate: WebsiteImageCandidate; draft: WebsiteArtworkDraft }>
 }) {
-  await requireArtist()
+  const account = await requireArtist()
+  const supabase = getSupabaseBrowserClient()
+  const confirmedAt = new Date().toISOString()
+  const { data: confirmedSession, error: confirmationError } = await supabase
+    .from("artist_website_import_sessions")
+    .update({ rights_confirmed_at: confirmedAt, updated_at: confirmedAt })
+    .eq("id", input.sessionId)
+    .eq("artist_user_id", account.user.id)
+    .select("id")
+    .single()
+  if (confirmationError || !confirmedSession) throw confirmationError ?? new Error("Website import rights confirmation could not be recorded.")
+
   const results: Array<{ candidateId: string; portfolioWorkId?: string; error?: string }> = []
   for (const work of input.works) {
     try {
