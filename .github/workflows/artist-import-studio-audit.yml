@@ -14,6 +14,8 @@ on:
       - "components/kleio/media-import/**"
       - "components/kleio/visual-artist-portfolio-studio.tsx"
       - "components/kleio/artist-media-library.tsx"
+      - "components/kleio/passport-updates-inbox.tsx"
+      - "components/kleio/application-requirement-media.tsx"
       - "components/kleio/profile-media-quick-import.tsx"
       - "components/kleio/creative-passport-media-panel.tsx"
       - "components/kleio/application-media-import-bar.tsx"
@@ -22,14 +24,20 @@ on:
       - "components/kleio/signup/lightweight-artist-signup.tsx"
       - "components/kleio/auth/auth-callback-client.tsx"
       - "lib/kleio-artwork-import.ts"
+      - "lib/kleio-artist-import.ts"
       - "lib/kleio-universal-media.ts"
+      - "lib/kleio-upload-to-passport.ts"
+      - "lib/kleio-application-preparation.ts"
       - "lib/kleio-media-destinations.ts"
       - "lib/kleio-profile-presentation.ts"
       - "lib/kleio-lightweight-artist-signup.ts"
       - "scripts/audit-artist-import-studio.mjs"
       - "scripts/audit-universal-media-import.mjs"
+      - "scripts/audit-upload-to-passport-intelligence.mjs"
+      - "supabase/functions/extract-artist-materials/**"
       - "supabase/migrations/20260801160000_artist_import_studio.sql"
       - "supabase/migrations/20260801183000_universal_media_import.sql"
+      - "supabase/migrations/20260801210000_upload_to_passport_intelligence.sql"
       - "package.json"
       - ".github/workflows/artist-import-studio-audit.yml"
 
@@ -62,3 +70,5 @@ jobs:
         run: pnpm audit:artist-import
       - name: Universal Media Import audit
         run: pnpm audit:universal-media
+      - name: Upload-to-Passport intelligence audit
+        run: pnpm audit:upload-to-passport
