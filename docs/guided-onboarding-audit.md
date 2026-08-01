@@ -24,6 +24,7 @@ This implementation applies the guided onboarding brief to KLEIO's artist and in
 5. **Incomplete downstream use.** Answers did not produce a visible first dashboard action.
 6. **Draft risk.** Auth recovery existed, but in-progress page answers were not progressively autosaved.
 7. **Password inconsistency.** The legacy full form still described an older minimum while the active KLEIO policy requires 12 characters, complexity, and breach screening.
+8. **Schema-option mismatch.** The institution interface needed a grantmaking-organization option, but the production constraint did not permit that value.
 
 ## Revised onboarding map
 
@@ -47,6 +48,10 @@ This implementation applies the guided onboarding brief to KLEIO's artist and in
 6. Programs: open-call status and program types — optional
 7. First objective
 8. Review and create
+
+### Synthetic demo
+
+The preview paths now use the same focused question architecture and reusable controls as live onboarding while remaining isolated from authentication and production records. Demo answers are stored only in a role-specific browser draft and are explicitly presented as synthetic.
 
 ### Acquisition exception
 
@@ -82,6 +87,7 @@ Artists arriving from a specific opportunity retain the lightweight account path
 - Existing pending-onboarding and auth-metadata recovery remains in place for email confirmation.
 - User-scoped upserts prevent duplicate artist or institution profile records.
 - Demo and live state remain separate.
+- Demo hydration completes before autosave begins, preventing restored answers from being overwritten by seed data.
 
 ## Accessibility implementation
 
@@ -92,6 +98,7 @@ Artists arriving from a specific opportunity retain the lightweight account path
 - Validation errors use `role="alert"`.
 - Focus states do not depend on color alone.
 - Back, skip, edit, dismiss, and primary actions are keyboard operable.
+- Skip actions appear only on steps explicitly marked optional.
 - Motion respects reduced-motion preferences.
 - Primary controls and choice cards use mobile-appropriate touch targets.
 
@@ -106,22 +113,24 @@ The migration adds non-null JSONB columns with `{}` defaults:
 - `artist_profiles.onboarding_preferences`
 - `institutions.onboarding_preferences`
 
-The migration was executed and verified against `information_schema`. Existing rows remain valid.
+It also aligns `institutions_organization_type_check` with the implemented organization-type options by allowing `grantmaking_organization`. The columns and revised constraint were executed and verified against `information_schema`. Existing rows remain valid.
 
 ## QA completed
 
 - Source audit of signup, auth recovery, password security, role isolation, navigation routes, and persistence
 - TypeScript syntax transpilation of new and replaced local files before commit
-- Database migration execution and schema verification
-- Supabase security and performance advisor review after migration
+- Isolated strict TypeScript compilation of the authored onboarding modules with their internal contracts connected
+- Database migration execution, column verification, and constraint verification
+- Supabase security and performance advisor review after the initial migration
 - Route-target review against current artist and institution navigation
 - Preservation of the opportunity-first lightweight artist path
+- Guided synthetic demo parity in English and Spanish
 
 ## QA still required before merge
 
 Do not mark the following complete until a runnable preview is available and tested:
 
-- Next.js production build, lint, and repository typecheck
+- Next.js production build, repository lint, and full-project typecheck
 - Desktop Chrome, Safari, and Firefox walkthroughs
 - Physical iPhone Safari and Android Chrome tests
 - Keyboard-only completion of both role paths
@@ -131,4 +140,4 @@ Do not mark the following complete until a runnable preview is available and tes
 
 ## Release gate
 
-Do not merge solely because the interface is visually improved. Merge only after CI passes and remaining browser, accessibility, and interruption scenarios have actual recorded results. Untested devices must remain labeled **not tested**.
+Do not merge solely because the interface is visually improved. Merge only after the active deployment check passes and the remaining browser, accessibility, and interruption scenarios have actual recorded results. Untested devices must remain labeled **not tested**.
