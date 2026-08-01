@@ -5,6 +5,7 @@ import { ApplicationPreparationWorkspace } from "@/components/kleio/application-
 import { ApplicationArtistIdentityBar } from "@/components/kleio/application-artist-identity-bar"
 import { ApplicationSubmissionCover } from "@/components/kleio/application-submission-cover"
 import { ApplicationMediaImportBar } from "@/components/kleio/application-media-import-bar"
+import { ApplicationRequirementMedia } from "@/components/kleio/application-requirement-media"
 
 export const metadata: Metadata = {
   title: "KLEIO — Prepare application",
@@ -26,10 +27,15 @@ export default function Page() {
         <Suspense fallback={null}>
           <ApplicationMediaImportBar />
         </Suspense>
-        <div className="min-h-0 flex-1">
-          <Suspense fallback={<PreparationFallback />}>
-            <ApplicationPreparationWorkspace />
-          </Suspense>
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          <div className="mx-auto max-w-[1120px] space-y-5 px-4 py-5 sm:px-6">
+            <Suspense fallback={null}>
+              <ApplicationRequirementMedia />
+            </Suspense>
+            <Suspense fallback={<PreparationFallback />}>
+              <ApplicationPreparationWorkspace />
+            </Suspense>
+          </div>
         </div>
       </div>
     </ArtistShell>
