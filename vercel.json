@@ -1,6 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "pnpm run lint && pnpm run build && pnpm run typecheck && pnpm run audit:navigation && pnpm run audit:auth-isolation",
+  "buildCommand": "pnpm run lint && pnpm run build && pnpm run typecheck && pnpm run audit:navigation && pnpm run audit:auth-isolation && pnpm run audit:uploads",
   "outputDirectory": "out",
   "headers": [
     {

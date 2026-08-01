@@ -1,3 +1,4 @@
+import { validateRasterImageFile } from "@/lib/kleio-file-validation"
 import { getSupabaseBrowserClient, loadKleioAccount } from "@/lib/kleio-supabase"
 
 export type ArtistProfilePresentationRecord = {
@@ -8,7 +9,6 @@ export type ArtistProfilePresentationRecord = {
   profile_image_position_y: number
 }
 
-const PROFILE_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp"])
 const PROFILE_IMAGE_MAX_BYTES = 5 * 1024 * 1024
 
 async function requireArtistAccount() {
@@ -50,8 +50,10 @@ export async function loadArtistProfilePresentation(): Promise<ArtistProfilePres
 }
 
 export async function uploadArtistProfileImage(file: File) {
-  if (!PROFILE_IMAGE_TYPES.has(file.type)) throw new Error("Choose a JPG, PNG, or WebP profile image.")
-  if (file.size > PROFILE_IMAGE_MAX_BYTES) throw new Error("Profile images must be 5 MB or smaller.")
+  await validateRasterImageFile(file, {
+    maxBytes: PROFILE_IMAGE_MAX_BYTES,
+    label: "Profile image",
+  })
 
   const account = await requireArtistAccount()
   const supabase = getSupabaseBrowserClient()

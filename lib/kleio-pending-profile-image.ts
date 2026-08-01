@@ -1,3 +1,4 @@
+import { validateRasterImageFile } from "@/lib/kleio-file-validation"
 import { loadArtistProfilePresentation, saveArtistProfilePresentation, uploadArtistProfileImage } from "@/lib/kleio-profile-presentation"
 import { getSupabaseBrowserClient, loadKleioAccount } from "@/lib/kleio-supabase"
 
@@ -6,7 +7,6 @@ const DATABASE_VERSION = 1
 const STORE_NAME = "artist-profile-images"
 const RECORD_KEY = "pending"
 const MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000
-const PROFILE_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp"])
 const PROFILE_IMAGE_MAX_BYTES = 5 * 1024 * 1024
 
 type PendingArtistProfileImageRecord = {
@@ -85,13 +85,15 @@ function wait(milliseconds: number) {
   return new Promise((resolve) => window.setTimeout(resolve, milliseconds))
 }
 
-export function validatePendingArtistProfileImage(file: File) {
-  if (!PROFILE_IMAGE_TYPES.has(file.type)) throw new Error("Choose a JPG, PNG, or WebP profile image.")
-  if (file.size > PROFILE_IMAGE_MAX_BYTES) throw new Error("Profile images must be 5 MB or smaller.")
+export async function validatePendingArtistProfileImage(file: File) {
+  await validateRasterImageFile(file, {
+    maxBytes: PROFILE_IMAGE_MAX_BYTES,
+    label: "Profile image",
+  })
 }
 
 export async function savePendingArtistProfileImage(file: File, email = "") {
-  validatePendingArtistProfileImage(file)
+  await validatePendingArtistProfileImage(file)
   const record: PendingArtistProfileImageRecord = {
     key: RECORD_KEY,
     blob: file,
