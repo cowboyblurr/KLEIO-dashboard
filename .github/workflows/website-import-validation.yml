@@ -13,6 +13,7 @@ on:
       - "supabase/migrations/20260801223000_website_import_assist.sql"
       - "supabase/migrations/20260801224000_kleio_assist_drafts.sql"
       - "supabase/migrations/20260801231500_kleio_assist_cloudflare_beta.sql"
+      - "supabase/migrations/20260801234500_enforce_website_import_rights.sql"
       - "package.json"
       - "pnpm-lock.yaml"
   workflow_dispatch:
