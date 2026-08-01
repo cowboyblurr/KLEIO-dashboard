@@ -1,0 +1,39 @@
+name: Audit Artist Import Studio
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "app/artist-dashboard/import/**"
+      - "components/kleio/artist-import-studio*.tsx"
+      - "components/kleio/signup/lightweight-artist-signup.tsx"
+      - "components/kleio/auth/auth-callback-client.tsx"
+      - "lib/kleio-artwork-import.ts"
+      - "lib/kleio-lightweight-artist-signup.ts"
+      - "scripts/audit-artist-import-studio.mjs"
+      - "supabase/migrations/20260801160000_artist_import_studio.sql"
+      - "package.json"
+      - ".github/workflows/artist-import-studio-audit.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Enable pnpm
+        run: corepack enable
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Typecheck
+        run: pnpm typecheck
+      - name: Source audit
+        run: pnpm audit:artist-import
