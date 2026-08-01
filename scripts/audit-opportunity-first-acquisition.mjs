@@ -53,7 +53,8 @@ requirePattern("components/kleio/artist-import-review.tsx", /Approve and save/, 
 requirePattern("components/kleio/artist-import-review.tsx", /Reject/, "artists must be able to reject proposals")
 requirePattern("components/kleio/artist-import-review.tsx", /Decide later/, "artists must be able to defer proposals")
 requirePattern("lib/kleio-artist-import.ts", /uploadMediaToLibrary/, "PDF imports must use the canonical private media source layer")
-requirePattern("lib/kleio-universal-media.ts", /BUCKET = "artist-assets"/, "canonical artist media must use owner-scoped private storage")
+requirePattern("lib/kleio-universal-media.ts", /storage\.from\("artist-assets"\)\.upload/, "canonical artist media uploads must use owner-scoped private storage")
+requirePattern("lib/kleio-universal-media.ts", /storage\.from\("artist-assets"\)\.createSignedUrl/, "private artist media previews must use expiring signed URLs")
 
 requirePattern("lib/kleio-product-analytics.ts", /SAFE_METADATA_KEYS/, "analytics metadata must be allowlisted")
 requirePattern("supabase/migrations/20260730023306_opportunity_first_acquisition_foundations.sql", /product_events_metadata_sanitized/, "database must enforce analytics sanitization")
