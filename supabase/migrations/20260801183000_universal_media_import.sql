@@ -103,6 +103,10 @@ create index if not exists artist_import_sources_library_idx
   on public.artist_import_sources (artist_user_id, library_status, media_kind, created_at desc)
   where deleted_at is null and storage_path <> '';
 
+create index if not exists artist_import_sources_parent_source_idx
+  on public.artist_import_sources (parent_source_id)
+  where parent_source_id is not null;
+
 comment on table public.artist_media_usages is
   'Owner-scoped associations showing where a private media source is intentionally used. Selecting or uploading a source does not create a usage until the artist confirms the destination action.';
 comment on column public.artist_import_sources.library_status is
