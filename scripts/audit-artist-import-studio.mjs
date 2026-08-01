@@ -13,6 +13,7 @@ const signupLib = "lib/kleio-lightweight-artist-signup.ts"
 const googleCapabilities = "lib/kleio-google-capabilities.ts"
 const callback = "components/kleio/auth/auth-callback-client.tsx"
 const sidebar = "components/kleio/artist-sidebar.tsx"
+const mediaLibrary = "components/kleio/artist-media-library.tsx"
 const migration = "supabase/migrations/20260801160000_artist_import_studio.sql"
 
 requireText(signup, "Continue with Google", "artist signup must expose Google authentication when configured")
@@ -25,7 +26,9 @@ requireText(signupLib, "assertKleioPasswordIsSafe", "email signup must enforce K
 forbidText(signupLib, "drive.file", "Google authentication must not request Drive access")
 requireText(callback, "ensureLightweightArtistWorkspace", "OAuth callbacks must create the artist workspace safely")
 requireText(callback, '"/artist-dashboard/import/"', "new artist authentication must open the import onboarding route")
-requireText(sidebar, 'href: "/artist-dashboard/import/"', "existing artists must be able to reopen Import Studio from workspace navigation")
+requireText(mediaLibrary, 'href="/artist-dashboard/import/"', "existing artists must be able to begin the guided import flow from Media Library")
+requireText(sidebar, 'activeMatch: ["/artist-dashboard/media", "/artist-dashboard/import"]', "Media Library must remain active while the guided import flow is open")
+forbidText(sidebar, '{ href: "/artist-dashboard/import/"', "Import Studio must not remain a separate artist navigation destination")
 
 requireText(studio, "<dialog", "Import Studio must use native modal dialog semantics")
 requireText(studio, 'aria-labelledby="artwork-import-title"', "Import Studio must expose an accessible name")
@@ -55,9 +58,9 @@ forbidText(migration, "artist_import_sources_owner_provider_idx", "the beta migr
 forbidText(migration, "portfolio_works_owner_approval_idx", "the beta migration must not add an unused approval lookup index")
 forbidText(migration, "disable row level security", "the import migration must not weaken RLS")
 
-for (const file of [studio, importLib, signup, signupLib, googleCapabilities, callback, sidebar, migration]) {
+for (const file of [studio, importLib, signup, signupLib, googleCapabilities, callback, sidebar, mediaLibrary, migration]) {
   forbidText(file, "AIzaSy", "Google API keys must not be committed")
   forbidText(file, "GOCSPX-", "Google client secrets must not be committed")
 }
 
-console.log("Artist Import Studio audit passed: capability-gated Google auth, separate Drive consent, breached-password checks, owner-scoped private files, server-side artwork MIME integrity, deterministic metadata suggestions, explicit artist approval, autosave recovery, idempotent portfolio creation, workspace access, and accessibility safeguards are present.")
+console.log("Artist Import Studio audit passed: capability-gated Google auth, separate Drive consent, breached-password checks, owner-scoped private files, server-side artwork MIME integrity, deterministic metadata suggestions, explicit artist approval, autosave recovery, idempotent portfolio creation, Media Library access, and accessibility safeguards are present.")
