@@ -45,8 +45,11 @@ requireText(importLib, "clearArtworkImportDraft", "artists must be able to delet
 
 requireText(migration, "device_image", "database constraints must accept device artwork sources")
 requireText(migration, "google_drive_image", "database constraints must accept Drive artwork sources")
+requireText(migration, "artist_import_sources_image_mime_check", "the database must reject non-image MIME types for artwork import sources")
 requireText(migration, "portfolio_works_import_source_unique", "one source must not create duplicate portfolio records")
 requireText(migration, "approval_status = 'approved'", "portfolio imports must be approval-only")
+forbidText(migration, "artist_import_sources_owner_provider_idx", "the beta migration must not add an unused provider lookup index")
+forbidText(migration, "portfolio_works_owner_approval_idx", "the beta migration must not add an unused approval lookup index")
 forbidText(migration, "disable row level security", "the import migration must not weaken RLS")
 
 for (const file of [studio, importLib, signup, signupLib, callback, sidebar, migration]) {
@@ -54,4 +57,4 @@ for (const file of [studio, importLib, signup, signupLib, callback, sidebar, mig
   forbidText(file, "GOCSPX-", "Google client secrets must not be committed")
 }
 
-console.log("Artist Import Studio audit passed: separate Google auth and Drive consent, breached-password checks, private file imports, deterministic metadata suggestions, explicit artist approval, autosave recovery, idempotent portfolio creation, workspace access, and accessibility safeguards are present.")
+console.log("Artist Import Studio audit passed: separate Google auth and Drive consent, breached-password checks, owner-scoped private files, server-side artwork MIME integrity, deterministic metadata suggestions, explicit artist approval, autosave recovery, idempotent portfolio creation, workspace access, and accessibility safeguards are present.")
