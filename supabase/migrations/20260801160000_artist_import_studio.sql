@@ -4,7 +4,8 @@
 alter table public.artist_import_sources
   drop constraint if exists artist_import_sources_source_type_check,
   drop constraint if exists artist_import_sources_extraction_status_check,
-  drop constraint if exists artist_import_sources_byte_size_check;
+  drop constraint if exists artist_import_sources_byte_size_check,
+  drop constraint if exists artist_import_sources_image_mime_check;
 
 alter table public.artist_import_sources
   add constraint artist_import_sources_source_type_check
@@ -12,7 +13,12 @@ alter table public.artist_import_sources
   add constraint artist_import_sources_extraction_status_check
     check (extraction_status in ('pending','processing','completed','partial','source_unavailable','failed','review_ready','approved')),
   add constraint artist_import_sources_byte_size_check
-    check (byte_size is null or (byte_size >= 0 and byte_size <= 20971520));
+    check (byte_size is null or (byte_size >= 0 and byte_size <= 20971520)),
+  add constraint artist_import_sources_image_mime_check
+    check (
+      source_type not in ('device_image','google_drive_image')
+      or mime_type in ('image/jpeg','image/png','image/webp')
+    );
 
 alter table public.artist_import_sources
   add column if not exists provider_file_id text,
@@ -43,16 +49,9 @@ alter table public.portfolio_works
   add constraint portfolio_works_approval_status_check
   check (approval_status = 'approved');
 
-create index if not exists artist_import_sources_owner_provider_idx
-  on public.artist_import_sources (artist_user_id, source_type, provider_file_id)
-  where provider_file_id is not null and provider_file_id <> '';
-
 create unique index if not exists portfolio_works_import_source_unique
   on public.portfolio_works (import_source_id)
   where import_source_id is not null;
-
-create index if not exists portfolio_works_owner_approval_idx
-  on public.portfolio_works (artist_user_id, approval_status, created_at desc);
 
 comment on column public.artist_import_sources.provider_file_id is
   'Provider-specific file identifier retained only for traceability and duplicate prevention; never exposed as artist-facing content.';
