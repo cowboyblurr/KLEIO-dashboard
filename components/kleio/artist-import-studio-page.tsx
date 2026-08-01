@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { ArrowLeft, ArrowRight, Images, ShieldCheck } from "lucide-react"
 import { ArtistImportStudio } from "@/components/kleio/artist-import-studio"
+import { InstagramImportAssist } from "@/components/kleio/instagram-import-assist"
 import { WebsiteImportAssist } from "@/components/kleio/website-import-assist"
 
 export function ArtistImportStudioPage() {
@@ -18,7 +19,7 @@ export function ArtistImportStudioPage() {
             <div className="max-w-3xl">
               <p className="text-[0.68rem] font-semibold uppercase tracking-[0.17em] text-[#75639E]">Media Library · Import work</p>
               <h1 className="mt-2 font-serif text-3xl font-semibold tracking-[-0.04em] text-[#292631] sm:text-4xl">Bring your existing work into KLEIO</h1>
-              <p className="mt-3 text-sm leading-7 text-[#746E80]">Start from your public artist website, device, or Google Drive. KLEIO separates exact source evidence, visual interpretations, and writing suggestions, then waits for your review before adding anything to the private Media Library and Creative Passport.</p>
+              <p className="mt-3 text-sm leading-7 text-[#746E80]">Choose work from Instagram, a public artist website, your device, or Google Drive. KLEIO prepares editable records and waits for your approval before adding anything to the private Media Library and Creative Passport.</p>
             </div>
             <div className="grid gap-2 text-xs font-semibold text-[#625C70]">
               <span className="inline-flex items-center gap-2"><ShieldCheck className="size-4 text-[#6A5896]" />Nothing publishes automatically</span>
@@ -27,6 +28,7 @@ export function ArtistImportStudioPage() {
           </div>
         </header>
 
+        <InstagramImportAssist />
         <WebsiteImportAssist />
         <ArtistImportStudio />
 
