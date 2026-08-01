@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { Loader2 } from "lucide-react"
 
 const STORAGE_KEY = "kleio_opportunity_filters_v1"
+const TRANSIENT_PRESET_KEY = "kleio_opportunity_filter_preset"
 
 const fundingFilters = {
   query: "funding",
@@ -23,6 +24,7 @@ export function FundingOpportunityRedirect() {
 
   useEffect(() => {
     try {
+      window.sessionStorage.setItem(TRANSIENT_PRESET_KEY, "funding")
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(fundingFilters))
     } catch {
       // The Opportunities page still opens when browser storage is unavailable.
