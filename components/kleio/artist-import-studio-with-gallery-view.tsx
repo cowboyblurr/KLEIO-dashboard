@@ -21,7 +21,6 @@ export function ArtistImportStudioWithGalleryView() {
     const saved = window.localStorage.getItem(GALLERY_VIEW_PREFERENCE_KEY)
     const initialView: GalleryView = isGalleryView(saved) ? saved : "standard"
     setGalleryView(initialView)
-    document.documentElement.dataset.instagramGalleryView = initialView
 
     const updateTarget = () => {
       setControlsTarget(
@@ -41,10 +40,13 @@ export function ArtistImportStudioWithGalleryView() {
     }
   }, [])
 
+  useEffect(() => {
+    document.documentElement.dataset.instagramGalleryView = galleryView
+    window.localStorage.setItem(GALLERY_VIEW_PREFERENCE_KEY, galleryView)
+  }, [galleryView])
+
   function chooseView(next: GalleryView) {
     setGalleryView(next)
-    document.documentElement.dataset.instagramGalleryView = next
-    window.localStorage.setItem(GALLERY_VIEW_PREFERENCE_KEY, next)
   }
 
   const controls = (
