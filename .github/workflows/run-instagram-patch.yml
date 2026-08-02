@@ -28,6 +28,10 @@ jobs:
           end = source.index("\n          PY\n", start)
           lines = source[start:end].splitlines()
           script = "\n".join(line[10:] if line.startswith("          ") else line for line in lines) + "\n"
+          script = script.replace(
+              "updated, count = re.subn(pattern, replacement, text, count=1, flags=flags)",
+              "updated, count = re.subn(pattern, lambda _match: replacement, text, count=1, flags=flags)",
+          )
           Path('/tmp/apply-instagram-patch.py').write_text(script)
           PY
           python /tmp/apply-instagram-patch.py
