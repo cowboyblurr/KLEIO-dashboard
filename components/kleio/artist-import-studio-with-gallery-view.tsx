@@ -15,7 +15,6 @@ export function ArtistImportStudioWithGalleryView() {
     const saved = window.localStorage.getItem("kleio-instagram-gallery-view")
     const initialView: GalleryView = saved === "compact" ? "compact" : "large"
     setGalleryView(initialView)
-    document.documentElement.dataset.instagramGalleryView = initialView
 
     const updateAvailability = () => {
       setGalleryAvailable(Boolean(document.querySelector('[aria-labelledby="instagram-gallery-title"]')))
@@ -31,10 +30,13 @@ export function ArtistImportStudioWithGalleryView() {
     }
   }, [])
 
+  useEffect(() => {
+    document.documentElement.dataset.instagramGalleryView = galleryView
+    window.localStorage.setItem("kleio-instagram-gallery-view", galleryView)
+  }, [galleryView])
+
   function chooseView(next: GalleryView) {
     setGalleryView(next)
-    document.documentElement.dataset.instagramGalleryView = next
-    window.localStorage.setItem("kleio-instagram-gallery-view", next)
   }
 
   return (
