@@ -19,6 +19,7 @@ const VALUE_FIELDS = [
   "country", "role", "type", "collaborators", "medium", "materials", "dimensions", "description", "publisher",
   "publication", "collection", "discipline", "visual_keyword", "accessibility_description", "image_role",
 ] as const
+const PAGE_ASSET_PATTERN = /\.(?:avif|bmp|css|csv|docx?|eot|gif|ico|jpe?g|js|json|mp3|mp4|ogg|otf|pdf|png|pptx?|svg|tiff?|ttf|txt|wav|webm|webp|woff2?|xlsx?)(?:$|[?#])/i
 
 export type Json = Record<string, unknown>
 export type Failure = Error & { status?: number; code?: string; retryable?: boolean }
@@ -52,6 +53,7 @@ export type EvidencePackage = {
     pages_collected: number
     pages_skipped: number
     image_candidates: number
+    images_submitted_to_ai: number
     collection_method: string[]
   }
   pages: EvidencePage[]
@@ -179,23 +181,47 @@ export function responseSchema(): Json {
   }
 }
 
-function structuredData(value: unknown): Json[] {
-  if (!object(value)) return []
+function structuredValue(value: unknown, depth = 0): unknown {
+  if (typeof value === "string") return text(value, 2_000)
+  if (typeof value === "number" || typeof value === "boolean" || value === null) return value
+  if (Array.isArray(value)) return value.slice(0, 20).map((item) => structuredValue(item, depth + 1)).filter((item) => item !== undefined)
+  if (!object(value) || depth >= 2) return undefined
   const cleaned: Json = {}
   for (const [key, raw] of Object.entries(value).slice(0, 50)) {
-    if (/script|style|html|css|token|secret|authorization/i.test(key)) continue
-    if (typeof raw === "string") cleaned[key] = text(raw, 2_000)
-    else if (typeof raw === "number" || typeof raw === "boolean" || raw === null) cleaned[key] = raw
-    else if (Array.isArray(raw)) cleaned[key] = raw.slice(0, 20).map((item) => typeof item === "string" ? text(item, 500) : item)
+    if (/script|style|html|css|token|secret|authorization|credential|configuration/i.test(key)) continue
+    const next = structuredValue(raw, depth + 1)
+    if (next !== undefined) cleaned[key] = next
   }
-  return [cleaned]
+  return cleaned
+}
+function structuredData(value: unknown): Json[] {
+  const cleaned = structuredValue(value)
+  return object(cleaned) ? [cleaned] : []
 }
 function filename(url: string) {
   try { return decodeURIComponent(new URL(url).pathname.split("/").pop() || "") } catch { return "" }
 }
+function normalizedPageUrl(value: unknown, canonicalOrigin: string) {
+  const raw = text(value, 2_000)
+  if (!raw) return ""
+  try {
+    const url = new URL(raw)
+    if (!/^https?:$/.test(url.protocol) || url.origin !== canonicalOrigin || PAGE_ASSET_PATTERN.test(url.pathname)) return ""
+    url.hash = ""
+    url.search = ""
+    url.pathname = url.pathname.replace(/\/{2,}/g, "/").replace(/\/$/, "") || "/"
+    return url.href
+  } catch {
+    return ""
+  }
+}
 export function buildEvidencePackage(session: Json): EvidencePackage {
   const rawPages = Array.isArray(session.pages) ? session.pages.filter(object).slice(0, MAX_PAGES) : []
-  const rawImages = Array.isArray(session.image_candidates) ? session.image_candidates.filter(object).slice(0, MAX_IMAGES) : []
+  const allRawImages = Array.isArray(session.image_candidates) ? session.image_candidates.filter(object) : []
+  const rawImages = allRawImages.slice(0, MAX_IMAGES)
+  const canonicalUrl = text(session.canonical_url || session.website_url, 2_000)
+  let canonicalOrigin = ""
+  try { canonicalOrigin = new URL(canonicalUrl).origin } catch { canonicalOrigin = "" }
   const pageRefs = new Map(rawPages.map((page, index) => [text(page.url, 2_000), `page_${index + 1}`]))
   const pageImages = new Map<string, ImageEvidence[]>()
   rawImages.forEach((image, index) => {
@@ -232,15 +258,23 @@ export function buildEvidencePackage(session: Json): EvidencePackage {
       image_evidence: pageImages.get(pageRef) || [],
     }
   })
-  const discovered = new Set(pages.flatMap((page) => page.links.map((link) => link.url))).size + (pages.length ? 1 : 0)
+  const collectedUrls = new Set(pages.map((page) => normalizedPageUrl(page.url, canonicalOrigin)).filter(Boolean))
+  const discoveredUrls = new Set(collectedUrls)
+  for (const page of pages) {
+    for (const link of page.links) {
+      const normalized = normalizedPageUrl(link.url, canonicalOrigin)
+      if (normalized) discoveredUrls.add(normalized)
+    }
+  }
   return {
     scan_id: text(session.id, 100),
-    canonical_website_url: text(session.canonical_url || session.website_url, 2_000),
+    canonical_website_url: canonicalUrl,
     scan_summary: {
-      pages_discovered: Math.max(discovered, pages.length),
-      pages_collected: pages.length,
-      pages_skipped: Math.max(discovered - pages.length, 0),
-      image_candidates: rawImages.length,
+      pages_discovered: Math.max(discoveredUrls.size, collectedUrls.size),
+      pages_collected: collectedUrls.size || pages.length,
+      pages_skipped: Math.max(discoveredUrls.size - collectedUrls.size, 0),
+      image_candidates: allRawImages.length,
+      images_submitted_to_ai: rawImages.length,
       collection_method: ["deterministic_static_collection"],
     },
     pages,
