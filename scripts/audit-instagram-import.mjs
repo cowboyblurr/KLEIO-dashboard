@@ -11,6 +11,7 @@ function forbidText(content, pattern, message) {
 }
 
 const migration = read("supabase/migrations/20260802010000_instagram_import.sql")
+const oauthMigration = read("supabase/migrations/20260802070000_instagram_oauth_state_lifecycle.sql")
 const edge = read("supabase/functions/instagram-import/index.ts")
 const client = read("lib/kleio-instagram-import.ts")
 const component = read("components/kleio/instagram-import-assist.tsx")
@@ -24,6 +25,8 @@ requireText(migration, /revoke all on table public\.artist_instagram_connections
 requireText(migration, /instagram_image/, "Instagram media must use a distinct source type.")
 requireText(migration, /private\.enforce_instagram_import_rights/, "Instagram image rights must be database-enforced.")
 requireText(migration, /rights_confirmed_at/, "Instagram import must record rights confirmation.")
+requireText(oauthMigration, /processing_at/, "OAuth callbacks must use an atomic processing claim.")
+requireText(oauthMigration, /15 minutes/, "OAuth state lifetime must be explicit and consistent.")
 forbidText(migration, /security definer/i, "The rights trigger must not bypass access controls.")
 
 requireText(edge, /instagram_business_basic/, "The minimum Instagram permission is missing.")
@@ -33,6 +36,10 @@ requireText(edge, /ig_exchange_token/, "Long-lived token exchange is missing.")
 requireText(edge, /ig_refresh_token/, "Long-lived token refresh is missing.")
 requireText(edge, /AES-GCM/, "Per-artist token encryption is missing.")
 requireText(edge, /state_hash/, "OAuth state hashing is missing.")
+requireText(edge, /htmlResponse/, "OAuth callback must return explicit HTML response headers.")
+requireText(edge, /new FormData\(\)/, "Instagram code exchange must use form-data.")
+requireText(edge, /instagram_code_exchange_redirect_mismatch/, "OAuth exchange errors must be normalized safely.")
+requireText(edge, /processing_at/, "OAuth callback must claim state without consuming it early.")
 requireText(edge, /requireArtist\(req\)/, "Browser actions must validate the KLEIO artist session.")
 requireText(edge, /request_origin_not_allowed/, "Browser actions must enforce allowed origins.")
 requireText(edge, /isTrustedMediaHost/, "Instagram media downloads must be host-restricted.")
@@ -42,6 +49,7 @@ requireText(edge, /action === "save_drafts"/, "Instagram edits must autosave thr
 requireText(edge, /action === "disconnect"/, "Artists must be able to disconnect Instagram.")
 forbidText(edge, /instagram_business_manage_messages|instagram_business_manage_comments|instagram_content_publish/, "The import flow must not request messaging, comment, or publishing permissions.")
 forbidText(edge, /META_INSTAGRAM_APP_SECRET\s*=\s*["'][^"']+/, "A Meta secret appears committed.")
+forbidText(edge, /raw\.githubusercontent\.com|queryBuilderPrototype|\.catch\(\(\) => undefined\)/, "Production Instagram source must not depend on remote imports or runtime query-builder shims.")
 
 requireText(client, /loadInstagramPreparedImports/, "Prepared Instagram imports must be restorable.")
 requireText(client, /saveInstagramPreparedDrafts/, "Instagram edits must be saveable.")
@@ -51,6 +59,8 @@ requireText(component, /rightsConfirmed/, "Artist rights confirmation is missing
 requireText(component, /Edits autosave privately/, "Autosave must be explained.")
 requireText(component, /Approve artwork/, "Explicit artist approval is missing.")
 requireText(component, /Disconnect/, "Disconnect control is missing.")
+requireText(component, /oauthStartRef/, "Duplicate Instagram connection attempts must be synchronously blocked.")
+requireText(client, /return fallback/, "Unknown internal Instagram errors must use a safe artist-facing fallback.")
 requireText(page, /<InstagramImportAssist \/>/, "Instagram import is not exposed in the Import work page.")
 forbidText(component, /Cloudflare|App Secret|access token|provider/i, "Infrastructure or credentials must not appear in artist-facing copy.")
 

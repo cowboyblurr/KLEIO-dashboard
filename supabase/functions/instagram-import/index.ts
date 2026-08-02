@@ -8,14 +8,14 @@ const INSTAGRAM_APP_ID = Deno.env.get("META_INSTAGRAM_APP_ID") ?? ""
 const INSTAGRAM_APP_SECRET = Deno.env.get("META_INSTAGRAM_APP_SECRET") ?? ""
 const TOKEN_KEY_MATERIAL = Deno.env.get("META_INSTAGRAM_TOKEN_ENCRYPTION_KEY") || INSTAGRAM_APP_SECRET
 const API_VERSION = (Deno.env.get("META_INSTAGRAM_API_VERSION") || "v25.0").replace(/^\/+|\/+$/g, "")
-const DEFAULT_REDIRECT_URI = `${SUPABASE_URL}/functions/v1/instagram-import`
-const REDIRECT_URI = Deno.env.get("META_INSTAGRAM_REDIRECT_URI") || DEFAULT_REDIRECT_URI
+const REDIRECT_URI = "https://trekynurdgxgtaaqqtyq.supabase.co/functions/v1/instagram-import"
 const PUBLIC_ORIGIN = (Deno.env.get("KLEIO_PUBLIC_ORIGIN") || "https://kleioarthouse.com").replace(/\/+$/, "")
 const MEDIA_BUCKET = "artist-assets"
 const MAX_MEDIA_PAGE = 50
 const MAX_IMPORT_ITEMS = 20
 const MAX_IMAGE_BYTES = 20 * 1024 * 1024
 const OAUTH_WINDOW_MS = 15 * 60 * 1000
+const OAUTH_PROCESSING_STALE_MS = 2 * 60 * 1000
 const OAUTH_MAX_STARTS = 5
 const TOKEN_REFRESH_WINDOW_MS = 7 * 24 * 60 * 60 * 1000
 const encoder = new TextEncoder()
@@ -96,6 +96,20 @@ function json(req: Request, body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
     headers: { ...corsHeaders(req), "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" },
+  })
+}
+
+function htmlResponse(markup: string, status = 200) {
+  return new Response(markup, {
+    status,
+    headers: {
+      "Content-Type": "text/html; charset=utf-8",
+      "Cache-Control": "no-store, max-age=0",
+      "Content-Security-Policy": "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'",
+      "Referrer-Policy": "no-referrer",
+      "X-Content-Type-Options": "nosniff",
+      "X-Frame-Options": "DENY",
+    },
   })
 }
 
@@ -243,22 +257,69 @@ async function firstMetaJson(path: string, token: string) {
   throw last
 }
 
+class InstagramOAuthError extends Error {
+  diagnostics: JsonRecord
+
+  constructor(category: string, diagnostics: JsonRecord = {}) {
+    super(category)
+    this.name = "InstagramOAuthError"
+    this.diagnostics = diagnostics
+  }
+}
+
+function oauthDiagnostics(reason: unknown) {
+  return reason instanceof InstagramOAuthError ? reason.diagnostics : {}
+}
+
+function normalizeCodeExchangeFailure(data: JsonRecord, status: number) {
+  const nested = asRecord(data.error)
+  const type = cleanText(nested.type || data.error_type, 100)
+  const code = idText(nested.code ?? data.code, 40)
+  const subcode = idText(nested.error_subcode ?? data.error_subcode, 40)
+  const rawMessage = cleanText(nested.message || data.error_message || data.message, 500).toLowerCase()
+  const category = rawMessage.includes("redirect_uri") || rawMessage.includes("redirect uri")
+    ? "instagram_code_exchange_redirect_mismatch"
+    : rawMessage.includes("verification code") || rawMessage.includes("invalid code") || rawMessage.includes("authorization code")
+      ? "instagram_code_exchange_invalid_code"
+      : rawMessage.includes("client") || code === "101"
+        ? "instagram_code_exchange_invalid_client"
+        : status === 429 || rawMessage.includes("rate")
+          ? "instagram_code_exchange_rate_limited"
+          : status >= 500
+            ? "instagram_code_exchange_network_error"
+            : "instagram_code_exchange_unknown"
+  return {
+    category,
+    diagnostics: {
+      http_status: status,
+      error_type: type,
+      error_code: code,
+      error_subcode: subcode,
+    },
+  }
+}
+
 async function exchangeAuthorizationCode(code: string) {
-  const body = new URLSearchParams({
-    client_id: INSTAGRAM_APP_ID,
-    client_secret: INSTAGRAM_APP_SECRET,
-    grant_type: "authorization_code",
-    redirect_uri: REDIRECT_URI,
-    code: code.replace(/#_$/, ""),
-  })
-  const response = await fetch("https://api.instagram.com/oauth/access_token", {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded", "Accept": "application/json" },
-    body,
-  })
+  const body = new FormData()
+  body.set("client_id", INSTAGRAM_APP_ID)
+  body.set("client_secret", INSTAGRAM_APP_SECRET)
+  body.set("grant_type", "authorization_code")
+  body.set("redirect_uri", REDIRECT_URI)
+  body.set("code", code.replace(/#_$/, ""))
+  let response: Response
+  try {
+    response = await fetch("https://api.instagram.com/oauth/access_token", {
+      method: "POST",
+      headers: { "Accept": "application/json" },
+      body,
+    })
+  } catch {
+    throw new InstagramOAuthError("instagram_code_exchange_network_error")
+  }
   const data = await response.json().catch(() => ({})) as JsonRecord
   if (!response.ok || !cleanText(data.access_token) || !idText(data.user_id, 120)) {
-    throw new Error("instagram_code_exchange_failed")
+    const failure = normalizeCodeExchangeFailure(data, response.status)
+    throw new InstagramOAuthError(failure.category, failure.diagnostics)
   }
   return {
     accessToken: cleanText(data.access_token, 5_000),
@@ -369,67 +430,139 @@ async function activeToken(connection: InstagramConnection) {
 }
 
 async function logEvent(artistUserId: string, eventType: string, instagramUserId: string | null, mediaCount = 0, metadata: JsonRecord = {}) {
-  await admin.from("artist_instagram_import_events").insert({
-    artist_user_id: artistUserId,
-    event_type: eventType,
-    instagram_user_id: instagramUserId,
-    media_count: mediaCount,
-    metadata,
-  }).catch(() => undefined)
+  try {
+    const { error } = await admin.from("artist_instagram_import_events").insert({
+      artist_user_id: artistUserId,
+      event_type: eventType,
+      instagram_user_id: instagramUserId,
+      media_count: mediaCount,
+      metadata,
+    })
+    if (error) console.warn("instagram_event_log_failed", { code: error.code || "unknown" })
+  } catch {
+    console.warn("instagram_event_log_failed")
+  }
 }
 
-function popupHtml(input: { success: boolean; message: string; returnUrl: string; username?: string }) {
+type OAuthPopupKind = "success" | "expired" | "cancelled" | "invalid" | "consumed" | "in_progress" | "failed"
+
+function popupCopy(kind: OAuthPopupKind) {
+  if (kind === "success") return {
+    title: "Instagram connected",
+    body: "Your Instagram account is connected to KLEIO. This window can close.",
+  }
+  if (kind === "expired") return {
+    title: "This connection attempt expired",
+    body: "Return to KLEIO and start a fresh Instagram connection.",
+  }
+  if (kind === "cancelled") return {
+    title: "Instagram authorization was cancelled",
+    body: "Nothing was connected. Return to KLEIO whenever you are ready to try again.",
+  }
+  if (kind === "consumed") return {
+    title: "This connection link was already used",
+    body: "Return to KLEIO and start a fresh Instagram connection.",
+  }
+  if (kind === "in_progress") return {
+    title: "Instagram connection is already processing",
+    body: "Return to KLEIO and wait a moment before trying again.",
+  }
+  if (kind === "invalid") return {
+    title: "Instagram connection could not be verified",
+    body: "Return to KLEIO and start the connection again.",
+  }
+  return {
+    title: "Instagram connection needs attention",
+    body: "KLEIO could not complete this connection. Return to KLEIO and try again.",
+  }
+}
+
+function popupHtml(input: { kind: OAuthPopupKind; returnUrl: string; username?: string }) {
+  const copy = popupCopy(input.kind)
   const payload = JSON.stringify({
     type: "kleio-instagram-oauth",
-    success: input.success,
-    message: input.message,
+    success: input.kind === "success",
+    message: `instagram_oauth_${input.kind}`,
     username: input.username || "",
-  }).replace(/</g, "\\u003c")
+  }).replace(/</g, "\u003c")
   const target = JSON.stringify(new URL(input.returnUrl).origin)
   const returnUrl = JSON.stringify(input.returnUrl)
-  const title = input.success ? "Instagram connected" : "Instagram connection needs attention"
-  const body = input.success
-    ? "Your Instagram account is connected to KLEIO. This window can close."
-    : "KLEIO could not complete the Instagram connection. Return to KLEIO and try again."
   return `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'">
-<title>${title}</title><style>body{font-family:ui-sans-serif,system-ui,-apple-system,sans-serif;margin:0;min-height:100vh;display:grid;place-items:center;background:#fcfbfe;color:#292631}.card{max-width:34rem;margin:2rem;padding:2rem;border:1px solid #e2dcf1;border-radius:24px;background:white;box-shadow:0 24px 70px rgba(82,64,130,.12)}h1{font-family:Georgia,serif;margin:0 0 .75rem;font-size:1.75rem}p{line-height:1.65;color:#6f6879}a{color:#5b4b8a;font-weight:700}</style></head>
-<body><main class="card"><h1>${title}</h1><p>${body}</p><p><a href=${returnUrl}>Return to KLEIO</a></p></main>
+<title>${copy.title}</title><style>body{font-family:ui-sans-serif,system-ui,-apple-system,sans-serif;margin:0;min-height:100vh;display:grid;place-items:center;background:#fcfbfe;color:#292631}.card{max-width:34rem;margin:2rem;padding:2rem;border:1px solid #e2dcf1;border-radius:24px;background:white;box-shadow:0 24px 70px rgba(82,64,130,.12)}h1{font-family:Georgia,serif;margin:0 0 .75rem;font-size:1.75rem}p{line-height:1.65;color:#6f6879}a{color:#5b4b8a;font-weight:700}</style></head>
+<body><main class="card"><h1>${copy.title}</h1><p>${copy.body}</p><p><a href=${returnUrl}>Return to KLEIO</a></p></main>
 <script>
 const payload=${payload};const target=${target};const returnUrl=${returnUrl};
 try{if(window.opener&&!window.opener.closed){window.opener.postMessage(payload,target);setTimeout(()=>window.close(),250)}else{window.location.replace(returnUrl+(returnUrl.includes("?")?"&":"?")+"instagram="+(payload.success?"connected":"error"))}}catch{window.location.replace(returnUrl)}
 </script></body></html>`
 }
 
-async function handleOAuthCallback(req: Request, url: URL) {
+async function handleOAuthCallback(_req: Request, url: URL) {
   const state = cleanText(url.searchParams.get("state"), 500)
   const code = cleanText(url.searchParams.get("code"), 5_000)
   const oauthError = cleanText(url.searchParams.get("error") || url.searchParams.get("error_reason"), 200)
-  if (!state) return new Response(popupHtml({ success: false, message: "Missing state", returnUrl: `${PUBLIC_ORIGIN}/artist-dashboard/import/` }), { status: 400, headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" } })
+  const fallbackUrl = `${PUBLIC_ORIGIN}/artist-dashboard/import/`
+  if (!state) return htmlResponse(popupHtml({ kind: "invalid", returnUrl: fallbackUrl }), 400)
+
   const stateHash = await sha256Text(state)
-  const { data: stored, error } = await admin
+  const claimStartedAt = new Date().toISOString()
+  const staleBefore = new Date(Date.now() - OAUTH_PROCESSING_STALE_MS).toISOString()
+  const { data: stored, error: claimError } = await admin
     .from("artist_instagram_oauth_states")
-    .select("id,artist_user_id,return_url,expires_at,used_at")
+    .update({ processing_at: claimStartedAt })
     .eq("state_hash", stateHash)
+    .is("used_at", null)
+    .gt("expires_at", claimStartedAt)
+    .or(`processing_at.is.null,processing_at.lt.${staleBefore}`)
+    .select("id,artist_user_id,return_url,created_at,expires_at,used_at,processing_at")
     .maybeSingle()
-  const returnUrl = stored?.return_url ? validateReturnUrl(stored.return_url) : `${PUBLIC_ORIGIN}/artist-dashboard/import/`
-  if (error || !stored || stored.used_at || Date.parse(stored.expires_at) <= Date.now()) {
-    return new Response(popupHtml({ success: false, message: "Expired state", returnUrl }), { status: 400, headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" } })
+
+  if (claimError) return htmlResponse(popupHtml({ kind: "failed", returnUrl: fallbackUrl }), 500)
+  if (!stored) {
+    const { data: existing } = await admin
+      .from("artist_instagram_oauth_states")
+      .select("id,artist_user_id,return_url,created_at,expires_at,used_at,processing_at")
+      .eq("state_hash", stateHash)
+      .maybeSingle()
+    const returnUrl = existing?.return_url ? validateReturnUrl(existing.return_url) : fallbackUrl
+    const kind: OAuthPopupKind = !existing
+      ? "invalid"
+      : existing.used_at
+        ? "consumed"
+        : Date.parse(existing.expires_at) <= Date.now()
+          ? "expired"
+          : "in_progress"
+    if (existing?.artist_user_id) {
+      const event = kind === "expired" ? "state_expired" : kind === "consumed" ? "state_already_consumed" : "state_in_progress"
+      await logEvent(existing.artist_user_id, event, null)
+    }
+    return htmlResponse(popupHtml({ kind, returnUrl }), kind === "in_progress" ? 409 : 400)
   }
-  await admin.from("artist_instagram_oauth_states").update({ used_at: new Date().toISOString() }).eq("id", stored.id).is("used_at", null)
+
+  const returnUrl = validateReturnUrl(stored.return_url)
+  const stateAgeSeconds = Math.max(0, Math.round((Date.now() - Date.parse(stored.created_at)) / 1_000))
+  await logEvent(stored.artist_user_id, "callback_received", null, 0, { state_age_seconds: stateAgeSeconds })
+
   if (oauthError || !code) {
+    await admin.from("artist_instagram_oauth_states").update({
+      used_at: new Date().toISOString(),
+      processing_at: null,
+      last_failure_category: "authorization_cancelled",
+    }).eq("id", stored.id).is("used_at", null)
     await logEvent(stored.artist_user_id, "connection_cancelled", null, 0, { category: oauthError || "missing_code" })
-    return new Response(popupHtml({ success: false, message: oauthError || "Authorization cancelled", returnUrl }), { status: 400, headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" } })
+    return htmlResponse(popupHtml({ kind: "cancelled", returnUrl }), 400)
   }
+
   try {
     if (!isConfigured()) throw new Error("instagram_not_configured")
     const short = await exchangeAuthorizationCode(code)
+    await logEvent(stored.artist_user_id, "token_received", short.userId)
     if (short.permissions.length && !short.permissions.includes("instagram_business_basic")) throw new Error("instagram_basic_permission_missing")
     const long = await exchangeLongLivedToken(short.accessToken)
     const accessToken = long?.accessToken || short.accessToken
     const expiresIn = long?.expiresIn || short.expiresIn
     const profile = await profileFor(short.userId, accessToken)
+    await logEvent(stored.artist_user_id, "profile_verified", profile.id || short.userId, 0, { account_type: profile.accountType })
     await saveConnection({
       artistUserId: stored.artist_user_id,
       instagramUserId: profile.id || short.userId,
@@ -440,18 +573,26 @@ async function handleOAuthCallback(req: Request, url: URL) {
       expiresIn,
       scopes: short.permissions,
     })
-    return new Response(popupHtml({ success: true, message: "Connected", returnUrl, username: profile.username }), {
-      status: 200,
-      headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store", "X-Frame-Options": "DENY" },
-    })
+    const { error: consumeError } = await admin.from("artist_instagram_oauth_states").update({
+      used_at: new Date().toISOString(),
+      processing_at: null,
+      last_failure_category: "",
+    }).eq("id", stored.id).is("used_at", null)
+    if (consumeError) throw new Error("instagram_state_consume_failed")
+    return htmlResponse(popupHtml({ kind: "success", returnUrl, username: profile.username }))
   } catch (reason) {
     const category = errorCode(reason)
-    await admin.from("artist_instagram_connections").update({ last_error_category: category, updated_at: new Date().toISOString() }).eq("artist_user_id", stored.artist_user_id)
-    await logEvent(stored.artist_user_id, "connection_failed", null, 0, { category })
-    return new Response(popupHtml({ success: false, message: category, returnUrl }), {
-      status: 502,
-      headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store", "X-Frame-Options": "DENY" },
-    })
+    await admin.from("artist_instagram_oauth_states").update({
+      processing_at: null,
+      last_failure_category: category,
+    }).eq("id", stored.id).is("used_at", null)
+    await admin.from("artist_instagram_connections").update({
+      last_error_category: category,
+      updated_at: new Date().toISOString(),
+    }).eq("artist_user_id", stored.artist_user_id)
+    const event = category.startsWith("instagram_code_exchange_") ? "code_exchange_failed" : "connection_failed"
+    await logEvent(stored.artist_user_id, event, null, 0, { category, ...oauthDiagnostics(reason) })
+    return htmlResponse(popupHtml({ kind: "failed", returnUrl }), 502)
   }
 }
 
@@ -893,6 +1034,9 @@ async function handlePost(req: Request) {
       artist_user_id: user.id,
       return_url: returnUrl,
       requested_scopes: ["instagram_business_basic"],
+      expires_at: new Date(Date.now() + OAUTH_WINDOW_MS).toISOString(),
+      processing_at: null,
+      last_failure_category: "",
     })
     if (error) throw error
     const authorize = new URL("https://www.instagram.com/oauth/authorize")

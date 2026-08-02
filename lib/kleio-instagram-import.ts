@@ -104,11 +104,11 @@ async function functionMessage(error: unknown, fallback: string) {
   if (/artwork title required/.test(normalized)) return "Add and confirm an artwork title before approval."
   if (/instagram import not found/.test(normalized)) return "This prepared Instagram item is no longer available. Refresh the import list."
   if (/approved artwork remove from portfolio/.test(normalized)) return "Remove approved work from the Portfolio page."
-  if (/code exchange failed|basic permission missing/.test(normalized)) {
-    return "Instagram could not complete authorization. Confirm the Instagram App ID, App Secret, redirect URL, and basic permission in Meta."
-  }
+  if (/redirect mismatch/.test(normalized)) return "Instagram connection is temporarily unavailable while KLEIO verifies its callback configuration."
+  if (/invalid code/.test(normalized)) return "That Instagram authorization link is no longer valid. Start a fresh connection."
+  if (/code exchange|basic permission missing/.test(normalized)) return "Instagram could not complete authorization. Return to KLEIO and start a fresh connection."
   if (/non-2xx|failed to send a request/.test(normalized)) return fallback
-  return code || fallback
+  return fallback
 }
 
 async function invoke<T>(action: string, payload: Record<string, unknown> = {}): Promise<T> {

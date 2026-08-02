@@ -41,7 +41,7 @@ const callbackOrigin = "https://trekynurdgxgtaaqqtyq.supabase.co"
 const MAX_SELECTED = 20
 
 type SaveState = "idle" | "saving" | "saved" | "error"
-type OAuthMessage = { type?: string; success?: boolean; username?: string }
+type OAuthMessage = { type?: string; success?: boolean; username?: string; message?: string }
 
 function draftPayload(items: InstagramPreparedItem[]) {
   return items
@@ -79,6 +79,10 @@ export function InstagramImportAssist() {
   const sessionIdRef = useRef(crypto.randomUUID())
   const lastSavedRef = useRef("")
   const hydratedRef = useRef(false)
+  const oauthStartRef = useRef(false)
+  const oauthPopupRef = useRef<Window | null>(null)
+  const oauthMonitorRef = useRef<number | null>(null)
+  const [oauthInProgress, setOauthInProgress] = useState(false)
 
   const selectedCount = selected.size
   const preparedPending = useMemo(() => prepared.filter((item) => !item.approved), [prepared])
@@ -111,18 +115,36 @@ export function InstagramImportAssist() {
   useEffect(() => { void hydrate() }, [])
 
   useEffect(() => {
+    function finishAttempt() {
+      oauthStartRef.current = false
+      oauthPopupRef.current = null
+      if (oauthMonitorRef.current !== null) window.clearInterval(oauthMonitorRef.current)
+      oauthMonitorRef.current = null
+      setOauthInProgress(false)
+    }
     function receive(event: MessageEvent<OAuthMessage>) {
       if (event.origin !== callbackOrigin || event.data?.type !== "kleio-instagram-oauth") return
+      finishAttempt()
       if (event.data.success) {
         setNotice(`Instagram${event.data.username ? ` @${event.data.username}` : ""} is connected. Choose the posts you want to review.`)
         setError("")
         void refreshConnection(true)
-      } else {
-        setError("Instagram connection was not completed. Try again from this page.")
+        return
       }
+      const callbackMessage = event.data.message === "instagram_oauth_expired"
+        ? "This Instagram connection attempt expired. Start a fresh connection."
+        : event.data.message === "instagram_oauth_cancelled"
+          ? "Instagram authorization was cancelled. Nothing was connected."
+          : event.data.message === "instagram_oauth_in_progress"
+            ? "An Instagram connection is already processing. Wait a moment and try again."
+            : "Instagram connection was not completed. Try again from this page."
+      setError(callbackMessage)
     }
     window.addEventListener("message", receive)
-    return () => window.removeEventListener("message", receive)
+    return () => {
+      window.removeEventListener("message", receive)
+      if (oauthMonitorRef.current !== null) window.clearInterval(oauthMonitorRef.current)
+    }
   }, [])
 
   useEffect(() => {
@@ -140,26 +162,46 @@ export function InstagramImportAssist() {
   }, [prepared])
 
   async function connect() {
-    if (working) return
-    const popup = window.open("about:blank", "kleio-instagram-connect", "popup,width=620,height=760,resizable=yes,scrollbars=yes")
-    if (!popup) return setError("Allow pop-ups for KLEIO, then try Connect Instagram again.")
-    setWorking("connect")
-    setError("")
-    setNotice("Opening Instagram’s secure authorization screen…")
-    try {
-      const { authorizeUrl } = await startInstagramConnection(window.location.href)
-      popup.location.href = authorizeUrl
-      popup.focus()
-    } catch (reason) {
-      popup.close()
-      setError(message(reason, "Instagram connection could not start."))
-      setNotice("")
-    } finally {
-      setWorking("")
-    }
+  if (working || oauthStartRef.current || oauthInProgress) {
+    oauthPopupRef.current?.focus()
+    return
   }
+  oauthStartRef.current = true
+  const popup = window.open("about:blank", "kleio-instagram-connect", "popup,width=620,height=760,resizable=yes,scrollbars=yes")
+  if (!popup) {
+    oauthStartRef.current = false
+    return setError("Allow pop-ups for KLEIO, then try Connect Instagram again.")
+  }
+  oauthPopupRef.current = popup
+  setOauthInProgress(true)
+  setWorking("connect")
+  setError("")
+  setNotice("Opening Instagram’s secure authorization screen…")
+  try {
+    const { authorizeUrl } = await startInstagramConnection(window.location.href)
+    popup.location.href = authorizeUrl
+    popup.focus()
+    oauthMonitorRef.current = window.setInterval(() => {
+      if (!popup.closed) return
+      if (oauthMonitorRef.current !== null) window.clearInterval(oauthMonitorRef.current)
+      oauthMonitorRef.current = null
+      oauthPopupRef.current = null
+      oauthStartRef.current = false
+      setOauthInProgress(false)
+    }, 500)
+  } catch (reason) {
+    popup.close()
+    oauthPopupRef.current = null
+    oauthStartRef.current = false
+    setOauthInProgress(false)
+    setError(message(reason, "Instagram connection could not start."))
+    setNotice("")
+  } finally {
+    setWorking("")
+  }
+}
 
-  async function refreshGallery(reset: boolean) {
+async function refreshGallery(reset: boolean) {
     if (working) return
     setWorking("gallery")
     setError("")
@@ -297,7 +339,7 @@ export function InstagramImportAssist() {
           {connection?.connected ? <>
             <button type="button" className={secondary} disabled={Boolean(working)} onClick={() => void refreshGallery(true)}>{working === "gallery" ? <Loader2 className="size-4 animate-spin" /> : <RefreshCw className="size-4" />}Open media gallery</button>
             <button type="button" className={quiet} disabled={Boolean(working)} onClick={() => void disconnect()}><LogOut className="size-4" />Disconnect</button>
-          </> : <button type="button" className={primary} disabled={Boolean(working) || connection?.configured === false} onClick={() => void connect()}>{working === "connect" ? <Loader2 className="size-4 animate-spin" /> : <Camera className="size-4" />}Connect Instagram</button>}
+          </> : <button type="button" className={primary} disabled={Boolean(working) || oauthInProgress || connection?.configured === false} onClick={() => void connect()}>{working === "connect" || oauthInProgress ? <Loader2 className="size-4 animate-spin" /> : <Camera className="size-4" />}{oauthInProgress ? "Connecting Instagram…" : "Connect Instagram"}</button>}
         </div>
       </div>
 
