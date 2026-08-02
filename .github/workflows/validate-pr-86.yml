@@ -1,0 +1,49 @@
+name: Validate PR 86 interaction refinements
+
+on:
+  push:
+    branches:
+      - fix/instagram-oauth-state-and-callback
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: validate-pr-86-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: TypeScript
+        run: pnpm typecheck
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Navigation audit
+        run: pnpm audit:navigation
+
+      - name: Instagram import audit
+        run: pnpm audit:instagram-import
+
+      - name: Production build
+        run: pnpm build
