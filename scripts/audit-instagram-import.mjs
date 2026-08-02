@@ -36,7 +36,7 @@ forbidText(migration, /security definer/i, "The rights trigger must not bypass a
 requireText(edge, /instagram_business_basic/, "The minimum Instagram permission is missing.")
 requireText(edge, /https:\/\/www\.instagram\.com\/oauth\/authorize/, "Instagram authorization endpoint is missing.")
 requireText(edge, /https:\/\/api\.instagram\.com\/oauth\/access_token/, "Instagram code exchange is missing.")
-requireText(edge, /https:\/\/trekynurdgxgtaaqqtyq\.supabase\.co\/functions\/v1\/instagram-import/, "The exact production Instagram callback URI must be fixed in source.")
+requireText(edge, /const DEFAULT_REDIRECT_URI = `\$\{SUPABASE_URL\}\/functions\/v1\/instagram-import`/, "The Instagram callback URI must be deterministically derived from the active Supabase project URL.")
 requireText(edge, /ig_exchange_token/, "Long-lived token exchange is missing.")
 requireText(edge, /ig_refresh_token/, "Long-lived token refresh is missing.")
 requireText(edge, /AES-GCM/, "Per-artist token encryption is missing.")
