@@ -28,10 +28,53 @@ jobs:
           end = source.index("\n          PY\n", start)
           lines = source[start:end].splitlines()
           script = "\n".join(line[10:] if line.startswith("          ") else line for line in lines) + "\n"
-          script = script.replace(
-              "updated, count = re.subn(pattern, replacement, text, count=1, flags=flags)",
-              "updated, count = re.subn(pattern, lambda _match: replacement, text, count=1, flags=flags)",
-          )
+          old_helper = '''def replace_once(path: str, old: str, new: str) -> None:
+              file = Path(path)
+              text = file.read_text()
+              if text.count(old) != 1:
+                  raise SystemExit(f"Expected one exact match in {path}, found {text.count(old)}")
+              file.write_text(text.replace(old, new, 1))
+
+          def sub_once(path: str, pattern: str, replacement: str, flags: int = 0) -> None:
+              file = Path(path)
+              text = file.read_text()
+              updated, count = re.subn(pattern, replacement, text, count=1, flags=flags)
+              if count != 1:
+                  raise SystemExit(f"Expected one regex match in {path}, found {count}: {pattern[:80]}")
+              file.write_text(updated)'''
+          new_helper = '''def normalize_block(value: str) -> str:
+              lines = value.splitlines()
+              if len(lines) < 2:
+                  return value
+              first_indent = len(lines[0]) - len(lines[0].lstrip(" "))
+              following = [len(line) - len(line.lstrip(" ")) for line in lines[1:] if line.strip()]
+              if not following:
+                  return value
+              extra = max(0, min(following) - first_indent)
+              if not extra:
+                  return value
+              return "\\n".join([lines[0], *[(line[extra:] if line.startswith(" " * extra) else line) for line in lines[1:]]])
+
+          def replace_once(path: str, old: str, new: str) -> None:
+              file = Path(path)
+              text = file.read_text()
+              old = normalize_block(old)
+              new = normalize_block(new)
+              if text.count(old) != 1:
+                  raise SystemExit(f"Expected one exact match in {path}, found {text.count(old)}")
+              file.write_text(text.replace(old, new, 1))
+
+          def sub_once(path: str, pattern: str, replacement: str, flags: int = 0) -> None:
+              file = Path(path)
+              text = file.read_text()
+              replacement = normalize_block(replacement)
+              updated, count = re.subn(pattern, lambda _match: replacement, text, count=1, flags=flags)
+              if count != 1:
+                  raise SystemExit(f"Expected one regex match in {path}, found {count}: {pattern[:80]}")
+              file.write_text(updated)'''
+          if old_helper not in script:
+              raise SystemExit('repair helper not found')
+          script = script.replace(old_helper, new_helper, 1)
           Path('/tmp/apply-instagram-patch.py').write_text(script)
           PY
           python /tmp/apply-instagram-patch.py
