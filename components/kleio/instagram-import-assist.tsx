@@ -730,7 +730,7 @@ export function InstagramImportAssist() {
             {connection?.connected ? <>
               <button type="button" className={secondary} disabled={Boolean(working) || isGalleryBusy} onClick={() => void refreshGallery(true)}>{galleryPhase === "refreshing" || galleryPhase === "loading" ? <Loader2 className="size-4 animate-spin motion-reduce:animate-none" /> : <RefreshCw className="size-4" />}Refresh posts</button>
               <button type="button" className={quiet} disabled={Boolean(working)} onClick={() => void disconnect()}><LogOut className="size-4" />Disconnect</button>
-            </> : <button type="button" className={primary} disabled={Boolean(working) || oauthInProgress || connection?.configured === false} onClick={() => void connect()}>{working === "connect" || oauthInProgress ? <Loader2 className="size-4 animate-spin motion-reduce:animate-none" /> : <Instagram className="size-4" />}{oauthInProgress ? "Connecting Instagram…" : "Connect Instagram"}</button>}
+            </> : <button type="button" className={primary} disabled={Boolean(working) || oauthInProgress || connection?.configured === false} onClick={() => void connect()}>{working === "connect" || oauthInProgress ? <Loader2 className="size-4 animate-spin motion-reduce:animate-none" /> : <InstagramMark />}{oauthInProgress ? "Connecting Instagram…" : "Connect Instagram"}</button>}
           </div>
         </div>
       </div>
