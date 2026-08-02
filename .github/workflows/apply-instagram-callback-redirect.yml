@@ -1,0 +1,143 @@
+name: Apply Instagram callback redirect
+
+on:
+  push:
+    branches:
+      - fix/instagram-oauth-state-and-callback
+    paths:
+      - .github/workflows/apply-instagram-callback-redirect.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch-callback:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repair branch
+        uses: actions/checkout@v4
+        with:
+          ref: fix/instagram-oauth-state-and-callback
+          fetch-depth: 0
+
+      - name: Patch callback redirect and popup relay
+        shell: python
+        run: |
+          from pathlib import Path
+
+          backend_path = Path("supabase/functions/instagram-import/index.ts")
+          backend = backend_path.read_text()
+
+          marker = '''async function handleOAuthCallback(_req: Request, url: URL) {'''
+          helper = '''function callbackRedirect(kind: OAuthPopupKind, returnUrl: string, username = "") {
+            const target = new URL(returnUrl)
+            target.searchParams.set("instagram_result", `instagram_oauth_${kind}`)
+            if (username) target.searchParams.set("instagram_username", username)
+            return new Response(null, {
+              status: 303,
+              headers: {
+                "Location": target.href,
+                "Cache-Control": "no-store, max-age=0",
+                "Referrer-Policy": "no-referrer",
+                "X-Content-Type-Options": "nosniff",
+              },
+            })
+          }
+
+          async function handleOAuthCallback(_req: Request, url: URL) {'''
+          if marker not in backend:
+              raise SystemExit("callback handler marker not found")
+          backend = backend.replace(marker, helper, 1)
+
+          replacements = {
+            'if (!state) return htmlResponse(popupHtml({ kind: "invalid", returnUrl: fallbackUrl }), 400)':
+              'if (!state) return callbackRedirect("invalid", fallbackUrl)',
+            'if (claimError) return htmlResponse(popupHtml({ kind: "failed", returnUrl: fallbackUrl }), 500)':
+              'if (claimError) return callbackRedirect("failed", fallbackUrl)',
+            'return htmlResponse(popupHtml({ kind, returnUrl }), kind === "in_progress" ? 409 : 400)':
+              'return callbackRedirect(kind, returnUrl)',
+            'return htmlResponse(popupHtml({ kind: "cancelled", returnUrl }), 400)':
+              'return callbackRedirect("cancelled", returnUrl)',
+            'return htmlResponse(popupHtml({ kind: "success", returnUrl, username: profile.username }))':
+              'return callbackRedirect("success", returnUrl, profile.username)',
+            'return htmlResponse(popupHtml({ kind: "failed", returnUrl }), 502)':
+              'return callbackRedirect("failed", returnUrl)',
+          }
+          for old, new in replacements.items():
+              if old not in backend:
+                  raise SystemExit(f"backend callback target not found: {old}")
+              backend = backend.replace(old, new, 1)
+
+          backend_path.write_text(backend)
+
+          frontend_path = Path("components/kleio/instagram-import-assist.tsx")
+          frontend = frontend_path.read_text()
+
+          hydrate = '''  useEffect(() => { void hydrate() }, [])
+
+  useEffect(() => {
+    function finishAttempt() {'''
+          relay = '''  useEffect(() => { void hydrate() }, [])
+
+  useEffect(() => {
+    const url = new URL(window.location.href)
+    const result = url.searchParams.get("instagram_result")
+    if (!result) return
+
+    const username = url.searchParams.get("instagram_username") || ""
+    const success = result === "instagram_oauth_success"
+    const payload: OAuthMessage = {
+      type: "kleio-instagram-oauth",
+      success,
+      username,
+      message: result,
+    }
+
+    url.searchParams.delete("instagram_result")
+    url.searchParams.delete("instagram_username")
+    window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`)
+
+    if (window.opener && !window.opener.closed) {
+      window.opener.postMessage(payload, window.location.origin)
+      window.setTimeout(() => window.close(), 150)
+      return
+    }
+
+    if (success) {
+      setNotice(`Instagram${username ? ` @${username}` : ""} is connected. Choose the posts you want to review.`)
+      setError("")
+      void refreshConnection(true)
+    } else if (result === "instagram_oauth_expired") {
+      setError("This Instagram connection attempt expired. Start a fresh connection.")
+    } else if (result === "instagram_oauth_cancelled") {
+      setError("Instagram authorization was cancelled. Nothing was connected.")
+    } else if (result === "instagram_oauth_consumed") {
+      setError("That Instagram connection link was already used. Start a fresh connection.")
+    } else if (result === "instagram_oauth_in_progress") {
+      setError("An Instagram connection is already processing. Wait a moment and try again.")
+    } else {
+      setError("Instagram connection was not completed. Try again from this page.")
+    }
+  }, [])
+
+  useEffect(() => {
+    function finishAttempt() {'''
+          if hydrate not in frontend:
+              raise SystemExit("frontend relay insertion target not found")
+          frontend = frontend.replace(hydrate, relay, 1)
+
+          old_origin = 'if (event.origin !== callbackOrigin || event.data?.type !== "kleio-instagram-oauth") return'
+          new_origin = 'if (![callbackOrigin, window.location.origin].includes(event.origin) || event.data?.type !== "kleio-instagram-oauth") return'
+          if old_origin not in frontend:
+              raise SystemExit("frontend callback origin target not found")
+          frontend = frontend.replace(old_origin, new_origin, 1)
+
+          frontend_path.write_text(frontend)
+
+      - name: Commit callback redirect
+        run: |
+          git config user.name "KLEIO Automation"
+          git config user.email "actions@users.noreply.github.com"
+          git add supabase/functions/instagram-import/index.ts components/kleio/instagram-import-assist.tsx
+          git commit -m "Redirect Instagram callbacks safely into KLEIO"
+          git push origin HEAD:fix/instagram-oauth-state-and-callback
