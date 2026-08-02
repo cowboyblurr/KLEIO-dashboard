@@ -90,6 +90,7 @@ Deno.test("valid output keeps exact source-backed proposal", () => {
   const normalized = validateOutput(validOutput(), evidence)
   assertEquals(normalized.identity.length, 1)
   assertEquals(normalized.identity[0].source_page_ref, "page_1")
+  assertEquals(normalized.identity[0].requires_artist_confirmation, true)
 })
 
 Deno.test("unknown source reference is rejected", async () => {
@@ -128,21 +129,29 @@ Deno.test("Gemini request separates system instruction from untrusted evidence",
   const evidence = buildEvidencePackage(sessionFixture())
   let capturedBody = ""
   let capturedKey = ""
-  const mockFetch: typeof fetch = async (_input, init) => {
+  let capturedUrl = ""
+  const mockFetch: typeof fetch = async (input, init) => {
+    capturedUrl = String(input)
     capturedBody = String(init?.body || "")
     capturedKey = new Headers(init?.headers).get("x-goog-api-key") || ""
     return new Response(JSON.stringify({
-      candidates: [{ content: { parts: [{ text: JSON.stringify(validOutput()) }] } }],
-      usageMetadata: { promptTokenCount: 10, candidatesTokenCount: 20, totalTokenCount: 30 },
-    }), { status: 200, headers: { "x-request-id": "request-1" } })
+      id: "request-1",
+      status: "completed",
+      steps: [{ type: "model_output", content: [{ type: "text", text: JSON.stringify(validOutput()) }] }],
+      usage: { total_input_tokens: 10, total_output_tokens: 20, total_tokens: 30 },
+    }), { status: 200 })
   }
-  const result = await runGemini({ apiKey: "test-secret", model: "gemini-3.6-flash" } as never, evidence, mockFetch)
+  const result = await runGemini({ apiKey: "test-secret", model: "gemini-3.6-flash" }, evidence, mockFetch)
   const parsed = JSON.parse(capturedBody)
+  assertEquals(capturedUrl, "https://generativelanguage.googleapis.com/v1beta/interactions")
   assertEquals(capturedKey, "test-secret")
   assert(!capturedBody.includes("test-secret"))
-  assertEquals(parsed.systemInstruction.parts[0].text, SYSTEM_INSTRUCTION)
-  assert(parsed.contents[0].parts[0].text.includes("<BEGIN_KLEIO_WEBSITE_EVIDENCE>"))
-  assert(parsed.generationConfig.responseFormat.text.schema)
+  assertEquals(parsed.system_instruction, SYSTEM_INSTRUCTION)
+  assert(parsed.input.includes("<BEGIN_KLEIO_WEBSITE_EVIDENCE>"))
+  assertEquals(parsed.response_format.mime_type, "application/json")
+  assert(parsed.response_format.schema)
+  assertEquals(parsed.store, false)
+  assertEquals(parsed.generation_config.tool_choice, "none")
   assertEquals(result.usage.total_tokens, 30)
 })
 
