@@ -5,6 +5,7 @@ import { ArrowLeft, ArrowRight, Images, ShieldCheck } from "lucide-react"
 import { ArtistImportStudio } from "@/components/kleio/artist-import-studio"
 import { InstagramImportAssist } from "@/components/kleio/instagram-import-assist"
 import { WebsiteImportAssist } from "@/components/kleio/website-import-assist"
+import { WebsiteOrganizationAssist } from "@/components/kleio/website-organization-assist"
 
 export function ArtistImportStudioPage() {
   return (
@@ -30,6 +31,7 @@ export function ArtistImportStudioPage() {
 
         <InstagramImportAssist />
         <WebsiteImportAssist />
+        <WebsiteOrganizationAssist />
         <ArtistImportStudio />
 
         <section className="rounded-2xl border border-[#E7E1F7] bg-white p-5 text-sm leading-6 text-[#746E80]">
