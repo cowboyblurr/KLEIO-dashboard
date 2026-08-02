@@ -47,3 +47,7 @@ jobs:
 
       - name: Production build
         run: pnpm build
+
+      - name: Validation summary
+        if: always()
+        run: echo "Completed repository validation independently of Vercel deployment status."
