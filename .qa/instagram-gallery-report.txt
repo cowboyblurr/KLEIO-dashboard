@@ -1,0 +1,184 @@
+Instagram gallery QA
+commit=937005de7dab043c15a168e17d40b5b700370014
+typecheck=0
+lint=0
+instagram_audit=0
+production_build=0
+
+===== typecheck =====
+
+> my-project@0.1.0 typecheck /home/runner/work/KLEIO-dashboard/KLEIO-dashboard
+> tsc --noEmit
+
+
+===== lint =====
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/home/runner/work/KLEIO-dashboard/KLEIO-dashboard/components/kleio/smart-home-link.tsx:32:5
+  30 |
+  31 |   useEffect(() => {
+> 32 |     setHref(getExploreArthouseHref())
+     |     ^^^^^^^ Avoid calling setState() directly within an effect
+  33 |   }, [])
+  34 |
+  35 |   return (  react-hooks/set-state-in-effect
+
+/home/runner/work/KLEIO-dashboard/KLEIO-dashboard/components/kleio/submission-drawer.tsx
+  62:21  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/home/runner/work/KLEIO-dashboard/KLEIO-dashboard/components/kleio/submission-drawer.tsx:62:21
+  60 |   const activity = getSubmissionActivity(submission.id)
+  61 |
+> 62 |   useEffect(() => { setConfirmation(null); setComposer(null) }, [submission.id])
+     |                     ^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  63 |
+  64 |   function openComposer(label: string) { setConfirmation(null); setComposer({ label, body: defaultRequestBody(label, submission) }) }
+  65 |   function saveComposer() { if (!composer) return; setConfirmation(`${composer.label} saved as an editable demo draft for ${submission.artist}.`); setComposer(null) }  react-hooks/set-state-in-effect
+
+/home/runner/work/KLEIO-dashboard/KLEIO-dashboard/components/kleio/use-demo-guide.ts
+  75:5  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/home/runner/work/KLEIO-dashboard/KLEIO-dashboard/components/kleio/use-demo-guide.ts:75:5
+  73 |
+  74 |   useEffect(() => {
+> 75 |     setState(readGuideState())
+     |     ^^^^^^^^ Avoid calling setState() directly within an effect
+  76 |     const onChange = () => setState(readGuideState())
+  77 |     window.addEventListener(DEMO_GUIDE_CHANGED_EVENT, onChange)
+  78 |     return () => window.removeEventListener(DEMO_GUIDE_CHANGED_EVENT, onChange)  react-hooks/set-state-in-effect
+
+/home/runner/work/KLEIO-dashboard/KLEIO-dashboard/components/kleio/visual-artist-portfolio-studio.tsx
+  6:66  warning  'Plus' is defined but never used      @typescript-eslint/no-unused-vars
+  6:80  warning  'Sparkles' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/runner/work/KLEIO-dashboard/KLEIO-dashboard/components/kleio/website-import-assist.tsx
+  227:1070  warning  Expected an assignment or function call and instead saw an expression  @typescript-eslint/no-unused-expressions
+  229:1500  warning  Expected an assignment or function call and instead saw an expression  @typescript-eslint/no-unused-expressions
+
+/home/runner/work/KLEIO-dashboard/KLEIO-dashboard/lib/kleio-application-preparation.ts
+  108:10  warning  'asObject' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/runner/work/KLEIO-dashboard/KLEIO-dashboard/lib/kleio-artist-analytics.ts
+   46:7   warning  'CLOSED_APPLICATION_STATUSES' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  226:13  warning  '_artistId' is assigned a value but never used                    @typescript-eslint/no-unused-vars
+
+/home/runner/work/KLEIO-dashboard/KLEIO-dashboard/supabase/functions/analyze-artist-website/index.ts
+  111:10   warning  'normalizedKey' is defined but never used  @typescript-eslint/no-unused-vars
+  313:32   warning  Unexpected any. Specify a different type   @typescript-eslint/no-explicit-any
+  315:101  warning  Unexpected any. Specify a different type   @typescript-eslint/no-explicit-any
+  322:74   warning  Unexpected any. Specify a different type   @typescript-eslint/no-explicit-any
+  327:81   warning  Unexpected any. Specify a different type   @typescript-eslint/no-explicit-any
+  329:17   warning  Unexpected any. Specify a different type   @typescript-eslint/no-explicit-any
+  335:76   warning  Unexpected any. Specify a different type   @typescript-eslint/no-explicit-any
+  426:78   warning  Unexpected any. Specify a different type   @typescript-eslint/no-explicit-any
+  439:82   warning  Unexpected any. Specify a different type   @typescript-eslint/no-explicit-any
+
+✖ 83 problems (0 errors, 83 warnings)
+
+
+===== audit =====
+
+> my-project@0.1.0 audit:instagram-import /home/runner/work/KLEIO-dashboard/KLEIO-dashboard
+> node scripts/audit-instagram-import.mjs
+
+Instagram import audit passed: official read-only login, minimum permission, database-clock one-time OAuth state, explicit HTML callback, encrypted server-only tokens, refresh handling, trusted-host media copying, signature checks, database-enforced rights, resumable private drafts, autosave, explicit approval, and disconnect controls.
+
+===== build =====
+├ ○ /artist-dashboard/opportunities
+├ ● /artist-dashboard/opportunities/[opportunityId]
+│ ├ /artist-dashboard/opportunities/lumen-arts-grant
+│ ├ /artist-dashboard/opportunities/caribbean-futures-fund
+│ ├ /artist-dashboard/opportunities/citywide-artist-award
+│ └ [+4 more paths]
+├ ○ /artist-dashboard/passport
+├ ○ /artist-dashboard/passport/review
+├ ○ /artist-dashboard/portfolio
+├ ○ /artist-dashboard/profile
+├ ○ /artist-dashboard/profile/editorial-test
+├ ○ /artist-dashboard/settings
+├ ● /artist/[username]
+│ ├ /artist/amina-el-badri
+│ ├ /artist/mei-lin-zhang
+│ ├ /artist/sofia-karim
+│ └ [+27 more paths]
+├ ○ /artists
+├ ● /artists/[artistId]
+│ ├ /artists/amina-el-badri
+│ ├ /artists/mei-lin-zhang
+│ ├ /artists/sofia-karim
+│ └ [+3 more paths]
+├ ○ /artists/applicants
+├ ○ /auth/accept-invite
+├ ○ /auth/callback
+├ ○ /auth/forgot-password
+├ ○ /auth/update-password
+├ ○ /collaborator-dashboard
+├ ○ /collaborator-dashboard/assignments
+├ ○ /collaborator-dashboard/guidelines
+├ ○ /collaborator-dashboard/messages
+├ ○ /collaborator-dashboard/review-queue
+├ ○ /collaborator-dashboard/submitted
+├ ○ /committee
+├ ○ /dashboard
+├ ○ /demo
+├ ○ /demo/infrastructure
+├ ○ /demo/pilot-readiness
+├ ○ /demo/reports-export-archive
+├ ○ /demo/roles
+├ ○ /demo/trust
+├ ● /institution/[username]
+│ ├ /institution/kleio-arthouse
+│ ├ /institution/lumen-residency
+│ └ /institution/casa-rivera-arts
+├ ○ /journal
+├ ○ /landing
+├ ○ /manifesto
+├ ○ /messages
+├ ○ /opportunities
+├ ○ /opportunities/submit
+├ ○ /programs
+├ ● /programs/[programId]
+│ ├ /programs/residency-2026
+│ ├ /programs/archive-fellowship-2026
+│ └ /programs/public-forms-2026
+├ ○ /programs/new
+├ ○ /reports
+├ ○ /reports/new
+├ ○ /review-queue
+├ ○ /review-room
+├ ○ /settings
+├ ○ /shortlist
+├ ○ /signup
+├ ○ /signup/artist
+├ ○ /signup/institution
+├ ○ /submissions
+├ ● /submissions/[submissionId]
+│ ├ /submissions/amina-el-badri
+│ ├ /submissions/mei-lin-zhang
+│ ├ /submissions/sofia-karim
+│ └ [+27 more paths]
+├ ○ /templates
+└ ○ /templates/new
+
+
+○  (Static)  prerendered as static content
+●  (SSG)     prerendered as static HTML (uses generateStaticParams)
+
+
