@@ -74,7 +74,7 @@ export async function runGemini(
         throw fail("gemini_provider_unavailable", 503)
       }
       const providerStatus = text(payload.status, 40)
-      if (providerStatus && !["completed", "incomplete"].includes(providerStatus)) throw fail("gemini_provider_unavailable", 503)
+      if (providerStatus && providerStatus !== "completed") throw fail("gemini_invalid_structured_output", 502)
       const raw = outputText(payload)
       if (!raw) throw fail("gemini_invalid_structured_output", 502)
       let output: Json
