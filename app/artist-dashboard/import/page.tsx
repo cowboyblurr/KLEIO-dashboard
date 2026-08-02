@@ -1,6 +1,6 @@
 import type { Metadata } from "next"
 import { ArtistShell } from "@/components/kleio/artist-shell"
-import { ArtistImportStudioPage } from "@/components/kleio/artist-import-studio-page"
+import { ArtistImportStudioWithGalleryView } from "@/components/kleio/artist-import-studio-with-gallery-view"
 
 export const metadata: Metadata = {
   title: "KLEIO — Import work",
@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 export default function Page() {
   return (
     <ArtistShell>
-      <ArtistImportStudioPage />
+      <ArtistImportStudioWithGalleryView />
     </ArtistShell>
   )
 }
