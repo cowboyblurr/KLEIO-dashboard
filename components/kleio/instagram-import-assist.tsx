@@ -11,7 +11,6 @@ import {
   ExternalLink,
   ImageIcon,
   ImagePlus,
-  Instagram,
   Loader2,
   LogOut,
   RefreshCw,
@@ -95,6 +94,16 @@ function assetName(asset: InstagramGalleryAsset) {
     return `Carousel image ${asset.carouselIndex} of ${asset.carouselTotal}`
   }
   return asset.kind === "video" ? "Instagram video" : "Instagram artwork"
+}
+
+function InstagramMark() {
+  return (
+    <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+      <rect x="3" y="3" width="18" height="18" rx="5" />
+      <circle cx="12" cy="12" r="4.25" />
+      <circle cx="17.4" cy="6.7" r="1" fill="currentColor" stroke="none" />
+    </svg>
+  )
 }
 
 function FieldStatus({ item, name }: { item: InstagramPreparedItem; name: keyof InstagramPreparedItem["fields"] }) {
@@ -707,7 +716,7 @@ export function InstagramImportAssist() {
       <div className="mt-5 rounded-2xl border border-[#E7E1F7] bg-[#FAF9FD] p-4 sm:p-5">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex min-w-0 items-start gap-3">
-            <span className="grid size-11 shrink-0 place-items-center rounded-full bg-white text-[#5B4B8A] shadow-sm"><Instagram className="size-5" aria-hidden="true" /></span>
+            <span className="grid size-11 shrink-0 place-items-center rounded-full bg-white text-[#5B4B8A] shadow-sm"><InstagramMark /></span>
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
                 <p className="truncate text-sm font-semibold text-[#292631]">{connection?.connected ? `Connected as @${connection.username}` : "Instagram is not connected"}</p>
