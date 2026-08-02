@@ -95,6 +95,10 @@ async function functionMessage(error: unknown, fallback: string) {
   if (/artist workspace required/.test(normalized)) return "Instagram import is available only in an artist workspace."
   if (/rate limited/.test(normalized)) return "Too many connection attempts were started. Wait a few minutes and try again."
   if (/connection required/.test(normalized)) return "Reconnect Instagram to continue."
+  if (/code exchange redirect mismatch/.test(normalized)) return "Instagram connection is temporarily unavailable while KLEIO verifies its callback configuration."
+  if (/code exchange invalid code/.test(normalized)) return "That Instagram authorization link is no longer valid. Start a fresh connection."
+  if (/code exchange rate limited/.test(normalized)) return "Instagram is limiting connection attempts. Wait a few minutes and start again."
+  if (/code exchange network error/.test(normalized)) return "Instagram could not be reached. Wait a moment and try the connection again."
   if (/token refresh failed|api 190|oauth/.test(normalized)) return "Instagram access expired or was removed. Reconnect the account to continue."
   if (/rights confirmation required/.test(normalized)) return "Confirm that you own or have permission to use the selected Instagram images."
   if (/image selection required|selection required/.test(normalized)) return "Select at least one image post or carousel image."
@@ -104,9 +108,9 @@ async function functionMessage(error: unknown, fallback: string) {
   if (/artwork title required/.test(normalized)) return "Add and confirm an artwork title before approval."
   if (/instagram import not found/.test(normalized)) return "This prepared Instagram item is no longer available. Refresh the import list."
   if (/approved artwork remove from portfolio/.test(normalized)) return "Remove approved work from the Portfolio page."
-  if (/redirect mismatch/.test(normalized)) return "Instagram connection is temporarily unavailable while KLEIO verifies its callback configuration."
-  if (/invalid code/.test(normalized)) return "That Instagram authorization link is no longer valid. Start a fresh connection."
-  if (/code exchange|basic permission missing/.test(normalized)) return "Instagram could not complete authorization. Return to KLEIO and start a fresh connection."
+  if (/code exchange|basic permission missing/.test(normalized)) {
+    return "Instagram could not complete authorization. Return to KLEIO and start a fresh connection."
+  }
   if (/non-2xx|failed to send a request/.test(normalized)) return fallback
   return fallback
 }

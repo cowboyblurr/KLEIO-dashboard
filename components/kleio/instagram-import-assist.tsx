@@ -122,6 +122,7 @@ export function InstagramImportAssist() {
       oauthMonitorRef.current = null
       setOauthInProgress(false)
     }
+
     function receive(event: MessageEvent<OAuthMessage>) {
       if (event.origin !== callbackOrigin || event.data?.type !== "kleio-instagram-oauth") return
       finishAttempt()
@@ -135,11 +136,14 @@ export function InstagramImportAssist() {
         ? "This Instagram connection attempt expired. Start a fresh connection."
         : event.data.message === "instagram_oauth_cancelled"
           ? "Instagram authorization was cancelled. Nothing was connected."
-          : event.data.message === "instagram_oauth_in_progress"
-            ? "An Instagram connection is already processing. Wait a moment and try again."
-            : "Instagram connection was not completed. Try again from this page."
+          : event.data.message === "instagram_oauth_consumed"
+            ? "That Instagram connection link was already used. Start a fresh connection."
+            : event.data.message === "instagram_oauth_in_progress"
+              ? "An Instagram connection is already processing. Wait a moment and try again."
+              : "Instagram connection was not completed. Try again from this page."
       setError(callbackMessage)
     }
+
     window.addEventListener("message", receive)
     return () => {
       window.removeEventListener("message", receive)
@@ -162,46 +166,47 @@ export function InstagramImportAssist() {
   }, [prepared])
 
   async function connect() {
-  if (working || oauthStartRef.current || oauthInProgress) {
-    oauthPopupRef.current?.focus()
-    return
-  }
-  oauthStartRef.current = true
-  const popup = window.open("about:blank", "kleio-instagram-connect", "popup,width=620,height=760,resizable=yes,scrollbars=yes")
-  if (!popup) {
-    oauthStartRef.current = false
-    return setError("Allow pop-ups for KLEIO, then try Connect Instagram again.")
-  }
-  oauthPopupRef.current = popup
-  setOauthInProgress(true)
-  setWorking("connect")
-  setError("")
-  setNotice("Opening Instagram’s secure authorization screen…")
-  try {
-    const { authorizeUrl } = await startInstagramConnection(window.location.href)
-    popup.location.href = authorizeUrl
-    popup.focus()
-    oauthMonitorRef.current = window.setInterval(() => {
-      if (!popup.closed) return
-      if (oauthMonitorRef.current !== null) window.clearInterval(oauthMonitorRef.current)
-      oauthMonitorRef.current = null
+    if (working || oauthStartRef.current || oauthInProgress) {
+      oauthPopupRef.current?.focus()
+      return
+    }
+    oauthStartRef.current = true
+    const popup = window.open("about:blank", "kleio-instagram-connect", "popup,width=620,height=760,resizable=yes,scrollbars=yes")
+    if (!popup) {
+      oauthStartRef.current = false
+      setError("Allow pop-ups for KLEIO, then try Connect Instagram again.")
+      return
+    }
+    oauthPopupRef.current = popup
+    setOauthInProgress(true)
+    setWorking("connect")
+    setError("")
+    setNotice("Opening Instagram’s secure authorization screen…")
+    try {
+      const { authorizeUrl } = await startInstagramConnection(window.location.href)
+      popup.location.href = authorizeUrl
+      popup.focus()
+      oauthMonitorRef.current = window.setInterval(() => {
+        if (!popup.closed) return
+        if (oauthMonitorRef.current !== null) window.clearInterval(oauthMonitorRef.current)
+        oauthMonitorRef.current = null
+        oauthPopupRef.current = null
+        oauthStartRef.current = false
+        setOauthInProgress(false)
+      }, 500)
+    } catch (reason) {
+      popup.close()
       oauthPopupRef.current = null
       oauthStartRef.current = false
       setOauthInProgress(false)
-    }, 500)
-  } catch (reason) {
-    popup.close()
-    oauthPopupRef.current = null
-    oauthStartRef.current = false
-    setOauthInProgress(false)
-    setError(message(reason, "Instagram connection could not start."))
-    setNotice("")
-  } finally {
-    setWorking("")
+      setError(message(reason, "Instagram connection could not start."))
+      setNotice("")
+    } finally {
+      setWorking("")
+    }
   }
-}
 
-async function refreshGallery(reset: boolean) {
+  async function refreshGallery(reset: boolean) {
     if (working) return
     setWorking("gallery")
     setError("")

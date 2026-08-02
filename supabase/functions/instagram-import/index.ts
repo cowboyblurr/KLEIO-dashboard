@@ -9,13 +9,12 @@ const INSTAGRAM_APP_SECRET = Deno.env.get("META_INSTAGRAM_APP_SECRET") ?? ""
 const TOKEN_KEY_MATERIAL = Deno.env.get("META_INSTAGRAM_TOKEN_ENCRYPTION_KEY") || INSTAGRAM_APP_SECRET
 const API_VERSION = (Deno.env.get("META_INSTAGRAM_API_VERSION") || "v25.0").replace(/^\/+|\/+$/g, "")
 const REDIRECT_URI = "https://trekynurdgxgtaaqqtyq.supabase.co/functions/v1/instagram-import"
-const PUBLIC_ORIGIN = (Deno.env.get("KLEIO_PUBLIC_ORIGIN") || "https://kleioarthouse.com").replace(/\/+$/, "")
+const PUBLIC_ORIGIN = (Deno.env.get("KLEIO_PUBLIC_ORIGIN") || "https://www.kleioarthouse.com").replace(/\/+$/, "")
 const MEDIA_BUCKET = "artist-assets"
 const MAX_MEDIA_PAGE = 50
 const MAX_IMPORT_ITEMS = 20
 const MAX_IMAGE_BYTES = 20 * 1024 * 1024
 const OAUTH_WINDOW_MS = 15 * 60 * 1000
-const OAUTH_PROCESSING_STALE_MS = 2 * 60 * 1000
 const OAUTH_MAX_STARTS = 5
 const TOKEN_REFRESH_WINDOW_MS = 7 * 24 * 60 * 60 * 1000
 const encoder = new TextEncoder()
@@ -259,16 +258,22 @@ async function firstMetaJson(path: string, token: string) {
 
 class InstagramOAuthError extends Error {
   diagnostics: JsonRecord
+  retryable: boolean
 
-  constructor(category: string, diagnostics: JsonRecord = {}) {
+  constructor(category: string, diagnostics: JsonRecord = {}, retryable = false) {
     super(category)
     this.name = "InstagramOAuthError"
     this.diagnostics = diagnostics
+    this.retryable = retryable
   }
 }
 
 function oauthDiagnostics(reason: unknown) {
   return reason instanceof InstagramOAuthError ? reason.diagnostics : {}
+}
+
+function oauthFailureRetryable(reason: unknown) {
+  return reason instanceof InstagramOAuthError && reason.retryable
 }
 
 function normalizeCodeExchangeFailure(data: JsonRecord, status: number) {
@@ -290,6 +295,7 @@ function normalizeCodeExchangeFailure(data: JsonRecord, status: number) {
             : "instagram_code_exchange_unknown"
   return {
     category,
+    retryable: status >= 500 || status === 429,
     diagnostics: {
       http_status: status,
       error_type: type,
@@ -314,12 +320,12 @@ async function exchangeAuthorizationCode(code: string) {
       body,
     })
   } catch {
-    throw new InstagramOAuthError("instagram_code_exchange_network_error")
+    throw new InstagramOAuthError("instagram_code_exchange_network_error", {}, true)
   }
   const data = await response.json().catch(() => ({})) as JsonRecord
   if (!response.ok || !cleanText(data.access_token) || !idText(data.user_id, 120)) {
     const failure = normalizeCodeExchangeFailure(data, response.status)
-    throw new InstagramOAuthError(failure.category, failure.diagnostics)
+    throw new InstagramOAuthError(failure.category, failure.diagnostics, failure.retryable)
   }
   return {
     accessToken: cleanText(data.access_token, 5_000),
@@ -445,6 +451,15 @@ async function logEvent(artistUserId: string, eventType: string, instagramUserId
 }
 
 type OAuthPopupKind = "success" | "expired" | "cancelled" | "invalid" | "consumed" | "in_progress" | "failed"
+type ClaimedOAuthState = {
+  status: "claimed" | "not_found" | "expired" | "consumed" | "in_progress"
+  state_id: string | null
+  artist_user_id: string | null
+  return_url: string | null
+  created_at: string | null
+  expires_at: string | null
+  state_age_seconds: number | null
+}
 
 function popupCopy(kind: OAuthPopupKind) {
   if (kind === "success") return {
@@ -484,7 +499,7 @@ function popupHtml(input: { kind: OAuthPopupKind; returnUrl: string; username?: 
     success: input.kind === "success",
     message: `instagram_oauth_${input.kind}`,
     username: input.username || "",
-  }).replace(/</g, "\u003c")
+  }).replace(/</g, "\\u003c")
   const target = JSON.stringify(new URL(input.returnUrl).origin)
   const returnUrl = JSON.stringify(input.returnUrl)
   return `<!doctype html>
@@ -497,6 +512,23 @@ try{if(window.opener&&!window.opener.closed){window.opener.postMessage(payload,t
 </script></body></html>`
 }
 
+async function finishOAuthState(stateId: string, category = "") {
+  const { error } = await admin.from("artist_instagram_oauth_states").update({
+    used_at: new Date().toISOString(),
+    processing_at: null,
+    last_failure_category: category,
+  }).eq("id", stateId).is("used_at", null)
+  if (error) throw error
+}
+
+async function releaseOAuthState(stateId: string, category: string) {
+  const { error } = await admin.from("artist_instagram_oauth_states").update({
+    processing_at: null,
+    last_failure_category: category,
+  }).eq("id", stateId).is("used_at", null)
+  if (error) console.warn("instagram_state_release_failed", { code: error.code || "unknown" })
+}
+
 async function handleOAuthCallback(_req: Request, url: URL) {
   const state = cleanText(url.searchParams.get("state"), 500)
   const code = cleanText(url.searchParams.get("code"), 5_000)
@@ -505,66 +537,51 @@ async function handleOAuthCallback(_req: Request, url: URL) {
   if (!state) return htmlResponse(popupHtml({ kind: "invalid", returnUrl: fallbackUrl }), 400)
 
   const stateHash = await sha256Text(state)
-  const claimStartedAt = new Date().toISOString()
-  const staleBefore = new Date(Date.now() - OAUTH_PROCESSING_STALE_MS).toISOString()
-  const { data: stored, error: claimError } = await admin
-    .from("artist_instagram_oauth_states")
-    .update({ processing_at: claimStartedAt })
-    .eq("state_hash", stateHash)
-    .is("used_at", null)
-    .gt("expires_at", claimStartedAt)
-    .or(`processing_at.is.null,processing_at.lt.${staleBefore}`)
-    .select("id,artist_user_id,return_url,created_at,expires_at,used_at,processing_at")
-    .maybeSingle()
-
+  const { data: claimedRows, error: claimError } = await admin.rpc("claim_instagram_oauth_state", { p_state_hash: stateHash })
   if (claimError) return htmlResponse(popupHtml({ kind: "failed", returnUrl: fallbackUrl }), 500)
-  if (!stored) {
-    const { data: existing } = await admin
-      .from("artist_instagram_oauth_states")
-      .select("id,artist_user_id,return_url,created_at,expires_at,used_at,processing_at")
-      .eq("state_hash", stateHash)
-      .maybeSingle()
-    const returnUrl = existing?.return_url ? validateReturnUrl(existing.return_url) : fallbackUrl
-    const kind: OAuthPopupKind = !existing
-      ? "invalid"
-      : existing.used_at
+  const claimed = (Array.isArray(claimedRows) ? claimedRows[0] : claimedRows) as ClaimedOAuthState | null
+  const returnUrl = claimed?.return_url ? validateReturnUrl(claimed.return_url) : fallbackUrl
+  if (!claimed || claimed.status !== "claimed" || !claimed.state_id || !claimed.artist_user_id) {
+    const kind: OAuthPopupKind = claimed?.status === "expired"
+      ? "expired"
+      : claimed?.status === "consumed"
         ? "consumed"
-        : Date.parse(existing.expires_at) <= Date.now()
-          ? "expired"
-          : "in_progress"
-    if (existing?.artist_user_id) {
-      const event = kind === "expired" ? "state_expired" : kind === "consumed" ? "state_already_consumed" : "state_in_progress"
-      await logEvent(existing.artist_user_id, event, null)
+        : claimed?.status === "in_progress"
+          ? "in_progress"
+          : "invalid"
+    if (claimed?.artist_user_id) {
+      const event = kind === "expired" ? "state_expired" : kind === "consumed" ? "state_already_consumed" : kind === "in_progress" ? "state_in_progress" : "state_not_found"
+      await logEvent(claimed.artist_user_id, event, null)
     }
     return htmlResponse(popupHtml({ kind, returnUrl }), kind === "in_progress" ? 409 : 400)
   }
 
-  const returnUrl = validateReturnUrl(stored.return_url)
-  const stateAgeSeconds = Math.max(0, Math.round((Date.now() - Date.parse(stored.created_at)) / 1_000))
-  await logEvent(stored.artist_user_id, "callback_received", null, 0, { state_age_seconds: stateAgeSeconds })
+  const artistUserId = claimed.artist_user_id
+  const stateId = claimed.state_id
+  await logEvent(artistUserId, "callback_received", null, 0, {
+    state_age_seconds: Math.max(0, Number(claimed.state_age_seconds) || 0),
+  })
 
   if (oauthError || !code) {
-    await admin.from("artist_instagram_oauth_states").update({
-      used_at: new Date().toISOString(),
-      processing_at: null,
-      last_failure_category: "authorization_cancelled",
-    }).eq("id", stored.id).is("used_at", null)
-    await logEvent(stored.artist_user_id, "connection_cancelled", null, 0, { category: oauthError || "missing_code" })
+    await finishOAuthState(stateId, "authorization_cancelled")
+    await logEvent(artistUserId, "connection_cancelled", null, 0, { category: oauthError || "missing_code" })
     return htmlResponse(popupHtml({ kind: "cancelled", returnUrl }), 400)
   }
 
+  let tokenReceived = false
   try {
     if (!isConfigured()) throw new Error("instagram_not_configured")
     const short = await exchangeAuthorizationCode(code)
-    await logEvent(stored.artist_user_id, "token_received", short.userId)
+    tokenReceived = true
+    await logEvent(artistUserId, "token_received", short.userId)
     if (short.permissions.length && !short.permissions.includes("instagram_business_basic")) throw new Error("instagram_basic_permission_missing")
     const long = await exchangeLongLivedToken(short.accessToken)
     const accessToken = long?.accessToken || short.accessToken
     const expiresIn = long?.expiresIn || short.expiresIn
     const profile = await profileFor(short.userId, accessToken)
-    await logEvent(stored.artist_user_id, "profile_verified", profile.id || short.userId, 0, { account_type: profile.accountType })
+    await logEvent(artistUserId, "profile_verified", profile.id || short.userId, 0, { account_type: profile.accountType })
     await saveConnection({
-      artistUserId: stored.artist_user_id,
+      artistUserId,
       instagramUserId: profile.id || short.userId,
       username: profile.username,
       accountType: profile.accountType,
@@ -573,25 +590,21 @@ async function handleOAuthCallback(_req: Request, url: URL) {
       expiresIn,
       scopes: short.permissions,
     })
-    const { error: consumeError } = await admin.from("artist_instagram_oauth_states").update({
-      used_at: new Date().toISOString(),
-      processing_at: null,
-      last_failure_category: "",
-    }).eq("id", stored.id).is("used_at", null)
-    if (consumeError) throw new Error("instagram_state_consume_failed")
+    await finishOAuthState(stateId)
     return htmlResponse(popupHtml({ kind: "success", returnUrl, username: profile.username }))
   } catch (reason) {
     const category = errorCode(reason)
-    await admin.from("artist_instagram_oauth_states").update({
-      processing_at: null,
-      last_failure_category: category,
-    }).eq("id", stored.id).is("used_at", null)
+    const retryable = !tokenReceived && oauthFailureRetryable(reason)
+    if (retryable) await releaseOAuthState(stateId, category)
+    else {
+      try { await finishOAuthState(stateId, category) } catch { console.warn("instagram_state_finish_failed") }
+    }
     await admin.from("artist_instagram_connections").update({
       last_error_category: category,
       updated_at: new Date().toISOString(),
-    }).eq("artist_user_id", stored.artist_user_id)
+    }).eq("artist_user_id", artistUserId)
     const event = category.startsWith("instagram_code_exchange_") ? "code_exchange_failed" : "connection_failed"
-    await logEvent(stored.artist_user_id, event, null, 0, { category, ...oauthDiagnostics(reason) })
+    await logEvent(artistUserId, event, null, 0, { category, ...oauthDiagnostics(reason) })
     return htmlResponse(popupHtml({ kind: "failed", returnUrl }), 502)
   }
 }
