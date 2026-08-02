@@ -16,6 +16,7 @@ const edge = read("supabase/functions/instagram-import/index.ts")
 const client = read("lib/kleio-instagram-import.ts")
 const component = read("components/kleio/instagram-import-assist.tsx")
 const page = read("components/kleio/artist-import-studio-page.tsx")
+const completionPage = read("app/artist-dashboard/import/instagram-complete/page.tsx")
 
 for (const table of ["artist_instagram_oauth_states", "artist_instagram_connections", "artist_instagram_import_drafts", "artist_instagram_import_events"]) {
   requireText(migration, new RegExp(`create table if not exists public\\.${table}`), `Missing ${table}.`)
@@ -67,6 +68,10 @@ requireText(component, /Approve artwork/, "Explicit artist approval is missing."
 requireText(component, /Disconnect/, "Disconnect control is missing.")
 requireText(component, /oauthStartRef/, "Duplicate Instagram connection attempts must be synchronously blocked.")
 requireText(component, /instagram_oauth_consumed/, "Replayed Instagram callbacks need a clear artist-facing message.")
+requireText(component, /artist-dashboard\/import\/instagram-complete/, "OAuth must return through the minimal completion relay, not the full Import Studio.")
+requireText(completionPage, /window\.opener\.postMessage/, "The completion relay must notify the original Import Studio window.")
+requireText(completionPage, /window\.close/, "The completion relay must attempt to close the authorization popup.")
+requireText(completionPage, /Your Instagram gallery is opening in the original KLEIO window/, "The completion relay fallback copy is missing.")
 requireText(client, /return fallback/, "Unknown internal Instagram errors must use a safe artist-facing fallback.")
 requireText(page, /<InstagramImportAssist \/>/, "Instagram import is not exposed in the Import work page.")
 forbidText(component, /Cloudflare|App Secret|access token|provider/i, "Infrastructure or credentials must not appear in artist-facing copy.")

@@ -515,7 +515,8 @@ export function InstagramImportAssist() {
     setError("")
     setNotice("Opening Instagram’s secure authorization screen…")
     try {
-      const { authorizeUrl } = await startInstagramConnection(window.location.href)
+      const completionUrl = new URL("/artist-dashboard/import/instagram-complete/", window.location.origin)
+    const { authorizeUrl } = await startInstagramConnection(completionUrl.href)
       popup.location.href = authorizeUrl
       popup.focus()
       oauthMonitorRef.current = window.setInterval(() => {
