@@ -85,9 +85,14 @@ jobs:
       - name: Commit repaired source
         shell: bash
         run: |
-          rm -f .github/workflows/patch-instagram-oauth.yml .github/workflows/run-instagram-patch.yml
+          git checkout origin/main -- .github/workflows/ci.yml
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A
+          git add \
+            supabase/functions/instagram-import/index.ts \
+            lib/kleio-instagram-import.ts \
+            components/kleio/instagram-import-assist.tsx \
+            supabase/migrations/20260802070000_instagram_oauth_state_lifecycle.sql \
+            scripts/audit-instagram-import.mjs
           git commit -m "Fix Instagram OAuth state lifecycle and callback"
           git push origin HEAD:fix/instagram-oauth-state-and-callback
