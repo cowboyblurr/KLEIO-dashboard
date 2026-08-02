@@ -100,7 +100,7 @@ function json(req: Request, body: unknown, status = 200) {
 
 function htmlResponse(markup: string, status = 200) {
   return new Response(markup, {
-    status,
+    status: status >= 400 ? 200 : status,
     headers: {
       "Content-Type": "text/html; charset=utf-8",
       "Cache-Control": "no-store, max-age=0",
@@ -357,10 +357,17 @@ async function refreshLongLivedToken(token: string) {
 }
 
 async function profileFor(instagramUserId: string, token: string) {
-  const fields = "id,username,account_type,media_count"
-  const data = await firstMetaJson(`${encodeURIComponent(instagramUserId)}?fields=${encodeURIComponent(fields)}`, token)
+  const fullFields = "user_id,username,account_type,media_count"
+  let data: JsonRecord
+  try {
+    data = await firstMetaJson(`me?fields=${encodeURIComponent(fullFields)}`, token)
+  } catch (reason) {
+    if (errorCode(reason) !== "instagram_api_100") throw reason
+    const minimumFields = "user_id,username"
+    data = await firstMetaJson(`me?fields=${encodeURIComponent(minimumFields)}`, token)
+  }
   return {
-    id: idText(data.id, 120) || instagramUserId,
+    id: idText(data.id ?? data.user_id, 120) || instagramUserId,
     username: cleanText(data.username, 120),
     accountType: cleanText(data.account_type, 80),
     mediaCount: Number.isFinite(Number(data.media_count)) ? Number(data.media_count) : null,
@@ -662,7 +669,7 @@ async function listMedia(connection: InstagramConnection, token: string, cursor:
   const fields = "id,caption,media_type,media_product_type,media_url,thumbnail_url,permalink,timestamp,username,children{id,media_type,media_url,thumbnail_url}"
   const params = new URLSearchParams({ fields, limit: String(MAX_MEDIA_PAGE) })
   if (cursor) params.set("after", cursor)
-  const data = await firstMetaJson(`${encodeURIComponent(connection.instagram_user_id)}/media?${params.toString()}`, token)
+  const data = await firstMetaJson(`me/media?${params.toString()}`, token)
   const raw = Array.isArray(data.data) ? data.data : []
   const paging = asRecord(data.paging)
   const cursors = asRecord(paging.cursors)
