@@ -1,0 +1,90 @@
+name: Apply Instagram source hotfix
+
+on:
+  push:
+    branches:
+      - fix/instagram-oauth-state-and-callback
+    paths:
+      - .github/workflows/apply-instagram-source-hotfix.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch-source:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repair branch
+        uses: actions/checkout@v4
+        with:
+          ref: fix/instagram-oauth-state-and-callback
+          fetch-depth: 0
+
+      - name: Patch authenticated account requests and callback rendering
+        shell: python
+        run: |
+          from pathlib import Path
+
+          path = Path("supabase/functions/instagram-import/index.ts")
+          source = path.read_text()
+
+          old_html = '''function htmlResponse(markup: string, status = 200) {
+            return new Response(markup, {
+              status,
+          '''
+          new_html = '''function htmlResponse(markup: string, status = 200) {
+            return new Response(markup, {
+              status: status >= 400 ? 200 : status,
+          '''
+          if old_html not in source:
+              raise SystemExit("htmlResponse target not found")
+          source = source.replace(old_html, new_html, 1)
+
+          old_profile = '''async function profileFor(instagramUserId: string, token: string) {
+            const fields = "id,username,account_type,media_count"
+            const data = await firstMetaJson(`${encodeURIComponent(instagramUserId)}?fields=${encodeURIComponent(fields)}`, token)
+            return {
+              id: idText(data.id, 120) || instagramUserId,
+              username: cleanText(data.username, 120),
+              accountType: cleanText(data.account_type, 80),
+              mediaCount: Number.isFinite(Number(data.media_count)) ? Number(data.media_count) : null,
+            }
+          }
+          '''
+          new_profile = '''async function profileFor(instagramUserId: string, token: string) {
+            const fullFields = "user_id,username,account_type,media_count"
+            let data: JsonRecord
+            try {
+              data = await firstMetaJson(`me?fields=${encodeURIComponent(fullFields)}`, token)
+            } catch (reason) {
+              if (errorCode(reason) !== "instagram_api_100") throw reason
+              const minimumFields = "user_id,username"
+              data = await firstMetaJson(`me?fields=${encodeURIComponent(minimumFields)}`, token)
+            }
+            return {
+              id: idText(data.id ?? data.user_id, 120) || instagramUserId,
+              username: cleanText(data.username, 120),
+              accountType: cleanText(data.account_type, 80),
+              mediaCount: Number.isFinite(Number(data.media_count)) ? Number(data.media_count) : null,
+            }
+          }
+          '''
+          if old_profile not in source:
+              raise SystemExit("profileFor target not found")
+          source = source.replace(old_profile, new_profile, 1)
+
+          old_media = 'const data = await firstMetaJson(`${encodeURIComponent(connection.instagram_user_id)}/media?${params.toString()}`, token)'
+          new_media = 'const data = await firstMetaJson(`me/media?${params.toString()}`, token)'
+          if old_media not in source:
+              raise SystemExit("listMedia target not found")
+          source = source.replace(old_media, new_media, 1)
+
+          path.write_text(source)
+
+      - name: Commit source hotfix
+        run: |
+          git config user.name "KLEIO Automation"
+          git config user.email "actions@users.noreply.github.com"
+          git add supabase/functions/instagram-import/index.ts
+          git commit -m "Fix Instagram authenticated account Graph requests"
+          git push origin HEAD:fix/instagram-oauth-state-and-callback
