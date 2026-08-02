@@ -2,19 +2,22 @@
 
 /* eslint-disable @next/next/no-img-element -- Instagram previews are temporary, artist-authorized remote media */
 
+import Link from "next/link"
 import { useEffect, useMemo, useRef, useState } from "react"
 import {
   AlertTriangle,
-  ArrowLeft,
-  ArrowRight,
   Check,
+  ChevronDown,
+  Eye,
   ExternalLink,
   ImageIcon,
   ImagePlus,
+  Library,
   Loader2,
   LogOut,
   RefreshCw,
   ShieldCheck,
+  Sparkles,
   Trash2,
   X,
 } from "lucide-react"
@@ -36,30 +39,44 @@ import {
   type InstagramGalleryAsset,
   type InstagramPreparedItem,
 } from "@/lib/kleio-instagram-import"
+import { loadArtistPassport, saveArtistPassport } from "@/lib/kleio-live-data"
+import {
+  assetName,
+  GalleryCard,
+  FieldStatus,
+  GallerySkeleton,
+  InstagramMark,
+  PreviewDialog,
+} from "@/components/kleio/instagram-import-gallery-ui"
+import {
+  buildInstagramPracticeInsights,
+  confirmedInsightSummary,
+  splitInsightList,
+  uniqueInsightValues,
+  type PracticeInsight,
+  type PracticeInsightKey,
+} from "@/components/kleio/instagram-practice-insights"
 
 const primary = "inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#5B4B8A] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#4F407B] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#A997E8]/25 disabled:cursor-not-allowed disabled:opacity-50"
 const secondary = "inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-[#D8D0F2] bg-white px-4 py-2 text-sm font-semibold text-[#5B4B8A] transition hover:border-[#B9A9DE] hover:bg-[#FBFAFE] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#A997E8]/20 disabled:cursor-not-allowed disabled:opacity-50"
 const quiet = "inline-flex min-h-10 items-center justify-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-[#746E80] transition hover:bg-[#F7F4FC] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#A997E8]/20 disabled:opacity-50"
-const iconButton = "inline-grid size-11 shrink-0 place-items-center rounded-full border border-[#DED7EF] bg-white text-[#5B4B8A] shadow-sm transition hover:bg-[#F8F6FC] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#A997E8]/25 disabled:cursor-not-allowed disabled:opacity-40"
 const input = "min-h-11 w-full rounded-xl border border-[#DED7EF] bg-white px-3 py-2 text-sm text-[#292631] outline-none transition focus:border-[#A997E8] focus:ring-4 focus:ring-[#A997E8]/12 disabled:bg-[#F7F5FA]"
 const textarea = `${input} min-h-24 resize-y leading-6`
 const callbackOrigin = "https://trekynurdgxgtaaqqtyq.supabase.co"
 const MAX_SELECTED = 20
-
-const focusableSelector = [
-  "button:not([disabled])",
-  "[href]",
-  "input:not([disabled])",
-  "select:not([disabled])",
-  "textarea:not([disabled])",
-  "[tabindex]:not([tabindex='-1'])",
-].join(",")
 
 type SaveState = "idle" | "saving" | "saved" | "error"
 type GalleryPhase = "idle" | "loading" | "refreshing" | "loading-more" | "ready" | "error"
 type OAuthMessage = { type?: string; success?: boolean; username?: string; message?: string }
 type CallbackCompletion = { result: string; username: string; success: boolean } | null
 type PreparationSummary = { completed: number; failed: number } | null
+type CompletionSummary = {
+  worksSaved: number
+  portfolioCount: number
+  privateCount: number
+  passportUpdated: boolean
+  failedCount: number
+} | null
 
 function draftPayload(items: InstagramPreparedItem[]) {
   return items
@@ -82,253 +99,6 @@ function message(reason: unknown, fallback: string) {
   return reason instanceof Error && reason.message ? reason.message : fallback
 }
 
-function assetBadge(asset: InstagramGalleryAsset) {
-  if (asset.parentMediaType === "CAROUSEL_ALBUM") return "Carousel"
-  if (asset.mediaProductType === "REELS") return "Reel"
-  if (asset.kind === "video") return "Video"
-  return ""
-}
-
-function assetName(asset: InstagramGalleryAsset) {
-  if (asset.isCarouselChild && asset.carouselIndex && asset.carouselTotal) {
-    return `Carousel image ${asset.carouselIndex} of ${asset.carouselTotal}`
-  }
-  return asset.kind === "video" ? "Instagram video" : "Instagram artwork"
-}
-
-function InstagramMark() {
-  return (
-    <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
-      <rect x="3" y="3" width="18" height="18" rx="5" />
-      <circle cx="12" cy="12" r="4.25" />
-      <circle cx="17.4" cy="6.7" r="1" fill="currentColor" stroke="none" />
-    </svg>
-  )
-}
-
-function FieldStatus({ item, name }: { item: InstagramPreparedItem; name: keyof InstagramPreparedItem["fields"] }) {
-  const field = item.fields[name]
-  const label = field.status === "extracted" ? "From caption" : field.status === "suggested" ? "Suggested" : field.status === "edited" ? "Edited" : field.status === "confirmed" ? "Confirmed" : "Add details"
-  return <span className="rounded-full border border-[#E2DCF1] bg-[#FAF9FD] px-2 py-1 text-[0.65rem] font-semibold text-[#756F80]">{label}</span>
-}
-
-function GallerySkeleton() {
-  return (
-    <div className="mt-4 grid grid-cols-2 gap-2.5 max-[340px]:grid-cols-1 md:grid-cols-3 xl:grid-cols-4" aria-hidden="true">
-      {Array.from({ length: 8 }, (_, index) => (
-        <div key={index} className="overflow-hidden rounded-2xl border border-[#E7E1F7] bg-white">
-          <div className="aspect-square animate-pulse bg-[#F0EDF6] motion-reduce:animate-none" />
-          <div className="space-y-2 p-3">
-            <div className="h-3 w-3/4 animate-pulse rounded bg-[#EEEAF5] motion-reduce:animate-none" />
-            <div className="h-3 w-1/2 animate-pulse rounded bg-[#F2EFF7] motion-reduce:animate-none" />
-          </div>
-        </div>
-      ))}
-    </div>
-  )
-}
-
-function MediaPlaceholder({ compact = false }: { compact?: boolean }) {
-  return (
-    <div className="flex size-full flex-col items-center justify-center gap-2 bg-[#F4F1F8] px-4 text-center text-[#746E80]">
-      <ImageIcon className={compact ? "size-5" : "size-8"} aria-hidden="true" />
-      <span className={compact ? "text-[0.65rem] font-semibold" : "text-sm font-semibold"}>Preview unavailable</span>
-    </div>
-  )
-}
-
-function GalleryCard({
-  asset,
-  selected,
-  prepared,
-  selectionDisabled,
-  onPreview,
-  onToggle,
-}: {
-  asset: InstagramGalleryAsset
-  selected: boolean
-  prepared: boolean
-  selectionDisabled: boolean
-  onPreview: (trigger: HTMLButtonElement) => void
-  onToggle: () => void
-}) {
-  const [imageFailed, setImageFailed] = useState(false)
-  const badge = assetBadge(asset)
-  const unavailable = asset.unavailable || imageFailed
-  const canSelect = asset.selectable && !prepared && !unavailable
-  const selectionLabel = selected ? `Deselect ${assetName(asset)}` : `Select ${assetName(asset)}`
-
-  useEffect(() => setImageFailed(false), [asset.imageUrl])
-
-  return (
-    <article className={`group overflow-hidden rounded-2xl border bg-white transition ${selected ? "border-[#8C78BF] ring-2 ring-[#A997E8]/25" : "border-[#E7E1F7] hover:border-[#CFC4E8]"}`} aria-label={`${assetName(asset)}${selected ? ", selected" : ""}${prepared ? ", already prepared" : ""}`}>
-      <div className="relative aspect-square overflow-hidden bg-[#F2EFF7]">
-        <button
-          type="button"
-          className="size-full focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-inset focus-visible:ring-[#A997E8]/45"
-          onClick={(event) => onPreview(event.currentTarget)}
-          aria-label={`Preview ${assetName(asset)}`}
-        >
-          {!unavailable ? (
-            <img src={asset.imageUrl} alt="" referrerPolicy="no-referrer" className="size-full object-contain transition duration-300 group-hover:scale-[1.015] motion-reduce:transition-none motion-reduce:group-hover:scale-100" onError={() => setImageFailed(true)} />
-          ) : <MediaPlaceholder compact />}
-        </button>
-
-        {badge && <span className="pointer-events-none absolute left-2 top-2 rounded-full bg-[#292631]/82 px-2 py-1 text-[0.62rem] font-semibold text-white backdrop-blur-sm">{badge}</span>}
-        {prepared && <span className="pointer-events-none absolute bottom-2 left-2 inline-flex items-center gap-1 rounded-full bg-white/95 px-2 py-1 text-[0.62rem] font-semibold text-[#5B4B8A] shadow-sm"><Check className="size-3" />Prepared</span>}
-
-        <label className={`absolute right-2 top-2 grid size-11 place-items-center rounded-full border shadow-sm transition ${selected ? "border-[#7964AD] bg-[#5B4B8A] text-white" : "border-white/80 bg-white/95 text-[#5B4B8A]"} ${!canSelect ? "cursor-not-allowed opacity-60" : "cursor-pointer hover:scale-105 motion-reduce:hover:scale-100"}`}>
-          <span className="sr-only">{prepared ? `${assetName(asset)} is already prepared` : canSelect ? selectionLabel : `${assetName(asset)} cannot be selected`}</span>
-          <input
-            type="checkbox"
-            className="sr-only"
-            checked={selected}
-            disabled={!canSelect || (!selected && selectionDisabled)}
-            onChange={onToggle}
-            aria-label={selectionLabel}
-          />
-          {selected ? <Check className="size-5" aria-hidden="true" /> : <span className="size-4 rounded-full border-2 border-current" aria-hidden="true" />}
-        </label>
-      </div>
-
-      <div className="min-h-[5.25rem] p-3">
-        <p className="line-clamp-2 text-xs leading-5 text-[#625C70]">{asset.caption || (asset.kind === "video" ? "Video shown for context" : "No caption available")}</p>
-        <div className="mt-2 flex items-center justify-between gap-2">
-          <span className="truncate text-[0.68rem] text-[#8A8296]">{readableDate(asset.timestamp)}</span>
-          {asset.isCarouselChild && asset.carouselIndex && asset.carouselTotal ? <span className="text-[0.68rem] font-semibold text-[#75639E]">{asset.carouselIndex}/{asset.carouselTotal}</span> : null}
-        </div>
-      </div>
-    </article>
-  )
-}
-
-function PreviewDialog({
-  asset,
-  gallery,
-  selected,
-  prepared,
-  selectionDisabled,
-  onClose,
-  onChange,
-  onToggle,
-}: {
-  asset: InstagramGalleryAsset
-  gallery: InstagramGalleryAsset[]
-  selected: boolean
-  prepared: boolean
-  selectionDisabled: boolean
-  onClose: () => void
-  onChange: (asset: InstagramGalleryAsset) => void
-  onToggle: () => void
-}) {
-  const dialogRef = useRef<HTMLDivElement | null>(null)
-  const closeRef = useRef<HTMLButtonElement | null>(null)
-  const [imageFailed, setImageFailed] = useState(false)
-  const currentIndex = gallery.findIndex((item) => item.id === asset.id)
-  const carouselAssets = gallery.filter((item) => item.parentId === asset.parentId)
-  const badge = assetBadge(asset)
-  const unavailable = asset.unavailable || imageFailed
-  const canSelect = asset.selectable && !prepared && !unavailable
-
-  useEffect(() => {
-    setImageFailed(false)
-    closeRef.current?.focus()
-  }, [asset.id])
-
-  useEffect(() => {
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        event.preventDefault()
-        onClose()
-        return
-      }
-      if (event.key === "ArrowLeft" && gallery.length > 1) {
-        event.preventDefault()
-        onChange(gallery[(currentIndex - 1 + gallery.length) % gallery.length])
-        return
-      }
-      if (event.key === "ArrowRight" && gallery.length > 1) {
-        event.preventDefault()
-        onChange(gallery[(currentIndex + 1) % gallery.length])
-        return
-      }
-      if (event.key !== "Tab" || !dialogRef.current) return
-      const focusable = Array.from(dialogRef.current.querySelectorAll<HTMLElement>(focusableSelector))
-      if (!focusable.length) return
-      const first = focusable[0]
-      const last = focusable[focusable.length - 1]
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault()
-        last.focus()
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault()
-        first.focus()
-      }
-    }
-    window.addEventListener("keydown", handleKeyDown)
-    return () => window.removeEventListener("keydown", handleKeyDown)
-  }, [asset.id, currentIndex, gallery, onChange, onClose])
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-[#211B2E]/55 p-0 backdrop-blur-[2px] sm:items-center sm:p-5" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose() }}>
-      <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="instagram-preview-title" aria-describedby="instagram-preview-description" className="flex max-h-[96dvh] w-full max-w-6xl flex-col overflow-hidden rounded-t-[28px] border border-[#DED7EF] bg-white shadow-[0_30px_100px_rgba(25,18,40,0.3)] sm:max-h-[90vh] sm:rounded-[28px] lg:grid lg:grid-cols-[minmax(0,1.4fr)_minmax(320px,0.65fr)]">
-        <div className="relative flex min-h-[42dvh] items-center justify-center bg-[#F3F0F7] sm:min-h-[55vh]">
-          {!unavailable ? <img src={asset.imageUrl} alt="" referrerPolicy="no-referrer" className="max-h-[66vh] max-w-full object-contain" onError={() => setImageFailed(true)} /> : <MediaPlaceholder />}
-          {gallery.length > 1 && <>
-            <button type="button" className={`${iconButton} absolute left-3 top-1/2 -translate-y-1/2`} onClick={() => onChange(gallery[(currentIndex - 1 + gallery.length) % gallery.length])} aria-label="Previous Instagram work"><ArrowLeft className="size-5" /></button>
-            <button type="button" className={`${iconButton} absolute right-3 top-1/2 -translate-y-1/2`} onClick={() => onChange(gallery[(currentIndex + 1) % gallery.length])} aria-label="Next Instagram work"><ArrowRight className="size-5" /></button>
-          </>}
-          {badge && <span className="absolute left-3 top-3 rounded-full bg-[#292631]/82 px-3 py-1.5 text-xs font-semibold text-white">{badge}</span>}
-        </div>
-
-        <div className="flex min-h-0 flex-col">
-          <div className="flex items-center justify-between border-b border-[#E7E1F7] px-5 py-4">
-            <div>
-              <p className="text-[0.68rem] font-semibold uppercase tracking-[0.15em] text-[#75639E]">Instagram preview</p>
-              <h3 id="instagram-preview-title" className="mt-1 font-serif text-xl font-semibold text-[#292631]">{assetName(asset)}</h3>
-            </div>
-            <button ref={closeRef} type="button" className={iconButton} onClick={onClose} aria-label="Close Instagram preview"><X className="size-5" /></button>
-          </div>
-
-          <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5">
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-xs text-[#746E80]">
-              <span>{readableDate(asset.timestamp) || "Date unavailable"}</span>
-              <span aria-hidden="true">•</span>
-              <span>{asset.kind === "video" ? "Video" : "Still image"}</span>
-              {asset.isCarouselChild && asset.carouselIndex && asset.carouselTotal ? <><span aria-hidden="true">•</span><span aria-label={`Carousel image ${asset.carouselIndex} of ${asset.carouselTotal}`}>Image {asset.carouselIndex} of {asset.carouselTotal}</span></> : null}
-            </div>
-
-            {carouselAssets.length > 1 && <div className="mt-4" aria-label="Carousel images">
-              <p className="mb-2 text-xs font-semibold text-[#625C70]">Carousel images</p>
-              <div className="flex gap-2 overflow-x-auto pb-1">
-                {carouselAssets.map((item) => (
-                  <button key={item.id} type="button" className={`relative size-16 shrink-0 overflow-hidden rounded-xl border-2 bg-[#F3F0F7] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#A997E8]/25 ${item.id === asset.id ? "border-[#7964AD]" : "border-transparent"}`} onClick={() => onChange(item)} aria-label={`Show carousel image ${item.carouselIndex || 1} of ${item.carouselTotal || carouselAssets.length}`} aria-current={item.id === asset.id ? "true" : undefined}>
-                    {item.imageUrl ? <img src={item.imageUrl} alt="" className="size-full object-cover" referrerPolicy="no-referrer" /> : <MediaPlaceholder compact />}
-                  </button>
-                ))}
-              </div>
-            </div>}
-
-            <p id="instagram-preview-description" className="mt-5 whitespace-pre-wrap text-sm leading-7 text-[#625C70]">{asset.caption || "No caption was available for this post."}</p>
-          </div>
-
-          <div className="border-t border-[#E7E1F7] bg-[#FCFBFE] p-4 sm:p-5">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              {asset.permalink ? <a href={asset.permalink} target="_blank" rel="noreferrer" className={quiet}>Open on Instagram <ExternalLink className="size-4" /></a> : <span />}
-              {prepared ? <span className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-[#EEE9F7] px-4 text-sm font-semibold text-[#5B4B8A]"><Check className="size-4" />Already prepared</span> : (
-                <button type="button" className={selected ? secondary : primary} disabled={!canSelect || (!selected && selectionDisabled)} onClick={onToggle} aria-pressed={selected}>
-                  {selected ? <Check className="size-4" /> : <ImagePlus className="size-4" />}
-                  {selected ? "Deselect work" : canSelect ? "Select work" : asset.kind === "video" ? "Video selection unavailable" : "Image unavailable"}
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
 export function InstagramImportAssist() {
   const [connection, setConnection] = useState<InstagramConnectionStatus | null>(null)
   const [gallery, setGallery] = useState<InstagramGalleryAsset[]>([])
@@ -338,6 +108,9 @@ export function InstagramImportAssist() {
   const [lastRefreshed, setLastRefreshed] = useState<Date | null>(null)
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [prepared, setPrepared] = useState<InstagramPreparedItem[]>([])
+  const [includeInPortfolio, setIncludeInPortfolio] = useState<Set<string>>(new Set())
+  const [practiceInsights, setPracticeInsights] = useState<PracticeInsight[]>([])
+  const [applyInsightsToPassport, setApplyInsightsToPassport] = useState(false)
   const [previewId, setPreviewId] = useState("")
   const [rightsConfirmed, setRightsConfirmed] = useState(false)
   const [working, setWorking] = useState("")
@@ -345,6 +118,7 @@ export function InstagramImportAssist() {
   const [error, setError] = useState("")
   const [selectionNotice, setSelectionNotice] = useState("")
   const [prepareSummary, setPrepareSummary] = useState<PreparationSummary>(null)
+  const [completionSummary, setCompletionSummary] = useState<CompletionSummary>(null)
   const [saveState, setSaveState] = useState<SaveState>("idle")
   const sessionIdRef = useRef(crypto.randomUUID())
   const lastSavedRef = useRef("")
@@ -356,6 +130,7 @@ export function InstagramImportAssist() {
   const previewTriggerRef = useRef<HTMLButtonElement | null>(null)
   const reviewSectionRef = useRef<HTMLElement | null>(null)
   const reviewHeadingRef = useRef<HTMLHeadingElement | null>(null)
+  const completionRef = useRef<HTMLDivElement | null>(null)
   const [oauthInProgress, setOauthInProgress] = useState(false)
   const [initialLocationResolved, setInitialLocationResolved] = useState(false)
   const [callbackCompletion, setCallbackCompletion] = useState<CallbackCompletion>(null)
@@ -364,9 +139,13 @@ export function InstagramImportAssist() {
   const preparedPending = useMemo(() => prepared.filter((item) => !item.approved), [prepared])
   const preparedMediaIds = useMemo(() => new Set(prepared.map(instagramPreparedMediaId)), [prepared])
   const previewAsset = useMemo(() => gallery.find((asset) => asset.id === previewId) || null, [gallery, previewId])
+  const selectedAssets = useMemo(() => gallery.filter((asset) => selected.has(asset.id)), [gallery, selected])
+  const selectedInsightsCount = practiceInsights.filter((item) => item.selected && !item.dismissed && item.value.trim()).length
+  const portfolioPending = preparedPending.filter((item) => includeInPortfolio.has(item.sourceId))
+  const missingPortfolioTitles = portfolioPending.filter((item) => !item.fields.title.value.trim())
 
   async function refreshGallery(reset: boolean) {
-    if (galleryPhase === "loading" || galleryPhase === "refreshing" || galleryPhase === "loading-more") return
+    if (["loading", "refreshing", "loading-more"].includes(galleryPhase)) return
     const requestId = ++galleryRequestRef.current
     setGalleryError("")
     setGalleryPhase(reset ? (gallery.length ? "refreshing" : "loading") : "loading-more")
@@ -405,6 +184,7 @@ export function InstagramImportAssist() {
       const [status, preparedResult] = await Promise.all([loadInstagramConnection(), loadInstagramPreparedImports()])
       setConnection(status)
       setPrepared(preparedResult.items)
+      setPracticeInsights(buildInstagramPracticeInsights(preparedResult.items.filter((item) => !item.approved)))
       lastSavedRef.current = JSON.stringify(draftPayload(preparedResult.items))
       hydratedRef.current = true
       setWorking("")
@@ -423,23 +203,15 @@ export function InstagramImportAssist() {
       void hydrate()
       return
     }
-
     const username = url.searchParams.get("instagram_username") || ""
     const success = result === "instagram_oauth_success"
-    const payload: OAuthMessage = {
-      type: "kleio-instagram-oauth",
-      success,
-      username,
-      message: result,
-    }
-
+    const payload: OAuthMessage = { type: "kleio-instagram-oauth", success, username, message: result }
     url.searchParams.delete("instagram")
     url.searchParams.delete("instagram_result")
     url.searchParams.delete("instagram_username")
     window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`)
     setCallbackCompletion({ result, username, success })
     setInitialLocationResolved(true)
-
     if (window.opener && !window.opener.closed) {
       window.opener.postMessage(payload, window.location.origin)
       window.setTimeout(() => window.close(), 150)
@@ -454,12 +226,11 @@ export function InstagramImportAssist() {
       oauthMonitorRef.current = null
       setOauthInProgress(false)
     }
-
     function receive(event: MessageEvent<OAuthMessage>) {
       if (![callbackOrigin, window.location.origin].includes(event.origin) || event.data?.type !== "kleio-instagram-oauth") return
       finishAttempt()
       if (event.data.success) {
-        setNotice(`Instagram${event.data.username ? ` @${event.data.username}` : ""} is connected. Choose the posts you want to review.`)
+        setNotice(`Instagram${event.data.username ? ` @${event.data.username}` : ""} is connected. Choose the works you want KLEIO to organize.`)
         setError("")
         void refreshConnection(true)
         return
@@ -475,7 +246,6 @@ export function InstagramImportAssist() {
               : "Instagram connection was not completed. Try again from this page."
       setError(callbackMessage)
     }
-
     window.addEventListener("message", receive)
     return () => {
       window.removeEventListener("message", receive)
@@ -516,7 +286,7 @@ export function InstagramImportAssist() {
     setNotice("Opening Instagram’s secure authorization screen…")
     try {
       const completionUrl = new URL("/artist-dashboard/import/instagram-complete/", window.location.origin)
-    const { authorizeUrl } = await startInstagramConnection(completionUrl.href)
+      const { authorizeUrl } = await startInstagramConnection(completionUrl.href)
       popup.location.href = authorizeUrl
       popup.focus()
       oauthMonitorRef.current = window.setInterval(() => {
@@ -547,7 +317,7 @@ export function InstagramImportAssist() {
         next.delete(asset.id)
         setSelectionNotice(`${assetName(asset)} deselected.`)
       } else if (next.size >= MAX_SELECTED) {
-        setSelectionNotice(`Selection limit reached. You can review up to ${MAX_SELECTED} works at a time.`)
+        setSelectionNotice(`Selection limit reached. You can organize up to ${MAX_SELECTED} works at a time.`)
         return current
       } else {
         next.add(asset.id)
@@ -580,18 +350,13 @@ export function InstagramImportAssist() {
     setWorking("prepare")
     setError("")
     setPrepareSummary(null)
-    setNotice(`Preparing ${selected.size} selected work${selected.size === 1 ? "" : "s"} for review. Nothing will be added to your Creative Passport until you approve it.`)
+    setCompletionSummary(null)
+    setNotice(`KLEIO is preparing ${selected.size} artwork record${selected.size === 1 ? "" : "s"} and identifying patterns from available captions and details. Everything remains private until you choose otherwise.`)
     try {
-      const result = await prepareInstagramImports({
-        mediaIds: requestedIds,
-        sessionId: sessionIdRef.current,
-        rightsConfirmed: true,
-      })
+      const result = await prepareInstagramImports({ mediaIds: requestedIds, sessionId: sessionIdRef.current, rightsConfirmed: true })
       const completed = result.results.flatMap((entry) => entry.ok ? [entry.item] : [])
       const failedIds = new Set<string>()
-      for (const entry of result.results) {
-        if ("mediaId" in entry) failedIds.add(entry.mediaId)
-      }
+      for (const entry of result.results) if ("mediaId" in entry) failedIds.add(entry.mediaId)
       const merged = [...prepared]
       for (const item of completed) {
         const index = merged.findIndex((existing) => existing.sourceId === item.sourceId)
@@ -599,12 +364,13 @@ export function InstagramImportAssist() {
         else merged.unshift(item)
       }
       setPrepared(merged)
+      setPracticeInsights(buildInstagramPracticeInsights(merged.filter((item) => !item.approved)))
       lastSavedRef.current = JSON.stringify(draftPayload(merged))
       setSelected(failedIds)
       setRightsConfirmed(failedIds.size > 0)
       setPrepareSummary({ completed: result.completed, failed: result.failed })
-      setNotice(`${result.completed} work${result.completed === 1 ? "" : "s"} prepared as editable drafts.${result.failed ? ` ${result.failed} could not be prepared and remain selected for retry.` : ""}`)
-      if (result.failed) setError("Some selected media could not be prepared. Refresh posts and retry the remaining selection.")
+      setNotice(`${result.completed} work${result.completed === 1 ? "" : "s"} added privately to your KLEIO Media Library.${result.failed ? ` ${result.failed} could not be prepared and remain selected for retry.` : ""}`)
+      if (result.failed) setError("Some selected media could not be prepared. The successful works were preserved.")
       if (result.completed) {
         window.requestAnimationFrame(() => {
           reviewSectionRef.current?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" })
@@ -624,40 +390,127 @@ export function InstagramImportAssist() {
     setSaveState("idle")
   }
 
-  async function approve(item: InstagramPreparedItem) {
-    if (working || item.approved) return
-    setWorking(`approve:${item.sourceId}`)
+  function togglePortfolio(sourceId: string) {
+    setIncludeInPortfolio((current) => {
+      const next = new Set(current)
+      if (next.has(sourceId)) next.delete(sourceId)
+      else next.add(sourceId)
+      return next
+    })
+  }
+
+  function includeAllTitledWorks() {
+    setIncludeInPortfolio(new Set(preparedPending.filter((item) => item.fields.title.value.trim()).map((item) => item.sourceId)))
+  }
+
+  function updateInsight(id: PracticeInsightKey, patch: Partial<PracticeInsight>) {
+    setPracticeInsights((current) => current.map((item) => item.id === id ? { ...item, ...patch } : item))
+  }
+
+  async function applyConfirmedInsights() {
+    const selectedInsights = practiceInsights.filter((item) => item.selected && !item.dismissed && item.value.trim())
+    if (!applyInsightsToPassport || !selectedInsights.length) return false
+    const profile = await loadArtistPassport()
+    if (!profile) throw new Error("Complete the basic Creative Passport profile before applying practice insights.")
+    const disciplines = uniqueInsightValues([...profile.disciplines, ...splitInsightList(selectedInsights.find((item) => item.id === "disciplines")?.value || "")])
+    const mediums = uniqueInsightValues([...profile.mediums, ...splitInsightList(selectedInsights.find((item) => item.id === "mediums")?.value || "")])
+    const addition = confirmedInsightSummary(selectedInsights)
+    const practiceDescription = addition && !profile.practice_description.includes(addition)
+      ? [profile.practice_description.trim(), addition].filter(Boolean).join("\n\n")
+      : profile.practice_description
+    await saveArtistPassport({
+      ...profile,
+      disciplines,
+      mediums,
+      practice_description: practiceDescription,
+      disciplines_text: disciplines.join(", "),
+      mediums_text: mediums.join(", "),
+      languages_text: profile.languages.join(", "),
+    })
+    return true
+  }
+
+  async function saveWorksToKleio() {
+    if (working || !preparedPending.length) return
+    setWorking("save-all")
     setError("")
+    setCompletionSummary(null)
     try {
-      const result = await approveInstagramImport({ sourceId: item.sourceId, fields: confirmedInstagramFields(item) })
-      setPrepared((current) => current.map((entry) => entry.sourceId === item.sourceId ? { ...entry, approved: true, portfolioWorkId: result.portfolioWorkId } : entry))
-      setNotice(`${item.fields.title.value.trim()} was approved and added to the Creative Passport portfolio.`)
+      const payload = draftPayload(prepared)
+      await saveInstagramPreparedDrafts(payload)
+      lastSavedRef.current = JSON.stringify(payload)
+      setSaveState("saved")
+
+      if (missingPortfolioTitles.length) {
+        setError(`${missingPortfolioTitles.length} work${missingPortfolioTitles.length === 1 ? " needs" : "s need"} a title before portfolio display. Add a title or switch the work to Keep private.`)
+        return
+      }
+
+      const approvedResults: Array<{ sourceId: string; portfolioWorkId: string }> = []
+      const failed: string[] = []
+      for (const item of portfolioPending) {
+        try {
+          const result = await approveInstagramImport({ sourceId: item.sourceId, fields: confirmedInstagramFields(item) })
+          approvedResults.push({ sourceId: item.sourceId, portfolioWorkId: result.portfolioWorkId })
+        } catch {
+          failed.push(item.fields.title.value.trim() || "Untitled work")
+        }
+      }
+
+      const approvedBySource = new Map(approvedResults.map((item) => [item.sourceId, item.portfolioWorkId]))
+      const nextPrepared = prepared.map((item) => approvedBySource.has(item.sourceId)
+        ? { ...item, approved: true, portfolioWorkId: approvedBySource.get(item.sourceId) }
+        : item)
+      setPrepared(nextPrepared)
+      setIncludeInPortfolio((current) => new Set([...current].filter((sourceId) => !approvedBySource.has(sourceId))))
+
+      let passportUpdated = false
+      try {
+        passportUpdated = await applyConfirmedInsights()
+      } catch (reason) {
+        setError(message(reason, "Works were saved, but the selected Creative Passport insights could not be applied."))
+      }
+
+      const remainingPrivate = nextPrepared.filter((item) => !item.approved).length
+      setCompletionSummary({
+        worksSaved: preparedPending.length,
+        portfolioCount: approvedResults.length,
+        privateCount: remainingPrivate,
+        passportUpdated,
+        failedCount: failed.length,
+      })
+      setPrepareSummary(null)
+      if (failed.length) setError(`${failed.length} portfolio work${failed.length === 1 ? "" : "s"} could not be added. Private Media Library records were preserved.`)
+      else setNotice("Your work is organized in KLEIO. Private records, portfolio choices, and confirmed Passport insights were handled in one save.")
+      window.requestAnimationFrame(() => completionRef.current?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "center" }))
     } catch (reason) {
-      setError(message(reason, "The artwork could not be approved."))
+      setError(message(reason, "KLEIO could not finish saving these works."))
     } finally {
       setWorking("")
     }
   }
 
   async function removePrepared(item: InstagramPreparedItem) {
-    if (item.approved || working || !window.confirm("Remove this unfinished Instagram import? Approved portfolio work will not be affected.")) return
+    if (item.approved || working || !window.confirm("Remove this private Instagram artwork record from KLEIO?")) return
     setWorking(`delete:${item.sourceId}`)
     setError("")
     try {
       await deleteInstagramImport(item.sourceId)
       const next = prepared.filter((entry) => entry.sourceId !== item.sourceId)
       setPrepared(next)
+      setIncludeInPortfolio((current) => { const updated = new Set(current); updated.delete(item.sourceId); return updated })
+      setPracticeInsights(buildInstagramPracticeInsights(next.filter((entry) => !entry.approved)))
       lastSavedRef.current = JSON.stringify(draftPayload(next))
-      setNotice("The unfinished Instagram import was removed.")
+      setNotice("The private artwork record was removed.")
     } catch (reason) {
-      setError(message(reason, "The unfinished import could not be removed."))
+      setError(message(reason, "The private artwork record could not be removed."))
     } finally {
       setWorking("")
     }
   }
 
   async function disconnect() {
-    if (working || !window.confirm("Disconnect Instagram from KLEIO? Private copies already prepared or approved will remain in your account.")) return
+    if (working || !window.confirm("Disconnect Instagram from KLEIO? Work already saved in KLEIO will remain available.")) return
     setWorking("disconnect")
     setError("")
     try {
@@ -667,7 +520,7 @@ export function InstagramImportAssist() {
       setGalleryPhase("idle")
       setSelected(new Set())
       setPreviewId("")
-      setNotice("Instagram was disconnected. Your existing KLEIO imports remain private and available.")
+      setNotice("Instagram was disconnected. Existing KLEIO artwork records remain available.")
     } catch (reason) {
       setError(message(reason, "Instagram could not be disconnected."))
     } finally {
@@ -675,14 +528,12 @@ export function InstagramImportAssist() {
     }
   }
 
-  const isGalleryBusy = galleryPhase === "loading" || galleryPhase === "refreshing" || galleryPhase === "loading-more"
+  const isGalleryBusy = ["loading", "refreshing", "loading-more"].includes(galleryPhase)
 
   if (!initialLocationResolved) {
-    return (
-      <section className="rounded-[28px] border border-[#E2DCF1] bg-white p-6 shadow-[0_22px_70px_rgba(82,64,130,0.07)]" aria-live="polite">
-        <div className="flex items-center gap-3 text-sm font-semibold text-[#625C70]"><Loader2 className="size-4 animate-spin motion-reduce:animate-none" />Opening Instagram Import Studio…</div>
-      </section>
-    )
+    return <section className="rounded-[28px] border border-[#E2DCF1] bg-white p-6 shadow-[0_22px_70px_rgba(82,64,130,0.07)]" aria-live="polite">
+      <div className="flex items-center gap-3 text-sm font-semibold text-[#625C70]"><Loader2 className="size-4 animate-spin motion-reduce:animate-none" />Opening Instagram Import Studio…</div>
+    </section>
   }
 
   if (callbackCompletion) {
@@ -691,24 +542,22 @@ export function InstagramImportAssist() {
       : callbackCompletion.result === "instagram_oauth_cancelled"
         ? { title: "Authorization cancelled", body: "Nothing was connected. You can close this window and continue in KLEIO." }
         : { title: "Instagram connection needs attention", body: "The connection was not completed. You can close this window and try again from KLEIO." }
-    return (
-      <section className="grid min-h-[420px] place-items-center rounded-[28px] border border-[#E2DCF1] bg-[#FCFBFE] p-6" aria-labelledby="instagram-callback-title">
-        <div className="w-full max-w-md rounded-[24px] border border-[#E2DCF1] bg-white p-6 text-center shadow-[0_22px_70px_rgba(82,64,130,0.10)] sm:p-8">
-          <span className="mx-auto grid size-12 place-items-center rounded-full bg-[#F1EDF8] text-[#5B4B8A]">{callbackCompletion.success ? <Check className="size-5" /> : <AlertTriangle className="size-5" />}</span>
-          <h2 id="instagram-callback-title" className="mt-4 font-serif text-2xl font-semibold tracking-[-0.03em] text-[#292631]">{callbackCopy.title}</h2>
-          <p className="mt-3 text-sm leading-6 text-[#746E80]">{callbackCopy.body}</p>
-          <button type="button" className={`${primary} mt-5 w-full`} onClick={() => window.close()}>Close window</button>
-        </div>
-      </section>
-    )
+    return <section className="grid min-h-[420px] place-items-center rounded-[28px] border border-[#E2DCF1] bg-[#FCFBFE] p-6" aria-labelledby="instagram-callback-title">
+      <div className="w-full max-w-md rounded-[24px] border border-[#E2DCF1] bg-white p-6 text-center shadow-[0_22px_70px_rgba(82,64,130,0.10)] sm:p-8">
+        <span className="mx-auto grid size-12 place-items-center rounded-full bg-[#F1EDF8] text-[#5B4B8A]">{callbackCompletion.success ? <Check className="size-5" /> : <AlertTriangle className="size-5" />}</span>
+        <h2 id="instagram-callback-title" className="mt-4 font-serif text-2xl font-semibold tracking-[-0.03em] text-[#292631]">{callbackCopy.title}</h2>
+        <p className="mt-3 text-sm leading-6 text-[#746E80]">{callbackCopy.body}</p>
+        <button type="button" className={`${primary} mt-5 w-full`} onClick={() => window.close()}>Close window</button>
+      </div>
+    </section>
   }
 
   return (
     <section className="rounded-[28px] border border-[#E2DCF1] bg-white p-4 shadow-[0_22px_70px_rgba(82,64,130,0.07)] sm:p-7" aria-labelledby="instagram-import-title">
       <div className="max-w-3xl">
-        <p className="text-[0.68rem] font-semibold uppercase tracking-[0.17em] text-[#75639E]">Connected import</p>
-        <h2 id="instagram-import-title" className="mt-2 font-serif text-3xl font-semibold tracking-[-0.03em]">Choose artwork from Instagram</h2>
-        <p className="mt-3 text-sm leading-7 text-[#746E80]">Browse your connected account, preview individual works, and prepare only the media you choose. Every artwork remains an editable draft until you approve it.</p>
+        <p className="text-[0.68rem] font-semibold uppercase tracking-[0.17em] text-[#75639E]">Connected artwork source</p>
+        <h2 id="instagram-import-title" className="mt-2 font-serif text-3xl font-semibold tracking-[-0.03em]">Turn Instagram works into reusable KLEIO records</h2>
+        <p className="mt-3 text-sm leading-7 text-[#746E80]">Choose the works that represent your practice. KLEIO saves them privately once, prepares editable artwork details, surfaces source-based practice patterns, and lets you decide which works appear in your portfolio.</p>
       </div>
 
       {(error || notice) && <div className={`mt-5 rounded-xl border p-3 text-sm ${error ? "border-red-200 bg-red-50 text-red-700" : "border-[#E2DCF1] bg-[#F9F7FC] text-[#625C70]"}`} role={error ? "alert" : "status"} aria-live="polite">{error || notice}</div>}
@@ -723,7 +572,7 @@ export function InstagramImportAssist() {
                 <p className="truncate text-sm font-semibold text-[#292631]">{connection?.connected ? `Connected as @${connection.username}` : "Instagram is not connected"}</p>
                 {connection?.connected && <span className="inline-flex items-center gap-1 rounded-full border border-[#D8D0F2] bg-white px-2 py-1 text-[0.64rem] font-semibold uppercase tracking-[0.08em] text-[#75639E]"><ShieldCheck className="size-3" />Read only</span>}
               </div>
-              <p className="mt-1 max-w-2xl text-xs leading-5 text-[#746E80]">{connection?.connected ? "Only media you deliberately select is copied into KLEIO. KLEIO cannot post, message, or comment, or modify your Instagram account." : "Instagram will ask you to authorize read-only access to your eligible professional account."}</p>
+              <p className="mt-1 max-w-2xl text-xs leading-5 text-[#746E80]">{connection?.connected ? "Only media you deliberately select is copied into your private KLEIO Media Library. KLEIO cannot post, message, comment, or modify Instagram." : "Instagram will ask you to authorize read-only access to your eligible professional account."}</p>
               {connection?.connected && lastRefreshed ? <p className="mt-1 text-[0.68rem] text-[#8A8296]">Last refreshed {readableTime(lastRefreshed)}</p> : null}
             </div>
           </div>
@@ -739,108 +588,69 @@ export function InstagramImportAssist() {
       {connection?.connected && <section className={`mt-7 ${selectedCount ? "pb-3" : ""}`} aria-labelledby="instagram-gallery-title" aria-busy={galleryPhase === "loading" || galleryPhase === "refreshing"}>
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#75639E]">1 · Select media</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#75639E]">1 · Select works</p>
             <h3 id="instagram-gallery-title" className="mt-1 font-serif text-2xl font-semibold">Your Instagram gallery</h3>
-            <p className="mt-2 text-sm text-[#746E80]">Preview a work by opening its image. Use the checkbox to select it for preparation.</p>
+            <p className="mt-2 text-sm text-[#746E80]">Choose works you want KLEIO to organize, reuse, and optionally display in your portfolio.</p>
           </div>
           <div className="text-right">
             <p className="text-sm font-semibold text-[#4F4660]" aria-live="polite">{selectedCount} of {MAX_SELECTED} selected</p>
             {selectedCount === MAX_SELECTED && <p className="mt-1 text-xs font-semibold text-amber-700">Selection limit reached</p>}
           </div>
         </div>
-
         {galleryPhase === "loading" && !gallery.length ? <><p className="sr-only" role="status">Loading Instagram posts</p><GallerySkeleton /></> : null}
+        {galleryError && <div className="mt-4 flex flex-col gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 sm:flex-row sm:items-center sm:justify-between" role="alert"><span className="flex items-start gap-2"><AlertTriangle className="mt-0.5 size-4 shrink-0" />{galleryError} Your current selection has been preserved.</span><button type="button" className={secondary} onClick={() => void refreshGallery(true)}>Retry</button></div>}
+        {gallery.length > 0 && <div className="mt-4 grid grid-cols-2 gap-2.5 max-[340px]:grid-cols-1 md:grid-cols-3 xl:grid-cols-4">{gallery.map((asset) => <GalleryCard key={asset.id} asset={asset} selected={selected.has(asset.id)} saved={preparedMediaIds.has(asset.id)} selectionDisabled={selectedCount >= MAX_SELECTED} onPreview={(trigger) => openPreview(asset, trigger)} onToggle={() => toggleAsset(asset)} />)}</div>}
+        {galleryPhase === "ready" && !gallery.length && <div className="mt-5 rounded-2xl border border-dashed border-[#D8D0F2] bg-[#FCFBFE] px-5 py-10 text-center"><ImageIcon className="mx-auto size-8 text-[#8C78BF]" /><h4 className="mt-3 font-serif text-xl font-semibold">No compatible media returned</h4><p className="mx-auto mt-2 max-w-lg text-sm leading-6 text-[#746E80]">KLEIO did not receive any available still images from this account. Refresh posts to try again.</p><button type="button" className={`${secondary} mt-4`} onClick={() => void refreshGallery(true)}>Refresh posts</button></div>}
+        {gallery.length > 0 && <div className="mt-5 flex justify-center">{nextCursor ? <button type="button" className={secondary} disabled={isGalleryBusy} onClick={() => void refreshGallery(false)}>{galleryPhase === "loading-more" ? <Loader2 className="size-4 animate-spin motion-reduce:animate-none" /> : <ImagePlus className="size-4" />}Load more</button> : <p className="text-xs text-[#8A8296]">All available posts are shown.</p>}</div>}
 
-        {galleryError && <div className="mt-4 flex flex-col gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 sm:flex-row sm:items-center sm:justify-between" role="alert">
-          <span className="flex items-start gap-2"><AlertTriangle className="mt-0.5 size-4 shrink-0" />{galleryError} Your current selection has been preserved.</span>
-          <button type="button" className={secondary} onClick={() => void refreshGallery(true)}>Retry</button>
-        </div>}
-
-        {gallery.length > 0 && <div className="mt-4 grid grid-cols-2 gap-2.5 max-[340px]:grid-cols-1 md:grid-cols-3 xl:grid-cols-4">
-          {gallery.map((asset) => (
-            <GalleryCard
-              key={asset.id}
-              asset={asset}
-              selected={selected.has(asset.id)}
-              prepared={preparedMediaIds.has(asset.id)}
-              selectionDisabled={selectedCount >= MAX_SELECTED}
-              onPreview={(trigger) => openPreview(asset, trigger)}
-              onToggle={() => toggleAsset(asset)}
-            />
-          ))}
-        </div>}
-
-        {galleryPhase === "ready" && !gallery.length && <div className="mt-5 rounded-2xl border border-dashed border-[#D8D0F2] bg-[#FCFBFE] px-5 py-10 text-center">
-          <ImageIcon className="mx-auto size-8 text-[#8C78BF]" />
-          <h4 className="mt-3 font-serif text-xl font-semibold">No compatible media returned</h4>
-          <p className="mx-auto mt-2 max-w-lg text-sm leading-6 text-[#746E80]">KLEIO did not receive any available still images from this account. Refresh posts to try again.</p>
-          <button type="button" className={`${secondary} mt-4`} onClick={() => void refreshGallery(true)}>Refresh posts</button>
-        </div>}
-
-        {gallery.length > 0 && <div className="mt-5 flex justify-center">
-          {nextCursor ? <button type="button" className={secondary} disabled={isGalleryBusy} onClick={() => void refreshGallery(false)}>{galleryPhase === "loading-more" ? <Loader2 className="size-4 animate-spin motion-reduce:animate-none" /> : <ImagePlus className="size-4" />}Load more</button> : <p className="text-xs text-[#8A8296]">All available posts are shown.</p>}
-        </div>}
-
-        {selectedCount > 0 && <div className="sticky bottom-3 z-30 mt-6 rounded-2xl border border-[#CFC4E8] bg-white/95 p-3 shadow-[0_18px_60px_rgba(64,45,105,0.18)] backdrop-blur-md sm:p-4" aria-label="Instagram selection actions">
+        {selectedCount > 0 && <div className="sticky bottom-3 z-30 mt-6 rounded-2xl border border-[#CFC4E8] bg-white/95 p-3 pb-[max(.75rem,env(safe-area-inset-bottom))] shadow-[0_18px_60px_rgba(64,45,105,0.18)] backdrop-blur-md sm:p-4" aria-label="Instagram selection actions">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div className="min-w-0">
-              <div className="flex flex-wrap items-center gap-3">
-                <p className="text-sm font-semibold text-[#292631]">{selectedCount} work{selectedCount === 1 ? "" : "s"} selected</p>
-                <button type="button" className="text-xs font-semibold text-[#6A5896] underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#A997E8]/20" onClick={clearSelection}>Clear selection</button>
-              </div>
+              <div className="flex flex-wrap items-center gap-3"><p className="text-sm font-semibold text-[#292631]">{selectedCount} work{selectedCount === 1 ? "" : "s"} selected</p><button type="button" className="text-xs font-semibold text-[#6A5896] underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#A997E8]/20" onClick={clearSelection}>Clear selection</button></div>
+              {selectedAssets.length > 0 && <div className="mt-2 flex max-w-md gap-1.5 overflow-x-auto pb-1" aria-label="Selected work previews">{selectedAssets.slice(0, 8).map((asset) => <img key={asset.id} src={asset.imageUrl} alt="" className="size-10 shrink-0 rounded-lg border border-[#E7E1F7] bg-[#F2EFF7] object-cover" referrerPolicy="no-referrer" />)}{selectedAssets.length > 8 && <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-[#F1EDF8] text-xs font-semibold text-[#5B4B8A]">+{selectedAssets.length - 8}</span>}</div>}
               <label className="mt-2 flex max-w-2xl items-start gap-2 text-xs leading-5 text-[#625C70]"><input type="checkbox" className="mt-0.5 size-4 shrink-0 accent-[#5B4B8A]" checked={rightsConfirmed} onChange={(event) => setRightsConfirmed(event.target.checked)} /><span>I confirm that I own or have permission to copy these images into my private KLEIO workspace.</span></label>
             </div>
-            <button type="button" className={`${primary} w-full lg:w-auto`} disabled={!rightsConfirmed || Boolean(working)} onClick={() => void prepareSelection()}>{working === "prepare" ? <Loader2 className="size-4 animate-spin motion-reduce:animate-none" /> : <ImagePlus className="size-4" />}{working === "prepare" ? "Preparing selected works…" : `Review ${selectedCount} selected work${selectedCount === 1 ? "" : "s"}`}</button>
+            <button type="button" className={`${primary} w-full lg:w-auto`} disabled={!rightsConfirmed || Boolean(working)} onClick={() => void prepareSelection()}>{working === "prepare" ? <Loader2 className="size-4 animate-spin motion-reduce:animate-none" /> : <Sparkles className="size-4" />}{working === "prepare" ? "Preparing your artwork…" : `Continue with ${selectedCount} selected work${selectedCount === 1 ? "" : "s"}`}</button>
           </div>
         </div>}
       </section>}
 
-      {prepareSummary && <div className="mt-6 grid gap-3 sm:grid-cols-2" role="status" aria-live="polite">
-        <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800"><strong>{prepareSummary.completed}</strong> completed and ready for artist review.</div>
-        {prepareSummary.failed > 0 && <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900"><strong>{prepareSummary.failed}</strong> could not be prepared and remain selected.</div>}
-      </div>}
+      {prepareSummary && <div className="mt-6 grid gap-3 sm:grid-cols-2" role="status" aria-live="polite"><div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800"><strong>{prepareSummary.completed}</strong> added privately and ready to review.</div>{prepareSummary.failed > 0 && <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900"><strong>{prepareSummary.failed}</strong> could not be prepared and remain selected.</div>}</div>}
 
       {prepared.length > 0 && <section ref={reviewSectionRef} className="mt-8 scroll-mt-6 border-t border-[#E7E1F7] pt-7" aria-labelledby="instagram-review-title">
         <div className="flex flex-wrap items-end justify-between gap-3">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#75639E]">2 · Artist review</p>
-            <h3 ref={reviewHeadingRef} tabIndex={-1} id="instagram-review-title" className="mt-1 font-serif text-2xl font-semibold outline-none">Confirm each artwork record</h3>
-            <p className="mt-2 text-sm text-[#746E80]">These are private drafts. Edits autosave privately. Nothing reaches the Creative Passport until you approve it.</p>
+          <div><p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#75639E]">2 · Review once</p><h3 ref={reviewHeadingRef} tabIndex={-1} id="instagram-review-title" className="mt-1 font-serif text-2xl font-semibold outline-none">Confirm the essentials and choose portfolio visibility</h3><p className="mt-2 max-w-3xl text-sm leading-6 text-[#746E80]">Every prepared image is already a private Media Library record. Confirm only what is useful now, choose which titled works appear in your portfolio, and save the entire group once.</p></div>
+          <p role="status" className={`text-xs font-semibold ${saveState === "error" ? "text-amber-700" : "text-[#746E80]"}`}>{saveState === "saving" ? "Saving private edits…" : saveState === "saved" ? "Private edits saved" : saveState === "error" ? "Autosave needs attention" : `${preparedPending.length} private record${preparedPending.length === 1 ? "" : "s"} ready`}</p>
+        </div>
+
+        {practiceInsights.length > 0 && <section className="mt-5 rounded-[24px] border border-[#DED7EF] bg-[linear-gradient(145deg,#F8F5FF,#FFFFFF)] p-4 sm:p-5" aria-labelledby="instagram-practice-insights-title">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+            <div className="max-w-3xl"><p className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-[#75639E]">Private suggestions</p><h4 id="instagram-practice-insights-title" className="mt-1 font-serif text-xl font-semibold">Practice insights from this group of works</h4><p className="mt-2 text-xs leading-5 text-[#746E80]">These suggestions use available captions, dates, tags, and artwork details. They are not verified visual judgments. Edit, select, or dismiss each suggestion before anything can update your Creative Passport.</p></div>
+            <span className="inline-flex items-center gap-2 rounded-full border border-[#D8D0F2] bg-white px-3 py-1.5 text-xs font-semibold text-[#625C70]"><Sparkles className="size-4 text-[#6A5896]" />{selectedInsightsCount} selected</span>
           </div>
-          <p role="status" className={`text-xs font-semibold ${saveState === "error" ? "text-amber-700" : "text-[#746E80]"}`}>{saveState === "saving" ? "Saving edits…" : saveState === "saved" ? "Edits saved" : saveState === "error" ? "Autosave needs attention" : `${preparedPending.length} awaiting approval`}</p>
-        </div>
-        <div className="mt-5 space-y-5">
-          {prepared.map((item) => <article key={item.sourceId} className={`rounded-[24px] border p-4 sm:p-5 ${item.approved ? "border-emerald-200 bg-emerald-50/40" : "border-[#E2DCF1] bg-white"}`}>
-            <div className="grid gap-5 lg:grid-cols-[260px_minmax(0,1fr)]">
-              <div><img src={item.previewUrl} alt={item.fields.altText.value || "Prepared Instagram artwork"} className="aspect-square w-full rounded-2xl bg-[#F2EFF7] object-contain" /><div className="mt-3 flex items-center justify-between gap-2"><span className="text-xs text-[#746E80]">{readableDate(item.timestamp)}</span>{item.permalink && <a href={item.permalink} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs font-semibold text-[#5B4B8A]">Original post <ExternalLink className="size-3" /></a>}</div></div>
-              <div className="grid gap-4">
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <label className="grid gap-1.5 text-xs font-semibold"><span className="flex items-center justify-between gap-2">Artist-confirmed title <FieldStatus item={item} name="title" /></span><input className={input} disabled={item.approved} value={item.fields.title.value} onChange={(event) => editField(item.sourceId, "title", event.target.value)} /></label>
-                  <label className="grid gap-1.5 text-xs font-semibold"><span className="flex items-center justify-between gap-2">Year <FieldStatus item={item} name="year" /></span><input className={input} disabled={item.approved} value={item.fields.year.value} onChange={(event) => editField(item.sourceId, "year", event.target.value)} /></label>
-                  <label className="grid gap-1.5 text-xs font-semibold"><span className="flex items-center justify-between gap-2">Medium <FieldStatus item={item} name="medium" /></span><input className={input} disabled={item.approved} value={item.fields.medium.value} onChange={(event) => editField(item.sourceId, "medium", event.target.value)} /></label>
-                  <label className="grid gap-1.5 text-xs font-semibold"><span className="flex items-center justify-between gap-2">Dimensions <FieldStatus item={item} name="dimensions" /></span><input className={input} disabled={item.approved} value={item.fields.dimensions.value} onChange={(event) => editField(item.sourceId, "dimensions", event.target.value)} /></label>
-                  <label className="grid gap-1.5 text-xs font-semibold sm:col-span-2"><span className="flex items-center justify-between gap-2">Series <FieldStatus item={item} name="series" /></span><input className={input} disabled={item.approved} value={item.fields.series.value} onChange={(event) => editField(item.sourceId, "series", event.target.value)} /></label>
-                  <label className="grid gap-1.5 text-xs font-semibold sm:col-span-2"><span className="flex items-center justify-between gap-2">Description <FieldStatus item={item} name="description" /></span><textarea className={textarea} disabled={item.approved} value={item.fields.description.value} onChange={(event) => editField(item.sourceId, "description", event.target.value)} /></label>
-                  <label className="grid gap-1.5 text-xs font-semibold sm:col-span-2"><span className="flex items-center justify-between gap-2">Tags <FieldStatus item={item} name="tags" /></span><input className={input} disabled={item.approved} value={item.fields.tags.value} onChange={(event) => editField(item.sourceId, "tags", event.target.value)} /></label>
-                  <label className="grid gap-1.5 text-xs font-semibold sm:col-span-2"><span className="flex items-center justify-between gap-2">Accessibility description <FieldStatus item={item} name="altText" /></span><textarea className={textarea} disabled={item.approved} value={item.fields.altText.value} onChange={(event) => editField(item.sourceId, "altText", event.target.value)} /></label>
-                </div>
-                <div className="flex flex-wrap justify-end gap-2">{item.approved ? <span className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-emerald-100 px-4 text-sm font-semibold text-emerald-800"><Check className="size-4" />Approved in portfolio</span> : <><button type="button" className={quiet} disabled={Boolean(working)} onClick={() => void removePrepared(item)}>{working === `delete:${item.sourceId}` ? <Loader2 className="size-4 animate-spin motion-reduce:animate-none" /> : <Trash2 className="size-4" />}Remove draft</button><button type="button" className={primary} disabled={!item.fields.title.value.trim() || Boolean(working)} onClick={() => void approve(item)}>{working === `approve:${item.sourceId}` ? <Loader2 className="size-4 animate-spin motion-reduce:animate-none" /> : <Check className="size-4" />}Approve artwork</button></>}</div>
-              </div>
+          <div className="mt-4 grid gap-3 md:grid-cols-2">{practiceInsights.filter((item) => !item.dismissed).map((item) => <article key={item.id} className={`rounded-2xl border p-3 ${item.selected ? "border-[#A997E8] bg-white" : "border-[#E7E1F7] bg-white/75"}`}><div className="flex items-start gap-2"><label className="flex min-w-0 flex-1 items-start gap-2"><input type="checkbox" className="mt-1 size-4 shrink-0 accent-[#5B4B8A]" checked={item.selected} onChange={(event) => updateInsight(item.id, { selected: event.target.checked })} /><span className="min-w-0 flex-1"><span className="block text-xs font-semibold text-[#292631]">{item.label}</span><textarea className="mt-2 min-h-20 w-full resize-y rounded-xl border border-[#E2DCF1] bg-[#FCFBFE] px-3 py-2 text-sm leading-5 text-[#4F4660] outline-none focus:border-[#A997E8] focus:ring-4 focus:ring-[#A997E8]/12" value={item.value} onChange={(event) => updateInsight(item.id, { value: event.target.value })} aria-label={`Edit ${item.label}`} /><span className="mt-1 block text-[0.65rem] leading-4 text-[#8A8296]">{item.source}</span></span></label><button type="button" className="grid size-10 shrink-0 place-items-center rounded-lg text-[#8A8296] hover:bg-[#F4F1F8] hover:text-[#5B4B8A] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#A997E8]/20" onClick={() => updateInsight(item.id, { dismissed: true, selected: false })} aria-label={`Dismiss ${item.label}`}><X className="size-4" /></button></div></article>)}</div>
+          {practiceInsights.some((item) => item.dismissed) && <button type="button" className={`${quiet} mt-2`} onClick={() => setPracticeInsights((current) => current.map((item) => ({ ...item, dismissed: false })))}>Restore dismissed suggestions</button>}
+          <label className="mt-4 flex items-start gap-2 rounded-xl border border-[#E7E1F7] bg-white p-3 text-xs leading-5 text-[#625C70]"><input type="checkbox" className="mt-0.5 size-4 shrink-0 accent-[#5B4B8A]" checked={applyInsightsToPassport} disabled={!selectedInsightsCount} onChange={(event) => setApplyInsightsToPassport(event.target.checked)} /><span><strong className="text-[#292631]">Apply selected insights to my Creative Passport when I save.</strong><br />KLEIO will merge confirmed disciplines and mediums and append your confirmed practice language without replacing existing artist-authored text.</span></label>
+        </section>}
+
+        <div className="mt-5 space-y-4">{prepared.map((item) => <article key={item.sourceId} className={`rounded-[24px] border p-4 sm:p-5 ${item.approved ? "border-emerald-200 bg-emerald-50/40" : "border-[#E2DCF1] bg-white"}`}>
+          <div className="grid gap-5 lg:grid-cols-[220px_minmax(0,1fr)]">
+            <div><img src={item.previewUrl} alt={item.fields.altText.value || "Instagram artwork saved in KLEIO"} className="aspect-square w-full rounded-2xl bg-[#F2EFF7] object-contain" /><div className="mt-3 flex items-center justify-between gap-2"><span className="text-xs text-[#746E80]">{readableDate(item.timestamp)}</span>{item.permalink && <a href={item.permalink} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs font-semibold text-[#5B4B8A]">Original post <ExternalLink className="size-3" /></a>}</div></div>
+            <div className="grid gap-4">
+              <div className="flex flex-col gap-3 rounded-2xl border border-[#E7E1F7] bg-[#FAF9FD] p-3 sm:flex-row sm:items-center sm:justify-between"><div><p className="text-xs font-semibold text-[#292631]">{item.approved ? "Displayed in portfolio" : "Portfolio visibility"}</p><p className="mt-1 text-xs leading-5 text-[#746E80]">{item.approved ? "This work already references the same Media Library source." : "Keep private by default, or include this titled work when you save."}</p></div>{item.approved ? <span className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-emerald-100 px-4 text-sm font-semibold text-emerald-800"><Check className="size-4" />In portfolio</span> : <label className="inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-xl border border-[#D8D0F2] bg-white px-3 text-sm font-semibold text-[#5B4B8A]"><input type="checkbox" className="size-4 accent-[#5B4B8A]" checked={includeInPortfolio.has(item.sourceId)} onChange={() => togglePortfolio(item.sourceId)} />Include in portfolio</label>}</div>
+              <div className="grid gap-4 sm:grid-cols-3"><label className="grid gap-1.5 text-xs font-semibold"><span className="flex items-center justify-between gap-2">Title <FieldStatus item={item} name="title" /></span><input className={input} disabled={item.approved} value={item.fields.title.value} onChange={(event) => editField(item.sourceId, "title", event.target.value)} placeholder="Untitled is okay while private" /></label><label className="grid gap-1.5 text-xs font-semibold"><span className="flex items-center justify-between gap-2">Year <FieldStatus item={item} name="year" /></span><input className={input} disabled={item.approved} value={item.fields.year.value} onChange={(event) => editField(item.sourceId, "year", event.target.value)} /></label><label className="grid gap-1.5 text-xs font-semibold"><span className="flex items-center justify-between gap-2">Medium <FieldStatus item={item} name="medium" /></span><input className={input} disabled={item.approved} value={item.fields.medium.value} onChange={(event) => editField(item.sourceId, "medium", event.target.value)} /></label></div>
+              <details className="group rounded-2xl border border-[#E7E1F7] bg-white"><summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-sm font-semibold text-[#5B4B8A] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#A997E8]/20"><span>More artwork details</span><ChevronDown className="size-4 transition group-open:rotate-180 motion-reduce:transition-none" /></summary><div className="grid gap-4 border-t border-[#E7E1F7] p-4 sm:grid-cols-2"><label className="grid gap-1.5 text-xs font-semibold"><span className="flex items-center justify-between gap-2">Dimensions <FieldStatus item={item} name="dimensions" /></span><input className={input} disabled={item.approved} value={item.fields.dimensions.value} onChange={(event) => editField(item.sourceId, "dimensions", event.target.value)} /></label><label className="grid gap-1.5 text-xs font-semibold"><span className="flex items-center justify-between gap-2">Series <FieldStatus item={item} name="series" /></span><input className={input} disabled={item.approved} value={item.fields.series.value} onChange={(event) => editField(item.sourceId, "series", event.target.value)} /></label><label className="grid gap-1.5 text-xs font-semibold sm:col-span-2"><span className="flex items-center justify-between gap-2">Description <FieldStatus item={item} name="description" /></span><textarea className={textarea} disabled={item.approved} value={item.fields.description.value} onChange={(event) => editField(item.sourceId, "description", event.target.value)} /></label><label className="grid gap-1.5 text-xs font-semibold sm:col-span-2"><span className="flex items-center justify-between gap-2">Tags <FieldStatus item={item} name="tags" /></span><input className={input} disabled={item.approved} value={item.fields.tags.value} onChange={(event) => editField(item.sourceId, "tags", event.target.value)} /></label><label className="grid gap-1.5 text-xs font-semibold sm:col-span-2"><span className="flex items-center justify-between gap-2">Accessibility description <FieldStatus item={item} name="altText" /></span><textarea className={textarea} disabled={item.approved} value={item.fields.altText.value} onChange={(event) => editField(item.sourceId, "altText", event.target.value)} /></label>{item.caption && <div className="sm:col-span-2"><p className="text-xs font-semibold text-[#292631]">Source caption</p><p className="mt-1 whitespace-pre-wrap rounded-xl bg-[#FAF9FD] p-3 text-xs leading-5 text-[#746E80]">{item.caption}</p></div>}</div></details>
+              {!item.approved && <div className="flex justify-end"><button type="button" className={quiet} disabled={Boolean(working)} onClick={() => void removePrepared(item)}>{working === `delete:${item.sourceId}` ? <Loader2 className="size-4 animate-spin motion-reduce:animate-none" /> : <Trash2 className="size-4" />}Remove private record</button></div>}
             </div>
-          </article>)}
-        </div>
+          </div>
+        </article>)}</div>
+
+        {preparedPending.length > 0 && <section className="sticky bottom-3 z-20 mt-6 rounded-[22px] border border-[#CFC4E8] bg-white/95 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] shadow-[0_18px_60px_rgba(64,45,105,0.18)] backdrop-blur-md" aria-labelledby="instagram-save-summary-title"><div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between"><div><h4 id="instagram-save-summary-title" className="text-sm font-semibold text-[#292631]">Save this group once</h4><div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-[#625C70]"><span><strong>{preparedPending.length}</strong> private Media Library record{preparedPending.length === 1 ? "" : "s"}</span><span><strong>{portfolioPending.length}</strong> selected for portfolio</span><span><strong>{preparedPending.length - portfolioPending.length}</strong> staying private</span><span><strong>{selectedInsightsCount}</strong> practice insight{selectedInsightsCount === 1 ? "" : "s"} selected</span></div>{missingPortfolioTitles.length > 0 && <p className="mt-2 text-xs font-semibold text-amber-700">{missingPortfolioTitles.length} portfolio selection{missingPortfolioTitles.length === 1 ? " needs" : "s need"} a title.</p>}{portfolioPending.length === 0 && <button type="button" className="mt-2 text-xs font-semibold text-[#6A5896] underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#A997E8]/20" onClick={includeAllTitledWorks}>Include all titled works in portfolio</button>}</div><button type="button" className={`${primary} w-full lg:w-auto`} disabled={Boolean(working)} onClick={() => void saveWorksToKleio()}>{working === "save-all" ? <Loader2 className="size-4 animate-spin motion-reduce:animate-none" /> : <Check className="size-4" />}{working === "save-all" ? "Saving works to KLEIO…" : "Save works to KLEIO"}</button></div></section>}
       </section>}
 
-      {previewAsset && <PreviewDialog
-        asset={previewAsset}
-        gallery={gallery}
-        selected={selected.has(previewAsset.id)}
-        prepared={preparedMediaIds.has(previewAsset.id)}
-        selectionDisabled={selectedCount >= MAX_SELECTED}
-        onClose={closePreview}
-        onChange={(asset) => setPreviewId(asset.id)}
-        onToggle={() => toggleAsset(previewAsset)}
-      />}
+      {completionSummary && <div ref={completionRef} className="mt-6 rounded-[24px] border border-emerald-200 bg-emerald-50 p-5" role="status" aria-live="polite"><div className="flex items-start gap-3"><span className="grid size-11 shrink-0 place-items-center rounded-full bg-white text-emerald-700"><Check className="size-5" /></span><div className="min-w-0"><h3 className="font-serif text-xl font-semibold text-emerald-950">Your works are organized in KLEIO</h3><p className="mt-2 text-sm leading-6 text-emerald-900">{completionSummary.worksSaved} work{completionSummary.worksSaved === 1 ? " was" : "s were"} saved in your Media Library. {completionSummary.portfolioCount} {completionSummary.portfolioCount === 1 ? "is" : "are"} displayed in your portfolio. {completionSummary.privateCount} remain private.{completionSummary.passportUpdated ? " Your selected Creative Passport insights were also applied." : ""}</p>{completionSummary.failedCount > 0 && <p className="mt-2 text-xs font-semibold text-amber-800">{completionSummary.failedCount} portfolio action{completionSummary.failedCount === 1 ? " needs" : "s need"} another try; the private records are safe.</p>}<div className="mt-4 flex flex-wrap gap-2"><Link href="/artist-dashboard/portfolio/" className={primary}><Eye className="size-4" />View portfolio</Link><Link href="/artist-dashboard/media/" className={secondary}><Library className="size-4" />Done</Link></div></div></div></div>}
+
+      {previewAsset && <PreviewDialog asset={previewAsset} gallery={gallery} selected={selected.has(previewAsset.id)} saved={preparedMediaIds.has(previewAsset.id)} selectionDisabled={selectedCount >= MAX_SELECTED} onClose={closePreview} onChange={(asset) => setPreviewId(asset.id)} onToggle={() => toggleAsset(previewAsset)} />}
     </section>
   )
 }
