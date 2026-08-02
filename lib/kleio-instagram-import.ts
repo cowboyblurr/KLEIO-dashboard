@@ -31,8 +31,14 @@ export type InstagramGalleryAsset = {
   caption: string
   timestamp: string
   mediaProductType: string
+  mediaType: string
+  parentMediaType: string
   selectable: boolean
+  unavailable: boolean
   kind: "image" | "video"
+  isCarouselChild: boolean
+  carouselIndex: number | null
+  carouselTotal: number | null
 }
 
 export type InstagramPreparedField = {
@@ -191,28 +197,63 @@ export function flattenInstagramMedia(items: InstagramMediaItem[]): InstagramGal
       caption: item.caption || "",
       timestamp: item.timestamp || "",
       mediaProductType: item.media_product_type || "",
+      parentMediaType: item.media_type || "",
     }
-    if (item.media_type === "IMAGE" && item.media_url) {
-      output.push({ ...shared, id: item.id, imageUrl: item.media_url, selectable: true, kind: "image" })
+    if (item.media_type === "IMAGE") {
+      const imageUrl = item.media_url || item.thumbnail_url || ""
+      output.push({
+        ...shared,
+        id: item.id,
+        imageUrl,
+        mediaType: item.media_type,
+        selectable: Boolean(item.media_url),
+        unavailable: !imageUrl,
+        kind: "image",
+        isCarouselChild: false,
+        carouselIndex: null,
+        carouselTotal: null,
+      })
       continue
     }
     if (item.media_type === "CAROUSEL_ALBUM") {
-      for (const child of item.children?.data ?? []) {
+      const children = item.children?.data ?? []
+      children.forEach((child, index) => {
         const imageUrl = child.media_url || child.thumbnail_url || ""
+        const isImage = child.media_type === "IMAGE"
         output.push({
           ...shared,
           id: child.id,
           imageUrl,
-          selectable: child.media_type === "IMAGE" && Boolean(child.media_url),
-          kind: child.media_type === "IMAGE" ? "image" : "video",
+          mediaType: child.media_type || "",
+          selectable: isImage && Boolean(child.media_url),
+          unavailable: !imageUrl,
+          kind: isImage ? "image" : "video",
+          isCarouselChild: true,
+          carouselIndex: index + 1,
+          carouselTotal: children.length,
         })
-      }
+      })
       continue
     }
     const imageUrl = item.thumbnail_url || item.media_url || ""
-    if (imageUrl) output.push({ ...shared, id: item.id, imageUrl, selectable: false, kind: "video" })
+    output.push({
+      ...shared,
+      id: item.id,
+      imageUrl,
+      mediaType: item.media_type || "",
+      selectable: false,
+      unavailable: !imageUrl,
+      kind: "video",
+      isCarouselChild: false,
+      carouselIndex: null,
+      carouselTotal: null,
+    })
   }
   return output
+}
+
+export function instagramPreparedMediaId(item: InstagramPreparedItem) {
+  return item.providerMediaId
 }
 
 export function updateInstagramPreparedField(
