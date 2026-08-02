@@ -7,6 +7,11 @@ import { getSupabaseBrowserClient, loadKleioAccount } from "@/lib/kleio-supabase
 const primary = "inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#5B4B8A] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#4F407B] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#A997E8]/25 disabled:cursor-not-allowed disabled:opacity-50"
 const secondary = "inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-[#D8D0F2] bg-white px-3 py-2 text-xs font-semibold text-[#5B4B8A] transition hover:bg-[#FBFAFE] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#A997E8]/20 disabled:opacity-50"
 const textarea = "min-h-24 w-full resize-y rounded-xl border border-[#DED7EF] bg-white px-3 py-2 text-sm leading-6 text-[#292631] outline-none focus:border-[#A997E8] focus:ring-4 focus:ring-[#A997E8]/12"
+const professionalHistoryFields = new Set([
+  "education", "solo_exhibitions", "group_exhibitions", "other_exhibitions", "residencies", "awards",
+  "grants_and_fellowships", "publications", "press", "collections", "commissions", "talks_and_panels",
+  "teaching_and_professional_experience", "memberships",
+])
 
 type WebsiteSession = {
   id: string
@@ -62,6 +67,11 @@ type Conflict = {
 type MissingInformation = { field: string; reason: string }
 type RunSummary = {
   coverage?: Coverage
+  proposal_count?: number
+  professional_history_count?: number
+  likely_artwork_count?: number
+  conflict_count?: number
+  uncertain_count?: number
   organized_output?: { conflicts?: Conflict[]; missing_information?: MissingInformation[]; limitations?: string[] }
 }
 
@@ -168,6 +178,20 @@ export function WebsiteOrganizationAssist() {
   const missing = organized.missing_information || []
   const limitations = organized.limitations || []
   const reviewed = proposals.filter((item) => ["approved", "edited_approved", "rejected", "deferred"].includes(item.status)).length
+  const professionalHistoryCount = summary.professional_history_count ?? proposals.filter((item) => professionalHistoryFields.has(item.target_field)).length
+  const likelyArtworkCount = summary.likely_artwork_count ?? proposals.filter((item) => item.target_field === "artworks").length
+  const uncertainCount = summary.uncertain_count ?? proposals.filter((item) => item.normalized_value?.classification === "uncertain").length
+  const metrics = coverage ? [
+    ["Pages discovered", coverage.pages_discovered],
+    ["Pages scanned", coverage.pages_collected],
+    ["Pages skipped", coverage.pages_skipped],
+    ["Images discovered", coverage.image_candidates],
+    ["Likely artwork images", likelyArtworkCount],
+    ["Professional-history entries", professionalHistoryCount],
+    ["AI-organized proposals", summary.proposal_count ?? proposals.length],
+    ["Conflicts", summary.conflict_count ?? conflicts.length],
+    ["Uncertain items", uncertainCount],
+  ] as const : []
 
   async function organize(force = false) {
     if (!session || working) return
@@ -180,7 +204,7 @@ export function WebsiteOrganizationAssist() {
       if (invokeError) throw invokeError
       if (data?.error) throw new Error(String(data.error))
       setProposals((data?.proposals || []) as ProposalRow[])
-      setSummary({ coverage: data?.coverage, organized_output: data?.result })
+      setSummary((data?.run?.summary || { coverage: data?.coverage, organized_output: data?.result }) as RunSummary)
       setNotice(data?.cached ? "A compatible source-backed result was reused without another Gemini call." : "Organization complete. Review every proposal before it can move forward.")
     } catch (reason) {
       setError(safeMessage(reason, "Website evidence could not be organized.")); setNotice("")
@@ -231,8 +255,8 @@ export function WebsiteOrganizationAssist() {
       {notice && <p className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900" role="status" aria-live="polite">{notice}</p>}
       {error && <p className="mt-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-900" role="alert">{error}</p>}
 
-      {coverage && <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4" aria-label="Website analysis coverage">
-        {[["Pages discovered", coverage.pages_discovered], ["Pages scanned", coverage.pages_collected], ["Pages skipped", coverage.pages_skipped], ["Image candidates", coverage.image_candidates]].map(([label, value]) => <div key={String(label)} className="rounded-2xl border border-[#E7E1F7] bg-white p-4"><p className="text-2xl font-semibold text-[#292631]">{value}</p><p className="mt-1 text-xs text-[#746E80]">{label}</p></div>)}
+      {metrics.length > 0 && <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3" aria-label="Website analysis coverage">
+        {metrics.map(([label, value]) => <div key={label} className="rounded-2xl border border-[#E7E1F7] bg-white p-4"><p className="text-2xl font-semibold text-[#292631]">{value}</p><p className="mt-1 text-xs text-[#746E80]">{label}</p></div>)}
       </div>}
 
       {proposals.length > 0 && <div className="mt-6">
