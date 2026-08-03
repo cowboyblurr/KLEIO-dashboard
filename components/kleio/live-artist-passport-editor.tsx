@@ -20,6 +20,7 @@ import {
   type ArtistProfilePresentationRecord,
 } from "@/lib/kleio-profile-presentation"
 import { WorkspacePageHeader } from "@/components/kleio/workspace-page-header"
+import { PassportDraftRecoveryNotice } from "@/components/kleio/passport-draft-recovery-notice"
 import { DisciplineMultiSelect, TagEntryField } from "@/components/kleio/forms/artist-term-fields"
 import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
 import { passportAutosaveLabel, usePassportDraftAutosave } from "@/components/kleio/use-passport-draft-autosave"
@@ -196,10 +197,12 @@ export function LiveArtistPassportEditor() {
 
         {autosaveLabel && <p role="status" aria-live="polite" className={`text-right text-xs font-semibold ${autosave.state === "conflict" || autosave.state === "error" ? "text-amber-700" : "text-[#746E80]"}`}>{autosaveLabel}</p>}
         {autosave.recovery && (
-          <section className="flex flex-wrap items-center justify-between gap-3 border border-amber-200 bg-amber-50 p-4" role="status">
-            <p className="text-sm leading-6 text-amber-950"><strong>Recovery available.</strong> A draft from {new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeStyle: "short" }).format(new Date(autosave.recovery.clientUpdatedAt))} differs from the saved Passport.</p>
-            <div className="flex gap-2"><button type="button" className={secondary} onClick={autosave.dismissRecovery}>Keep saved Passport</button><button type="button" className={primary} onClick={autosave.restore}>Restore draft</button></div>
-          </section>
+          <PassportDraftRecoveryNotice
+            recovery={autosave.recovery}
+            onRestore={autosave.restore}
+            onDismiss={autosave.dismissRecovery}
+            locale={locale}
+          />
         )}
 
         {loading && <div className={`${card} flex items-center gap-2 text-sm text-muted-foreground`}><Loader2 className="size-4 animate-spin" />Loading your Creative Passport…</div>}
