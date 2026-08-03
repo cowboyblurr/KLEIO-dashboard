@@ -1,0 +1,30 @@
+name: Product Analytics Legacy Baseline Validation
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "supabase/migrations/20260803162400_product_analytics_legacy_internal_actors.sql"
+      - "scripts/audit-product-analytics-legacy-baseline.mjs"
+      - "docs/product-analytics-architecture.md"
+      - "docs/product-analytics-release-order.md"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Audit legacy baseline classification
+        run: node scripts/audit-product-analytics-legacy-baseline.mjs
