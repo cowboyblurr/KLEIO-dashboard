@@ -4,10 +4,6 @@ import Link from "next/link"
 import { ArrowLeft, Images, ShieldCheck } from "lucide-react"
 import { ArtistImportStudio } from "@/components/kleio/artist-import-studio"
 import { ImportSourceHub } from "@/components/kleio/import-source-hub"
-import { InstagramImportAssist } from "@/components/kleio/instagram-import-assist"
-import { PinterestImportAssist } from "@/components/kleio/pinterest-import-assist"
-import { WebsiteImportAssist } from "@/components/kleio/website-import-assist"
-import { WebsiteOrganizationAssist } from "@/components/kleio/website-organization-assist"
 
 export function ArtistImportStudioPage() {
   return (
@@ -21,31 +17,20 @@ export function ArtistImportStudioPage() {
           <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
             <div className="max-w-3xl">
               <p className="text-[0.68rem] font-semibold uppercase tracking-[0.17em] text-[#75639E]">Media Library · Import work</p>
-              <h1 className="mt-2 font-serif text-3xl font-semibold tracking-[-0.04em] text-[#292631] sm:text-4xl">Bring your existing work into KLEIO</h1>
-              <p className="mt-3 text-sm leading-7 text-[#746E80]">Choose a source once. KLEIO creates private Media Library records, helps organize the available details, and lets you decide which works appear in your Portfolio or contribute confirmed information to your Creative Passport.</p>
+              <h1 className="mt-2 font-serif text-3xl font-semibold tracking-[-0.04em] text-[#292631] sm:text-4xl">Bring selected work into KLEIO</h1>
+              <p className="mt-3 text-sm leading-7 text-[#746E80]">The initial artist beta uses Google Drive as the only active new-import source. KLEIO creates private Media Library records first, then leaves every Portfolio, Creative Passport, profile, and application decision to the artist.</p>
             </div>
             <div className="grid gap-2 text-xs font-semibold text-[#625C70]">
               <span className="inline-flex items-center gap-2"><ShieldCheck className="size-4 text-[#6A5896]" />Nothing publishes automatically</span>
-              <span className="inline-flex items-center gap-2"><Images className="size-4 text-[#6A5896]" />Import once and reuse the same records</span>
+              <span className="inline-flex items-center gap-2"><Images className="size-4 text-[#6A5896]" />Private files remain artist-owned</span>
             </div>
           </div>
         </header>
 
         <ImportSourceHub />
 
-        <section id="device-drive-import" className="scroll-mt-6" aria-label="Device and Google Drive import">
+        <section id="google-drive-import" className="scroll-mt-6" aria-label="Google Drive import">
           <ArtistImportStudio />
-        </section>
-
-        <section id="website-import" className="scroll-mt-6 space-y-5" aria-label="Personal portfolio website import">
-          <WebsiteImportAssist />
-          <WebsiteOrganizationAssist />
-        </section>
-
-        <PinterestImportAssist />
-
-        <section id="instagram-import" className="scroll-mt-6" aria-label="Instagram import">
-          <InstagramImportAssist />
         </section>
       </div>
     </main>
