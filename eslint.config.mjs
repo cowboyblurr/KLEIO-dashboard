@@ -27,20 +27,23 @@ const eslintConfig = defineConfig([
     },
   },
   {
-    files: ["supabase/functions/analyze-artist-website/index.ts"],
+    files: [
+      "supabase/functions/analyze-artist-website/index.ts",
+      "supabase/functions/analyze-artist-website-intelligence/index.ts",
+    ],
     rules: {
-      // JSON-LD may contain arbitrary nested arrays and records from external sites.
-      // Keep any-based normalization visible as warnings at this hostile-input parser
-      // boundary while runtime guards, URL validation, size limits, and tests enforce safety.
+      // Linkedom and hostile public JSON/DOM payloads are intentionally runtime-guarded
+      // at this server-only extraction boundary. Keep dynamic DOM values visible as
+      // warnings while URL, DNS, size, content-type, signature, ownership and RLS checks
+      // remain the actual trust boundary.
       "@typescript-eslint/no-explicit-any": "warn",
     },
   },
   {
     files: ["components/kleio/website-import-assist.tsx"],
     rules: {
-      // The two cloned-Set toggle expressions are side-effectful state callbacks.
-      // Keep them visible for the readability cleanup without blocking the verified
-      // review, provenance, and capability-gating implementation from building.
+      // Set toggles are side-effectful state callbacks. Keep any future compact
+      // expressions visible without blocking the feature-gated review surface.
       "@typescript-eslint/no-unused-expressions": "warn",
     },
   },
