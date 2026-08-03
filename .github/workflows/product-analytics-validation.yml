@@ -21,6 +21,9 @@ on:
 permissions:
   contents: read
 
+env:
+  NEXT_PUBLIC_SITE_URL: https://www.kleioarthouse.com
+
 jobs:
   validate:
     runs-on: ubuntu-latest
