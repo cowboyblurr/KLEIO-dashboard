@@ -31,10 +31,11 @@ const utilityPath = "lib/kleio-product-analytics.ts"
 const eventMigrationPath = "supabase/migrations/20260803162000_product_analytics_event_contract.sql"
 const milestoneMigrationPath = "supabase/migrations/20260803162100_product_analytics_milestones.sql"
 const snapshotMigrationPath = "supabase/migrations/20260803162200_product_analytics_admin_snapshot.sql"
-const adminClientPath = "components/kleio/admin-product-analytics-dashboard.tsx"
+const adminLoaderPath = "lib/kleio-admin-analytics.ts"
+const adminDashboardPath = "components/kleio/admin-product-analytics-dashboard.tsx"
 const adminRoutePath = "app/admin/analytics/page.tsx"
 
-for (const file of [dictionaryPath, utilityPath, eventMigrationPath, milestoneMigrationPath, snapshotMigrationPath, adminClientPath, adminRoutePath]) {
+for (const file of [dictionaryPath, utilityPath, eventMigrationPath, milestoneMigrationPath, snapshotMigrationPath, adminLoaderPath, adminDashboardPath, adminRoutePath]) {
   if (!fs.existsSync(path.join(root, file))) failures.push(`Missing required analytics file: ${file}`)
 }
 
@@ -44,7 +45,8 @@ if (!failures.length) {
   const eventMigration = read(eventMigrationPath)
   const milestoneMigration = read(milestoneMigrationPath)
   const snapshotMigration = read(snapshotMigrationPath)
-  const adminClient = read(adminClientPath)
+  const adminLoader = read(adminLoaderPath)
+  const adminDashboard = read(adminDashboardPath)
   const adminRoute = read(adminRoutePath)
 
   const declaredEvents = new Set(
@@ -100,10 +102,11 @@ if (!failures.length) {
   requireMatch(snapshotMigration, /requested_traffic_class/, "Aggregate analytics must filter traffic classes.")
   requireMatch(snapshotMigration, /day_7_returned/, "Aggregate analytics must derive seven-day retention.")
 
-  requireMatch(adminClient, /get_kleio_admin_analytics_snapshot/, "Admin dashboard must load aggregate analytics through the authorized RPC.")
-  forbidMatch(adminClient, /from\(["']product_events["']\)/, "Admin dashboard must not download raw product events.")
-  requireMatch(adminClient, /<table/, "Admin dashboard must provide semantic tabular alternatives.")
-  requireMatch(adminClient, /Export aggregate CSV/, "Admin dashboard must export aggregate data only.")
+  requireMatch(adminLoader, /rpc\("get_kleio_admin_analytics_snapshot"/, "Typed analytics loader must call the authorized aggregate RPC.")
+  forbidMatch(adminLoader, /from\(["']product_events["']\)/, "Typed analytics loader must not download raw product events.")
+  requireMatch(adminDashboard, /loadKleioAdminAnalyticsSnapshot/, "Admin dashboard must use the typed aggregate loader.")
+  requireMatch(adminDashboard, /<table/, "Admin dashboard must provide semantic tabular alternatives.")
+  requireMatch(adminDashboard, /Export aggregate CSV/, "Admin dashboard must export aggregate data only.")
   requireMatch(adminRoute, /robots:[\s\S]*index: false/, "Private admin analytics route must opt out of indexing.")
 
   const clientCode = sourceFiles.map((file) => `${file}\n${read(file)}`).join("\n")
