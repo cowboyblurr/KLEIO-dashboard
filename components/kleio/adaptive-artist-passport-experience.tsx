@@ -4,9 +4,14 @@ import { useEffect, useRef, useState } from "react"
 import { Check, ChevronLeft, ChevronRight, FileText, FormInput, Loader2, Save, Sparkles } from "lucide-react"
 import { LiveArtistPassportEditor } from "@/components/kleio/live-artist-passport-editor"
 import { ArtistImportReview } from "@/components/kleio/artist-import-review"
+import { PassportDraftRecoveryNotice } from "@/components/kleio/passport-draft-recovery-notice"
 import { DisciplineMultiSelect, TagEntryField } from "@/components/kleio/forms/artist-term-fields"
 import { VoiceDictationControl } from "@/components/kleio/forms/voice-dictation-control"
 import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
+import {
+  dismissPassportDraftRecovery,
+  isPassportDraftRecoveryDismissed,
+} from "@/components/kleio/use-passport-draft-autosave"
 import { loadArtistPassport, saveArtistPassport, type ArtistPassportRecord } from "@/lib/kleio-live-data"
 import {
   loadRemoteKleioDraft,
@@ -95,7 +100,11 @@ export function AdaptiveArtistPassportExperience() {
       const local = readLocalKleioDraft<PassportDraftPayload>(DRAFT_KEY)
       const newest = newestKleioDraft(local, remote)
       revisionRef.current = remote?.revision ?? 0
-      if (newest && JSON.stringify(newest.payload) !== JSON.stringify(profile ?? blankPassport)) {
+      if (
+        newest
+        && JSON.stringify(newest.payload) !== JSON.stringify(profile ?? blankPassport)
+        && !isPassportDraftRecoveryDismissed(newest)
+      ) {
         setRecovery(newest)
         setSaveState("idle")
       }
@@ -128,7 +137,8 @@ export function AdaptiveArtistPassportExperience() {
         .catch(async (reason) => {
           if (reason instanceof Error && reason.name === "KleioDraftConflictError") {
             setSaveState("conflict")
-            setRecovery(await loadRemoteKleioDraft<PassportDraftPayload>(DRAFT_KEY))
+            const nextRecovery = await loadRemoteKleioDraft<PassportDraftPayload>(DRAFT_KEY)
+            setRecovery(nextRecovery && !isPassportDraftRecoveryDismissed(nextRecovery) ? nextRecovery : null)
             void trackKleioProductEvent("conflict_detected", { surface: "creative_passport", metadata: { mode } })
           } else {
             setSaveState("error")
@@ -183,12 +193,19 @@ export function AdaptiveArtistPassportExperience() {
 
   function restoreDraft() {
     if (!recovery) return
+    dismissPassportDraftRecovery(recovery)
     setRecord(recovery.payload)
     revisionRef.current = recovery.revision
     setRecovery(null)
     setSaveState("local")
     setStatus(es ? "Borrador recuperado. Revísalo antes de guardar el Pasaporte." : "Draft restored. Review it before saving the Passport.")
     void trackKleioProductEvent("draft_restored", { surface: "creative_passport", metadata: { source: recovery.serverUpdatedAt ? "remote" : "local" } })
+  }
+
+  function dismissRecovery() {
+    if (!recovery) return
+    dismissPassportDraftRecovery(recovery)
+    setRecovery(null)
   }
 
   const saveLabel = saveState === "saving" ? "Saving to KLEIO…" : saveState === "saved" ? "Saved to KLEIO" : saveState === "local" ? "Saved locally" : saveState === "offline" ? "Offline — saved locally" : saveState === "conflict" ? "Conflict detected" : saveState === "error" ? "Retry required" : ""
@@ -199,7 +216,18 @@ export function AdaptiveArtistPassportExperience() {
         <div className="mx-auto max-w-[1180px]"><div className="flex flex-wrap items-start justify-between gap-3"><div><p className="text-xs font-semibold uppercase tracking-[0.15em] text-[#6A5896]">{es ? "Cómo quieres trabajar" : "How you want to work"}</p><p className="mt-1 text-xs text-[#746E80]">{es ? "Todos los modos actualizan el mismo Pasaporte." : "Every mode updates the same Passport."}</p></div>{saveLabel && <p role="status" aria-live="polite" className={`text-xs font-semibold ${saveState === "conflict" || saveState === "error" ? "text-amber-700" : "text-[#746E80]"}`}>{saveLabel}</p>}</div><div className="mt-3 flex gap-2 overflow-x-auto pb-1"><ModeButton active={mode === "guided"} icon={Sparkles} title={es ? "Guíame paso a paso" : "Guide me step by step"} description={es ? "Preguntas breves y ayuda por voz." : "Short prompts and optional voice help."} onClick={() => chooseMode("guided")} /><ModeButton active={mode === "full"} icon={FormInput} title={es ? "Déjame completarlo" : "Let me fill it out"} description={es ? "Formulario completo para entrada directa." : "The complete form for direct entry."} onClick={() => chooseMode("full")} /><ModeButton active={mode === "import"} icon={FileText} title={es ? "Empezar con lo que tengo" : "Start from what I have"} description={es ? "Extrae propuestas de CV y texto." : "Extract proposals from PDFs and text."} onClick={() => chooseMode("import")} /></div></div>
       </section>
 
-      {recovery && <section className="shrink-0 border-b border-amber-200 bg-amber-50 px-4 py-3" role="status"><div className="mx-auto flex max-w-[1180px] flex-wrap items-center justify-between gap-3"><p className="text-sm text-amber-950"><strong>Recovery available.</strong> A {recovery.serverUpdatedAt ? "KLEIO" : "local"} draft from {new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeStyle: "short" }).format(new Date(recovery.clientUpdatedAt))} differs from the saved Passport.</p><div className="flex gap-2"><button type="button" className={secondary} onClick={() => setRecovery(null)}>Keep saved Passport</button><button type="button" className={primary} onClick={restoreDraft}>Restore draft</button></div></div></section>}
+      {mode !== "full" && recovery && (
+        <div className="shrink-0 px-4 pt-3 sm:px-6">
+          <div className="mx-auto max-w-[1180px]">
+            <PassportDraftRecoveryNotice
+              recovery={recovery}
+              onRestore={restoreDraft}
+              onDismiss={dismissRecovery}
+              locale={locale}
+            />
+          </div>
+        </div>
+      )}
 
       <div className="min-h-0 flex-1">
         {mode === "full" && <LiveArtistPassportEditor />}
