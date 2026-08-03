@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
+import { getKleioActiveUserScope } from "@/lib/kleio-client-session"
 import {
   loadRemoteKleioDraft,
   newestKleioDraft,
@@ -12,7 +13,39 @@ import {
 } from "@/lib/kleio-passport-drafts"
 import { trackKleioProductEvent } from "@/lib/kleio-product-analytics"
 
+const RECOVERY_DISMISSAL_PREFIX = "kleio:artist:draft-recovery-dismissed:v1:"
+
 export type PassportAutosaveState = "idle" | "local" | "saving" | "saved" | "offline" | "conflict" | "error"
+
+function recoveryDismissalStorageKey(draftKey: string) {
+  if (typeof window === "undefined") return null
+  const userId = getKleioActiveUserScope()
+  return userId ? `${RECOVERY_DISMISSAL_PREFIX}${userId}:${draftKey}` : null
+}
+
+function recoveryFingerprint(draft: KleioDraftEnvelope<Record<string, unknown>>) {
+  return `${draft.revision}:${draft.clientUpdatedAt}:${draft.serverUpdatedAt ?? "local"}`
+}
+
+export function isPassportDraftRecoveryDismissed<T extends Record<string, unknown>>(draft: KleioDraftEnvelope<T>) {
+  const key = recoveryDismissalStorageKey(draft.draftKey)
+  if (!key) return false
+  try {
+    return window.localStorage.getItem(key) === recoveryFingerprint(draft)
+  } catch {
+    return false
+  }
+}
+
+export function dismissPassportDraftRecovery<T extends Record<string, unknown>>(draft: KleioDraftEnvelope<T>) {
+  const key = recoveryDismissalStorageKey(draft.draftKey)
+  if (!key) return
+  try {
+    window.localStorage.setItem(key, recoveryFingerprint(draft))
+  } catch {
+    // Recovery can still be dismissed for the current visit when storage is unavailable.
+  }
+}
 
 export function usePassportDraftAutosave<T extends Record<string, unknown>>(input: {
   draftKey: string
@@ -40,7 +73,13 @@ export function usePassportDraftAutosave<T extends Record<string, unknown>>(inpu
       const newest = newestKleioDraft(local, remote)
       const currentSerialized = JSON.stringify(input.payload)
       lastSerializedRef.current = currentSerialized
-      if (newest && JSON.stringify(newest.payload) !== currentSerialized) setRecovery(newest)
+      if (
+        newest
+        && JSON.stringify(newest.payload) !== currentSerialized
+        && !isPassportDraftRecoveryDismissed(newest)
+      ) {
+        setRecovery(newest)
+      }
       initializedRef.current = true
     })
     return () => { active = false }
@@ -79,7 +118,8 @@ export function usePassportDraftAutosave<T extends Record<string, unknown>>(inpu
       }).catch(async (reason) => {
         if (reason instanceof Error && reason.name === "KleioDraftConflictError") {
           setState("conflict")
-          setRecovery(await loadRemoteKleioDraft<T>(input.draftKey))
+          const nextRecovery = await loadRemoteKleioDraft<T>(input.draftKey)
+          setRecovery(nextRecovery && !isPassportDraftRecoveryDismissed(nextRecovery) ? nextRecovery : null)
           void trackKleioProductEvent("conflict_detected", { surface: input.surface, metadata: { mode: input.draftKey } })
         } else {
           setState("error")
@@ -93,6 +133,7 @@ export function usePassportDraftAutosave<T extends Record<string, unknown>>(inpu
 
   function restore() {
     if (!recovery) return
+    dismissPassportDraftRecovery(recovery)
     input.onRestore(recovery.payload)
     revisionRef.current = recovery.revision
     setRecovery(null)
@@ -101,11 +142,17 @@ export function usePassportDraftAutosave<T extends Record<string, unknown>>(inpu
     void trackKleioProductEvent("draft_restored", { surface: input.surface, metadata: { source: recovery.serverUpdatedAt ? "remote" : "local" } })
   }
 
+  function dismissRecovery() {
+    if (!recovery) return
+    dismissPassportDraftRecovery(recovery)
+    setRecovery(null)
+  }
+
   return {
     state,
     recovery,
     restore,
-    dismissRecovery: () => setRecovery(null),
+    dismissRecovery,
     markSaved: () => setState("saved"),
   }
 }
