@@ -1,5 +1,6 @@
 import { assertKleioPasswordIsSafe } from "@/lib/kleio-password-security"
 import { getKleioAuthCallbackUrl } from "@/lib/kleio-url"
+import { trackKleioProductEvent } from "@/lib/kleio-product-analytics"
 import { getSupabaseBrowserClient } from "@/lib/kleio-supabase"
 
 const PENDING_KEY = "kleio:artist:lightweight-signup:v1"
@@ -135,6 +136,20 @@ export async function signUpLightweightArtistAccount(input: {
 }
 
 export async function ensureLightweightArtistWorkspace() {
+  const onboardingWorkflowId = typeof crypto !== "undefined" ? crypto.randomUUID() : null
+  void trackKleioProductEvent("onboarding_started", {
+    surface: "artist_account_foundation",
+    workflowId: onboardingWorkflowId,
+    deduplicationKey: "onboarding_started:artist_foundation",
+    metadata: { mode: "lightweight" },
+  })
+  void trackKleioProductEvent("onboarding_step_viewed", {
+    surface: "artist_account_foundation",
+    workflowId: onboardingWorkflowId,
+    deduplicationKey: "onboarding_step_viewed:artist_foundation",
+    metadata: { step: "artist_foundation", mode: "lightweight" },
+  })
+
   const supabase = getSupabaseBrowserClient()
   const { data: userResponse, error: userError } = await supabase.auth.getUser()
   if (userError || !userResponse.user) return null
@@ -154,51 +169,89 @@ export async function ensureLightweightArtistWorkspace() {
   const pending = localPending && normalizeEmail(user.email ?? "") === localPending.email ? localPending : metadataPending
   const displayName = pending?.displayName || profile.display_name || googleDisplayName(user.user_metadata, user.email) || "Artist"
 
-  const { error: artistError } = await supabase.from("artist_profiles").upsert(
-    {
-      user_id: user.id,
-      professional_name: displayName,
-      profile_completion: displayName === "Artist" ? 0 : 8,
-    },
-    { onConflict: "user_id", ignoreDuplicates: false },
-  )
-  if (artistError) throw artistError
-
-  if (!profile.onboarding_completed || profile.display_name !== displayName) {
-    const { error: updateError } = await supabase
-      .from("profiles")
-      .update({ display_name: displayName, onboarding_completed: true })
-      .eq("id", user.id)
-    if (updateError) throw updateError
+  if (pending || (!profile.onboarding_completed && Boolean(profile.display_name))) {
+    void trackKleioProductEvent("onboarding_resumed", {
+      surface: "artist_account_foundation",
+      workflowId: onboardingWorkflowId,
+      deduplicationKey: "onboarding_resumed:artist_foundation",
+      metadata: { step: "artist_foundation", mode: "lightweight" },
+    })
   }
 
-  let consent = pending ? { acceptedAt: pending.acceptedAt, policyVersion: pending.policyVersion } : null
-  if (!consent && typeof window !== "undefined") {
-    const raw = window.localStorage.getItem(OAUTH_CONSENT_KEY)
-    try {
-      const parsed = raw ? JSON.parse(raw) as Record<string, unknown> : null
-      if (parsed?.policyVersion === KLEIO_POLICY_VERSION && typeof parsed.acceptedAt === "string" && !Number.isNaN(new Date(parsed.acceptedAt).getTime())) {
-        consent = { acceptedAt: new Date(parsed.acceptedAt).toISOString(), policyVersion: KLEIO_POLICY_VERSION }
-      }
-    } catch {
-      // Invalid browser consent data is ignored and cleared below.
-    }
-  }
-  if (consent) {
-    const { error: consentError } = await supabase.from("user_consents").upsert(
+  try {
+    const { error: artistError } = await supabase.from("artist_profiles").upsert(
       {
         user_id: user.id,
-        consent_type: "terms_and_privacy",
-        policy_version: consent.policyVersion,
-        accepted_at: consent.acceptedAt,
+        professional_name: displayName,
+        profile_completion: displayName === "Artist" ? 0 : 8,
       },
-      { onConflict: "user_id,consent_type,policy_version", ignoreDuplicates: true },
+      { onConflict: "user_id", ignoreDuplicates: false },
     )
-    if (consentError) throw consentError
-  }
+    if (artistError) throw artistError
 
-  if (typeof window !== "undefined") window.localStorage.removeItem(OAUTH_CONSENT_KEY)
-  clearPendingLightweightArtistAccount()
-  await supabase.auth.updateUser({ data: { [RECOVERY_KEY]: null } }).catch(() => undefined)
-  return { userId: user.id, displayName }
+    if (!profile.onboarding_completed || profile.display_name !== displayName) {
+      const { error: updateError } = await supabase
+        .from("profiles")
+        .update({ display_name: displayName, onboarding_completed: true })
+        .eq("id", user.id)
+      if (updateError) throw updateError
+    }
+
+    let consent = pending ? { acceptedAt: pending.acceptedAt, policyVersion: pending.policyVersion } : null
+    if (!consent && typeof window !== "undefined") {
+      const raw = window.localStorage.getItem(OAUTH_CONSENT_KEY)
+      try {
+        const parsed = raw ? JSON.parse(raw) as Record<string, unknown> : null
+        if (parsed?.policyVersion === KLEIO_POLICY_VERSION && typeof parsed.acceptedAt === "string" && !Number.isNaN(new Date(parsed.acceptedAt).getTime())) {
+          consent = { acceptedAt: new Date(parsed.acceptedAt).toISOString(), policyVersion: KLEIO_POLICY_VERSION }
+        }
+      } catch {
+        // Invalid browser consent data is ignored and cleared below.
+      }
+    }
+    if (consent) {
+      const { error: consentError } = await supabase.from("user_consents").upsert(
+        {
+          user_id: user.id,
+          consent_type: "terms_and_privacy",
+          policy_version: consent.policyVersion,
+          accepted_at: consent.acceptedAt,
+        },
+        { onConflict: "user_id,consent_type,policy_version", ignoreDuplicates: true },
+      )
+      if (consentError) throw consentError
+    }
+
+    if (typeof window !== "undefined") window.localStorage.removeItem(OAUTH_CONSENT_KEY)
+    clearPendingLightweightArtistAccount()
+    await supabase.auth.updateUser({ data: { [RECOVERY_KEY]: null } }).catch(() => undefined)
+
+    void trackKleioProductEvent("onboarding_step_completed", {
+      surface: "artist_account_foundation",
+      workflowId: onboardingWorkflowId,
+      deduplicationKey: "onboarding_step_completed:artist_foundation",
+      metadata: { step: "artist_foundation", mode: "lightweight" },
+    })
+    void trackKleioProductEvent("onboarding_step_skipped", {
+      surface: "artist_account_foundation",
+      workflowId: onboardingWorkflowId,
+      deduplicationKey: "onboarding_step_skipped:optional_profile_details",
+      metadata: { step: "optional_profile_details", mode: "lightweight" },
+    })
+
+    return { userId: user.id, displayName }
+  } catch (reason) {
+    void trackKleioProductEvent("onboarding_save_failed", {
+      surface: "artist_account_foundation",
+      workflowId: onboardingWorkflowId,
+      deduplicationKey: "onboarding_save_failed:artist_foundation",
+      metadata: {
+        step: "artist_foundation",
+        mode: "lightweight",
+        reason: "onboarding_save_failed",
+        error_code: "onboarding_save_failed",
+      },
+    })
+    throw reason
+  }
 }

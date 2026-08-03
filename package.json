@@ -20,7 +20,12 @@
     "audit:upload-to-passport": "node scripts/audit-upload-to-passport-intelligence.mjs",
     "audit:website-import": "node scripts/audit-website-import-assist.mjs",
     "audit:instagram-import": "node scripts/audit-instagram-import.mjs",
-    "audit:gemini-website": "node scripts/audit-gemini-website-intelligence.mjs"
+    "audit:gemini-website": "node scripts/audit-gemini-website-intelligence.mjs",
+    "audit:product-analytics": "node scripts/audit-product-analytics-architecture.mjs",
+    "audit:analytics-privacy": "node scripts/audit-product-analytics-privacy.mjs",
+    "audit:analytics-coverage": "node scripts/audit-product-analytics-coverage.mjs",
+    "audit:analytics-admin": "node scripts/audit-product-analytics-admin.mjs",
+    "audit:analytics-attribution": "node scripts/audit-product-analytics-attribution.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.5.0",

@@ -65,9 +65,18 @@ export function ProgressiveOpportunityActions({
         setLocation(nextPassport?.location ?? "")
         setDisciplines(nextPassport?.disciplines ?? [])
       }
-    }).catch((reason) => { if (active) setError(reason instanceof Error ? reason.message : "Unable to check your KLEIO account.") }).finally(() => { if (active) setLoading(false) })
+    }).catch(() => {
+      if (active) {
+        setError("Unable to check your KLEIO account.")
+        void trackKleioProductEvent("user_visible_error", {
+          surface: "public_opportunity",
+          opportunityId,
+          metadata: { step: "account_check", error_code: "opportunity_account_check_failed", retryable: true },
+        })
+      }
+    }).finally(() => { if (active) setLoading(false) })
     return () => { active = false }
-  }, [])
+  }, [opportunityId])
 
   function requireArtist(action: KleioOpportunityIntentAction) {
     const eventName = action === "check_fit" ? "check_fit_selected" : action === "save" ? "save_selected" : "prepare_selected"
@@ -80,6 +89,11 @@ export function ProgressiveOpportunityActions({
     }
     if (account.profile.role !== "artist") {
       setError("Personal fit, saving, and application preparation require an artist account. This institution or collaborator session has not been changed.")
+      void trackKleioProductEvent("user_visible_error", {
+        surface: "public_opportunity",
+        opportunityId,
+        metadata: { step: action, error_code: "artist_account_required", retryable: false },
+      })
       return false
     }
     setActiveAction(action)
@@ -100,8 +114,13 @@ export function ProgressiveOpportunityActions({
       if (saveError) throw saveError
       setSaved(true)
       setStatus("Saved to your opportunity shortlist.")
-    } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "Unable to save this opportunity.")
+    } catch {
+      setError("Unable to save this opportunity.")
+      void trackKleioProductEvent("user_visible_error", {
+        surface: "public_opportunity",
+        opportunityId,
+        metadata: { step: "save", error_code: "opportunity_save_failed", retryable: true },
+      })
     } finally {
       setBusy(false)
     }
@@ -115,10 +134,25 @@ export function ProgressiveOpportunityActions({
       const supabase = getSupabaseBrowserClient()
       const { data, error: evaluationError } = await supabase.rpc("evaluate_my_opportunity", { target_opportunity_id: opportunityId })
       if (evaluationError) throw evaluationError
-      setEvaluation(data as EvaluationRecord)
+      const nextEvaluation = data as EvaluationRecord
+      setEvaluation(nextEvaluation)
       setStatus("Your eligibility and readiness result has been recalculated from the current Passport and confirmed source rules.")
-    } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "Unable to evaluate this opportunity.")
+      void trackKleioProductEvent("readiness_viewed", {
+        surface: "public_opportunity",
+        opportunityId,
+        metadata: {
+          source,
+          mode: "passport_evaluation",
+          status: nextEvaluation.eligibility_status,
+        },
+      })
+    } catch {
+      setError("Unable to evaluate this opportunity.")
+      void trackKleioProductEvent("user_visible_error", {
+        surface: "public_opportunity",
+        opportunityId,
+        metadata: { step: "readiness", error_code: "opportunity_readiness_failed", retryable: true },
+      })
     } finally {
       setBusy(false)
     }
@@ -145,13 +179,23 @@ export function ProgressiveOpportunityActions({
       if (countryError) throw countryError
       setPassport(savedPassport)
       await evaluateFit()
-    } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "Unable to save the required Passport details.")
+    } catch {
+      setError("Unable to save the required Passport details.")
+      void trackKleioProductEvent("passport_save_failed", {
+        surface: "public_opportunity",
+        opportunityId,
+        metadata: { section: "opportunity_foundation", reason: "passport_save_failed", error_code: "passport_save_failed" },
+      })
       setBusy(false)
     }
   }
 
   function prepareApplication() {
+    void trackKleioProductEvent("prepare_selected", {
+      surface: "public_opportunity",
+      opportunityId,
+      metadata: { source, mode: "application_preparation" },
+    })
     if (!requireArtist("prepare")) return
     if (!passport?.location || passport.disciplines.length === 0) return
     const params = new URLSearchParams({ opportunity: opportunityId, resume: "prepare" })

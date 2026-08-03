@@ -26,7 +26,7 @@ import {
 } from "@/lib/kleio-google-drive-beta-import"
 import { loadBetaImportAvailability, type KleioBetaImportAvailability } from "@/lib/kleio-import-source-availability"
 import { saveMediaImportReceipt } from "@/lib/kleio-import-receipt"
-import { trackKleioProductEvent } from "@/lib/kleio-product-analytics"
+import { createKleioAnalyticsWorkflowId, trackKleioProductEvent } from "@/lib/kleio-product-analytics"
 
 type GooglePickerDocument = { id?: string; name?: string; mimeType?: string; type?: string }
 type GoogleTokenResponse = { access_token?: string; error?: string; error_description?: string }
@@ -81,6 +81,17 @@ function SaveStatus({ state }: { state: SaveState }) {
   return <span role="status" aria-live="polite" className="inline-flex items-center gap-2 text-xs font-semibold text-[#746E80]">{state === "saving" ? <Loader2 className="size-3.5 animate-spin" /> : state === "saved" ? <Check className="size-3.5 text-emerald-600" /> : <Save className="size-3.5" />}{label}</span>
 }
 
+function stableImportFailure(reason: unknown) {
+  const message = reason instanceof Error ? reason.message.toLowerCase() : ""
+  if (message.includes("cancel")) return "import_authorization_cancelled"
+  if (message.includes("permission") || message.includes("authorization")) return "import_authorization_expired"
+  if (message.includes("initialize") || message.includes("load")) return "import_provider_unavailable"
+  if (message.includes("unsupported") || message.includes("mime")) return "upload_type_unsupported"
+  if (message.includes("large") || message.includes("size")) return "upload_file_too_large"
+  if (message.includes("network") || message.includes("fetch")) return "upload_network_interrupted"
+  return "import_provider_failed"
+}
+
 export function ArtistImportStudio({ onPortfolioChanged, compact = false, autoOpen = false }: {
   onPortfolioChanged?: () => void
   compact?: boolean
@@ -93,6 +104,11 @@ export function ArtistImportStudio({ onPortfolioChanged, compact = false, autoOp
   const lastSavedRef = useRef("")
   const googleTokenRef = useRef("")
   const autoOpenedRef = useRef(false)
+  const analyticsWorkflowIdRef = useRef<string | null>(createKleioAnalyticsWorkflowId())
+  const analyticsStartedRef = useRef(false)
+  const autosaveSuccessTrackedRef = useRef(false)
+  const autosaveFailureTrackedRef = useRef(false)
+  const restoreTrackedRef = useRef(false)
   const [draft, setDraft] = useState<ArtworkImportDraftPayload>(() => blankArtworkImportDraft())
   const [availability, setAvailability] = useState<KleioBetaImportAvailability | null>(null)
   const [previewUrls, setPreviewUrls] = useState<Record<string, string>>({})
@@ -110,6 +126,54 @@ export function ArtistImportStudio({ onPortfolioChanged, compact = false, autoOp
   const driveEnabled = availability?.google_drive_image === true
   const addedCount = useMemo(() => draft.items.filter((item) => !itemWasDuplicate(item)).length, [draft.items])
   const duplicateCount = draft.items.length - addedCount
+
+  function workflowId() {
+    if (!analyticsWorkflowIdRef.current) analyticsWorkflowIdRef.current = createKleioAnalyticsWorkflowId()
+    return analyticsWorkflowIdRef.current
+  }
+
+  function resetAnalyticsWorkflow() {
+    analyticsWorkflowIdRef.current = createKleioAnalyticsWorkflowId()
+    analyticsStartedRef.current = false
+    autosaveSuccessTrackedRef.current = false
+    autosaveFailureTrackedRef.current = false
+    restoreTrackedRef.current = false
+  }
+
+  function startAnalyticsWorkflow() {
+    const activeWorkflowId = workflowId()
+    if (!analyticsStartedRef.current) {
+      analyticsStartedRef.current = true
+      void trackKleioProductEvent("import_source_selected", {
+        surface: "artwork_import_studio",
+        workflowId: activeWorkflowId,
+        metadata: { source: "google_drive" },
+      })
+      void trackKleioProductEvent("import_started", {
+        surface: "artwork_import_studio",
+        workflowId: activeWorkflowId,
+        deduplicationKey: `import_started:${activeWorkflowId}`,
+        metadata: { source: "google_drive", mode: "private_media_library" },
+      })
+    }
+    return activeWorkflowId
+  }
+
+  function trackImportFailure(errorCode: string, count = 0) {
+    const activeWorkflowId = workflowId()
+    void trackKleioProductEvent("import_failed", {
+      surface: "artwork_import_studio",
+      workflowId: activeWorkflowId,
+      deduplicationKey: `import_failed:${activeWorkflowId}:${errorCode}`,
+      metadata: { source: "google_drive", reason: errorCode, error_code: errorCode, count },
+    })
+    void trackKleioProductEvent("user_visible_error", {
+      surface: "artwork_import_studio",
+      workflowId: activeWorkflowId,
+      deduplicationKey: `user_visible_error:${activeWorkflowId}:${errorCode}`,
+      metadata: { source: "google_drive", step: "import", error_code: errorCode, retryable: true },
+    })
+  }
 
   async function hydratePreviews(items: ArtworkImportItem[]) {
     const results = await Promise.allSettled(items.map(async (item) => ({ id: item.id, preview: await loadArtworkPreview(item.storagePath) })))
@@ -138,6 +202,23 @@ export function ArtistImportStudio({ onPortfolioChanged, compact = false, autoOp
         setDraft(restored)
         lastSavedRef.current = JSON.stringify(restored)
         void hydratePreviews(googleItems)
+        if (googleItems.length && !restoreTrackedRef.current) {
+          restoreTrackedRef.current = true
+          analyticsStartedRef.current = true
+          const activeWorkflowId = workflowId()
+          void trackKleioProductEvent("draft_restored", {
+            surface: "artwork_import_studio",
+            workflowId: activeWorkflowId,
+            deduplicationKey: `draft_restored:${activeWorkflowId}`,
+            metadata: { source: "google_drive", step: restored.step, count: googleItems.length },
+          })
+          void trackKleioProductEvent("workflow_recovered", {
+            surface: "artwork_import_studio",
+            workflowId: activeWorkflowId,
+            deduplicationKey: `workflow_recovered:${activeWorkflowId}:draft_restored`,
+            metadata: { source: "google_drive", reason: "draft_restored", step: restored.step },
+          })
+        }
         if (saved.payload.items.length !== googleItems.length) setStatus("Only Google Drive selections are available in the initial artist beta. Older device-import draft items were not reopened.")
       })
       .finally(() => { if (active) { hydratedRef.current = true; setLoading(false) } })
@@ -158,8 +239,45 @@ export function ArtistImportStudio({ onPortfolioChanged, compact = false, autoOp
           revisionRef.current = saved.revision
           lastSavedRef.current = JSON.stringify(saved.payload)
           setSaveState("saved")
+          const activeWorkflowId = workflowId()
+          if (!autosaveSuccessTrackedRef.current) {
+            autosaveSuccessTrackedRef.current = true
+            void trackKleioProductEvent("autosave_succeeded", {
+              surface: "artwork_import_studio",
+              workflowId: activeWorkflowId,
+              deduplicationKey: `autosave_succeeded:${activeWorkflowId}`,
+              metadata: { source: "google_drive", step: saved.payload.step },
+            })
+          }
+          if (autosaveFailureTrackedRef.current) {
+            autosaveFailureTrackedRef.current = false
+            void trackKleioProductEvent("workflow_recovered", {
+              surface: "artwork_import_studio",
+              workflowId: activeWorkflowId,
+              deduplicationKey: `workflow_recovered:${activeWorkflowId}:autosave`,
+              metadata: { source: "google_drive", reason: "autosave_failed", step: saved.payload.step },
+            })
+          }
         })
-        .catch(() => setSaveState("error"))
+        .catch(() => {
+          setSaveState("error")
+          if (!autosaveFailureTrackedRef.current) {
+            autosaveFailureTrackedRef.current = true
+            const activeWorkflowId = workflowId()
+            void trackKleioProductEvent("autosave_failed", {
+              surface: "artwork_import_studio",
+              workflowId: activeWorkflowId,
+              deduplicationKey: `autosave_failed:${activeWorkflowId}`,
+              metadata: { source: "google_drive", step: normalized.step, reason: "autosave_failed", error_code: "autosave_failed" },
+            })
+            void trackKleioProductEvent("workflow_recovery_offered", {
+              surface: "artwork_import_studio",
+              workflowId: activeWorkflowId,
+              deduplicationKey: `workflow_recovery_offered:${activeWorkflowId}:autosave`,
+              metadata: { source: "google_drive", step: normalized.step, reason: "autosave_failed" },
+            })
+          }
+        })
     }, 900)
     return () => window.clearTimeout(timer)
   }, [draft, loading])
@@ -168,14 +286,15 @@ export function ArtistImportStudio({ onPortfolioChanged, compact = false, autoOp
     if (!autoOpen || loading || autoOpenedRef.current || !dialogRef.current) return
     autoOpenedRef.current = true
     dialogRef.current.showModal()
+    startAnalyticsWorkflow()
     window.setTimeout(() => headingRef.current?.focus(), 0)
   }, [autoOpen, loading])
 
   function showStudio() {
     setError("")
     if (!dialogRef.current?.open) dialogRef.current?.showModal()
+    startAnalyticsWorkflow()
     window.setTimeout(() => headingRef.current?.focus(), 0)
-    void trackKleioProductEvent("import_started", { surface: "artwork_import_studio", metadata: { source: "google_drive" } })
   }
 
   async function requestGoogleToken() {
@@ -199,6 +318,7 @@ export function ArtistImportStudio({ onPortfolioChanged, compact = false, autoOp
 
   async function chooseGoogleDriveFiles() {
     if (!driveEnabled || !driveConfigured || working) return
+    const activeWorkflowId = startAnalyticsWorkflow()
     setWorking("drive")
     setError("")
     setStatus("Opening Google Drive…")
@@ -239,7 +359,7 @@ export function ArtistImportStudio({ onPortfolioChanged, compact = false, autoOp
           const item = await prepareGoogleDriveArtwork({ selectedFile, accessToken, sessionId: draft.sessionId })
           prepared.push(item)
         } catch (reason) {
-          failures.push(reason instanceof Error ? reason.message : `${selectedFile.name} could not be imported.`)
+          failures.push(stableImportFailure(reason))
         }
       }
       if (prepared.length) {
@@ -251,13 +371,31 @@ export function ArtistImportStudio({ onPortfolioChanged, compact = false, autoOp
           items: [...current.items, ...prepared],
           updatedAt: new Date().toISOString(),
         }))
+      } else {
+        trackImportFailure(failures[0] || "import_no_items_saved", selected.length)
       }
       setFailedCount((current) => current + failures.length)
       setStatus(prepared.length ? `${prepared.length} selected file${prepared.length === 1 ? " is" : "s are"} ready for private Media Library confirmation.` : "")
-      setError(failures.join(" "))
+      setError(failures.length ? `${failures.length} selected file${failures.length === 1 ? " needs" : "s need"} attention before confirmation.` : "")
+      if (failures.length && prepared.length) {
+        void trackKleioProductEvent("workflow_recovery_offered", {
+          surface: "artwork_import_studio",
+          workflowId: activeWorkflowId,
+          deduplicationKey: `workflow_recovery_offered:${activeWorkflowId}:partial_selection`,
+          metadata: { source: "google_drive", reason: "import_partial_failure", step: "file_validation", failed_count: failures.length },
+        })
+      }
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "Google Drive could not be opened.")
+      const errorCode = stableImportFailure(reason)
+      setError("Google Drive could not be opened. Reconnect and try again.")
       setStatus("")
+      trackImportFailure(errorCode)
+      void trackKleioProductEvent("workflow_recovery_offered", {
+        surface: "artwork_import_studio",
+        workflowId: activeWorkflowId,
+        deduplicationKey: `workflow_recovery_offered:${activeWorkflowId}:${errorCode}`,
+        metadata: { source: "google_drive", reason: errorCode, step: "authorization" },
+      })
     } finally {
       setWorking("")
     }
@@ -281,6 +419,7 @@ export function ArtistImportStudio({ onPortfolioChanged, compact = false, autoOp
 
   async function confirmImport() {
     if (!draft.items.length || working) return
+    const activeWorkflowId = startAnalyticsWorkflow()
     setWorking("confirm")
     setError("")
     try {
@@ -289,9 +428,36 @@ export function ArtistImportStudio({ onPortfolioChanged, compact = false, autoOp
       setDraft((current) => ({ ...current, step: "complete", updatedAt: new Date().toISOString() }))
       setStatus("")
       onPortfolioChanged?.()
-      void trackKleioProductEvent("import_completed", { surface: "artwork_import_studio", metadata: { source: "google_drive", result_count: addedCount, duplicate_count: duplicateCount, failed_count: failedCount } })
-    } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "The selected files could not be confirmed in the Media Library.")
+      const eventName = failedCount > 0 ? "import_partially_completed" : "import_completed"
+      void trackKleioProductEvent(eventName, {
+        surface: "artwork_import_studio",
+        workflowId: activeWorkflowId,
+        deduplicationKey: `${eventName}:${activeWorkflowId}`,
+        metadata: {
+          source: "google_drive",
+          result_count: addedCount,
+          duplicate_count: duplicateCount,
+          failed_count: failedCount,
+          count: draft.items.length + failedCount,
+        },
+      })
+      if (failedCount > 0) {
+        void trackKleioProductEvent("workflow_recovered", {
+          surface: "artwork_import_studio",
+          workflowId: activeWorkflowId,
+          deduplicationKey: `workflow_recovered:${activeWorkflowId}:partial_import`,
+          metadata: { source: "google_drive", reason: "import_partial_failure", step: "confirmation", result_count: addedCount },
+        })
+      }
+    } catch {
+      setError("The selected files could not be confirmed in the Media Library. Your review remains available so you can try again.")
+      trackImportFailure("import_confirmation_failed", draft.items.length)
+      void trackKleioProductEvent("workflow_recovery_offered", {
+        surface: "artwork_import_studio",
+        workflowId: activeWorkflowId,
+        deduplicationKey: `workflow_recovery_offered:${activeWorkflowId}:confirmation`,
+        metadata: { source: "google_drive", reason: "import_confirmation_failed", step: "confirmation" },
+      })
     } finally {
       setWorking("")
     }
@@ -306,6 +472,7 @@ export function ArtistImportStudio({ onPortfolioChanged, compact = false, autoOp
     setFailedCount(0)
     setError("")
     setStatus("Choose another set of files from Google Drive.")
+    resetAnalyticsWorkflow()
   }
 
   async function discardReview() {
@@ -321,6 +488,7 @@ export function ArtistImportStudio({ onPortfolioChanged, compact = false, autoOp
       setFailedCount(0)
       setError("")
       setStatus("A fresh Google Drive import is ready.")
+      resetAnalyticsWorkflow()
     } finally {
       setWorking("")
     }
