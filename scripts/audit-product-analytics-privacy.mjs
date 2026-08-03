@@ -31,6 +31,10 @@ const utility = read("lib/kleio-product-analytics.ts")
 const eventMigration = read("supabase/migrations/20260803162000_product_analytics_event_contract.sql")
 const adminDashboard = read("components/kleio/admin-product-analytics-dashboard.tsx")
 const privacyPage = read("app/privacy/product-analytics/page.tsx")
+const allowlistBody = utility.match(/const SAFE_METADATA_KEYS = new Set\(\[([\s\S]*?)\]\)/)?.[1] || ""
+const allowedClientKeys = new Set(
+  [...allowlistBody.matchAll(/["']([a-z][a-z0-9_]*)["']/g)].map((match) => match[1]),
+)
 
 for (const key of [
   "source", "status", "reason", "step", "mode", "viewport", "count", "result_count",
@@ -45,7 +49,7 @@ for (const sensitive of [
   "caption", "private_url", "signed_url", "token", "stack_trace", "search_query", "transcript",
 ]) {
   forbid(
-    utility.match(/const SAFE_METADATA_KEYS = new Set\(\[([\s\S]*?)\]\)/)?.[1] || "",
+    allowlistBody,
     new RegExp(`['\"]${sensitive}['\"]`, "i"),
     `Sensitive key appears in client metadata allowlist: ${sensitive}`,
   )
@@ -67,8 +71,15 @@ const sensitiveKeyPattern = /\b(?:artist_name|display_name|email|phone|address|a
 for (const file of sourceFiles) {
   const content = read(file)
   for (const metadataMatch of content.matchAll(/metadata\s*:\s*\{([^{}]*)\}/g)) {
-    if (sensitiveKeyPattern.test(metadataMatch[1])) {
-      failures.push(`Potential sensitive analytics metadata object in ${file}: ${metadataMatch[1].trim().slice(0, 120)}`)
+    const body = metadataMatch[1]
+    if (sensitiveKeyPattern.test(body)) {
+      failures.push(`Potential sensitive analytics metadata object in ${file}: ${body.trim().slice(0, 120)}`)
+    }
+    for (const keyMatch of body.matchAll(/(?:^|,)\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*:/g)) {
+      const key = keyMatch[1]
+      if (!allowedClientKeys.has(key)) {
+        failures.push(`Analytics metadata key is not declared in SAFE_METADATA_KEYS: ${key} (${file})`)
+      }
     }
   }
 }
@@ -102,4 +113,4 @@ if (failures.length) {
   process.exit(1)
 }
 
-console.log("KLEIO product analytics privacy audit passed: strict scalar metadata, sensitive-key rejection, aggregate-only administration and artist-facing no-surveillance disclosure verified.")
+console.log("KLEIO product analytics privacy audit passed: every literal metadata key is declared, scalar-only storage is enforced, sensitive keys are rejected, administrator reporting is aggregate-only and the no-surveillance disclosure is present.")
