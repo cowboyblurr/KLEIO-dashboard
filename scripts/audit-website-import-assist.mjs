@@ -17,6 +17,7 @@ const gradeMigration = read("supabase/migrations/20260803130500_website_import_e
 const betaMigration = read("supabase/migrations/20260803133000_beta_import_source_availability.sql")
 const gateway = read("supabase/functions/analyze-artist-website/index.ts")
 const core = read("supabase/functions/analyze-artist-website-core/index.ts")
+const futureCollector = read("supabase/functions/analyze-artist-website-core/future-collector.ts")
 const intelligence = read("supabase/functions/analyze-artist-website-intelligence/index.ts")
 const client = read("lib/kleio-website-scan-api.ts")
 const legacyClient = read("lib/kleio-website-import.ts")
@@ -38,11 +39,15 @@ requireText(gradeMigration, /status not in \('dismissed', 'expired'\)/, "Active-
 forbidText(gradeMigration, /delete from|truncate|drop table|drop column/i, "Evidence-grade migration must remain additive.")
 
 requireText(gateway, /WEBSITE_IMPORT_BETA_ENABLED/, "Website Import must be controlled by a server-side beta flag.")
-requireText(gateway, /website_import_beta_disabled/, "Website Import must fail closed while inactive.")
-requireText(gateway, /CORE_FUNCTION = "analyze-artist-website-core"/, "The deployed gateway/core split must remain explicit.")
-requireText(gateway, /INTELLIGENCE_FUNCTION = "analyze-artist-website-intelligence"/, "The evidence validator must remain isolated from the legacy core.")
-requireText(gateway, /sessionId/, "The gateway must validate the stored scan after core collection.")
-requireText(core, /raw\.githubusercontent\.com/, "The verified production core source must remain pinned rather than silently replaced.")
+requireText(gateway, /website_import_beta_disabled/, "Website Import gateway must fail closed while inactive.")
+requireText(gateway, /CORE_FUNCTION = "analyze-artist-website-core"/, "The gateway/core boundary must remain explicit for a deliberate future re-enable.")
+requireText(gateway, /INTELLIGENCE_FUNCTION = "analyze-artist-website-intelligence"/, "The evidence validator must remain isolated from the future collector.")
+requireText(core, /website_import_beta_disabled/, "The directly addressable Website Import core must fail closed during the initial beta.")
+requireText(core, /status: "coming_soon"/, "The disabled Website Import core must identify the capability honestly.")
+requireText(core, /status: 403/, "The disabled Website Import core must not return a false success.")
+forbidText(core, /raw\.githubusercontent\.com|Deno\.resolveDns|artist_website_import_sessions/, "The disabled core route must not load or execute collection code.")
+requireText(futureCollector, /raw\.githubusercontent\.com\/cowboyblurr\/KLEIO-dashboard\/[a-f0-9]{40}\//, "The reviewed future collector must remain pinned to immutable source.")
+forbidText(futureCollector, /raw\.githubusercontent\.com\/cowboyblurr\/KLEIO-dashboard\/(main|master|fix\/|feature\/)/, "The future collector must not import mutable branch source.")
 
 requireText(intelligence, /private_network_url_blocked/, "Website evidence validation lacks SSRF private-network blocking.")
 requireText(intelligence, /Deno\.resolveDns/, "Website evidence validation must resolve and validate public addresses.")
@@ -75,9 +80,9 @@ for (const code of [
   "website_ai_daily_limit_reached", "website_ai_session_limit_reached", "website_import_session_not_found",
 ]) requireText(client, new RegExp(code), `Missing safe frontend error mapping for ${code}.`)
 
-requireText(legacyClient, /rights_confirmed_at: confirmedAt/, "Website media import must still record artist rights confirmation.")
+requireText(legacyClient, /rights_confirmed_at: confirmedAt/, "Website media import must still record artist rights confirmation if deliberately re-enabled later.")
 requireText(legacyClient, /\.eq\("artist_user_id", account\.user\.id\)/, "Website rights confirmation must remain artist-scoped.")
-requireText(studio, /Nothing imports or publishes automatically/, "Legacy Website Import review must preserve artist-control copy.")
+requireText(studio, /Nothing imports or publishes automatically/, "Future Website Import review must preserve artist-control copy.")
 requireText(studio, /referrerPolicy="no-referrer"/, "External website previews must avoid leaking the KLEIO referrer.")
 requireText(organizer, /View source/, "Website proposals must retain source review.")
 requireText(organizer, /role="alert"/, "Website organization errors must be announced accessibly.")
@@ -88,8 +93,8 @@ forbidText(page, /WebsiteImportAssist|WebsiteOrganizationAssist/, "Website Impor
 requireText(betaMigration, /'website', false/, "Database source availability must disable Website Import during the initial beta.")
 requireText(betaMigration, /enforce_beta_import_source_availability/, "Inactive Website imports must be blocked below the UI.")
 
-for (const content of [gateway, core, intelligence, client, legacyClient, studio, organizer]) {
+for (const content of [gateway, core, futureCollector, intelligence, client, legacyClient, studio, organizer]) {
   forbidText(content, /AIzaSy|GOCSPX-|sk-[A-Za-z0-9]{20,}|SUPABASE_SERVICE_ROLE_KEY\s*=\s*["'][^"']+/, "A provider secret appears to be committed.")
 }
 
-console.log("Website Import audit passed: the production gateway/core split is preserved, deterministic evidence validation rejects empty and invalid image candidates, SSRF/robots/size boundaries remain intact, evidence grades are honest, structured errors and dismissal controls exist, and the entire source stays server- and database-gated out of the initial Google Drive-only artist beta.")
+console.log("Website Import audit passed: gateway and directly addressable core routes fail closed, the reviewed collector remains isolated as immutable future source, deterministic evidence validation rejects empty and invalid image candidates, SSRF/robots/size boundaries remain intact, evidence grades are honest, and database/UI availability keeps Website Import out of the initial Google Drive-only beta.")
