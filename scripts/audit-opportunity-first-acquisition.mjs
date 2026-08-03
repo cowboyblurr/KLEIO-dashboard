@@ -45,7 +45,7 @@ forbidPattern("components/kleio/signup/lightweight-artist-signup.tsx", /Location
 requirePattern("lib/kleio-passport-drafts.ts", /LOCAL_RETENTION_MS = 7/, "local drafts must expire")
 requirePattern("lib/kleio-passport-drafts.ts", /draft_conflict/, "remote drafts must surface optimistic conflicts")
 requirePattern("components/kleio/use-passport-draft-autosave.ts", /1100/, "Passport autosave must be debounced")
-requirePattern("components/kleio/live-artist-passport-editor.tsx", /Recovery available/, "full-form Passport must expose recovery")
+requirePattern("components/kleio/live-artist-passport-editor.tsx", /PassportDraftRecoveryNotice/, "full-form Passport must expose recovery")
 
 requirePattern("supabase/functions/extract-artist-materials/index.ts", /%PDF-/, "PDF extraction must validate the file signature")
 requirePattern("supabase/functions/extract-artist-materials/index.ts", /artist_account_required/, "extraction must validate the artist role")
