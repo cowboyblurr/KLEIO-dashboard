@@ -1,47 +1,36 @@
 "use client"
 
-/* eslint-disable @next/next/no-img-element -- signed private URLs are short-lived */
+/* eslint-disable @next/next/no-img-element -- private previews use short-lived signed URLs */
 /* eslint-disable @typescript-eslint/no-explicit-any -- Google Picker is a runtime global API */
 
+import Link from "next/link"
 import { useEffect, useMemo, useRef, useState } from "react"
+import { Check, Cloud, FolderOpen, Loader2, RotateCcw, Save, ShieldCheck, Trash2, X } from "lucide-react"
 import {
-  Check,
-  Cloud,
-  FolderOpen,
-  ImagePlus,
-  Loader2,
-  RotateCcw,
-  Save,
-  ShieldCheck,
-  Sparkles,
-  Trash2,
-  Upload,
-  X,
-} from "lucide-react"
-import {
-  ARTWORK_IMPORT_ACCEPT,
-  approveArtworkImportItem,
   blankArtworkImportDraft,
   clearArtworkImportDraft,
-  confirmArtworkFields,
-  createArtworkImportItem,
-  downloadGoogleDriveArtwork,
   loadArtworkImportDraft,
   loadArtworkPreview,
-  removeArtworkImportItem,
   saveArtworkImportDraft,
   saveArtworkImportDraftLocally,
   updateArtworkField,
   type ArtworkImportDraftPayload,
-  type ArtworkImportField,
   type ArtworkImportItem,
   type GoogleDrivePickerFile,
 } from "@/lib/kleio-artwork-import"
+import {
+  confirmGoogleDriveMediaImport,
+  discardUnconfirmedGoogleDriveItems,
+  itemWasDuplicate,
+  prepareGoogleDriveArtwork,
+} from "@/lib/kleio-google-drive-beta-import"
+import { loadBetaImportAvailability, type KleioBetaImportAvailability } from "@/lib/kleio-import-source-availability"
+import { saveMediaImportReceipt } from "@/lib/kleio-import-receipt"
 import { trackKleioProductEvent } from "@/lib/kleio-product-analytics"
 
-type SaveState = "idle" | "local" | "saving" | "saved" | "offline" | "conflict" | "error"
 type GooglePickerDocument = { id?: string; name?: string; mimeType?: string; type?: string }
 type GoogleTokenResponse = { access_token?: string; error?: string; error_description?: string }
+type SaveState = "idle" | "local" | "saving" | "saved" | "error"
 
 declare global {
   interface Window {
@@ -53,9 +42,7 @@ declare global {
 const primary = "inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#5B4B8A] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#4F407B] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#A997E8]/25 disabled:cursor-not-allowed disabled:opacity-50"
 const secondary = "inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-[#D8D0F2] bg-white px-4 py-2 text-sm font-semibold text-[#5B4B8A] transition hover:border-[#B9A9DE] hover:bg-[#FBFAFE] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#A997E8]/20 disabled:cursor-not-allowed disabled:opacity-50"
 const quiet = "inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-[#746E80] transition hover:bg-[#F7F4FC] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#A997E8]/20 disabled:opacity-50"
-const input = "min-h-11 w-full rounded-xl border border-[#DED7EF] bg-white px-3 py-2 text-sm text-[#292631] outline-none transition focus:border-[#A997E8] focus:ring-4 focus:ring-[#A997E8]/12 disabled:bg-[#F7F5FA] disabled:text-[#8A8296]"
-const textarea = `${input} min-h-24 resize-y leading-6`
-const mediumOptions = ["Painting", "Oil on canvas", "Acrylic on canvas", "Watercolor", "Drawing", "Photography", "Ceramics", "Sculpture", "Installation", "Textile", "Printmaking", "Digital media", "Mixed media"]
+const input = "min-h-11 w-full rounded-xl border border-[#DED7EF] bg-white px-3 py-2 text-sm text-[#292631] outline-none transition focus:border-[#A997E8] focus:ring-4 focus:ring-[#A997E8]/12"
 
 function loadScript(id: string, src: string) {
   return new Promise<void>((resolve, reject) => {
@@ -88,49 +75,10 @@ async function loadGooglePicker() {
   })
 }
 
-function readableBytes(bytes: number) {
-  if (bytes < 1024) return `${bytes} B`
-  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`
-  return `${(bytes / 1024 / 1024).toFixed(1)} MB`
-}
-
-function FieldStatus({ field }: { field: ArtworkImportField }) {
-  const label = field.status === "extracted" ? "Extracted" : field.status === "suggested" ? "Suggested" : field.status === "edited" ? "Edited" : field.status === "confirmed" ? "Confirmed" : "Missing"
-  const confidence = field.confidence === "strong_source_match" ? "Strong source match" : field.confidence === "possible_suggestion" ? "Possible suggestion" : "Needs artist confirmation"
-  return (
-    <details>
-      <summary className="inline-flex cursor-pointer list-none items-center gap-2 rounded-full border border-[#E2DCF1] bg-[#FAF9FD] px-2.5 py-1 text-[0.68rem] font-semibold text-[#625C70] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#A997E8]/20">
-        <span aria-hidden="true" className={`size-1.5 rounded-full ${field.status === "missing" ? "bg-amber-500" : field.status === "confirmed" ? "bg-emerald-600" : "bg-[#826FB2]"}`} />
-        {label}
-      </summary>
-      <div className="mt-2 rounded-lg border border-[#E7E1F7] bg-white p-2.5 text-[0.72rem] leading-5 text-[#746E80]"><p>{field.source}</p><p className="mt-1 font-semibold text-[#625C70]">{confidence}</p></div>
-    </details>
-  )
-}
-
-function ArtworkField({ label, field, disabled, multiline = false, list, onChange }: {
-  label: string
-  field: ArtworkImportField
-  disabled: boolean
-  multiline?: boolean
-  list?: string
-  onChange: (value: string) => void
-}) {
-  const id = `artwork-${label.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`
-  return (
-    <div className="grid gap-1.5">
-      <div className="flex min-h-7 items-center justify-between gap-3"><label htmlFor={id} className="text-xs font-semibold text-[#625C70]">{label}</label><FieldStatus field={field} /></div>
-      {multiline
-        ? <textarea id={id} className={textarea} rows={4} value={field.value} disabled={disabled} onChange={(event) => onChange(event.target.value)} />
-        : <input id={id} list={list} className={input} value={field.value} disabled={disabled} onChange={(event) => onChange(event.target.value)} />}
-    </div>
-  )
-}
-
 function SaveStatus({ state }: { state: SaveState }) {
-  const text = state === "saving" ? "Saving to KLEIO…" : state === "saved" ? "Saved to KLEIO" : state === "local" ? "Saved locally" : state === "offline" ? "Offline — saved locally" : state === "conflict" ? "A newer saved import exists" : state === "error" ? "Save needs attention" : ""
-  if (!text) return null
-  return <p role="status" aria-live="polite" className={`inline-flex items-center gap-2 text-xs font-semibold ${state === "error" || state === "conflict" ? "text-amber-700" : "text-[#746E80]"}`}>{state === "saving" ? <Loader2 className="size-3.5 animate-spin" /> : state === "saved" ? <Check className="size-3.5 text-emerald-600" /> : <Save className="size-3.5" />}{text}</p>
+  if (state === "idle") return null
+  const label = state === "local" ? "Progress saved locally" : state === "saving" ? "Saving progress…" : state === "saved" ? "Progress saved" : "Progress needs attention"
+  return <span role="status" aria-live="polite" className="inline-flex items-center gap-2 text-xs font-semibold text-[#746E80]">{state === "saving" ? <Loader2 className="size-3.5 animate-spin" /> : state === "saved" ? <Check className="size-3.5 text-emerald-600" /> : <Save className="size-3.5" />}{label}</span>
 }
 
 export function ArtistImportStudio({ onPortfolioChanged, compact = false, autoOpen = false }: {
@@ -140,56 +88,60 @@ export function ArtistImportStudio({ onPortfolioChanged, compact = false, autoOp
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null)
   const headingRef = useRef<HTMLHeadingElement>(null)
-  const fileInputRef = useRef<HTMLInputElement>(null)
   const revisionRef = useRef(0)
   const hydratedRef = useRef(false)
   const lastSavedRef = useRef("")
   const googleTokenRef = useRef("")
   const autoOpenedRef = useRef(false)
   const [draft, setDraft] = useState<ArtworkImportDraftPayload>(() => blankArtworkImportDraft())
+  const [availability, setAvailability] = useState<KleioBetaImportAvailability | null>(null)
   const [previewUrls, setPreviewUrls] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(true)
-  const [importing, setImporting] = useState(false)
-  const [approving, setApproving] = useState("")
+  const [working, setWorking] = useState("")
   const [saveState, setSaveState] = useState<SaveState>("idle")
   const [error, setError] = useState("")
   const [status, setStatus] = useState("")
-  const [conflictDraft, setConflictDraft] = useState<ArtworkImportDraftPayload | null>(null)
-  const [dragging, setDragging] = useState(false)
+  const [failedCount, setFailedCount] = useState(0)
 
   const driveClientId = process.env.NEXT_PUBLIC_GOOGLE_DRIVE_CLIENT_ID ?? ""
   const driveApiKey = process.env.NEXT_PUBLIC_GOOGLE_PICKER_API_KEY ?? ""
   const driveAppId = process.env.NEXT_PUBLIC_GOOGLE_CLOUD_APP_ID ?? ""
   const driveConfigured = Boolean(driveClientId && driveApiKey)
-  const activeItem = useMemo(() => draft.items.find((item) => item.id === draft.activeItemId) ?? draft.items[0] ?? null, [draft.activeItemId, draft.items])
-  const readyToApprove = draft.items.filter((item) => item.status === "ready" && item.fields.title.value.trim())
+  const driveEnabled = availability?.google_drive_image === true
+  const addedCount = useMemo(() => draft.items.filter((item) => !itemWasDuplicate(item)).length, [draft.items])
+  const duplicateCount = draft.items.length - addedCount
 
   async function hydratePreviews(items: ArtworkImportItem[]) {
-    const missing = items.filter((item) => item.storagePath && !previewUrls[item.id])
-    if (!missing.length) return
-    const results = await Promise.allSettled(missing.map(async (item) => ({ item, preview: await loadArtworkPreview(item.storagePath) })))
+    const results = await Promise.allSettled(items.map(async (item) => ({ id: item.id, preview: await loadArtworkPreview(item.storagePath) })))
     setPreviewUrls((current) => {
       const next = { ...current }
-      for (const result of results) if (result.status === "fulfilled") next[result.value.item.id] = result.value.preview.url
+      for (const result of results) if (result.status === "fulfilled") next[result.value.id] = result.value.preview.url
       return next
     })
   }
 
   useEffect(() => {
     let active = true
-    void loadArtworkImportDraft()
-      .then((saved) => {
-        if (!active || !saved) return
+    void Promise.all([loadArtworkImportDraft().catch(() => null), loadBetaImportAvailability().catch(() => null)])
+      .then(([saved, sourceAvailability]) => {
+        if (!active) return
+        setAvailability(sourceAvailability)
+        if (!saved) return
         revisionRef.current = saved.revision
-        setDraft(saved.payload)
-        lastSavedRef.current = JSON.stringify(saved.payload)
-        void hydratePreviews(saved.payload.items)
+        const googleItems = saved.payload.items.filter((item) => item.sourceType === "google_drive_image")
+        const restored = {
+          ...saved.payload,
+          items: googleItems,
+          activeItemId: googleItems[0]?.id ?? "",
+          step: saved.payload.step === "complete" ? "complete" : googleItems.length ? "review" : "source",
+        } satisfies ArtworkImportDraftPayload
+        setDraft(restored)
+        lastSavedRef.current = JSON.stringify(restored)
+        void hydratePreviews(googleItems)
+        if (saved.payload.items.length !== googleItems.length) setStatus("Only Google Drive selections are available in the initial artist beta. Older device-import draft items were not reopened.")
       })
-      .catch((reason) => { if (active) setError(reason instanceof Error ? reason.message : "KLEIO could not restore the previous import.") })
       .finally(() => { if (active) { hydratedRef.current = true; setLoading(false) } })
     return () => { active = false }
-  // Draft recovery is intentionally evaluated once per active account.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   useEffect(() => {
@@ -198,20 +150,17 @@ export function ArtistImportStudio({ onPortfolioChanged, compact = false, autoOp
     const serialized = JSON.stringify(normalized)
     if (serialized === lastSavedRef.current) return
     saveArtworkImportDraftLocally(normalized, revisionRef.current)
-    setSaveState(navigator.onLine ? "local" : "offline")
+    setSaveState("local")
     const timer = window.setTimeout(() => {
-      if (!navigator.onLine) return setSaveState("offline")
       setSaveState("saving")
       void saveArtworkImportDraft(normalized, revisionRef.current)
-        .then((saved) => { revisionRef.current = saved.revision; lastSavedRef.current = JSON.stringify(saved.payload); setSaveState("saved") })
-        .catch(async (reason) => {
-          if (reason instanceof Error && reason.name === "KleioDraftConflictError") {
-            const saved = await loadArtworkImportDraft().catch(() => null)
-            setConflictDraft(saved?.payload ?? null)
-            setSaveState("conflict")
-          } else setSaveState(navigator.onLine ? "error" : "offline")
+        .then((saved) => {
+          revisionRef.current = saved.revision
+          lastSavedRef.current = JSON.stringify(saved.payload)
+          setSaveState("saved")
         })
-    }, 1_100)
+        .catch(() => setSaveState("error"))
+    }, 900)
     return () => window.clearTimeout(timer)
   }, [draft, loading])
 
@@ -220,51 +169,13 @@ export function ArtistImportStudio({ onPortfolioChanged, compact = false, autoOp
     autoOpenedRef.current = true
     dialogRef.current.showModal()
     window.setTimeout(() => headingRef.current?.focus(), 0)
-    void trackKleioProductEvent("import_started", { surface: "artwork_import_studio", metadata: { source: "studio_auto_open" } })
   }, [autoOpen, loading])
 
   function showStudio() {
     setError("")
-    setStatus("")
     if (!dialogRef.current?.open) dialogRef.current?.showModal()
     window.setTimeout(() => headingRef.current?.focus(), 0)
-    void trackKleioProductEvent("import_started", { surface: "artwork_import_studio", metadata: { source: "studio_open" } })
-  }
-
-  function replaceItem(nextItem: ArtworkImportItem) {
-    setDraft((current) => ({ ...current, items: current.items.map((item) => item.id === nextItem.id ? nextItem : item), updatedAt: new Date().toISOString() }))
-  }
-
-  async function importFiles(files: File[], sourceType: ArtworkImportItem["sourceType"], providerFiles?: GoogleDrivePickerFile[], force = false) {
-    if (!files.length || (importing && !force)) return
-    setImporting(true)
-    setError("")
-    let imported = 0
-    const errors: string[] = []
-    for (let index = 0; index < files.length; index += 1) {
-      const file = files[index]
-      try {
-        setStatus(`Preparing ${index + 1} of ${files.length}: ${file.name}`)
-        const provider = providerFiles?.[index]
-        const item = await createArtworkImportItem({
-          file,
-          sourceType,
-          sessionId: draft.sessionId,
-          providerFileId: provider?.id,
-          providerMetadata: provider ? { provider_name: provider.name, provider_mime_type: provider.mimeType } : undefined,
-        })
-        const preview = await loadArtworkPreview(item.storagePath)
-        setPreviewUrls((current) => ({ ...current, [item.id]: preview.url }))
-        setDraft((current) => ({ ...current, step: "review", activeItemId: item.id, items: [...current.items, item], updatedAt: new Date().toISOString() }))
-        imported += 1
-      } catch (reason) {
-        errors.push(reason instanceof Error ? reason.message : `${file.name} could not be imported.`)
-      }
-    }
-    setImporting(false)
-    setStatus(imported ? `${imported} artwork file${imported === 1 ? "" : "s"} prepared. Nothing has been added to your Creative Passport yet.` : "")
-    setError(errors.join(" "))
-    void trackKleioProductEvent("import_completed", { surface: "artwork_import_studio", metadata: { source: sourceType, result_count: imported } })
+    void trackKleioProductEvent("import_started", { surface: "artwork_import_studio", metadata: { source: "google_drive" } })
   }
 
   async function requestGoogleToken() {
@@ -286,15 +197,17 @@ export function ArtistImportStudio({ onPortfolioChanged, compact = false, autoOp
     })
   }
 
-  async function connectGoogleDrive() {
-    if (!driveConfigured || importing) return
-    setImporting(true)
+  async function chooseGoogleDriveFiles() {
+    if (!driveEnabled || !driveConfigured || working) return
+    setWorking("drive")
     setError("")
     setStatus("Opening Google Drive…")
     try {
       const accessToken = await requestGoogleToken()
       const google = window.google
-      const view = new google.picker.DocsView(google.picker.ViewId.DOCS).setMimeTypes("image/jpeg,image/png,image/webp").setMode(google.picker.DocsViewMode.LIST)
+      const view = new google.picker.DocsView(google.picker.ViewId.DOCS)
+        .setMimeTypes("image/jpeg,image/png,image/webp")
+        .setMode(google.picker.DocsViewMode.LIST)
       const selected = await new Promise<GoogleDrivePickerFile[]>((resolve, reject) => {
         const builder = new google.picker.PickerBuilder()
           .addView(view)
@@ -302,99 +215,124 @@ export function ArtistImportStudio({ onPortfolioChanged, compact = false, autoOp
           .setOAuthToken(accessToken)
           .setDeveloperKey(driveApiKey)
           .setCallback((data: { action?: string; docs?: GooglePickerDocument[] }) => {
-            if (data.action === google.picker.Action.PICKED) resolve((data.docs ?? []).flatMap((document) => document.id && (document.mimeType ?? document.type) ? [{ id: document.id, name: document.name ?? "Drive artwork", mimeType: document.mimeType ?? document.type ?? "" }] : []))
-            else if (data.action === google.picker.Action.CANCEL) resolve([])
+            if (data.action === google.picker.Action.PICKED) {
+              resolve((data.docs || []).flatMap((document) => document.id && (document.mimeType || document.type)
+                ? [{ id: document.id, name: document.name || "Drive artwork", mimeType: document.mimeType || document.type || "" }]
+                : []))
+            } else if (data.action === google.picker.Action.CANCEL) resolve([])
             else if (data.action === google.picker.Action.ERROR) reject(new Error("Google Drive could not complete the selection."))
           })
         if (driveAppId) builder.setAppId(driveAppId)
         builder.build().setVisible(true)
       })
-      if (!selected.length) return setStatus("No Drive files were selected. Your existing progress is safe.")
-      const files: File[] = []
-      const accepted: GoogleDrivePickerFile[] = []
-      for (const selectedFile of selected) {
-        try { files.push(await downloadGoogleDriveArtwork(selectedFile, accessToken)); accepted.push(selectedFile) }
-        catch (reason) { setError((current) => `${current ? `${current} ` : ""}${reason instanceof Error ? reason.message : `${selectedFile.name} could not be copied.`}`) }
+      if (!selected.length) {
+        setStatus("No Drive files were selected. Your existing progress is unchanged.")
+        return
       }
-      await importFiles(files, "google_drive_image", accepted, true)
+
+      const prepared: ArtworkImportItem[] = []
+      const failures: string[] = []
+      for (let index = 0; index < selected.length; index += 1) {
+        const selectedFile = selected[index]
+        setStatus(`Validating and copying ${index + 1} of ${selected.length}: ${selectedFile.name}`)
+        try {
+          const item = await prepareGoogleDriveArtwork({ selectedFile, accessToken, sessionId: draft.sessionId })
+          prepared.push(item)
+        } catch (reason) {
+          failures.push(reason instanceof Error ? reason.message : `${selectedFile.name} could not be imported.`)
+        }
+      }
+      if (prepared.length) {
+        await hydratePreviews(prepared)
+        setDraft((current) => ({
+          ...current,
+          step: "review",
+          activeItemId: prepared[0]?.id || current.activeItemId,
+          items: [...current.items, ...prepared],
+          updatedAt: new Date().toISOString(),
+        }))
+      }
+      setFailedCount((current) => current + failures.length)
+      setStatus(prepared.length ? `${prepared.length} selected file${prepared.length === 1 ? " is" : "s are"} ready for private Media Library confirmation.` : "")
+      setError(failures.join(" "))
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "Google Drive could not be opened.")
+      setStatus("")
     } finally {
-      setImporting(false)
+      setWorking("")
     }
   }
 
-  async function disconnectGoogleDrive() {
-    const token = googleTokenRef.current
-    googleTokenRef.current = ""
-    if (token && window.google?.accounts?.oauth2?.revoke) await new Promise<void>((resolve) => window.google.accounts.oauth2.revoke(token, () => resolve()))
-    setStatus("Google Drive access for this session was disconnected. Private copies already imported into KLEIO remain available.")
-  }
-
-  async function removeItem(item: ArtworkImportItem) {
-    if (!window.confirm(`Remove ${item.fields.title.value || item.originalFilename} from this import?`)) return
+  async function removePrepared(item: ArtworkImportItem) {
+    if (!window.confirm(`Remove ${item.fields.title.value || item.originalFilename} from this import review?`)) return
+    setWorking(item.id)
     try {
-      await removeArtworkImportItem(item)
-      setPreviewUrls((current) => { const next = { ...current }; delete next[item.id]; return next })
+      if (!itemWasDuplicate(item)) await discardUnconfirmedGoogleDriveItems([item])
       setDraft((current) => {
-        const items = current.items.filter((entry) => entry.id !== item.id)
-        return { ...current, step: items.length ? "review" : "source", activeItemId: items[0]?.id ?? "", items, updatedAt: new Date().toISOString() }
+        const items = current.items.filter((candidate) => candidate.id !== item.id)
+        return { ...current, items, step: items.length ? "review" : "source", activeItemId: items[0]?.id || "", updatedAt: new Date().toISOString() }
       })
-      setStatus("The unfinished record and its private import file were removed.")
-    } catch (reason) { setError(reason instanceof Error ? reason.message : "The item could not be removed.") }
+      setPreviewUrls((current) => { const next = { ...current }; delete next[item.id]; return next })
+      setStatus("The selection was removed from this import review.")
+    } finally {
+      setWorking("")
+    }
   }
 
-  async function approve(item: ArtworkImportItem) {
-    if (approving || item.status === "approved") return
-    setApproving(item.id)
+  async function confirmImport() {
+    if (!draft.items.length || working) return
+    setWorking("confirm")
     setError("")
     try {
-      const confirmed = confirmArtworkFields(item)
-      const portfolioWorkId = await approveArtworkImportItem(confirmed)
-      replaceItem({ ...confirmed, status: "approved", portfolioWorkId, approvedAt: new Date().toISOString() })
-      setStatus(`${confirmed.fields.title.value} was approved and added to your Creative Passport portfolio.`)
+      const sourceIds = await confirmGoogleDriveMediaImport(draft.items)
+      saveMediaImportReceipt({ source: "google_drive", addedCount, duplicateCount, failedCount, sourceIds })
+      setDraft((current) => ({ ...current, step: "complete", updatedAt: new Date().toISOString() }))
+      setStatus("")
       onPortfolioChanged?.()
-      void trackKleioProductEvent("proposal_approved", { surface: "artwork_import_studio", metadata: { status: "artwork_approved" } })
-    } catch (reason) { setError(reason instanceof Error ? reason.message : "The artwork could not be approved.") }
-    finally { setApproving("") }
+      void trackKleioProductEvent("import_completed", { surface: "artwork_import_studio", metadata: { source: "google_drive", result_count: addedCount, duplicate_count: duplicateCount, failed_count: failedCount } })
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "The selected files could not be confirmed in the Media Library.")
+    } finally {
+      setWorking("")
+    }
   }
 
-  async function approveAllReady() {
-    if (!readyToApprove.length || approving) return
-    for (const item of readyToApprove) await approve(item)
+  async function importMore() {
+    await clearArtworkImportDraft().catch(() => undefined)
+    revisionRef.current = 0
+    lastSavedRef.current = ""
+    setDraft(blankArtworkImportDraft())
+    setPreviewUrls({})
+    setFailedCount(0)
+    setError("")
+    setStatus("Choose another set of files from Google Drive.")
   }
 
-  async function startFresh() {
-    if (draft.items.some((item) => item.status !== "approved") && !window.confirm("Delete the unfinished import draft and its unapproved files?")) return
-    setImporting(true)
+  async function discardReview() {
+    if (draft.items.length && !window.confirm("Discard this unconfirmed import review? New private copies from this review will be removed; existing duplicates remain in your Media Library.")) return
+    setWorking("discard")
     try {
-      for (const item of draft.items.filter((entry) => entry.status !== "approved")) await removeArtworkImportItem(item).catch(() => undefined)
+      await discardUnconfirmedGoogleDriveItems(draft.items)
       await clearArtworkImportDraft()
       revisionRef.current = 0
       lastSavedRef.current = ""
-      setPreviewUrls({})
       setDraft(blankArtworkImportDraft())
-      setStatus("A new private import is ready.")
-    } catch (reason) { setError(reason instanceof Error ? reason.message : "The import could not be reset.") }
-    finally { setImporting(false) }
-  }
-
-  function restoreConflict() {
-    if (!conflictDraft) return
-    setDraft(conflictDraft)
-    setConflictDraft(null)
-    setSaveState("saved")
-    void hydratePreviews(conflictDraft.items)
+      setPreviewUrls({})
+      setFailedCount(0)
+      setError("")
+      setStatus("A fresh Google Drive import is ready.")
+    } finally {
+      setWorking("")
+    }
   }
 
   const launcher = compact ? (
-    <button type="button" className={secondary} onClick={showStudio}><Upload className="size-4" />Import artwork</button>
+    <button type="button" className={secondary} onClick={showStudio}><Cloud className="size-4" />Import from Google Drive</button>
   ) : (
-    <section className="relative overflow-hidden rounded-[26px] border border-[#E2DCF1] bg-[linear-gradient(145deg,#F9F6FF,#FFFFFF)] p-6 shadow-[0_22px_70px_rgba(82,64,130,0.07)]" aria-labelledby="artwork-import-launcher">
-      <div aria-hidden="true" className="absolute -right-16 -top-20 size-56 rounded-full bg-[#E9E1FA]/70 blur-3xl" />
-      <div className="relative flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
-        <div className="max-w-2xl"><p className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-[#75639E]">Creative Passport import</p><h2 id="artwork-import-launcher" className="mt-2 font-serif text-2xl font-semibold tracking-[-0.03em]">Bring your existing artwork into KLEIO</h2><p className="mt-2 text-sm leading-6 text-[#746E80]">Choose images from your device or Google Drive. KLEIO reads available file information, prepares editable records, and waits for approval before saving.</p><div className="mt-3 flex flex-wrap gap-4 text-xs font-semibold text-[#6A5896]"><span className="inline-flex items-center gap-1.5"><ShieldCheck className="size-3.5" />Private by default</span><span className="inline-flex items-center gap-1.5"><Sparkles className="size-3.5" />Suggestions stay editable</span><span className="inline-flex items-center gap-1.5"><Save className="size-3.5" />Progress autosaves</span></div></div>
-        <button type="button" className={primary} onClick={showStudio}><FolderOpen className="size-4" />Open Import Studio</button>
+    <section className="rounded-[26px] border border-[#E2DCF1] bg-[linear-gradient(145deg,#F9F6FF,#FFFFFF)] p-6 shadow-[0_22px_70px_rgba(82,64,130,0.07)]" aria-labelledby="drive-import-launcher">
+      <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+        <div className="max-w-2xl"><p className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-[#75639E]">Active beta import source</p><h2 id="drive-import-launcher" className="mt-2 font-serif text-2xl font-semibold">Choose artwork from Google Drive</h2><p className="mt-2 text-sm leading-6 text-[#746E80]">KLEIO receives only the files you deliberately select. Private Media Library records are created first; nothing is added to a public Portfolio, Creative Passport, profile, or application automatically.</p><p className="mt-3 text-xs font-semibold text-[#6A5896]"><ShieldCheck className="mr-1.5 inline size-3.5" />Private by default · artist account ownership required</p></div>
+        <button type="button" className={primary} onClick={showStudio}><FolderOpen className="size-4" />Open Google Drive import</button>
       </div>
     </section>
   )
@@ -402,44 +340,41 @@ export function ArtistImportStudio({ onPortfolioChanged, compact = false, autoOp
   return (
     <>
       {launcher}
-      <dialog ref={dialogRef} aria-labelledby="artwork-import-title" aria-describedby="artwork-import-description" className="fixed inset-0 m-0 h-dvh max-h-none w-screen max-w-none overflow-hidden border-0 bg-white p-0 text-[#292631] shadow-2xl backdrop:bg-[#20182D]/45 backdrop:backdrop-blur-sm sm:inset-auto sm:m-auto sm:h-[min(860px,calc(100dvh-32px))] sm:w-[min(1280px,calc(100vw-32px))] sm:rounded-[28px] sm:border sm:border-[#DCD4EF]" onCancel={() => setStatus("Import progress is saved. Reopen the Studio to continue.")}>
+      <dialog ref={dialogRef} aria-labelledby="drive-import-title" aria-describedby="drive-import-description" className="fixed inset-0 m-0 h-dvh max-h-none w-screen max-w-none overflow-hidden border-0 bg-white p-0 text-[#292631] shadow-2xl backdrop:bg-[#20182D]/45 backdrop:backdrop-blur-sm sm:inset-auto sm:m-auto sm:h-[min(840px,calc(100dvh-32px))] sm:w-[min(1120px,calc(100vw-32px))] sm:rounded-[28px] sm:border sm:border-[#DCD4EF]" onCancel={() => setStatus("Import progress is saved. Reopen the Studio to continue.")}>
         <div className="flex h-full min-h-0 flex-col bg-[#FCFBFE]">
           <header className="flex shrink-0 items-start justify-between gap-4 border-b border-[#E7E1F7] bg-white px-4 py-4 sm:px-6">
-            <div><p className="text-[0.66rem] font-semibold uppercase tracking-[0.16em] text-[#75639E]">Artist-controlled import</p><h2 id="artwork-import-title" ref={headingRef} tabIndex={-1} className="mt-1 font-serif text-2xl font-semibold outline-none">Import Studio</h2><p id="artwork-import-description" className="mt-1 max-w-3xl text-xs leading-5 text-[#746E80]">KLEIO imports only files you select. Extracted information and suggestions remain separate until you review and approve the artwork record.</p></div>
-            <div className="flex items-center gap-2"><SaveStatus state={saveState} /><button type="button" className="grid size-11 place-items-center rounded-xl border border-[#E2DCF1] bg-white" onClick={() => dialogRef.current?.close()} aria-label="Close Import Studio"><X className="size-5" /></button></div>
+            <div><p className="text-[0.66rem] font-semibold uppercase tracking-[0.16em] text-[#75639E]">Google Drive · artist beta</p><h2 id="drive-import-title" ref={headingRef} tabIndex={-1} className="mt-1 font-serif text-2xl font-semibold outline-none">Import Studio</h2><p id="drive-import-description" className="mt-1 max-w-3xl text-xs leading-5 text-[#746E80]">Review the exact files KLEIO copied privately before confirming the Media Library handoff.</p></div>
+            <div className="flex items-center gap-2"><SaveStatus state={saveState} /><button type="button" className="grid size-11 place-items-center rounded-xl border border-[#E2DCF1] bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#A997E8]/20" onClick={() => dialogRef.current?.close()} aria-label="Close Import Studio"><X className="size-5" /></button></div>
           </header>
-          {conflictDraft && <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950" role="alert"><p><strong>Newer import progress exists.</strong> Load it before continuing.</p><button type="button" className={secondary} onClick={restoreConflict}><RotateCcw className="size-4" />Load latest</button></div>}
-          {(error || status) && <div className={`shrink-0 border-b px-4 py-3 text-sm sm:px-6 ${error ? "border-red-200 bg-red-50 text-red-700" : "border-[#E7E1F7] bg-[#F9F7FC] text-[#625C70]"}`} role={error ? "alert" : "status"}>{error || status}</div>}
 
-          <div className="min-h-0 flex-1 overflow-y-auto">
-            {loading ? <div className="grid min-h-full place-items-center"><p className="flex items-center gap-2 text-sm text-[#746E80]"><Loader2 className="size-4 animate-spin" />Restoring your import…</p></div> : draft.step === "source" ? (
-              <main className="mx-auto flex min-h-full max-w-5xl flex-col justify-center gap-5 px-4 py-8 sm:px-6">
-                <div className="grid gap-5 md:grid-cols-2">
-                  <section className={`rounded-3xl border-2 border-dashed p-6 text-center transition ${dragging ? "border-[#8C78BF] bg-[#F5F1FD]" : "border-[#D8D0F2] bg-white"}`} onDragEnter={(event) => { event.preventDefault(); setDragging(true) }} onDragOver={(event) => event.preventDefault()} onDragLeave={() => setDragging(false)} onDrop={(event) => { event.preventDefault(); setDragging(false); void importFiles(Array.from(event.dataTransfer.files), "device_image") }}>
-                    <span className="mx-auto grid size-12 place-items-center rounded-2xl bg-[#F0EAFB] text-[#5B4B8A]"><Upload className="size-5" /></span><h3 className="mt-4 font-serif text-xl font-semibold">Upload from device</h3><p className="mt-2 text-sm leading-6 text-[#746E80]">JPEG, PNG, or WebP, up to 20 MB each. Drag files here or use the file picker.</p><button type="button" className={`${secondary} mt-5`} disabled={importing} onClick={() => fileInputRef.current?.click()}>{importing ? <Loader2 className="size-4 animate-spin" /> : <ImagePlus className="size-4" />}Choose artwork files</button><input ref={fileInputRef} type="file" multiple accept={ARTWORK_IMPORT_ACCEPT} className="sr-only" onChange={(event) => void importFiles(Array.from(event.target.files ?? []), "device_image")} />
-                  </section>
-                  <section className="rounded-3xl border border-[#E2DCF1] bg-white p-6 text-center"><span className="mx-auto grid size-12 place-items-center rounded-2xl bg-[#F0EAFB] text-[#5B4B8A]"><Cloud className="size-5" /></span><h3 className="mt-4 font-serif text-xl font-semibold">Choose from Google Drive</h3><p className="mt-2 text-sm leading-6 text-[#746E80]">Drive permission is separate from Google login. KLEIO receives only files you deliberately select.</p><button type="button" className={`${secondary} mt-5`} disabled={!driveConfigured || importing} onClick={() => void connectGoogleDrive()}>{importing ? <Loader2 className="size-4 animate-spin" /> : <FolderOpen className="size-4" />}Connect and choose files</button>{!driveConfigured && <p className="mt-3 text-xs leading-5 text-amber-700">Drive code is ready, but the restricted client ID and Picker key must be added to this deployment.</p>}</section>
-                </div>
-                <button type="button" className={`${quiet} mx-auto`} onClick={() => dialogRef.current?.close()}>Skip for now</button>
+          {(error || status) && <div className={`shrink-0 border-b px-4 py-3 text-sm sm:px-6 ${error ? "border-red-200 bg-red-50 text-red-700" : "border-[#E7E1F7] bg-[#F9F7FC] text-[#625C70]"}`} role={error ? "alert" : "status"} aria-live="polite">{error || status}</div>}
+
+          <div className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-6">
+            {loading ? <div className="grid min-h-full place-items-center"><p className="flex items-center gap-2 text-sm text-[#746E80]"><Loader2 className="size-4 animate-spin" />Restoring your private import review…</p></div> : draft.step === "complete" ? (
+              <main className="mx-auto grid min-h-full max-w-2xl place-items-center py-8 text-center">
+                <section className="w-full rounded-[28px] border border-emerald-200 bg-[linear-gradient(145deg,#F2FCF7,#FFFFFF)] p-6 shadow-[0_22px_70px_rgba(54,112,82,0.08)] sm:p-8" role="status" aria-live="polite">
+                  <span className="mx-auto grid size-14 place-items-center rounded-2xl bg-emerald-100 text-emerald-800"><Check className="size-7" /></span>
+                  <h3 className="mt-5 font-serif text-3xl font-semibold">{addedCount} item{addedCount === 1 ? "" : "s"} added to your Media Library</h3>
+                  <p className="mt-3 text-sm leading-7 text-[#625C70]">Your selected files were saved privately. You can review, organize, and reuse them across your Portfolio, Creative Passport, profile, and applications.</p>
+                  {duplicateCount > 0 && <p className="mt-3 text-sm font-semibold text-[#5B4B8A]">{duplicateCount} selected file{duplicateCount === 1 ? " was" : "s were"} already in your Media Library and were not counted as new.</p>}
+                  {failedCount > 0 && <p className="mt-2 text-sm font-semibold text-amber-800">{failedCount} file{failedCount === 1 ? "" : "s"} could not be imported. The successful items remain available.</p>}
+                  <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row"><Link href="/artist-dashboard/media/" className={primary}>View Media Library</Link><button type="button" className={secondary} onClick={() => void importMore()}><RotateCcw className="size-4" />Import more</button></div>
+                </section>
+              </main>
+            ) : draft.step === "source" ? (
+              <main className="mx-auto flex min-h-full max-w-3xl flex-col justify-center py-8">
+                <section className="rounded-[28px] border border-[#E2DCF1] bg-white p-6 text-center shadow-[0_18px_52px_rgba(82,64,130,0.06)] sm:p-8">
+                  <span className="mx-auto grid size-14 place-items-center rounded-2xl bg-[#F0EAFB] text-[#5B4B8A]"><Cloud className="size-6" /></span><h3 className="mt-5 font-serif text-2xl font-semibold">Choose from Google Drive</h3><p className="mx-auto mt-3 max-w-xl text-sm leading-7 text-[#746E80]">Google permission is separate from KLEIO sign-in. The Picker lets you choose specific JPEG, PNG, or WebP files; KLEIO does not browse the rest of your Drive.</p>
+                  <button type="button" className={`${primary} mt-6`} disabled={!driveConfigured || !driveEnabled || Boolean(working)} onClick={() => void chooseGoogleDriveFiles()}>{working === "drive" ? <Loader2 className="size-4 animate-spin" /> : <FolderOpen className="size-4" />}Connect and choose files</button>
+                  {!driveEnabled && <p className="mt-4 text-xs font-semibold text-amber-800">Google Drive import is not enabled in the current beta configuration.</p>}
+                  {driveEnabled && !driveConfigured && <p className="mt-4 text-xs font-semibold text-amber-800">The restricted Google client ID and Picker key are not configured for this deployment.</p>}
+                </section>
               </main>
             ) : (
-              <main className="grid min-h-full lg:grid-cols-[230px_minmax(0,1fr)_390px]">
-                <aside className="border-b border-[#E7E1F7] bg-white p-3 lg:border-b-0 lg:border-r lg:p-4" aria-label="Imported artwork files">
-                  <div className="flex items-center justify-between"><div><p className="text-xs font-semibold">Selected works</p><p className="text-[0.7rem] text-[#8A8296]">{draft.items.length} in this import</p></div><button type="button" className="grid size-10 place-items-center rounded-xl border border-[#E2DCF1]" onClick={() => fileInputRef.current?.click()} aria-label="Add more artwork files"><ImagePlus className="size-4" /></button><input ref={fileInputRef} type="file" multiple accept={ARTWORK_IMPORT_ACCEPT} className="sr-only" onChange={(event) => void importFiles(Array.from(event.target.files ?? []), "device_image")} /></div>
-                  <div className="mt-3 flex gap-2 overflow-x-auto pb-2 lg:grid lg:max-h-[calc(100dvh-270px)] lg:overflow-y-auto lg:overflow-x-hidden">{draft.items.map((item, index) => <button key={item.id} type="button" aria-current={activeItem?.id === item.id ? "true" : undefined} onClick={() => setDraft((current) => ({ ...current, activeItemId: item.id }))} className={`relative min-w-32 overflow-hidden rounded-2xl border bg-white text-left focus-visible:ring-4 focus-visible:ring-[#A997E8]/20 lg:min-w-0 ${activeItem?.id === item.id ? "border-[#8C78BF] ring-2 ring-[#A997E8]/20" : "border-[#E7E1F7]"}`}>{previewUrls[item.id] ? <img src={previewUrls[item.id]} alt="" className="aspect-[4/3] w-full object-cover" /> : <div className="grid aspect-[4/3] place-items-center bg-[#F7F4FC]"><Loader2 className="size-4 animate-spin" /></div>}<span className="block truncate px-2.5 py-2 text-xs font-semibold">{item.fields.title.value || item.originalFilename}</span><span className="absolute left-2 top-2 rounded-full bg-white/95 px-2 py-1 text-[0.62rem] font-bold">{item.status === "approved" ? "Approved" : index + 1}</span></button>)}</div>
-                  <div className="mt-3 grid gap-2"><button type="button" className={secondary} disabled={!driveConfigured || importing} onClick={() => void connectGoogleDrive()}><Cloud className="size-4" />Add from Drive</button>{googleTokenRef.current && <button type="button" className={quiet} onClick={() => void disconnectGoogleDrive()}>Disconnect Drive</button>}<button type="button" className={quiet} disabled={importing} onClick={() => void startFresh()}><RotateCcw className="size-4" />Start fresh</button></div>
-                </aside>
-
-                {activeItem && <>
-                  <section className="min-h-[420px] bg-[#F4F1F8] p-4 sm:p-6 lg:flex lg:min-h-0 lg:items-center lg:justify-center lg:p-8"><div className="mx-auto w-full max-w-3xl"><div className="overflow-hidden rounded-3xl border border-white/80 bg-white shadow-[0_28px_80px_rgba(58,43,92,0.16)]">{previewUrls[activeItem.id] ? <img src={previewUrls[activeItem.id]} alt={activeItem.fields.altText.value || activeItem.fields.title.value || "Imported artwork preview"} className="max-h-[58dvh] w-full object-contain" /> : <div className="grid aspect-[4/3] place-items-center"><Loader2 className="size-4 animate-spin" /></div>}</div><div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-xs text-[#746E80]"><div><p className="font-semibold text-[#625C70]">{activeItem.originalFilename}</p><p>{activeItem.mimeType} · {readableBytes(activeItem.byteSize)}{activeItem.width && activeItem.height ? ` · ${activeItem.width} × ${activeItem.height}px` : ""}</p></div><span className="rounded-full border border-[#D8D0F2] bg-white px-3 py-1.5 font-semibold">{activeItem.sourceType === "google_drive_image" ? "Google Drive selection" : "Device upload"}</span></div></div></section>
-                  <aside className="border-t border-[#E7E1F7] bg-white p-4 lg:max-h-[calc(100dvh-170px)] lg:overflow-y-auto lg:border-l lg:border-t-0 sm:p-5" aria-label="Artwork record editor">
-                    <div className="flex items-start justify-between"><div><p className="text-[0.68rem] font-semibold uppercase tracking-[0.15em] text-[#75639E]">Editable artwork record</p><h3 className="mt-1 font-serif text-2xl font-semibold">{activeItem.status === "approved" ? "Approved record" : "Review before saving"}</h3></div>{activeItem.status !== "approved" && <button type="button" className="grid size-10 place-items-center rounded-xl text-[#8A8296] hover:bg-red-50 hover:text-red-700" onClick={() => void removeItem(activeItem)} aria-label={`Remove ${activeItem.fields.title.value || activeItem.originalFilename}`}><Trash2 className="size-4" /></button>}</div>
-                    <p className="mt-2 text-xs leading-5 text-[#746E80]">Every value shows whether it was extracted, suggested, edited, or confirmed. Blank fields remain blank rather than being invented.</p>
-                    <datalist id="kleio-medium-options">{mediumOptions.map((option) => <option key={option} value={option} />)}</datalist>
-                    <div className="mt-5 grid gap-4"><ArtworkField label="Artwork title" field={activeItem.fields.title} disabled={activeItem.status === "approved"} onChange={(value) => replaceItem(updateArtworkField(activeItem, "title", value))} /><div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2"><ArtworkField label="Year" field={activeItem.fields.year} disabled={activeItem.status === "approved"} onChange={(value) => replaceItem(updateArtworkField(activeItem, "year", value))} /><ArtworkField label="Medium" list="kleio-medium-options" field={activeItem.fields.medium} disabled={activeItem.status === "approved"} onChange={(value) => replaceItem(updateArtworkField(activeItem, "medium", value))} /><ArtworkField label="Dimensions" field={activeItem.fields.dimensions} disabled={activeItem.status === "approved"} onChange={(value) => replaceItem(updateArtworkField(activeItem, "dimensions", value))} /><ArtworkField label="Series" field={activeItem.fields.series} disabled={activeItem.status === "approved"} onChange={(value) => replaceItem(updateArtworkField(activeItem, "series", value))} /></div><ArtworkField label="Description" multiline field={activeItem.fields.description} disabled={activeItem.status === "approved"} onChange={(value) => replaceItem(updateArtworkField(activeItem, "description", value))} /><ArtworkField label="Keywords" field={activeItem.fields.tags} disabled={activeItem.status === "approved"} onChange={(value) => replaceItem(updateArtworkField(activeItem, "tags", value))} /><ArtworkField label="Accessibility description" multiline field={activeItem.fields.altText} disabled={activeItem.status === "approved"} onChange={(value) => replaceItem(updateArtworkField(activeItem, "altText", value))} /></div>
-                    <div className="mt-6 grid gap-2 border-t border-[#E7E1F7] pt-5">{activeItem.status === "approved" ? <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-3 text-sm font-semibold text-emerald-800"><Check className="mr-2 inline size-4" />Approved and saved to your portfolio.</p> : <button type="button" className={primary} disabled={approving === activeItem.id || !activeItem.fields.title.value.trim()} onClick={() => void approve(activeItem)}>{approving === activeItem.id ? <Loader2 className="size-4 animate-spin" /> : <ShieldCheck className="size-4" />}Approve and add to Creative Passport</button>}{readyToApprove.length > 1 && <button type="button" className={secondary} disabled={Boolean(approving)} onClick={() => void approveAllReady()}>Approve all {readyToApprove.length} complete records</button>}<p className="text-[0.7rem] leading-5 text-[#8A8296]">Saving the import draft is not approval. Only the approval button creates a portfolio record.</p></div>
-                  </aside>
-                </>}
+              <main className="mx-auto max-w-5xl py-2">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between"><div><p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#75639E]">Private import review</p><h3 className="mt-1 font-serif text-2xl font-semibold">Confirm the selected files</h3><p className="mt-2 text-sm text-[#746E80]">{draft.items.length} valid selection{draft.items.length === 1 ? "" : "s"} · {addedCount} new · {duplicateCount} already in your library{failedCount ? ` · ${failedCount} failed` : ""}</p></div><div className="flex flex-wrap gap-2"><button type="button" className={secondary} disabled={Boolean(working)} onClick={() => void chooseGoogleDriveFiles()}><Cloud className="size-4" />Add from Drive</button><button type="button" className={primary} disabled={!draft.items.length || Boolean(working)} onClick={() => void confirmImport()}>{working === "confirm" ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />}Confirm private import</button></div></div>
+                <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{draft.items.map((item) => <article key={item.id} className="overflow-hidden rounded-[22px] border border-[#E7E1F7] bg-white shadow-[0_14px_38px_rgba(82,64,130,0.05)]"><div className="grid aspect-[4/3] place-items-center bg-[#F4F1F8]">{previewUrls[item.id] ? <img src={previewUrls[item.id]} alt={item.fields.altText.value || "Selected artwork preview"} className="size-full object-cover" /> : <Loader2 className="size-4 animate-spin" />}</div><div className="p-4"><div className="flex items-start justify-between gap-3"><span className="rounded-full border border-[#D8D0F2] bg-[#FAF9FD] px-2.5 py-1 text-[0.65rem] font-semibold text-[#5B4B8A]">{itemWasDuplicate(item) ? "Already in library" : "New private item"}</span><button type="button" className="grid size-9 place-items-center rounded-lg text-[#8A8296] hover:bg-red-50 hover:text-red-700 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#A997E8]/20" disabled={working === item.id} onClick={() => void removePrepared(item)} aria-label={`Remove ${item.fields.title.value || item.originalFilename} from import review`}>{working === item.id ? <Loader2 className="size-4 animate-spin" /> : <Trash2 className="size-4" />}</button></div><label className="mt-4 grid gap-1.5 text-xs font-semibold text-[#625C70]">Private library title<input className={input} value={item.fields.title.value} placeholder={item.originalFilename} onChange={(event) => setDraft((current) => ({ ...current, items: current.items.map((candidate) => candidate.id === item.id ? updateArtworkField(candidate, "title", event.target.value) : candidate), updatedAt: new Date().toISOString() }))} /></label><p className="mt-3 truncate text-xs text-[#81788E]">{item.originalFilename}</p></div></article>)}</div>
+                <div className="mt-6 flex flex-wrap justify-between gap-3 border-t border-[#E7E1F7] pt-5"><button type="button" className={quiet} disabled={Boolean(working)} onClick={() => void discardReview()}><RotateCcw className="size-4" />Discard review</button><p className="max-w-xl text-xs leading-5 text-[#81788E]">Confirming creates or updates private Media Library records only. Public Portfolio and Creative Passport use still require a separate artist approval.</p></div>
               </main>
             )}
           </div>
