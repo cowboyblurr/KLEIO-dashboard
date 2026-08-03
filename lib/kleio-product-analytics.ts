@@ -27,8 +27,20 @@ type CompanionEvent = {
 }
 
 const SESSION_KEY = "kleio:analytics:anonymous-session:v2"
+const ACQUISITION_KEY = "kleio:analytics:first-touch-source:v1"
 const SESSION_MAX_AGE_MS = 14 * 24 * 60 * 60 * 1_000
 const SAFE_DIMENSION = /^[a-z0-9][a-z0-9_:-]{0,79}$/
+const ACQUISITION_SOURCES = new Set([
+  "direct_outreach",
+  "artist_referral",
+  "institution_referral",
+  "linkedin",
+  "instagram",
+  "organic_search",
+  "direct",
+  "opportunity_entry",
+  "unknown",
+])
 const SAFE_METADATA_KEYS = new Set([
   "action",
   "capability",
@@ -139,7 +151,7 @@ function releaseChannel(): KleioReleaseChannel {
   return "founding_artist_beta"
 }
 
-function acquisitionSource() {
+function detectAcquisitionSource() {
   if (typeof window === "undefined") return "unknown"
   const querySource = safeDimension(new URLSearchParams(window.location.search).get("utm_source"), "")
   if (querySource) {
@@ -161,6 +173,19 @@ function acquisitionSource() {
     return "unknown"
   } catch {
     return "unknown"
+  }
+}
+
+function acquisitionSource() {
+  if (typeof window === "undefined") return "unknown"
+  try {
+    const stored = window.localStorage.getItem(ACQUISITION_KEY)
+    if (stored && ACQUISITION_SOURCES.has(stored)) return stored
+    const detected = detectAcquisitionSource()
+    window.localStorage.setItem(ACQUISITION_KEY, detected)
+    return detected
+  } catch {
+    return detectAcquisitionSource()
   }
 }
 
