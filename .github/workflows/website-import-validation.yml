@@ -1,19 +1,34 @@
-name: Website Import Validation
+name: Website and Beta Media Import Validation
 
 on:
   pull_request:
     branches: [main]
     paths:
-      - "components/kleio/website-import-assist.tsx"
+      - "components/kleio/artist-import-studio.tsx"
       - "components/kleio/artist-import-studio-page.tsx"
+      - "components/kleio/artist-import-studio-with-gallery-view.tsx"
+      - "components/kleio/import-source-hub.tsx"
+      - "components/kleio/artist-media-library.tsx"
+      - "components/kleio/media-import/quick-media-import.tsx"
+      - "components/kleio/website-import-assist.tsx"
+      - "components/kleio/website-organization-assist.tsx"
+      - "lib/kleio-artwork-import.ts"
+      - "lib/kleio-google-drive-beta-import.ts"
+      - "lib/kleio-import-receipt.ts"
+      - "lib/kleio-import-source-availability.ts"
       - "lib/kleio-website-import.ts"
+      - "lib/kleio-website-scan-api.ts"
+      - "scripts/audit-artist-import-studio.mjs"
+      - "scripts/audit-universal-media-import.mjs"
       - "scripts/audit-website-import-assist.mjs"
+      - "scripts/audit-gemini-website-intelligence.mjs"
       - "supabase/functions/analyze-artist-website/**"
-      - "supabase/functions/kleio-assist/**"
-      - "supabase/migrations/20260801223000_website_import_assist.sql"
-      - "supabase/migrations/20260801224000_kleio_assist_drafts.sql"
-      - "supabase/migrations/20260801231500_kleio_assist_cloudflare_beta.sql"
-      - "supabase/migrations/20260801234500_enforce_website_import_rights.sql"
+      - "supabase/functions/analyze-artist-website-core/**"
+      - "supabase/functions/analyze-artist-website-intelligence/**"
+      - "supabase/functions/instagram-import/**"
+      - "supabase/functions/organize-website-evidence/**"
+      - "supabase/migrations/20260803130500_website_import_evidence_grades.sql"
+      - "supabase/migrations/20260803133000_beta_import_source_availability.sql"
       - "package.json"
       - "pnpm-lock.yaml"
   workflow_dispatch:
@@ -24,7 +39,7 @@ permissions:
 jobs:
   validate:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 30
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -50,6 +65,7 @@ jobs:
           pnpm audit:universal-media
           pnpm audit:upload-to-passport
           pnpm audit:website-import
+          pnpm audit:gemini-website
 
       - name: Typecheck
         run: pnpm typecheck

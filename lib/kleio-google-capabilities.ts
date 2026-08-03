@@ -23,5 +23,5 @@ export function googleAuthenticationAvailabilityMessage(locale: "en" | "es" = "e
 export function googleDriveAvailabilityMessage() {
   return isGoogleDriveConfigured()
     ? "Drive access is separate from Google login. KLEIO receives only files you select in Google Picker."
-    : "Google Drive setup is pending. Upload from this device or reuse your private KLEIO Library for now."
+    : "Google Drive setup is pending for this deployment. No other new import source is active during the initial artist beta."
 }

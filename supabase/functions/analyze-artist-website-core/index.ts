@@ -6,16 +6,16 @@ Deno.serve((request: Request) => {
       headers: {
         "Access-Control-Allow-Origin": "https://www.kleioarthouse.com",
         "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-        "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+        "Access-Control-Allow-Methods": "POST, OPTIONS",
         "Vary": "Origin",
       },
     })
   }
 
   return new Response(JSON.stringify({
-    error: "instagram_import_beta_disabled",
+    error: "website_import_beta_disabled",
     status: "coming_soon",
-    message: "Instagram import is not available during the initial KLEIO artist beta.",
+    message: "Website Import Assist is not active during the initial KLEIO artist beta.",
   }), {
     status: 403,
     headers: {

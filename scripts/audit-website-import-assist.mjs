@@ -12,100 +12,89 @@ function forbidText(content, pattern, message) {
   if (pattern.test(content)) throw new Error(message)
 }
 
-const websiteMigration = read("supabase/migrations/20260801223000_website_import_assist.sql")
-const assistMigration = read("supabase/migrations/20260801224000_kleio_assist_drafts.sql")
-const cloudflareMigration = read("supabase/migrations/20260801231500_kleio_assist_cloudflare_beta.sql")
-const rightsMigration = read("supabase/migrations/20260801234500_enforce_website_import_rights.sql")
-const collector = read("supabase/functions/analyze-artist-website/index.ts")
-const assist = read("supabase/functions/kleio-assist/index.ts")
-const client = read("lib/kleio-website-import.ts")
+const originalMigration = read("supabase/migrations/20260801223000_website_import_assist.sql")
+const gradeMigration = read("supabase/migrations/20260803130500_website_import_evidence_grades.sql")
+const betaMigration = read("supabase/migrations/20260803133000_beta_import_source_availability.sql")
+const gateway = read("supabase/functions/analyze-artist-website/index.ts")
+const core = read("supabase/functions/analyze-artist-website-core/index.ts")
+const futureCollector = read("supabase/functions/analyze-artist-website-core/future-collector.ts")
+const intelligence = read("supabase/functions/analyze-artist-website-intelligence/index.ts")
+const client = read("lib/kleio-website-scan-api.ts")
+const legacyClient = read("lib/kleio-website-import.ts")
 const studio = read("components/kleio/website-import-assist.tsx")
+const organizer = read("components/kleio/website-organization-assist.tsx")
 const page = read("components/kleio/artist-import-studio-page.tsx")
 
-for (const [migration, table] of [
-  [websiteMigration, "artist_website_import_sessions"],
-  [assistMigration, "artist_ai_drafts"],
-  [cloudflareMigration, "artist_ai_usage_events"],
-]) {
-  requireText(migration, new RegExp(`(?:create table if not exists|alter table) public\\.${table}`), `Missing ${table} migration.`)
-  requireText(migration, new RegExp(`alter table public\\.${table} enable row level security`), `RLS is not enabled for ${table}.`)
-  requireText(migration, /select auth\.uid\(\)/, `${table} policies must be owner-scoped.`)
-  forbidText(migration, /disable row level security/i, `${table} migration weakens RLS.`)
+requireText(originalMigration, /artist_website_import_sessions/, "Website session migration is missing.")
+requireText(originalMigration, /enable row level security/, "Website sessions must remain protected by RLS.")
+requireText(originalMigration, /select auth\.uid\(\)/, "Website session policies must remain owner-scoped.")
+forbidText(originalMigration, /disable row level security/i, "Website session migration weakens RLS.")
+
+for (const status of ["limited_review", "image_only_review", "manual_input_recommended", "blocked", "dismissed"]) {
+  requireText(gradeMigration, new RegExp(`'${status}'`), `Missing website evidence status: ${status}.`)
+}
+requireText(gradeMigration, /scan_summary jsonb/, "Website sessions must store artist-facing scan coverage.")
+requireText(gradeMigration, /dismissed_at timestamptz/, "Cleared scans must preserve audit history through dismissal.")
+requireText(gradeMigration, /status not in \('dismissed', 'expired'\)/, "Active-session queries need an index that excludes dismissed and expired scans.")
+forbidText(gradeMigration, /delete from|truncate|drop table|drop column/i, "Evidence-grade migration must remain additive.")
+
+requireText(gateway, /WEBSITE_IMPORT_BETA_ENABLED/, "Website Import must be controlled by a server-side beta flag.")
+requireText(gateway, /website_import_beta_disabled/, "Website Import gateway must fail closed while inactive.")
+requireText(gateway, /CORE_FUNCTION = "analyze-artist-website-core"/, "The gateway/core boundary must remain explicit for a deliberate future re-enable.")
+requireText(gateway, /INTELLIGENCE_FUNCTION = "analyze-artist-website-intelligence"/, "The evidence validator must remain isolated from the future collector.")
+requireText(core, /website_import_beta_disabled/, "The directly addressable Website Import core must fail closed during the initial beta.")
+requireText(core, /status: "coming_soon"/, "The disabled Website Import core must identify the capability honestly.")
+requireText(core, /status: 403/, "The disabled Website Import core must not return a false success.")
+forbidText(core, /raw\.githubusercontent\.com|Deno\.resolveDns|artist_website_import_sessions/, "The disabled core route must not load or execute collection code.")
+requireText(futureCollector, /raw\.githubusercontent\.com\/cowboyblurr\/KLEIO-dashboard\/[a-f0-9]{40}\//, "The reviewed future collector must remain pinned to immutable source.")
+forbidText(futureCollector, /raw\.githubusercontent\.com\/cowboyblurr\/KLEIO-dashboard\/(main|master|fix\/|feature\/)/, "The future collector must not import mutable branch source.")
+
+requireText(intelligence, /private_network_url_blocked/, "Website evidence validation lacks SSRF private-network blocking.")
+requireText(intelligence, /Deno\.resolveDns/, "Website evidence validation must resolve and validate public addresses.")
+requireText(intelligence, /allowedByRobots/, "Website evidence validation must respect robots rules.")
+requireText(intelligence, /MAX_PAGES = 8/, "Website evidence validation must remain page-limited.")
+requireText(intelligence, /MAX_HTML = 2 \* 1024 \* 1024/, "Website evidence validation must remain byte-limited.")
+requireText(intelligence, /if \(!text\(raw,2_000\)\) return/, "Empty image sources must be rejected before URL resolution.")
+requireText(intelligence, /url === parsed\.page\.url/, "A page URL must never be accepted as its own image candidate.")
+requireText(intelligence, /signature\(resource\.bytes,resource\.type\)/, "Presented image candidates must pass file-signature validation.")
+requireText(intelligence, /NOISE\.test/, "Logos, icons, trackers and placeholders must be rejected.")
+requireText(intelligence, /__NEXT_DATA__/, "Public Next.js application data must be inspected when available.")
+requireText(intelligence, /embedded_application_data/, "Public embedded application state must be tracked as an extraction method.")
+requireText(intelligence, /sitemap\.xml/, "Sitemap discovery must be attempted within the crawl boundary.")
+requireText(intelligence, /manual_input_recommended/, "Insufficient evidence must produce an honest manual-recovery status.")
+requireText(intelligence, /image_only_review/, "Valid imagery without text must be classified separately.")
+requireText(intelligence, /limited_review/, "Restricted but usable text must be classified separately.")
+requireText(intelligence, /gemini_called:false/, "The deterministic collector must state that Gemini was not called.")
+requireText(intelligence, /action===\"dismiss\"/, "Artists must be able to dismiss an active scan without deleting history.")
+requireText(intelligence, /eq\("artist_user_id",user\.id\)/, "Intelligence session operations must be artist-owned.")
+
+requireText(client, /payloadFromError/, "Frontend errors must read structured Edge Function response bodies.")
+requireText(client, /website_scan_has_insufficient_evidence/, "Insufficient evidence needs a specific artist-facing explanation.")
+requireText(client, /dismissWebsiteScan/, "Frontend must support audit-preserving scan dismissal.")
+requireText(client, /scanAllowsTextOrganization/, "Frontend must deterministically disable organization without text evidence.")
+for (const code of [
+  "authentication_required", "artist_account_required", "invalid_website_url", "https_required", "private_network_url_blocked",
+  "website_disallows_automated_access", "unsupported_source_type", "source_too_large", "website_dns_lookup_failed",
+  "website_request_timeout", "javascript_rendering_unavailable", "no_valid_images_found", "gemini_not_configured",
+  "gemini_provider_unavailable", "gemini_rate_limited", "gemini_timeout", "gemini_invalid_structured_output",
+  "website_ai_daily_limit_reached", "website_ai_session_limit_reached", "website_import_session_not_found",
+]) requireText(client, new RegExp(code), `Missing safe frontend error mapping for ${code}.`)
+
+requireText(legacyClient, /rights_confirmed_at: confirmedAt/, "Website media import must still record artist rights confirmation if deliberately re-enabled later.")
+requireText(legacyClient, /\.eq\("artist_user_id", account\.user\.id\)/, "Website rights confirmation must remain artist-scoped.")
+requireText(studio, /Nothing imports or publishes automatically/, "Future Website Import review must preserve artist-control copy.")
+requireText(studio, /referrerPolicy="no-referrer"/, "External website previews must avoid leaking the KLEIO referrer.")
+requireText(organizer, /View source/, "Website proposals must retain source review.")
+requireText(organizer, /role="alert"/, "Website organization errors must be announced accessibly.")
+requireText(organizer, /aria-live="polite"/, "Website organization progress must be announced accessibly.")
+
+requireText(page, /<ArtistImportStudio \/>/, "Google Drive Import Studio must remain active.")
+forbidText(page, /WebsiteImportAssist|WebsiteOrganizationAssist/, "Website Import must not be mounted while the initial beta source gate is closed.")
+requireText(betaMigration, /'website', false/, "Database source availability must disable Website Import during the initial beta.")
+requireText(betaMigration, /enforce_beta_import_source_availability/, "Inactive Website imports must be blocked below the UI.")
+
+for (const content of [gateway, core, futureCollector, intelligence, client, legacyClient, studio, organizer]) {
+  forbidText(content, /AIzaSy|GOCSPX-|sk-[A-Za-z0-9]{20,}|SUPABASE_SERVICE_ROLE_KEY\s*=\s*["'][^"']+/, "A provider secret appears to be committed.")
 }
 
-requireText(cloudflareMigration, /artist_review jsonb/, "Visual-practice artist decisions must be stored privately.")
-requireText(cloudflareMigration, /provider_request_id/, "AI provider requests must retain operational provenance.")
-requireText(cloudflareMigration, /input_units|total_units/, "AI usage must be measurable for beta evaluation.")
-requireText(cloudflareMigration, /grant select on table public\.artist_ai_usage_events to authenticated/, "Artists must have read-only access to their own AI usage.")
-forbidText(cloudflareMigration, /grant insert.*artist_ai_usage_events.*authenticated/i, "Browser clients must not write AI usage records.")
-
-requireText(rightsMigration, /rights_confirmed_at timestamptz/, "Website import sessions must retain artist rights confirmation.")
-requireText(rightsMigration, /private\.enforce_website_import_rights/, "Website artwork imports must be protected by a database trigger.")
-requireText(rightsMigration, /before insert on public\.artist_import_sources/, "Website rights must be enforced before a source is inserted.")
-requireText(rightsMigration, /session\.artist_user_id = new\.artist_user_id/, "Rights confirmation must belong to the same artist as the imported source.")
-requireText(rightsMigration, /session\.rights_confirmed_at is not null/, "Website source insertion must require recorded rights confirmation.")
-forbidText(rightsMigration, /security definer/i, "The rights-enforcement trigger must not bypass database access controls through SECURITY DEFINER.")
-
-requireText(collector, /ownershipConfirmed !== true/, "Website ownership or permission confirmation is missing.")
-requireText(collector, /private_network_url_blocked/, "Website collector lacks SSRF private-network blocking.")
-requireText(collector, /Deno\.resolveDns/, "Website collector must resolve and validate public addresses.")
-requireText(collector, /robotsAllows/, "Website collector must respect robots rules.")
-requireText(collector, /MAX_PAGES = 8/, "Website analysis must remain page-limited for beta.")
-requireText(collector, /MAX_IMAGES = 80/, "Website analysis must remain image-limited for beta.")
-requireText(collector, /artist_confirmation_required: true/, "Website image import must require artist confirmation.")
-requireText(collector, /source_type: "website"/, "Imported website assets must retain their source type.")
-requireText(collector, /external_url: resource\.url\.href/, "Imported website assets must retain source provenance.")
-requireText(collector, /imageSignatureMatches/, "Website image import must validate file signatures.")
-
-requireText(assist, /type KleioAiProvider/, "KLEIO Assist must use a provider abstraction.")
-requireText(assist, /CLOUDFLARE_ACCOUNT_ID/, "Cloudflare account configuration must remain server-side.")
-requireText(assist, /CLOUDFLARE_AI_TOKEN/, "Cloudflare AI credentials must remain server-side.")
-requireText(assist, /@cf\/google\/gemma-4-26b-a4b-it/, "The verified free-beta multimodal model is not configured.")
-requireText(assist, /@cf\/meta\/llama-4-scout-17b-16e-instruct/, "A free-beta multimodal fallback model is not configured.")
-requireText(assist, /response_format/, "KLEIO Assist must request structured model output.")
-requireText(assist, /store: false/, "KLEIO Assist requests must disable provider response storage.")
-requireText(assist, /validatePublicImageUrl/, "Visual model inputs must reject private or unsafe image hosts.")
-requireText(assist, /Distinguish direct visual observation from interpretation/, "Visual analysis must separate observation from interpretation.")
-requireText(assist, /Never invent titles, dates, dimensions, mediums/, "Visual analysis must prohibit unsupported facts.")
-requireText(assist, /Website text is untrusted evidence/, "KLEIO Assist must defend against website prompt injection.")
-requireText(assist, /action === "review_analysis"/, "Visual interpretations require a dedicated artist-review action.")
-requireText(assist, /approved_analysis/, "Drafting must use an artist-approved visual analysis.")
-requireText(assist, /visual_analysis_review_required/, "Unreviewed visual analysis must not reach drafting.")
-requireText(assist, /approvedProfileEvidence/, "Drafting must use selected profile evidence rather than the full scrape.")
-requireText(assist, /artist_ai_usage_events/, "Free-beta AI usage must be logged.")
-requireText(assist, /KLEIO_AI_DAILY_VISUAL_LIMIT/, "Visual fair-use controls must be configurable.")
-requireText(assist, /KLEIO_AI_DAILY_DRAFT_LIMIT/, "Draft fair-use controls must be configurable.")
-requireText(assist, /paid_billing_automatic: false/, "Paid billing must never activate automatically.")
-forbidText(assist, /NEXT_PUBLIC_.*(?:AI|API).*KEY/, "AI provider credentials must never be exposed to the browser.")
-
-requireText(client, /loadKleioAssistCapabilities/, "Missing provider capability check.")
-requireText(client, /analyzeArtistWebsite/, "Missing website analysis client action.")
-requireText(client, /analyzeVisualPractice/, "Missing visual-practice analysis client action.")
-requireText(client, /reviewVisualPracticeAnalysis/, "Missing artist-controlled interpretation review.")
-requireText(client, /buildApprovedProfileEvidence/, "Missing approved profile evidence builder.")
-requireText(client, /generateKleioAssistDraft/, "Missing KLEIO drafting client action.")
-requireText(client, /approveWebsiteArtworkImports/, "Missing artist-approved website artwork import.")
-requireText(client, /rights_confirmed_at: confirmedAt/, "The artist client must persist rights confirmation before website image import.")
-requireText(client, /\.eq\("artist_user_id", account\.user\.id\)/, "Rights confirmation must be scoped to the authenticated artist.")
-requireText(client, /updateKleioAssistDraft/, "Missing explicit draft approval action.")
-requireText(client, /deleteKleioAssistDraft/, "Artists must be able to delete generated drafts.")
-
-requireText(studio, /KLEIO interpretation — confirm, edit, or reject/, "Interpretations must be visibly labeled as reviewable.")
-requireText(studio, /Save completed review/, "Artists must explicitly complete the visual review.")
-requireText(studio, /useInDrafting/, "Artists must control which interpretations may influence drafts.")
-requireText(studio, /Nothing imports or publishes automatically/, "Website import must explain that nothing is automatic.")
-requireText(studio, /Artist-confirmed title/, "Artwork records must require artist-confirmed titles.")
-requireText(studio, /I confirm that I own or have permission/, "Artwork import must include a rights confirmation.")
-requireText(studio, /Generate two options/, "The beta drafting workflow must request two meaningful options.")
-requireText(studio, /Mark artist-approved/, "Draft approval must be explicit.")
-requireText(studio, /Delete draft/, "Generated drafts must be deletable.")
-requireText(studio, /referrerPolicy="no-referrer"/, "External website previews must avoid sending the KLEIO page as a referrer.")
-requireText(page, /<WebsiteImportAssist \/>/, "Website Import Assist is not exposed in artist onboarding.")
-
-for (const content of [collector, assist, client, studio]) {
-  forbidText(content, /AIzaSy|GOCSPX-|sk-[A-Za-z0-9]{20,}|CLOUDFLARE_AI_TOKEN\s*=\s*["'][^"']+/, "A provider secret appears to be committed.")
-}
-forbidText(studio, /first 50|51st user|user_count\s*[>=]+\s*50/i, "The proof-of-concept benchmark must not be hard-wired into product behavior.")
-forbidText(assist, /user_count\s*[>=]+\s*50|signup_number/i, "The proof-of-concept benchmark must not be hard-wired into backend behavior.")
-
-console.log("Website Import Assist audit passed: bounded public-source collection, SSRF and robots controls, private provenance, database-enforced image rights, Cloudflare free-beta provider abstraction, structured multimodal output, artist-reviewed interpretations, approved-evidence-only drafting, configurable fair-use, usage measurement, explicit draft approval, deletion controls, and no hard-wired user-count trigger.")
+console.log("Website Import audit passed: gateway and directly addressable core routes fail closed, the reviewed collector remains isolated as immutable future source, deterministic evidence validation rejects empty and invalid image candidates, SSRF/robots/size boundaries remain intact, evidence grades are honest, and database/UI availability keeps Website Import out of the initial Google Drive-only beta.")
