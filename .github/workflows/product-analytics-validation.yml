@@ -59,6 +59,9 @@ jobs:
       - name: Audit administrator authorization
         run: pnpm audit:analytics-admin
 
+      - name: Audit acquisition attribution
+        run: pnpm audit:analytics-attribution
+
       - name: Run inherited authentication audits
         run: |
           pnpm audit:auth-isolation
