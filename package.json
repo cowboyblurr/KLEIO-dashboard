@@ -24,7 +24,8 @@
     "audit:product-analytics": "node scripts/audit-product-analytics-architecture.mjs",
     "audit:analytics-privacy": "node scripts/audit-product-analytics-privacy.mjs",
     "audit:analytics-coverage": "node scripts/audit-product-analytics-coverage.mjs",
-    "audit:analytics-admin": "node scripts/audit-product-analytics-admin.mjs"
+    "audit:analytics-admin": "node scripts/audit-product-analytics-admin.mjs",
+    "audit:analytics-attribution": "node scripts/audit-product-analytics-attribution.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.5.0",
