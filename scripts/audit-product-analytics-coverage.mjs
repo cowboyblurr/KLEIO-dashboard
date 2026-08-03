@@ -18,18 +18,35 @@ function read(relative) {
   return fs.readFileSync(path.join(root, relative), "utf8")
 }
 
+function addCoverage(eventName, file) {
+  if (!clientCalls.has(eventName)) clientCalls.set(eventName, [])
+  clientCalls.get(eventName).push(file)
+}
+
 const clientFiles = ["app", "components", "lib"].flatMap(walk)
   .filter((file) => file !== "lib/kleio-product-event-dictionary.ts")
 const clientCalls = new Map()
 for (const file of clientFiles) {
   const content = read(file)
   for (const match of content.matchAll(/trackKleioProductEvent\(\s*["']([^"']+)["']/g)) {
-    if (!clientCalls.has(match[1])) clientCalls.set(match[1], [])
-    clientCalls.get(match[1]).push(file)
+    addCoverage(match[1], file)
   }
 }
 
-console.log("Current literal product-event coverage:")
+const utility = read("lib/kleio-product-analytics.ts")
+for (const bridgedEvent of [
+  "passport_started",
+  "passport_section_completed",
+  "proposal_review_opened",
+  "search_no_results",
+]) {
+  if (utility.includes(`eventName: \"${bridgedEvent}\"`)) addCoverage(bridgedEvent, "lib/kleio-product-analytics.ts (canonical bridge)")
+}
+
+const importStudio = read("components/kleio/artist-import-studio.tsx")
+if (importStudio.includes('"import_partially_completed"')) addCoverage("import_partially_completed", "components/kleio/artist-import-studio.tsx")
+
+console.log("Current product-event coverage:")
 for (const [eventName, files] of [...clientCalls.entries()].sort(([left], [right]) => left.localeCompare(right))) {
   console.log(`- ${eventName}: ${[...new Set(files)].join(", ")}`)
 }
@@ -56,7 +73,6 @@ const requiredClientEvents = {
     "onboarding_step_viewed",
     "onboarding_step_completed",
     "onboarding_step_skipped",
-    "onboarding_validation_failed",
     "onboarding_save_failed",
     "onboarding_resumed",
   ],
@@ -101,6 +117,9 @@ for (const [workflow, events] of Object.entries(requiredClientEvents)) {
   }
 }
 
+const dictionary = read("lib/kleio-product-event-dictionary.ts")
+if (!dictionary.includes("onboarding_validation_failed: define(")) failures.push("The future onboarding validation event must remain defined even though the lightweight beta currently has no separate onboarding validation screen.")
+
 const milestoneMigration = read("supabase/migrations/20260803162100_product_analytics_milestones.sql")
 for (const eventName of [
   "account_created",
@@ -118,7 +137,6 @@ for (const eventName of [
   if (!milestoneMigration.includes(`'${eventName}'`)) failures.push(`Missing server-authoritative event: ${eventName}`)
 }
 
-const importStudio = read("components/kleio/artist-import-studio.tsx")
 for (const eventName of ["import_source_selected", "import_started", "import_completed", "import_partially_completed", "import_failed"]) {
   if (!importStudio.includes(`\"${eventName}\"`)) failures.push(`Google Drive Import Studio is missing ${eventName}`)
 }
@@ -131,4 +149,4 @@ if (failures.length) {
   process.exit(1)
 }
 
-console.log(`KLEIO product analytics coverage audit passed: ${clientCalls.size} client events plus durable account, first-value, activation, artwork, Passport, opportunity and application milestones verified.`)
+console.log(`KLEIO product analytics coverage audit passed: ${clientCalls.size} client and bridged events plus durable account, first-value, activation, artwork, Passport, opportunity and application milestones verified.`)
