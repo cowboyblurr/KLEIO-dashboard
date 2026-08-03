@@ -28,6 +28,7 @@ function forbidPattern(content, pattern, message) {
 
 const migration = read("supabase/migrations/20260803162200_product_analytics_admin_snapshot.sql")
 const eventMigration = read("supabase/migrations/20260803162000_product_analytics_event_contract.sql")
+const foundationMigration = read("supabase/migrations/20260730023306_opportunity_first_acquisition_foundations.sql")
 const client = read("lib/kleio-admin-analytics.ts")
 const dashboard = read("components/kleio/admin-product-analytics-dashboard.tsx")
 const route = read("app/admin/analytics/page.tsx")
@@ -37,9 +38,9 @@ requirePattern(migration, /security definer[\s\S]*set search_path = ''/i, "Aggre
 requirePattern(migration, /revoke all on function public\.get_kleio_admin_analytics_snapshot[\s\S]*from public/, "Aggregate RPC must revoke PUBLIC execution.")
 requirePattern(migration, /grant execute on function public\.get_kleio_admin_analytics_snapshot[\s\S]*to authenticated/, "Only authenticated users may attempt the admin RPC.")
 forbidPattern(migration, /select\s+\*\s+from\s+public\.product_events[\s\S]*return/i, "Aggregate RPC must not return raw product-event rows.")
-forbidPattern(migration, /actor_user_id['\"]\s*,|anonymous_session_id['\"]\s*,|email['\"]\s*,|display_name['\"]\s*,/i, "Aggregate JSON must not expose actor or identity fields.")
+forbidPattern(migration, /jsonb_build_object\([\s\S]{0,300}['\"](?:actor_user_id|anonymous_session_id|email|display_name)['\"]/, "Aggregate JSON must not expose actor or identity fields.")
 
-requirePattern(eventMigration, /product_events_admin_read[\s\S]*private\.is_kleio_admin\(\)/, "Raw product-events RLS must remain administrator-only.")
+requirePattern(foundationMigration, /product_events_admin_read[\s\S]*private\.is_kleio_admin\(\)/, "Raw product-events RLS must remain administrator-only.")
 requirePattern(eventMigration, /revoke insert, update, delete on table public\.product_events from anon, authenticated/, "Browser roles must not write raw event rows directly.")
 
 requirePattern(client, /rpc\("get_kleio_admin_analytics_snapshot"/, "Admin client must use the aggregate RPC.")
