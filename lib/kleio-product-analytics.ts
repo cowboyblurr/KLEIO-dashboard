@@ -1,96 +1,159 @@
 import { getSupabaseBrowserClient } from "@/lib/kleio-supabase"
+import {
+  productEventDefinition,
+  type KleioProductEventName,
+} from "@/lib/kleio-product-event-dictionary"
 
-export type KleioProductEventName =
-  | "landing_viewed"
-  | "carousel_viewed"
-  | "carousel_manual_advanced"
-  | "carousel_card_selected"
-  | "explore_opportunities_selected"
-  | "creative_passport_selected"
-  | "institution_section_viewed"
-  | "institution_signup_selected"
-  | "login_selected"
-  | "public_directory_viewed"
-  | "search_performed"
-  | "filter_applied"
-  | "opportunity_opened"
-  | "official_source_opened"
-  | "check_fit_selected"
-  | "save_selected"
-  | "prepare_selected"
-  | "signup_prompted"
-  | "signup_started"
-  | "signup_submitted"
-  | "signup_validation_failed"
-  | "account_created"
-  | "confirmation_required"
-  | "confirmation_completed"
-  | "opportunity_restoration_completed"
-  | "opportunity_restoration_failed"
-  | "passport_mode_selected"
-  | "guided_step_completed"
-  | "guided_step_skipped"
-  | "import_started"
-  | "import_completed"
-  | "proposal_approved"
-  | "proposal_rejected"
-  | "review_opened"
-  | "claim_confirmed"
-  | "claim_rejected"
-  | "claim_deferred"
-  | "duplicate_merged"
-  | "claims_bulk_confirmed"
-  | "voice_capability_detected"
-  | "voice_started"
-  | "voice_completed"
-  | "autosave_succeeded"
-  | "autosave_failed"
-  | "draft_restored"
-  | "conflict_detected"
+export type { KleioProductEventName } from "@/lib/kleio-product-event-dictionary"
 
-const SESSION_KEY = "kleio:analytics:anonymous-session:v1"
+export type KleioReleaseChannel =
+  | "founding_artist_beta"
+  | "guided_demo"
+  | "synthetic_preview"
+
+export type KleioViewport = "mobile" | "tablet" | "desktop" | "unknown"
+
+const SESSION_KEY = "kleio:analytics:anonymous-session:v2"
+const SESSION_MAX_AGE_MS = 14 * 24 * 60 * 60 * 1_000
+const SAFE_DIMENSION = /^[a-z0-9][a-z0-9_:-]{0,79}$/
 const SAFE_METADATA_KEYS = new Set([
   "action",
   "capability",
+  "completion_state",
   "count",
+  "duplicate_count",
   "edited",
+  "error_code",
+  "failed_count",
   "filter_count",
   "intent_source",
+  "item_count",
   "mode",
+  "outcome",
+  "provider",
   "reason",
   "reduced_motion",
   "relationship",
   "result_count",
+  "retryable",
   "role",
+  "section",
   "source",
   "status",
   "step",
+  "success_count",
   "viewport",
 ])
+const FORBIDDEN_METADATA_KEYS = /(?:name|email|phone|address|title|caption|bio|statement|cv|content|text|body|query|filename|file_name|url|token|secret|response|stack|document|transcript)/i
 
-function sessionId() {
+type StoredSession = {
+  id: string
+  createdAt: string
+  lastSeenAt: string
+}
+
+function isUuid(value: unknown): value is string {
+  return typeof value === "string"
+    && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)
+}
+
+function anonymousSessionId() {
   if (typeof window === "undefined") return null
+  const now = new Date()
   try {
-    const stored = window.sessionStorage.getItem(SESSION_KEY)
-    if (stored) return stored
-    const next = crypto.randomUUID()
-    window.sessionStorage.setItem(SESSION_KEY, next)
-    return next
+    const parsed = JSON.parse(window.localStorage.getItem(SESSION_KEY) || "null") as Partial<StoredSession> | null
+    const createdAt = parsed?.createdAt ? new Date(parsed.createdAt).getTime() : Number.NaN
+    if (isUuid(parsed?.id) && Number.isFinite(createdAt) && now.getTime() - createdAt <= SESSION_MAX_AGE_MS) {
+      const next: StoredSession = { id: parsed.id, createdAt: parsed.createdAt!, lastSeenAt: now.toISOString() }
+      window.localStorage.setItem(SESSION_KEY, JSON.stringify(next))
+      return next.id
+    }
+    const next: StoredSession = { id: crypto.randomUUID(), createdAt: now.toISOString(), lastSeenAt: now.toISOString() }
+    window.localStorage.setItem(SESSION_KEY, JSON.stringify(next))
+    return next.id
   } catch {
-    return null
+    try {
+      const stored = window.sessionStorage.getItem(SESSION_KEY)
+      if (isUuid(stored)) return stored
+      const next = crypto.randomUUID()
+      window.sessionStorage.setItem(SESSION_KEY, next)
+      return next
+    } catch {
+      return null
+    }
   }
+}
+
+export function createKleioAnalyticsWorkflowId() {
+  return typeof crypto !== "undefined" ? crypto.randomUUID() : null
+}
+
+function safeDimension(value: unknown, fallback = "unknown") {
+  if (typeof value !== "string") return fallback
+  const normalized = value.trim().toLowerCase().replace(/[^a-z0-9_:-]+/g, "_").replace(/^_+|_+$/g, "").slice(0, 80)
+  return SAFE_DIMENSION.test(normalized) ? normalized : fallback
 }
 
 function sanitizedMetadata(input: Record<string, unknown> | undefined) {
   const output: Record<string, string | number | boolean | null> = {}
   if (!input) return output
   for (const [key, value] of Object.entries(input)) {
-    if (!SAFE_METADATA_KEYS.has(key)) continue
-    if (typeof value === "string") output[key] = value.slice(0, 100)
-    else if (typeof value === "number" && Number.isFinite(value)) output[key] = value
-    else if (typeof value === "boolean" || value === null) output[key] = value
+    if (!SAFE_METADATA_KEYS.has(key) || FORBIDDEN_METADATA_KEYS.test(key)) continue
+    if (typeof value === "string") {
+      const normalized = safeDimension(value, "")
+      if (normalized) output[key] = normalized
+    } else if (typeof value === "number" && Number.isFinite(value)) {
+      output[key] = Math.max(-1_000_000, Math.min(1_000_000, value))
+    } else if (typeof value === "boolean" || value === null) {
+      output[key] = value
+    }
   }
   return output
+}
+
+function viewport(): KleioViewport {
+  if (typeof window === "undefined") return "unknown"
+  if (window.innerWidth < 640) return "mobile"
+  if (window.innerWidth < 1024) return "tablet"
+  return "desktop"
+}
+
+function releaseChannel(): KleioReleaseChannel {
+  if (typeof window === "undefined") return "founding_artist_beta"
+  const path = window.location.pathname.toLowerCase()
+  if (path.includes("guided-demo") || path.includes("guided_tour")) return "guided_demo"
+  if (path.includes("preview") || document.documentElement.dataset.kleioSynthetic === "true") return "synthetic_preview"
+  return "founding_artist_beta"
+}
+
+function acquisitionSource() {
+  if (typeof window === "undefined") return "unknown"
+  const querySource = safeDimension(new URLSearchParams(window.location.search).get("utm_source"), "")
+  if (querySource) {
+    if (querySource.includes("linkedin")) return "linkedin"
+    if (querySource.includes("instagram")) return "instagram"
+    if (querySource.includes("artist") && querySource.includes("referr")) return "artist_referral"
+    if (querySource.includes("institution") && querySource.includes("referr")) return "institution_referral"
+    if (querySource.includes("outreach")) return "direct_outreach"
+    if (querySource.includes("opportunity")) return "opportunity_entry"
+    if (querySource.includes("google") || querySource.includes("bing") || querySource.includes("search")) return "organic_search"
+  }
+  try {
+    const hostname = document.referrer ? new URL(document.referrer).hostname.toLowerCase() : ""
+    if (!hostname) return "direct"
+    if (hostname.includes("linkedin")) return "linkedin"
+    if (hostname.includes("instagram")) return "instagram"
+    if (hostname.includes("google") || hostname.includes("bing") || hostname.includes("duckduckgo")) return "organic_search"
+    if (hostname === window.location.hostname) return "direct"
+    return "unknown"
+  } catch {
+    return "unknown"
+  }
+}
+
+function reducedMotion() {
+  if (typeof window === "undefined" || typeof window.matchMedia !== "function") return false
+  return window.matchMedia("(prefers-reduced-motion: reduce)").matches
 }
 
 export async function trackKleioProductEvent(
@@ -98,19 +161,39 @@ export async function trackKleioProductEvent(
   input: {
     surface: string
     opportunityId?: string | null
+    workflowId?: string | null
+    deduplicationKey?: string | null
     metadata?: Record<string, unknown>
   },
 ) {
   try {
-    const supabase = getSupabaseBrowserClient()
-    const { error } = await supabase.from("product_events").insert({
-      event_name: eventName,
-      surface: input.surface.slice(0, 80),
-      opportunity_id: input.opportunityId ?? null,
-      anonymous_session_id: sessionId(),
-      metadata: sanitizedMetadata(input.metadata),
+    const definition = productEventDefinition(eventName)
+    const client = getSupabaseBrowserClient()
+    const eventViewport = viewport()
+    const metadata = sanitizedMetadata({
+      ...input.metadata,
+      viewport: eventViewport,
+      reduced_motion: reducedMotion(),
     })
-    if (error && process.env.NODE_ENV !== "production") console.warn("KLEIO analytics event was not recorded", error.message)
+    const { error } = await client.rpc("record_product_event", {
+      requested_event_name: eventName,
+      requested_event_version: definition.version,
+      requested_surface: safeDimension(input.surface, "unknown_surface"),
+      requested_release_channel: releaseChannel(),
+      requested_anonymous_session_id: anonymousSessionId(),
+      requested_workflow_id: isUuid(input.workflowId) ? input.workflowId : null,
+      requested_opportunity_id: isUuid(input.opportunityId) ? input.opportunityId : null,
+      requested_app_version: safeDimension(process.env.NEXT_PUBLIC_KLEIO_APP_VERSION || "web_beta", "web_beta"),
+      requested_locale: safeDimension(typeof navigator === "undefined" ? "unknown" : navigator.language, "unknown"),
+      requested_viewport: eventViewport,
+      requested_acquisition_source: acquisitionSource(),
+      requested_metadata: metadata,
+      requested_deduplication_key: input.deduplicationKey ? safeDimension(input.deduplicationKey, "") || null : null,
+      requested_occurred_at: new Date().toISOString(),
+    })
+    if (error && process.env.NODE_ENV !== "production") {
+      console.warn("KLEIO analytics event was not recorded", error.message)
+    }
   } catch (error) {
     if (process.env.NODE_ENV !== "production") console.warn("KLEIO analytics is unavailable", error)
   }
