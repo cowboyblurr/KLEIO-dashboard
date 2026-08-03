@@ -3,9 +3,8 @@
 /* eslint-disable @next/next/no-img-element -- private media uses short-lived signed URLs */
 
 import { useEffect, useMemo, useRef, useState } from "react"
-import { AtSign, Check, Cloud, FileText, FolderOpen, ImageIcon, Library, Loader2, Search, ShieldCheck, Upload, X } from "lucide-react"
+import { Check, Cloud, FileText, FolderOpen, ImageIcon, Library, Loader2, Search, ShieldCheck, X } from "lucide-react"
 import {
-  MEDIA_SOURCE_ADAPTERS,
   chooseGoogleDriveFiles,
   downloadGoogleDriveFile,
   loadArtistMediaLibrary,
@@ -16,14 +15,14 @@ import {
   type MediaImportConfig,
   type MediaImportContext,
   type MediaSelectionResult,
-  type MediaSourceType,
 } from "@/lib/kleio-universal-media"
 import { googleDriveAvailabilityMessage, isGoogleDriveConfigured } from "@/lib/kleio-google-capabilities"
+import { loadBetaImportAvailability, type KleioBetaImportAvailability } from "@/lib/kleio-import-source-availability"
 import { trackKleioProductEvent } from "@/lib/kleio-product-analytics"
 
 const primary = "inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#5B4B8A] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#4F407B] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#A997E8]/25 disabled:cursor-not-allowed disabled:opacity-50"
 const secondary = "inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-[#D8D0F2] bg-white px-4 py-2 text-sm font-semibold text-[#5B4B8A] transition hover:border-[#B9A9DE] hover:bg-[#FBFAFE] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#A997E8]/20 disabled:cursor-not-allowed disabled:opacity-50"
-const sourceCard = "group flex min-h-28 items-start gap-3 rounded-2xl border border-[#E2DCF1] bg-white p-4 text-left transition hover:border-[#B9A9DE] hover:bg-[#FCFAFF] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#A997E8]/20 disabled:cursor-not-allowed disabled:opacity-55"
+const sourceCard = "flex min-h-28 items-start gap-3 rounded-2xl border border-[#E2DCF1] bg-white p-4 text-left transition hover:border-[#B9A9DE] hover:bg-[#FCFAFF] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#A997E8]/20 disabled:cursor-not-allowed disabled:opacity-55"
 
 type QuickMediaImportProps = {
   context: MediaImportContext
@@ -32,25 +31,6 @@ type QuickMediaImportProps = {
   className?: string
   onConfirm: (result: MediaSelectionResult) => Promise<void> | void
   onOpenChange?: (open: boolean) => void
-}
-
-function sourceIcon(source: MediaSourceType) {
-  if (source === "device") return Upload
-  if (source === "google_drive") return Cloud
-  if (source === "kleio_library") return Library
-  return AtSign
-}
-
-function sourceTitle(source: MediaSourceType) {
-  if (source === "device") return "Upload from device"
-  if (source === "google_drive") return "Choose from Google Drive"
-  if (source === "kleio_library") return "Choose from KLEIO Library"
-  return "Instagram Professional Account"
-}
-
-function sourceExplanation(source: MediaSourceType, config: MediaImportConfig) {
-  if (source === "google_drive") return googleDriveAvailabilityMessage()
-  return MEDIA_SOURCE_ADAPTERS.find((adapter) => adapter.type === source)?.getPermissionExplanation(config) ?? ""
 }
 
 function readableBytes(bytes: number | null) {
@@ -62,9 +42,8 @@ function readableBytes(bytes: number | null) {
 export function QuickMediaImport({ context, config: configOverrides, label, className = "", onConfirm, onOpenChange }: QuickMediaImportProps) {
   const dialogRef = useRef<HTMLDialogElement>(null)
   const headingRef = useRef<HTMLHeadingElement>(null)
-  const fileInputRef = useRef<HTMLInputElement>(null)
   const config = useMemo(() => mediaImportConfig(context, configOverrides), [context, configOverrides])
-  const googleDriveConfigured = isGoogleDriveConfigured()
+  const [availability, setAvailability] = useState<KleioBetaImportAvailability | null>(null)
   const [view, setView] = useState<"sources" | "library" | "review">("sources")
   const [library, setLibrary] = useState<ArtistMediaLibraryItem[]>([])
   const [selected, setSelected] = useState<ArtistMediaLibraryItem[]>([])
@@ -74,11 +53,16 @@ export function QuickMediaImport({ context, config: configOverrides, label, clas
   const [status, setStatus] = useState("")
   const [source, setSource] = useState<MediaSelectionResult["source"]>("kleio_library")
 
-  const accept = config.allowedMimeTypes.join(",")
+  const googleDriveConfigured = isGoogleDriveConfigured()
+  const googleDriveEnabled = availability?.google_drive_image === true || availability?.google_drive_document === true
+  const allowDrive = config.availableSources.includes("google_drive") && googleDriveEnabled && googleDriveConfigured
+  const allowLibraryReuse = config.availableSources.includes("kleio_library")
   const visibleLibrary = library.filter((item) => {
     const query = search.trim().toLowerCase()
     return config.allowedMimeTypes.includes(item.mimeType) && (!query || `${item.title} ${item.originalFilename} ${item.associatedWorkTitle}`.toLowerCase().includes(query))
   })
+
+  useEffect(() => { void loadBetaImportAvailability().then(setAvailability).catch(() => setAvailability(null)) }, [])
 
   function open() {
     setView("sources")
@@ -88,7 +72,7 @@ export function QuickMediaImport({ context, config: configOverrides, label, clas
     dialogRef.current?.showModal()
     onOpenChange?.(true)
     window.setTimeout(() => headingRef.current?.focus(), 0)
-    void trackKleioProductEvent("import_started", { surface: "universal_media_quick_import", metadata: { context } })
+    void trackKleioProductEvent("import_started", { surface: "universal_media_quick_import", metadata: { context, beta_source: "google_drive" } })
   }
 
   function close() {
@@ -128,7 +112,7 @@ export function QuickMediaImport({ context, config: configOverrides, label, clas
     }
   }
 
-  async function importFiles(files: File[], importSource: "device" | "google_drive", providerFiles?: Array<{ id: string; name: string; mimeType: string }>) {
+  async function importDriveFiles(files: File[], providerFiles: Array<{ id: string; name: string; mimeType: string }>) {
     if (!files.length) return
     setLoading(true)
     setError("")
@@ -141,10 +125,10 @@ export function QuickMediaImport({ context, config: configOverrides, label, clas
         setStatus(`Preparing ${index + 1} of ${Math.min(files.length, config.maxSelectionCount)}: ${file.name}`)
         const result = await uploadMediaToLibrary({
           file,
-          source: importSource,
+          source: "google_drive",
           config,
-          providerFileId: providerFiles?.[index]?.id,
-          providerMetadata: providerFiles?.[index] ? { provider_name: providerFiles[index].name, provider_mime_type: providerFiles[index].mimeType } : undefined,
+          providerFileId: providerFiles[index]?.id,
+          providerMetadata: providerFiles[index] ? { provider_name: providerFiles[index].name, provider_mime_type: providerFiles[index].mimeType, beta_import_source: "google_drive" } : undefined,
         })
         imported.push(result.item)
       } catch (reason) {
@@ -152,19 +136,15 @@ export function QuickMediaImport({ context, config: configOverrides, label, clas
       }
     }
     setSelected(config.allowMultiple ? imported : imported.slice(0, 1))
-    setSource(importSource)
+    setSource("google_drive")
     setView("review")
-    setStatus(imported.length ? `${imported.length} private media item${imported.length === 1 ? "" : "s"} ready for your confirmation.` : "")
+    setStatus(imported.length ? `${imported.length} private media item${imported.length === 1 ? "" : "s"} ready for confirmation.` : "")
     setError(errors.join(" "))
     setLoading(false)
-    void trackKleioProductEvent("import_completed", { surface: "universal_media_quick_import", metadata: { context, source: importSource, count: imported.length } })
   }
 
   async function chooseDrive() {
-    if (!googleDriveConfigured) {
-      setError("Google Drive setup is pending. Upload from this device or reuse your private KLEIO Library for now.")
-      return
-    }
+    if (!allowDrive) return
     setLoading(true)
     setError("")
     let token = ""
@@ -177,15 +157,17 @@ export function QuickMediaImport({ context, config: configOverrides, label, clas
       }
       const files: File[] = []
       const accepted: typeof selection.files = []
+      const failures: string[] = []
       for (const providerFile of selection.files) {
         try {
           files.push(await downloadGoogleDriveFile(providerFile, selection.accessToken))
           accepted.push(providerFile)
         } catch (reason) {
-          setError((current) => `${current ? `${current} ` : ""}${reason instanceof Error ? reason.message : `${providerFile.name} could not be copied.`}`)
+          failures.push(reason instanceof Error ? reason.message : `${providerFile.name} could not be copied.`)
         }
       }
-      await importFiles(files, "google_drive", accepted)
+      await importDriveFiles(files, accepted)
+      if (failures.length) setError((current) => [current, ...failures].filter(Boolean).join(" "))
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "Google Drive could not be opened.")
     } finally {
@@ -216,32 +198,24 @@ export function QuickMediaImport({ context, config: configOverrides, label, clas
         <div className="flex max-h-full min-h-full flex-col bg-[#FCFBFE] sm:min-h-[620px]">
           <header className="flex shrink-0 items-start justify-between gap-4 border-b border-[#E7E1F7] bg-white px-4 py-4 sm:px-6">
             <div><p className="text-[0.66rem] font-semibold uppercase tracking-[0.16em] text-[#75639E]">Private media selection</p><h2 id={`quick-media-${context}-title`} ref={headingRef} tabIndex={-1} className="mt-1 font-serif text-2xl font-semibold outline-none">{config.title}</h2><p id={`quick-media-${context}-description`} className="mt-1 max-w-2xl text-xs leading-5 text-[#746E80]">{config.description}</p></div>
-            <button type="button" onClick={close} className="grid size-11 place-items-center rounded-xl border border-[#E2DCF1] bg-white" aria-label="Close media picker"><X className="size-5" /></button>
+            <button type="button" onClick={close} className="grid size-11 place-items-center rounded-xl border border-[#E2DCF1] bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#A997E8]/20" aria-label="Close media picker"><X className="size-5" /></button>
           </header>
 
-          {(error || status) && <div className={`shrink-0 border-b px-4 py-3 text-sm sm:px-6 ${error ? "border-red-200 bg-red-50 text-red-700" : "border-[#E7E1F7] bg-[#F9F7FC] text-[#625C70]"}`} role={error ? "alert" : "status"}>{error || status}</div>}
+          {(error || status) && <div className={`shrink-0 border-b px-4 py-3 text-sm sm:px-6 ${error ? "border-red-200 bg-red-50 text-red-700" : "border-[#E7E1F7] bg-[#F9F7FC] text-[#625C70]"}`} role={error ? "alert" : "status"} aria-live="polite">{error || status}</div>}
 
           <main className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-6">
-            {view === "sources" && <div className="grid gap-4 sm:grid-cols-2">
-              {MEDIA_SOURCE_ADAPTERS.filter((adapter) => config.availableSources.includes(adapter.type)).map((adapter) => {
-                const Icon = sourceIcon(adapter.type)
-                const available = adapter.isAvailable(config) && (adapter.type !== "google_drive" || googleDriveConfigured)
-                return <button key={adapter.type} type="button" disabled={!available || loading} className={sourceCard} onClick={() => {
-                  if (adapter.type === "device") fileInputRef.current?.click()
-                  else if (adapter.type === "google_drive") void chooseDrive()
-                  else if (adapter.type === "kleio_library") void loadLibrary()
-                }}><span className="grid size-10 shrink-0 place-items-center rounded-xl bg-[#F0EAFB] text-[#5B4B8A]"><Icon className="size-5" /></span><span><span className="block text-sm font-semibold text-[#292631]">{sourceTitle(adapter.type)}</span><span className="mt-1 block text-xs leading-5 text-[#746E80]">{sourceExplanation(adapter.type, config)}</span>{!available && adapter.type === "google_drive" && <span className="mt-2 inline-flex rounded-full bg-[#F7F4FF] px-2 py-1 text-[0.65rem] font-semibold text-[#75639E]">Setup pending</span>}{!available && adapter.type === "instagram" && <span className="mt-2 inline-flex rounded-full bg-[#F7F4FF] px-2 py-1 text-[0.65rem] font-semibold text-[#75639E]">Planned after beta</span>}</span></button>
-              })}
-              <input ref={fileInputRef} type="file" multiple={config.allowMultiple} accept={accept} className="sr-only" onChange={(event) => void importFiles(Array.from(event.target.files ?? []), "device")} />
-              <div className="sm:col-span-2 rounded-2xl border border-[#E7E1F7] bg-white p-4 text-xs leading-5 text-[#746E80]"><ShieldCheck className="mr-2 inline size-4 text-[#5B4B8A]" />Selecting or uploading media does not attach, publish, or replace anything. The destination action happens only after confirmation.</div>
+            {view === "sources" && <div className="space-y-5">
+              <section aria-labelledby={`quick-media-${context}-new-source`}><p className="text-[0.66rem] font-semibold uppercase tracking-[0.14em] text-[#75639E]">New beta import</p><h3 id={`quick-media-${context}-new-source`} className="mt-1 font-serif text-xl font-semibold">Google Drive</h3><button type="button" disabled={!allowDrive || loading} className={`${sourceCard} mt-3 w-full`} onClick={() => void chooseDrive()}><span className="grid size-10 shrink-0 place-items-center rounded-xl bg-[#F0EAFB] text-[#5B4B8A]"><Cloud className="size-5" /></span><span><span className="block text-sm font-semibold text-[#292631]">Choose from Google Drive</span><span className="mt-1 block text-xs leading-5 text-[#746E80]">{googleDriveAvailabilityMessage()}</span>{!allowDrive && <span className="mt-2 inline-flex rounded-full bg-[#F7F4FF] px-2 py-1 text-[0.65rem] font-semibold text-[#75639E]">Unavailable in this deployment</span>}</span></button></section>
+              {allowLibraryReuse && <section aria-labelledby={`quick-media-${context}-reuse`}><p className="text-[0.66rem] font-semibold uppercase tracking-[0.14em] text-[#81788E]">Reuse existing private media</p><h3 id={`quick-media-${context}-reuse`} className="mt-1 font-serif text-xl font-semibold text-[#625C70]">KLEIO Media Library</h3><button type="button" disabled={loading} className={`${sourceCard} mt-3 w-full`} onClick={() => void loadLibrary()}><span className="grid size-10 shrink-0 place-items-center rounded-xl bg-[#F0EAFB] text-[#5B4B8A]"><Library className="size-5" /></span><span><span className="block text-sm font-semibold text-[#292631]">Use existing private media</span><span className="mt-1 block text-xs leading-5 text-[#746E80]">This reuses a file already stored in your private KLEIO Library. It is not a new external import provider.</span></span></button></section>}
+              <div className="rounded-2xl border border-[#E7E1F7] bg-white p-4 text-xs leading-5 text-[#746E80]"><ShieldCheck className="mr-2 inline size-4 text-[#5B4B8A]" />Selecting media does not attach, publish, or replace anything. The destination action happens only after confirmation.</div>
             </div>}
 
             {view === "library" && <div>
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><label className="relative block flex-1"><span className="sr-only">Search private media library</span><Search className="pointer-events-none absolute left-3 top-3 size-4 text-[#8A8296]" /><input type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search artwork or filename" className="h-11 w-full rounded-xl border border-[#DED7EF] bg-white pl-9 pr-3 text-sm outline-none focus:border-[#A997E8] focus:ring-4 focus:ring-[#A997E8]/12" /></label><button type="button" className={secondary} onClick={() => setView("sources")}>Change source</button></div>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><label className="relative block flex-1"><span className="sr-only">Search private media library</span><Search className="pointer-events-none absolute left-3 top-3 size-4 text-[#8A8296]" /><input type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search artwork or filename" className="h-11 w-full rounded-xl border border-[#DED7EF] bg-white pl-9 pr-3 text-sm outline-none focus:border-[#A997E8] focus:ring-4 focus:ring-[#A997E8]/12" /></label><button type="button" className={secondary} onClick={() => setView("sources")}>Back</button></div>
               {loading ? <p className="mt-8 flex items-center justify-center gap-2 text-sm text-[#746E80]"><Loader2 className="size-4 animate-spin" />Loading your private library…</p> : visibleLibrary.length ? <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{visibleLibrary.map((item) => {
                 const active = selected.some((candidate) => candidate.id === item.id)
                 return <button key={item.id} type="button" aria-pressed={active} onClick={() => toggle(item)} className={`overflow-hidden rounded-2xl border bg-white text-left transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#A997E8]/20 ${active ? "border-[#8C78BF] ring-2 ring-[#A997E8]/20" : "border-[#E7E1F7]"}`}><div className="relative grid aspect-[4/3] place-items-center bg-[#F4F1F8]">{item.previewUrl ? <img src={item.previewUrl} alt="" className="size-full object-cover" loading="lazy" /> : item.mediaKind === "document" ? <FileText className="size-8 text-[#75639E]" /> : <ImageIcon className="size-8 text-[#75639E]" />}{active && <span className="absolute right-2 top-2 grid size-7 place-items-center rounded-full bg-[#5B4B8A] text-white"><Check className="size-4" /></span>}</div><div className="p-3"><p className="truncate text-sm font-semibold">{item.title}</p><p className="mt-1 truncate text-xs text-[#8A8296]">{item.associatedWorkTitle || item.originalFilename}</p><p className="mt-1 text-[0.68rem] font-semibold text-[#75639E]">{item.approvalState === "approved" ? "Approved work" : "Private media"} · {readableBytes(item.byteSize)}</p></div></button>
-              })}</div> : <div className="mt-8 rounded-2xl border border-dashed border-[#D8D0F2] bg-white p-8 text-center"><Library className="mx-auto size-8 text-[#75639E]" /><h3 className="mt-3 font-serif text-xl font-semibold">No matching media yet</h3><p className="mt-2 text-sm text-[#746E80]">Choose another source to add a private file without leaving this task.</p><button type="button" className={`${secondary} mt-4`} onClick={() => setView("sources")}>Choose another source</button></div>}
+              })}</div> : <div className="mt-8 rounded-2xl border border-dashed border-[#D8D0F2] bg-white p-8 text-center"><Library className="mx-auto size-8 text-[#75639E]" /><h3 className="mt-3 font-serif text-xl font-semibold">No matching media yet</h3><p className="mt-2 text-sm text-[#746E80]">Import a file through Google Drive first, or choose another search.</p><button type="button" className={`${secondary} mt-4`} onClick={() => setView("sources")}>Back to sources</button></div>}
             </div>}
 
             {view === "review" && <div><div className="flex items-center justify-between gap-3"><div><p className="text-xs font-semibold uppercase tracking-[0.15em] text-[#75639E]">Ready to use</p><h3 className="mt-1 font-serif text-2xl font-semibold">Review your selection</h3></div><button type="button" className={secondary} onClick={() => setView("sources")}>Add or change</button></div><div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{selected.map((item) => <article key={item.id} className="overflow-hidden rounded-2xl border border-[#E7E1F7] bg-white"><div className="grid aspect-[4/3] place-items-center bg-[#F4F1F8]">{item.previewUrl ? <img src={item.previewUrl} alt="" className="size-full object-cover" /> : item.mediaKind === "document" ? <FileText className="size-8 text-[#75639E]" /> : <ImageIcon className="size-8 text-[#75639E]" />}</div><div className="p-3"><p className="truncate text-sm font-semibold">{item.title}</p><p className="mt-1 truncate text-xs text-[#8A8296]">{item.originalFilename}</p></div></article>)}</div></div>}
