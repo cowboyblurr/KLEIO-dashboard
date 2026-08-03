@@ -12,6 +12,8 @@ const tests = read("supabase/functions/organize-website-evidence/index.test.ts")
 const migration = read("supabase/migrations/20260802153000_gemini_website_intelligence.sql")
 const panel = read("components/kleio/website-organization-assist.tsx")
 const page = read("components/kleio/artist-import-studio-page.tsx")
+const gateway = read("supabase/functions/analyze-artist-website/index.ts")
+const betaMigration = read("supabase/migrations/20260803133000_beta_import_source_availability.sql")
 
 for (const secret of ["GEMINI_API_KEY", "GEMINI_MODEL"]) requireText(index, new RegExp(`Deno\\.env\\.get\\(\"${secret}\"\\)`), `Missing server-only ${secret} lookup.`)
 forbidText(fn, /VITE_GEMINI|NEXT_PUBLIC_GEMINI|GEMINI_API_KEY\s*=\s*["'][^"']+/i, "Gemini secret appears exposed or hard-coded.")
@@ -43,12 +45,16 @@ requireText(migration, /organize_website_evidence/, "The migration must register
 requireText(migration, /artist_ai_usage_events_action_check/, "AI usage events must accept website organization.")
 forbidText(migration, /drop table|drop column|truncate|delete from/i, "The migration must not destructively remove data.")
 
-requireText(page, /<WebsiteImportAssist \/>[\s\S]*<WebsiteOrganizationAssist \/>/, "Import Studio must preserve the scanner and add the organization panel after it.")
 for (const action of ["Accept", "Edit", "Reject", "Defer", "View source"]) requireText(panel, new RegExp(action), `Missing artist review action: ${action}`)
 requireText(panel, /AI organization currently processes public website material only/, "The UI privacy disclosure is missing.")
 requireText(panel, /Nothing was published or submitted/, "Artist-facing copy must preserve approval boundaries.")
 requireText(panel, /role="alert"/, "Errors must be announced accessibly.")
 requireText(panel, /aria-live="polite"/, "Progress and completion messages must be announced accessibly.")
+
+requireText(gateway, /WEBSITE_IMPORT_BETA_ENABLED/, "Website collection must remain behind an explicit server-side beta gate.")
+requireText(gateway, /website_import_beta_disabled/, "Website collection must fail closed while inactive.")
+requireText(betaMigration, /'website', false/, "Database availability must block Website Import during the initial beta.")
+forbidText(page, /WebsiteImportAssist|WebsiteOrganizationAssist/, "The inactive Website/Gemini workflow must not compete with Google Drive in the artist beta UI.")
 
 for (const testName of [
   "unknown source reference is rejected",
@@ -60,4 +66,4 @@ for (const testName of [
 requireText(tests, /v1beta\/interactions/, "The provider mock must exercise the current Interactions endpoint.")
 forbidText(tests, /AIza[0-9A-Za-z_-]{20,}/, "A real Gemini key appears in tests.")
 
-console.log("Gemini website intelligence audit passed: current Interactions API usage, provider isolation, public-only evidence, session ownership, strict schema validation, provenance checks, cache/rate limits, artist review controls and accessible states are present.")
+console.log("Gemini website intelligence audit passed: current Interactions API usage, provider isolation, public-only evidence, session ownership, strict schema validation, provenance checks, cache/rate limits and artist review controls remain intact while the entire workflow is safely gated out of the initial Google Drive-only beta.")
