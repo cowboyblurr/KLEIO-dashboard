@@ -2,6 +2,7 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts"
 
 const CORE_FUNCTION = "analyze-artist-website-core"
 const INTELLIGENCE_FUNCTION = "analyze-artist-website-intelligence"
+const WEBSITE_IMPORT_BETA_ENABLED = Deno.env.get("KLEIO_ENABLE_WEBSITE_IMPORT") === "true"
 const UNSUPPORTED_IMPORT_HOSTS = [
   "instagram.com", "facebook.com", "threads.net", "tiktok.com", "x.com", "twitter.com", "pinterest.com",
   "linkedin.com", "behance.net", "artstation.com",
@@ -52,6 +53,11 @@ Deno.serve(async (request: Request) => {
   if (request.method !== "POST") return json(request, { error: "method_not_allowed" }, 405)
   const authorization = request.headers.get("authorization")
   if (!authorization?.startsWith("Bearer ")) return json(request, { error: "authentication_required" }, 401)
+  if (!WEBSITE_IMPORT_BETA_ENABLED) return json(request, {
+    error: "website_import_beta_disabled",
+    status: "coming_soon",
+    message: "Website Import Assist is not active during the initial KLEIO artist beta.",
+  }, 403)
   let body: JsonObject
   try { body = await request.json() } catch { return json(request, { error: "invalid_json" }, 400) }
   const action = cleanText(body.action, 40) || "analyze"
