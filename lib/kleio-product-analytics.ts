@@ -13,6 +13,19 @@ export type KleioReleaseChannel =
 
 export type KleioViewport = "mobile" | "tablet" | "desktop" | "unknown"
 
+type AnalyticsInput = {
+  surface: string
+  opportunityId?: string | null
+  workflowId?: string | null
+  deduplicationKey?: string | null
+  metadata?: Record<string, unknown>
+}
+
+type CompanionEvent = {
+  eventName: KleioProductEventName
+  input: AnalyticsInput
+}
+
 const SESSION_KEY = "kleio:analytics:anonymous-session:v2"
 const SESSION_MAX_AGE_MS = 14 * 24 * 60 * 60 * 1_000
 const SAFE_DIMENSION = /^[a-z0-9][a-z0-9_:-]{0,79}$/
@@ -156,43 +169,106 @@ function reducedMotion() {
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches
 }
 
-export async function trackKleioProductEvent(
-  eventName: KleioProductEventName,
-  input: {
-    surface: string
-    opportunityId?: string | null
-    workflowId?: string | null
-    deduplicationKey?: string | null
-    metadata?: Record<string, unknown>
-  },
-) {
+function companionEvents(eventName: KleioProductEventName, input: AnalyticsInput): CompanionEvent[] {
+  const metadata = input.metadata || {}
+  const companions: CompanionEvent[] = []
+
+  if (eventName === "search_performed" && metadata.result_count === 0) {
+    companions.push({
+      eventName: "search_no_results",
+      input: {
+        ...input,
+        deduplicationKey: input.deduplicationKey ? `${input.deduplicationKey}:no_results` : null,
+        metadata: {
+          mode: metadata.mode || "public_directory",
+          filter_count: metadata.filter_count || 0,
+        },
+      },
+    })
+  }
+  if (eventName === "passport_mode_selected") {
+    companions.push({
+      eventName: "passport_started",
+      input: {
+        ...input,
+        deduplicationKey: "passport_started:workspace",
+        metadata: { mode: metadata.mode || "unspecified" },
+      },
+    })
+  }
+  if (eventName === "guided_step_completed") {
+    companions.push({
+      eventName: "passport_section_completed",
+      input: {
+        ...input,
+        deduplicationKey: input.deduplicationKey || null,
+        metadata: {
+          mode: "guided",
+          section: typeof metadata.step === "number" ? `guided_step_${metadata.step}` : metadata.step || "guided_step",
+        },
+      },
+    })
+  }
+  if (eventName === "review_opened") {
+    companions.push({ eventName: "proposal_review_opened", input })
+  }
+  if (eventName === "claim_confirmed") {
+    companions.push({ eventName: "proposal_approved", input: { ...input, metadata: { ...metadata, edited: false } } })
+  }
+  if (eventName === "claim_rejected") {
+    companions.push({ eventName: "proposal_rejected", input })
+  }
+  if (eventName === "autosave_failed" && safeDimension(input.surface, "") === "creative_passport") {
+    companions.push({
+      eventName: "passport_save_failed",
+      input: {
+        ...input,
+        metadata: {
+          mode: metadata.mode || "unspecified",
+          reason: metadata.reason || "autosave_failed",
+          error_code: metadata.error_code || "passport_save_failed",
+        },
+      },
+    })
+  }
+  return companions
+}
+
+async function recordProductEvent(eventName: KleioProductEventName, input: AnalyticsInput) {
+  const definition = productEventDefinition(eventName)
+  const client = getSupabaseBrowserClient()
+  const eventViewport = viewport()
+  const metadata = sanitizedMetadata({
+    ...input.metadata,
+    viewport: eventViewport,
+    reduced_motion: reducedMotion(),
+  })
+  return client.rpc("record_product_event", {
+    requested_event_name: eventName,
+    requested_event_version: definition.version,
+    requested_surface: safeDimension(input.surface, "unknown_surface"),
+    requested_release_channel: releaseChannel(),
+    requested_anonymous_session_id: anonymousSessionId(),
+    requested_workflow_id: isUuid(input.workflowId) ? input.workflowId : null,
+    requested_opportunity_id: isUuid(input.opportunityId) ? input.opportunityId : null,
+    requested_app_version: safeDimension(process.env.NEXT_PUBLIC_KLEIO_APP_VERSION || "web_beta", "web_beta"),
+    requested_locale: safeDimension(typeof navigator === "undefined" ? "unknown" : navigator.language, "unknown"),
+    requested_viewport: eventViewport,
+    requested_acquisition_source: acquisitionSource(),
+    requested_metadata: metadata,
+    requested_deduplication_key: input.deduplicationKey ? safeDimension(input.deduplicationKey, "") || null : null,
+    requested_occurred_at: new Date().toISOString(),
+  })
+}
+
+export async function trackKleioProductEvent(eventName: KleioProductEventName, input: AnalyticsInput) {
   try {
-    const definition = productEventDefinition(eventName)
-    const client = getSupabaseBrowserClient()
-    const eventViewport = viewport()
-    const metadata = sanitizedMetadata({
-      ...input.metadata,
-      viewport: eventViewport,
-      reduced_motion: reducedMotion(),
-    })
-    const { error } = await client.rpc("record_product_event", {
-      requested_event_name: eventName,
-      requested_event_version: definition.version,
-      requested_surface: safeDimension(input.surface, "unknown_surface"),
-      requested_release_channel: releaseChannel(),
-      requested_anonymous_session_id: anonymousSessionId(),
-      requested_workflow_id: isUuid(input.workflowId) ? input.workflowId : null,
-      requested_opportunity_id: isUuid(input.opportunityId) ? input.opportunityId : null,
-      requested_app_version: safeDimension(process.env.NEXT_PUBLIC_KLEIO_APP_VERSION || "web_beta", "web_beta"),
-      requested_locale: safeDimension(typeof navigator === "undefined" ? "unknown" : navigator.language, "unknown"),
-      requested_viewport: eventViewport,
-      requested_acquisition_source: acquisitionSource(),
-      requested_metadata: metadata,
-      requested_deduplication_key: input.deduplicationKey ? safeDimension(input.deduplicationKey, "") || null : null,
-      requested_occurred_at: new Date().toISOString(),
-    })
-    if (error && process.env.NODE_ENV !== "production") {
-      console.warn("KLEIO analytics event was not recorded", error.message)
+    const events: CompanionEvent[] = [{ eventName, input }, ...companionEvents(eventName, input)]
+    const results = await Promise.all(events.map((event) => recordProductEvent(event.eventName, event.input)))
+    if (process.env.NODE_ENV !== "production") {
+      for (const result of results) {
+        if (result.error) console.warn("KLEIO analytics event was not recorded", result.error.message)
+      }
     }
   } catch (error) {
     if (process.env.NODE_ENV !== "production") console.warn("KLEIO analytics is unavailable", error)
