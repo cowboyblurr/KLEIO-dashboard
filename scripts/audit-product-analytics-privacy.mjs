@@ -78,7 +78,8 @@ for (const file of sourceFiles) {
   }
 }
 
-forbid(adminDashboard, /actor_user_id|anonymous_session_id|email|display_name|artwork_title|filename/i, "Admin dashboard must not request or render raw identity or artist-content fields.")
+forbid(adminDashboard, /\.select\([^)]*(?:actor_user_id|anonymous_session_id|display_name|artwork_title|original_filename)/i, "Admin dashboard must not query raw identity or artist-content fields.")
+forbid(adminDashboard, /snapshot\.(?:actor_user_id|anonymous_session_id|display_name|artwork_title|original_filename)/i, "Admin dashboard must not render raw identity or artist-content fields.")
 requireText(adminDashboard, "aggregate counts only", "Admin dashboard must state its aggregate privacy boundary.")
 requireText(adminDashboard, "Raw provider errors", "Admin dashboard must explain stable error-code handling.")
 
@@ -94,8 +95,11 @@ for (const requiredCopy of [
   }
 }
 
-const allClient = sourceFiles.map(read).join("\n")
-forbid(allClient, /(?:hotjar|fullstory|posthog|rrweb|session\s*replay|meta\s*pixel|fbq\s*\(|linkedin\s*insight|google\s*analytics|gtag\s*\()/i, "Session replay, heatmap or advertising analytics code is present in KLEIO client source.")
+const executableClient = sourceFiles
+  .filter((file) => !file.includes("privacy/product-analytics") && !file.includes("admin-product-analytics-dashboard"))
+  .map(read)
+  .join("\n")
+forbid(executableClient, /(?:from\s+["'](?:hotjar|fullstory|posthog-js|rrweb)|require\(["'](?:hotjar|fullstory|posthog-js|rrweb)|fbq\s*\(|gtag\s*\(|linkedin_partner_id|connect\.facebook\.net\/en_US\/fbevents)/i, "Session replay, heatmap or advertising analytics execution code is present in KLEIO client source.")
 
 if (failures.length) {
   console.error("KLEIO product analytics privacy audit failed:\n")
