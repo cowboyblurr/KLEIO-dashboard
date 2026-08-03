@@ -7,6 +7,7 @@ import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
 import { clearDemoSession } from "@/lib/kleio-demo-auth"
 import { setKleioMode } from "@/lib/kleio-mode"
 import { getKleioAuthErrorMessage } from "@/lib/kleio-auth"
+import { trackKleioProductEvent } from "@/lib/kleio-product-analytics"
 import { signInKleioAccount, type KleioAccount } from "@/lib/kleio-supabase"
 import { cn } from "@/lib/utils"
 
@@ -31,6 +32,7 @@ export function RealLoginForm({
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState("")
   const landing = variant === "landing"
+  const analyticsSurface = landing ? "landing_login" : "account_login"
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -41,9 +43,20 @@ export function RealLoginForm({
       const account = await signInKleioAccount(email, password)
       clearDemoSession()
       setKleioMode("live")
+      void trackKleioProductEvent("login_completed", {
+        surface: analyticsSurface,
+        metadata: { role: account.profile.role },
+      })
       await onSuccess(account)
     } catch (loginError) {
       setError(getKleioAuthErrorMessage(loginError, es ? "es" : "en"))
+      void trackKleioProductEvent("login_failed", {
+        surface: analyticsSurface,
+        metadata: {
+          reason: "login_credentials_rejected",
+          error_code: "login_credentials_rejected",
+        },
+      })
     } finally {
       setSubmitting(false)
     }
@@ -93,7 +106,7 @@ export function RealLoginForm({
               <Link href="/auth/forgot-password/" className="text-[0.66rem] font-semibold text-primary hover:underline">{es ? "¿Olvidaste tu contraseña?" : "Forgot password?"}</Link>
             </div>
           )}
-          <label htmlFor={passwordId} className={landing ? "sr-only" : "sr-only"}>{es ? "Contraseña" : "Password"}</label>
+          <label htmlFor={passwordId} className="sr-only">{es ? "Contraseña" : "Password"}</label>
           <div className="relative">
             <input
               id={passwordId}
