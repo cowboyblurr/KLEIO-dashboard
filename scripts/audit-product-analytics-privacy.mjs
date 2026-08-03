@@ -57,7 +57,7 @@ for (const sensitive of [
 }
 
 requireText(utility, "FORBIDDEN_METADATA_KEYS", "Client must reject sensitive metadata key patterns.")
-requireText(utility, "value.slice", "Client strings must be length-limited.")
+requireText(utility, ".slice(0, 80)", "Client strings must be length-limited.")
 requireText(eventMigration, "jsonb_typeof(entry.value) in ('string','number','boolean','null')", "Database must reject nested analytics metadata.")
 requireText(eventMigration, "octet_length(result::text) > 2048", "Database must cap analytics metadata size.")
 requireText(eventMigration, "input = public.sanitize_product_event_metadata(input)", "Database constraints must reject unsanitized metadata.")
@@ -66,15 +66,10 @@ const sourceFiles = sourceRoots.flatMap(walk)
 const sensitiveKeyPattern = /\b(?:artist_name|display_name|email|phone|address|artwork_title|title|caption|bio|biography|artist_statement|cv|filename|file_name|file_contents|private_url|signed_url|token|oauth_token|raw_response|error_message|stack|query|search_query|document|transcript)\s*:/i
 for (const file of sourceFiles) {
   const content = read(file)
-  let cursor = 0
-  while (true) {
-    const index = content.indexOf("trackKleioProductEvent", cursor)
-    if (index < 0) break
-    const fragment = content.slice(index, index + 1600)
-    if (/metadata\s*:/.test(fragment) && sensitiveKeyPattern.test(fragment)) {
-      failures.push(`Potential sensitive analytics metadata near a tracking call in ${file}`)
+  for (const metadataMatch of content.matchAll(/metadata\s*:\s*\{([^{}]*)\}/g)) {
+    if (sensitiveKeyPattern.test(metadataMatch[1])) {
+      failures.push(`Potential sensitive analytics metadata object in ${file}: ${metadataMatch[1].trim().slice(0, 120)}`)
     }
-    cursor = index + 24
   }
 }
 
