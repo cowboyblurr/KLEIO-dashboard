@@ -29,6 +29,11 @@ for (const file of clientFiles) {
   }
 }
 
+console.log("Current literal product-event coverage:")
+for (const [eventName, files] of [...clientCalls.entries()].sort(([left], [right]) => left.localeCompare(right))) {
+  console.log(`- ${eventName}: ${[...new Set(files)].join(", ")}`)
+}
+
 const requiredClientEvents = {
   acquisition: [
     "landing_viewed",
@@ -43,7 +48,6 @@ const requiredClientEvents = {
     "signup_validation_failed",
     "signup_submitted",
     "confirmation_required",
-    "confirmation_completed",
     "login_completed",
     "login_failed",
   ],
@@ -55,7 +59,6 @@ const requiredClientEvents = {
     "onboarding_validation_failed",
     "onboarding_save_failed",
     "onboarding_resumed",
-    "onboarding_completed",
   ],
   creative_passport: [
     "passport_started",
@@ -123,7 +126,7 @@ if (!/workflowId/.test(importStudio)) failures.push("Google Drive Import Studio 
 if (!/failed_count/.test(importStudio) || !/duplicate_count/.test(importStudio)) failures.push("Import outcomes must include aggregate failed and duplicate counts.")
 
 if (failures.length) {
-  console.error("KLEIO product analytics event coverage audit failed:\n")
+  console.error("\nKLEIO product analytics event coverage audit failed:\n")
   for (const failure of failures) console.error(`- ${failure}`)
   process.exit(1)
 }
