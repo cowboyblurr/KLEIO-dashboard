@@ -59,12 +59,10 @@ jobs:
       - name: Audit administrator authorization
         run: pnpm audit:analytics-admin
 
-      - name: Run inherited security and navigation audits
+      - name: Run inherited authentication audits
         run: |
           pnpm audit:auth-isolation
           pnpm audit:auth-redirect
-          pnpm audit:navigation
-          pnpm audit:user-copy
 
       - name: Typecheck
         run: pnpm typecheck
@@ -74,3 +72,8 @@ jobs:
 
       - name: Build static export
         run: pnpm build
+
+      - name: Run inherited navigation and copy audits
+        run: |
+          pnpm audit:navigation
+          pnpm audit:user-copy
