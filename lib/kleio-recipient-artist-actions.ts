@@ -10,6 +10,8 @@ export type ArtistApplicationPackage = {
   state: string
   submission_method: string
   readiness: Record<string, unknown>
+  passport_snapshot: ExtendedArtistPassport | Record<string, unknown>
+  portfolio_snapshot: Array<PortfolioWorkRecord | Record<string, unknown>>
   written_content: Record<string, unknown>
   email_preview: {
     to?: string
@@ -43,7 +45,7 @@ export async function loadArtistApplicationPackage(opportunityId: string): Promi
   const supabase = getSupabaseBrowserClient()
   const { data, error } = await supabase
     .from("application_packages")
-    .select("id, artist_user_id, opportunity_id, state, submission_method, readiness, written_content, email_preview, external_destination, approval_confirmations, artist_approved_at, data_scope, updated_at")
+    .select("id, artist_user_id, opportunity_id, state, submission_method, readiness, passport_snapshot, portfolio_snapshot, written_content, email_preview, external_destination, approval_confirmations, artist_approved_at, data_scope, updated_at")
     .eq("artist_user_id", account.user.id)
     .eq("opportunity_id", opportunityId)
     .maybeSingle()
