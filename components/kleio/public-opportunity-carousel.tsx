@@ -150,7 +150,7 @@ export function PublicOpportunityCarousel() {
       void trackKleioProductEvent("carousel_card_selected", {
         surface: "landing",
         opportunityId: item.id,
-        metadata: { source: "landing_carousel", access: "limited_preview" },
+        metadata: { source: "landing_carousel", mode: "limited_preview" },
       })
     }
   }
