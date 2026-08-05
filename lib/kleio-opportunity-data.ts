@@ -98,11 +98,11 @@ export type OpportunityRecord = {
   source_published_at: string | null
   source_updated_at: string | null
   last_verified_at: string | null
-  submission_method: string
-  submission_email: string
-  contact_email: string
-  submission_instructions: string
-  data_scope: "real" | "guided_demo" | "synthetic_test"
+  submission_method?: string
+  submission_email?: string
+  contact_email?: string
+  submission_instructions?: string
+  data_scope?: "real" | "guided_demo" | "synthetic_test"
 }
 
 export type OpportunityDirectoryItem = OpportunityRecord & {
@@ -188,9 +188,14 @@ export type OpportunityMessageRecord = {
   created_at: string
 }
 
-type OpportunityRoutingFields = Pick<OpportunityRecord,
-  "id" | "submission_method" | "submission_email" | "contact_email" | "submission_instructions" | "data_scope"
->
+type OpportunityRoutingFields = {
+  id: string
+  submission_method: string
+  submission_email: string
+  contact_email: string
+  submission_instructions: string
+  data_scope: "real" | "guided_demo" | "synthetic_test"
+}
 
 function relationMap<T extends { id: string }>(rows: T[] | null | undefined) {
   return new Map((rows ?? []).map((row) => [row.id, row]))
