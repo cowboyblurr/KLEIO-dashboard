@@ -8,6 +8,7 @@ import { ApplicationMediaImportBar } from "@/components/kleio/application-media-
 import { ApplicationRequirementMedia } from "@/components/kleio/application-requirement-media"
 import { ApplicationRecipientLoopPanel } from "@/components/kleio/application-recipient-loop-panel"
 import { ArtistRecipientConversation } from "@/components/kleio/artist-recipient-conversation"
+import { PracticeSubmissionResetControl } from "@/components/kleio/practice-submission-reset-control"
 
 export const metadata: Metadata = {
   title: "KLEIO — Prepare application",
@@ -31,6 +32,9 @@ export default function Page() {
         </Suspense>
         <div className="min-h-0 flex-1 overflow-y-auto">
           <div className="mx-auto max-w-[1120px] space-y-5 px-4 py-5 sm:px-6">
+            <Suspense fallback={null}>
+              <PracticeSubmissionResetControl />
+            </Suspense>
             <Suspense fallback={null}>
               <ApplicationRequirementMedia />
             </Suspense>
