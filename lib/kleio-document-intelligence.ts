@@ -98,6 +98,16 @@ export type DocumentUploadResult = {
   } | null
 }
 
+export type DocumentUploadStage =
+  | "validating"
+  | "checking_availability"
+  | "checking_duplicate"
+  | "uploading"
+  | "creating_private_source"
+  | "server_validation"
+  | "extracting"
+  | "review_ready"
+
 const MAX_DOCUMENT_BYTES = 15 * 1024 * 1024
 
 function selectedTypeOption(value: ArtistSelectedDocumentType) {
@@ -171,14 +181,18 @@ export async function uploadArtistDocument(input: {
   file: File
   selectedType: ArtistSelectedDocumentType
   analyze?: boolean
+  onStage?: (stage: DocumentUploadStage) => void
 }): Promise<DocumentUploadResult> {
+  input.onStage?.("validating")
   await validateArtistPdf(input.file)
+  input.onStage?.("checking_availability")
   const [account, availability] = await Promise.all([requireArtist(), loadBetaImportAvailability()])
   if (!availability.device_document || !availability.pdf) {
     throw new Error("Direct PDF analysis is not enabled for this beta workspace.")
   }
 
   const supabase = getSupabaseBrowserClient()
+  input.onStage?.("checking_duplicate")
   const fileChecksum = await checksum(input.file)
   const { data: existing, error: existingError } = await supabase
     .from("artist_import_sources")
@@ -206,11 +220,17 @@ export async function uploadArtistDocument(input: {
       .single()
     if (updateError) throw updateError
 
-    if (input.analyze !== false) await validateStoredArtistDocument(String(existing.id))
+    if (input.analyze !== false) {
+      input.onStage?.("server_validation")
+      await validateStoredArtistDocument(String(existing.id))
+      input.onStage?.("extracting")
+    }
     const extraction = input.analyze === false ? null : await requestSourceExtraction(String(existing.id), canonical)
+    input.onStage?.("review_ready")
     return { source: normalizeSource(updated as Record<string, unknown>), duplicate: true, extraction }
   }
 
+  input.onStage?.("uploading")
   const storagePath = `${account.user.id}/documents/${crypto.randomUUID()}-${safeFilename(input.file.name)}`
   const { error: uploadError } = await supabase.storage.from("artist-documents").upload(storagePath, input.file, {
     cacheControl: "3600",
@@ -219,6 +239,7 @@ export async function uploadArtistDocument(input: {
   })
   if (uploadError) throw new Error("KLEIO could not store this document privately. Please try again.")
 
+  input.onStage?.("creating_private_source")
   const now = new Date().toISOString()
   const selected = selectedTypeOption(input.selectedType)
   const sensitivity = selected.sensitive ? "sensitive" : "standard"
@@ -264,8 +285,13 @@ export async function uploadArtistDocument(input: {
   }
 
   try {
-    if (input.analyze !== false) await validateStoredArtistDocument(String(inserted.id))
+    if (input.analyze !== false) {
+      input.onStage?.("server_validation")
+      await validateStoredArtistDocument(String(inserted.id))
+      input.onStage?.("extracting")
+    }
     const extraction = input.analyze === false ? null : await requestSourceExtraction(String(inserted.id), canonical)
+    input.onStage?.("review_ready")
     const { data: refreshed } = await supabase
       .from("artist_import_sources")
       .select("*")
