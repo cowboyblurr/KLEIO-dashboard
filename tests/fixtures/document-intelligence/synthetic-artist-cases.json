@@ -1,0 +1,182 @@
+{
+  "dataset": "KLEIO document intelligence synthetic evaluation v1",
+  "privacy": "Synthetic records only. No real artist names, documents, institutions, artworks, addresses or contact details.",
+  "optimization_priority": [
+    "factual precision",
+    "evidence accuracy",
+    "unsupported-claim prevention",
+    "artist review burden",
+    "recall"
+  ],
+  "cases": [
+    {
+      "id": "emerging_one_page_cv",
+      "profile": "Emerging visual artist with a one-page native-text CV",
+      "documents": ["artist_cv"],
+      "expected_classifications": ["Artist CV"],
+      "expected_facts": ["education record", "two group exhibitions", "one award finalist record"],
+      "must_not_appear": ["solo exhibition", "award recipient", "international recognition"],
+      "expected_conflicts": [],
+      "expected_correlations": [],
+      "passport_mappings": ["education", "exhibitions", "awards"],
+      "draft_inputs": ["confirmed education", "confirmed group exhibitions"]
+    },
+    {
+      "id": "midcareer_long_cv",
+      "profile": "Mid-career artist with a long chronological CV",
+      "documents": ["artist_cv", "artist_biography"],
+      "expected_classifications": ["Artist CV", "Biography"],
+      "expected_facts": ["solo and group exhibitions remain distinct", "residencies", "press", "teaching"],
+      "must_not_appear": ["all exhibitions are solo", "critical acclaim"],
+      "expected_conflicts": ["older biography omits recent exhibition"],
+      "expected_correlations": ["new accomplishments absent from biography"],
+      "passport_mappings": ["exhibitions", "residencies", "press", "teaching"],
+      "draft_inputs": ["artist-confirmed career highlights only"]
+    },
+    {
+      "id": "multidisciplinary_artist",
+      "profile": "Multidisciplinary artist using sculpture, sound and performance",
+      "documents": ["artist_statement", "portfolio_document", "project_proposal"],
+      "expected_classifications": ["Artist statement", "Portfolio document", "Project proposal"],
+      "expected_facts": ["explicit media", "explicit materials", "project-specific collaborators"],
+      "must_not_appear": ["every collaborator is a permanent collective member", "one project theme defines the entire practice"],
+      "expected_conflicts": [],
+      "expected_correlations": ["media repeated across at least two sources"],
+      "passport_mappings": ["media", "materials", "practice description", "project history"],
+      "draft_inputs": ["confirmed media", "artist-confirmed useful correlations"]
+    },
+    {
+      "id": "performance_artist",
+      "profile": "Performance artist with screenings, performances and workshops",
+      "documents": ["artist_cv", "practice_description"],
+      "expected_classifications": ["Artist CV", "Practice description"],
+      "expected_facts": ["performances distinguished from exhibitions", "workshops distinguished from teaching employment"],
+      "must_not_appear": ["screenings relabeled as exhibitions", "workshop host relabeled as employer"],
+      "expected_conflicts": [],
+      "expected_correlations": ["audience participation appears in multiple artist-authored sections"],
+      "passport_mappings": ["professional activity", "talks", "workshops", "practice description"],
+      "draft_inputs": ["confirmed performance history"]
+    },
+    {
+      "id": "filmmaker",
+      "profile": "Filmmaker with festival screenings and press interviews",
+      "documents": ["artist_cv", "press_publication", "work_sample_list"],
+      "expected_classifications": ["Artist CV", "Press or publication", "Work-sample list"],
+      "expected_facts": ["screening title", "festival", "year", "interview type"],
+      "must_not_appear": ["festival selection becomes an award", "press interview becomes a review"],
+      "expected_conflicts": [],
+      "expected_correlations": ["film medium across CV and samples"],
+      "passport_mappings": ["screenings", "publications", "media", "selected work"],
+      "draft_inputs": ["confirmed screenings and media"]
+    },
+    {
+      "id": "photographer_copied_bio",
+      "profile": "Photographer with the same biography copied into three PDFs",
+      "documents": ["artist_biography", "portfolio_document", "grant_application"],
+      "expected_classifications": ["Biography", "Portfolio document", "Grant application"],
+      "expected_facts": ["explicitly stated photography medium"],
+      "must_not_appear": ["three independent confirmations of copied claims"],
+      "expected_conflicts": [],
+      "expected_correlations": ["repeated artist-authored language with inheritance risk"],
+      "passport_mappings": ["biography", "media"],
+      "draft_inputs": ["artist-confirmed facts, not copied repetition count"]
+    },
+    {
+      "id": "ceramic_artist",
+      "profile": "Ceramic artist with material and firing terminology",
+      "documents": ["artist_statement", "residency_material", "portfolio_document"],
+      "expected_classifications": ["Artist statement", "Residency material", "Portfolio document"],
+      "expected_facts": ["ceramics", "explicit clay body", "explicit firing method"],
+      "must_not_appear": ["unstated environmental claim", "residency application becomes residency award"],
+      "expected_conflicts": [],
+      "expected_correlations": ["material repeated across statement and portfolio"],
+      "passport_mappings": ["disciplines", "materials", "techniques", "project history"],
+      "draft_inputs": ["confirmed materials and techniques"]
+    },
+    {
+      "id": "digital_artist",
+      "profile": "Digital artist using code and interactive installation",
+      "documents": ["practice_description", "project_proposal", "budget"],
+      "expected_classifications": ["Practice description", "Project proposal", "Budget"],
+      "expected_facts": ["explicit technology", "installation requirements", "budget currency when stated"],
+      "must_not_appear": ["budget becomes award amount", "technology vendor becomes collaborator"],
+      "expected_conflicts": [],
+      "expected_correlations": ["interactive installation across practice and project"],
+      "passport_mappings": ["technology use", "installation requirements", "project history"],
+      "draft_inputs": ["confirmed practice language"]
+    },
+    {
+      "id": "socially_engaged_artist",
+      "profile": "Socially engaged artist with project-specific community language",
+      "documents": ["project_proposal", "artist_statement", "grant_application"],
+      "expected_classifications": ["Project proposal", "Artist statement", "Grant application"],
+      "expected_facts": ["explicit audience or community named in source", "explicit collaboration"],
+      "must_not_appear": ["political belief inferred", "socioeconomic status inferred", "one project community becomes permanent identity"],
+      "expected_conflicts": [],
+      "expected_correlations": ["community focus only when repeated across independent project sources"],
+      "passport_mappings": ["project history", "collaboration", "practice description"],
+      "draft_inputs": ["artist-confirmed project language"]
+    },
+    {
+      "id": "bilingual_documents",
+      "profile": "Artist with English and Spanish CV and statement versions",
+      "documents": ["artist_cv", "artist_statement", "artist_statement"],
+      "expected_classifications": ["Artist CV", "Artist statement"],
+      "expected_facts": ["language of each source retained", "same exhibition normalized without duplicate publication"],
+      "must_not_appear": ["translation treated as independent factual proof"],
+      "expected_conflicts": ["different translated date requires review"],
+      "expected_correlations": ["repeated language labeled as version inheritance"],
+      "passport_mappings": ["languages", "exhibitions", "artist statement"],
+      "draft_inputs": ["artist-selected preferred language"]
+    },
+    {
+      "id": "inconsistent_cv_versions",
+      "profile": "Artist with older and newer CV versions containing contradictory dates and location",
+      "documents": ["artist_cv", "artist_cv", "artist_biography"],
+      "expected_classifications": ["Artist CV", "Biography"],
+      "expected_facts": ["both document versions preserved", "current designation remains artist-controlled"],
+      "must_not_appear": ["older evidence deleted", "newer date silently overwrites confirmed record"],
+      "expected_conflicts": ["contradictory exhibition year", "changing professional location"],
+      "expected_correlations": ["new accomplishment only in current CV"],
+      "passport_mappings": ["versioned CV", "location", "exhibitions"],
+      "draft_inputs": ["resolved current facts only"]
+    },
+    {
+      "id": "scanned_documents",
+      "profile": "Artist with a scanned image-only CV",
+      "documents": ["artist_cv"],
+      "expected_classifications": ["Artist CV selected by artist"],
+      "expected_facts": [],
+      "must_not_appear": ["fabricated OCR text", "fabricated career records"],
+      "expected_conflicts": [],
+      "expected_correlations": [],
+      "passport_mappings": [],
+      "draft_inputs": [],
+      "expected_failure_state": "ocr_required and not_configured"
+    },
+    {
+      "id": "sparse_documentation",
+      "profile": "Artist with one short biography and no dates",
+      "documents": ["artist_biography"],
+      "expected_classifications": ["Biography"],
+      "expected_facts": ["artist-authored description retained as Layer 2"],
+      "must_not_appear": ["invented dates", "invented exhibitions", "invented education"],
+      "expected_conflicts": ["missing dates remain missing"],
+      "expected_correlations": [],
+      "passport_mappings": ["biography"],
+      "draft_inputs": ["artist-confirmed biography language only"]
+    },
+    {
+      "id": "dense_academic_history",
+      "profile": "Artist with dense academic, publication and teaching history",
+      "documents": ["artist_cv", "press_publication", "reference_document"],
+      "expected_classifications": ["Artist CV", "Press or publication", "Reference document"],
+      "expected_facts": ["publications separated from talks", "teaching separated from panels", "reference remains restricted"],
+      "must_not_appear": ["private reference content becomes public Passport text", "citation becomes press review"],
+      "expected_conflicts": [],
+      "expected_correlations": ["research area only when repeated in non-sensitive sources"],
+      "passport_mappings": ["publications", "teaching", "talks", "professional experience"],
+      "draft_inputs": ["non-sensitive confirmed records only"]
+    }
+  ]
+}
