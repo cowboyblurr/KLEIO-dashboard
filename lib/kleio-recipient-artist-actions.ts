@@ -39,6 +39,35 @@ export type ArtistSubmissionAttempt = {
   created_at: string
 }
 
+type AlignmentSnapshot = {
+  passport: ExtendedArtistPassport | null
+  portfolio: PortfolioWorkRecord[]
+}
+
+const alignmentSnapshots = new Map<string, AlignmentSnapshot>()
+
+function normalizePortfolioSnapshot(rows: ArtistApplicationPackage["portfolio_snapshot"]): PortfolioWorkRecord[] {
+  return rows.map((raw, index) => {
+    const work = raw as Partial<PortfolioWorkRecord>
+    return {
+      id: String(work.id ?? `snapshot-${index}`),
+      artist_user_id: String(work.artist_user_id ?? ""),
+      title: String(work.title ?? ""),
+      year: String(work.year ?? ""),
+      medium: String(work.medium ?? ""),
+      dimensions: String(work.dimensions ?? ""),
+      description: String(work.description ?? ""),
+      series: String(work.series ?? ""),
+      tags: Array.isArray(work.tags) ? work.tags.map(String) : [],
+      image_path: typeof work.image_path === "string" ? work.image_path : null,
+      image_url: null,
+      sort_order: typeof work.sort_order === "number" ? work.sort_order : index,
+      created_at: String(work.created_at ?? ""),
+      updated_at: String(work.updated_at ?? ""),
+    }
+  })
+}
+
 export async function loadArtistApplicationPackage(opportunityId: string): Promise<ArtistApplicationPackage | null> {
   const account = await loadKleioAccount()
   if (!account) throw new Error("Please sign in to continue.")
@@ -50,7 +79,16 @@ export async function loadArtistApplicationPackage(opportunityId: string): Promi
     .eq("opportunity_id", opportunityId)
     .maybeSingle()
   if (error) throw error
-  return data as ArtistApplicationPackage | null
+  const packageRecord = data as ArtistApplicationPackage | null
+  if (packageRecord) {
+    alignmentSnapshots.set(opportunityId, {
+      passport: packageRecord.passport_snapshot as ExtendedArtistPassport,
+      portfolio: normalizePortfolioSnapshot(packageRecord.portfolio_snapshot ?? []),
+    })
+  } else {
+    alignmentSnapshots.delete(opportunityId)
+  }
+  return packageRecord
 }
 
 export async function saveApplicationAlignment(packageId: string, alignment: ApplicationAlignmentDraft) {
@@ -96,7 +134,12 @@ export function prepareApplicationAlignment(
   passport: ExtendedArtistPassport | null,
   selectedWorks: PortfolioWorkRecord[],
 ) {
-  return buildApplicationAlignmentDraft(opportunity, passport, selectedWorks)
+  const snapshot = alignmentSnapshots.get(opportunity.id)
+  return buildApplicationAlignmentDraft(
+    opportunity,
+    passport ?? snapshot?.passport ?? null,
+    selectedWorks.length ? selectedWorks : snapshot?.portfolio ?? [],
+  )
 }
 
 export async function recordArtistSubmissionSignal(input: {
