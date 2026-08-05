@@ -46,11 +46,10 @@ jobs:
           install -m 0644 /tmp/kleio-gemini-patch/gemini-document-intelligence.test.mjs tests/gemini-document-intelligence.test.mjs
           install -m 0644 /tmp/kleio-gemini-patch/audit-gemini-document-intelligence.mjs scripts/audit-gemini-document-intelligence.mjs
           install -m 0644 /tmp/kleio-gemini-patch/audit-document-intelligence-beta.mjs scripts/audit-document-intelligence-beta.mjs
-          install -m 0644 /tmp/kleio-gemini-patch/gemini-document-intelligence.yml .github/workflows/gemini-document-intelligence.yml
           install -m 0644 /tmp/kleio-gemini-patch/package.json package.json
           install -m 0644 /tmp/kleio-gemini-patch/gemini-document-intelligence-2026-08-05.md docs/gemini-document-intelligence-2026-08-05.md
 
-          rm -rf .kleio-patch .github/workflows/apply-gemini-patch.yml
+          rm -rf .kleio-patch
           git config user.name "KLEIO GitHub Automation"
           git config user.email "actions@users.noreply.github.com"
           git add -A
