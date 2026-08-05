@@ -1,0 +1,53 @@
+name: Gemini Document Intelligence
+
+on:
+  pull_request:
+    paths:
+      - "supabase/functions/_shared/gemini-document-intelligence.ts"
+      - "supabase/functions/extract-artist-materials/**"
+      - "supabase/functions/generate-artist-document-draft/**"
+      - "components/kleio/artist-document-intelligence.tsx"
+      - "components/kleio/document-draft-studio.tsx"
+      - "lib/kleio-document-intelligence.ts"
+      - "lib/kleio-document-drafting.ts"
+      - "scripts/audit-gemini-document-intelligence.mjs"
+      - "tests/gemini-document-intelligence.test.mjs"
+      - "tests/fixtures/document-intelligence/gemini-acceptance-cases.json"
+      - "supabase/migrations/20260805232500_gemini_document_intelligence.sql"
+      - "package.json"
+      - "pnpm-lock.yaml"
+  push:
+    branches: [main]
+    paths:
+      - "supabase/functions/_shared/gemini-document-intelligence.ts"
+      - "supabase/functions/extract-artist-materials/**"
+      - "supabase/functions/generate-artist-document-draft/**"
+      - "components/kleio/artist-document-intelligence.tsx"
+      - "components/kleio/document-draft-studio.tsx"
+      - "lib/kleio-document-intelligence.ts"
+      - "lib/kleio-document-drafting.ts"
+      - "scripts/audit-gemini-document-intelligence.mjs"
+      - "tests/gemini-document-intelligence.test.mjs"
+      - "tests/fixtures/document-intelligence/gemini-acceptance-cases.json"
+      - "supabase/migrations/20260805232500_gemini_document_intelligence.sql"
+      - "package.json"
+      - "pnpm-lock.yaml"
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm audit:gemini-document-intelligence
+      - run: pnpm test:gemini-document-intelligence
+      - run: pnpm typecheck
+      - run: pnpm build
