@@ -39,6 +39,23 @@ export type PersistentOpportunityFilters = {
   offset?: number
 }
 
+export type PersistentOpportunityDirectoryData = OpportunityDirectoryDataWithSources & {
+  total: number
+}
+
+export type OpportunityReportReason =
+  | "deadline_incorrect"
+  | "closed"
+  | "broken_link"
+  | "funding_inaccurate"
+  | "eligibility_inaccurate"
+  | "possible_scam"
+  | "rights_concern"
+  | "unexpected_fee"
+  | "match_incorrect"
+  | "duplicate"
+  | "other"
+
 function relationMap<T extends { id: string }>(rows: T[] | null | undefined) {
   return new Map((rows ?? []).map((row) => [row.id, row]))
 }
@@ -48,14 +65,8 @@ function selectedInterfaceLocale(): "en" | "es" {
   return window.localStorage.getItem("kleio_locale") === "es" ? "es" : "en"
 }
 
-export async function loadPersistentOpportunityDirectory(
-  filters: PersistentOpportunityFilters = {},
-): Promise<OpportunityDirectoryDataWithSources> {
-  const account = await loadKleioAccount()
-  if (!account) throw new Error("Please sign in to view your opportunity directory.")
-
-  const supabase = getSupabaseBrowserClient()
-  const { data, error } = await supabase.rpc("search_opportunities_v2", {
+function opportunityRpcArgs(filters: PersistentOpportunityFilters) {
+  return {
     search_query: filters.query?.trim() || null,
     opportunity_types: filters.opportunityTypes?.length ? filters.opportunityTypes : null,
     source_slugs: filters.sourceSlugs?.length ? filters.sourceSlugs : null,
@@ -71,12 +82,30 @@ export async function loadPersistentOpportunityDirectory(
     structured_requirements_only: Boolean(filters.structuredRequirementsOnly),
     no_fee_only: Boolean(filters.noFeeOnly),
     external_only: Boolean(filters.externalOnly),
-    limit_count: filters.limit ?? 50,
-    offset_count: filters.offset ?? 0,
-  })
-  if (error) throw error
+  }
+}
 
-  const opportunities = (data ?? []) as OpportunityRecord[]
+export async function loadPersistentOpportunityDirectory(
+  filters: PersistentOpportunityFilters = {},
+): Promise<PersistentOpportunityDirectoryData> {
+  const account = await loadKleioAccount()
+  if (!account) throw new Error("Please sign in to view your opportunity directory.")
+
+  const supabase = getSupabaseBrowserClient()
+  const baseArgs = opportunityRpcArgs(filters)
+  const [pageResponse, totalResponse] = await Promise.all([
+    supabase.rpc("search_my_opportunities_v3", {
+      ...baseArgs,
+      limit_count: filters.limit ?? 24,
+      offset_count: filters.offset ?? 0,
+    }),
+    supabase.rpc("count_my_opportunities_v3", baseArgs),
+  ])
+
+  if (pageResponse.error) throw pageResponse.error
+  if (totalResponse.error) throw totalResponse.error
+
+  const opportunities = (pageResponse.data ?? []) as OpportunityRecord[]
   const opportunityIds = opportunities.map((item) => item.id)
   const internalCallIds = opportunities.flatMap((item) => item.internal_call_id ? [item.internal_call_id] : [])
 
@@ -146,10 +175,53 @@ export async function loadPersistentOpportunityDirectory(
     passport,
     portfolioWorks,
     sources,
+    total: Number(totalResponse.data ?? 0),
     items: directoryItems.map((item) => localizeOpportunity(
       item as OpportunityDirectoryItem & { source_language?: string },
       locale,
       translations,
     )),
+  }
+}
+
+export async function setOpportunityHidden(opportunityId: string, hidden: boolean) {
+  const account = await loadKleioAccount()
+  if (!account) throw new Error("Please sign in to manage opportunity recommendations.")
+  const supabase = getSupabaseBrowserClient()
+
+  if (hidden) {
+    const { error } = await supabase.from("artist_hidden_opportunities").upsert({
+      artist_user_id: account.user.id,
+      opportunity_id: opportunityId,
+    }, { onConflict: "artist_user_id,opportunity_id" })
+    if (error) throw error
+    return
+  }
+
+  const { error } = await supabase
+    .from("artist_hidden_opportunities")
+    .delete()
+    .eq("artist_user_id", account.user.id)
+    .eq("opportunity_id", opportunityId)
+  if (error) throw error
+}
+
+export async function reportOpportunityIssue(
+  opportunityId: string,
+  reason: OpportunityReportReason,
+  notes: string,
+) {
+  const account = await loadKleioAccount()
+  if (!account) throw new Error("Please sign in to report an opportunity issue.")
+  const supabase = getSupabaseBrowserClient()
+  const { error } = await supabase.from("opportunity_reports").insert({
+    artist_user_id: account.user.id,
+    opportunity_id: opportunityId,
+    reason,
+    notes: notes.trim(),
+  })
+  if (error) {
+    if (error.code === "23505") throw new Error("You already reported this issue. KLEIO has kept it in the review queue.")
+    throw error
   }
 }
