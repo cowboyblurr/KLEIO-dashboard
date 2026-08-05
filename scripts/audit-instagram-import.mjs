@@ -13,6 +13,8 @@ function forbidText(content, pattern, message) {
 const migration = read("supabase/migrations/20260802010000_instagram_import.sql")
 const oauthMigration = read("supabase/migrations/20260802070000_instagram_oauth_state_lifecycle.sql")
 const betaMigration = read("supabase/migrations/20260803133000_beta_import_source_availability.sql")
+const documentMigration = read("supabase/migrations/20260805133000_document_intelligence_beta.sql")
+const availability = read("lib/kleio-import-source-availability.ts")
 const gateway = read("supabase/functions/instagram-import/index.ts")
 const core = read("supabase/functions/instagram-import-core/index.ts")
 const futureCore = read("supabase/functions/instagram-import-core/future-core.ts")
@@ -35,8 +37,8 @@ requireText(oauthMigration, /claim_instagram_oauth_state/, "Reviewed OAuth state
 forbidText(migration, /disable row level security/i, "The retained Instagram architecture must not weaken RLS.")
 
 for (const [surface, content] of [["gateway", gateway], ["core", core]]) {
-  requireText(content, /instagram_import_beta_disabled/, `The public Instagram ${surface} must fail closed during the initial beta.`)
-  requireText(content, /status: "coming_soon"/, `The disabled Instagram ${surface} must identify the capability as coming soon.`)
+  requireText(content, /instagram_import_beta_disabled/, `The public Instagram ${surface} must fail closed during the document-first beta.`)
+  requireText(content, /status: "coming_soon"/, `The disabled Instagram ${surface} must identify the capability as unavailable for the active beta.`)
   requireText(content, /status: 403/, `The disabled Instagram ${surface} must not return a false successful OAuth response.`)
   requireText(content, /GET, POST, OPTIONS/, `The disabled Instagram ${surface} must block callback and action methods consistently.`)
   forbidText(content, /META_INSTAGRAM_APP_ID|META_INSTAGRAM_APP_SECRET|TOKEN_ENCRYPTION/, `The disabled Instagram ${surface} must not load provider credentials.`)
@@ -46,13 +48,16 @@ for (const [surface, content] of [["gateway", gateway], ["core", core]]) {
 
 requireText(futureCore, /raw\.githubusercontent\.com\/cowboyblurr\/KLEIO-dashboard\/[a-f0-9]{40}\//, "The reviewed future Instagram core must pin immutable source.")
 forbidText(futureCore, /raw\.githubusercontent\.com\/cowboyblurr\/KLEIO-dashboard\/(main|master|fix\/|feature\/)/, "The future Instagram core must not import mutable branch source.")
-requireText(betaMigration, /'instagram_image', false/, "Database availability must reject new Instagram source records.")
+requireText(betaMigration, /'instagram_image', false/, "The retained baseline migration must reject new Instagram source records.")
 requireText(betaMigration, /enforce_beta_import_source_availability/, "Inactive Instagram records must be blocked below the UI, gateway, and core.")
+requireText(documentMigration, /when 'instagram_image' then 'Deferred/, "The document-first beta migration must keep Instagram deferred.")
+requireText(availability, /instagram_image:\s*false/, "The shared frontend availability gate must disable Instagram.")
 
 requireText(hub, /Instagram/, "The Import Studio may communicate Instagram as a future capability.")
-requireText(hub, /Coming soon/, "Instagram must be labeled Coming soon.")
-forbidText(hub, /Connect Instagram|Authorize Instagram|Continue with Instagram/, "Coming-soon Instagram content must not be interactive.")
-forbidText(page, /InstagramImportAssist/, "Instagram import must not be mounted in the initial artist beta.")
+requireText(hub, /Deferred connected sources/, "Connected sources must be grouped as deferred rather than competing with direct PDF upload.")
+requireText(hub, /<strong className="text-\[#625C70\]">Instagram<\/strong>[\s\S]*Deferred/, "Instagram must be labeled Deferred.")
+forbidText(hub, /Connect Instagram|Authorize Instagram|Continue with Instagram/, "Deferred Instagram content must not be interactive.")
+forbidText(page, /InstagramImportAssist/, "Instagram import must not be mounted in the document-first artist beta.")
 
 requireText(client, /loadInstagramPreparedImports/, "Future client architecture must remain isolated for later review.")
 requireText(component, /KLEIO cannot post, message, comment, or modify Instagram/, "Future UI must retain the read-only boundary if re-enabled.")
@@ -64,4 +69,4 @@ for (const content of [gateway, core, futureCore, client, component, galleryUi, 
   forbidText(content, /META_INSTAGRAM_APP_SECRET\s*=\s*["'][^"']+|GOCSPX-|AIzaSy/, "A provider secret appears committed.")
 }
 
-console.log("Instagram import audit passed: the initial artist beta exposes no Instagram OAuth or import action, both gateway and directly addressable core fail closed without loading provider credentials, database insertion is disabled, the source is represented only as Coming soon, and the reviewed future implementation remains isolated for a deliberate re-enable.")
+console.log("Instagram import audit passed: the document-first artist beta exposes no Instagram OAuth or import action, both gateway and directly addressable core fail closed without loading provider credentials, database and shared availability gates disable Instagram, the source is represented only as Deferred, and the reviewed future implementation remains isolated for a deliberate re-enable.")
