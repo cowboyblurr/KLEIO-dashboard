@@ -215,9 +215,9 @@ export async function loadOpportunityDirectory(filters: OpportunityDirectoryFilt
   })
   if (error) throw error
 
-  const searchRows = (data ?? []) as OpportunityRecord[]
-  const opportunityIds = searchRows.map((item) => item.id)
-  const internalCallIds = searchRows.flatMap((item) => item.internal_call_id ? [item.internal_call_id] : [])
+  const opportunities = (data ?? []) as OpportunityRecord[]
+  const opportunityIds = opportunities.map((item) => item.id)
+  const internalCallIds = opportunities.flatMap((item) => item.internal_call_id ? [item.internal_call_id] : [])
 
   const [sourceResponse, rulesResponse, requirementsResponse, routingResponse, passport, portfolioWorks, openCalls, savedResponse] = await Promise.all([
     supabase.from("opportunity_sources").select("id, slug, name, base_domain, source_type, ingestion_method, attribution_required, active, last_successful_sync"),
@@ -263,7 +263,7 @@ export async function loadOpportunityDirectory(filters: OpportunityDirectoryFilt
   return {
     passport,
     portfolioWorks,
-    items: searchRows.map((opportunity) => ({
+    items: opportunities.map((opportunity) => ({
       ...opportunity,
       submission_method: routingById.get(opportunity.id)?.submission_method ?? opportunity.submission_method ?? "unknown",
       submission_email: routingById.get(opportunity.id)?.submission_email ?? opportunity.submission_email ?? "",
@@ -377,29 +377,30 @@ export function evaluateOpportunity(item: OpportunityDirectoryItem, passport: Ex
   const confirmedRules = item.rules.filter((rule) => rule.verification_status === "confirmed")
   const ambiguousRules = item.rules.filter((rule) => rule.verification_status === "ambiguous")
   const ruleResults = item.rules.map((rule) => evaluateRule(rule, passport))
-  const requiredFailures = ruleResults.filter((result) => result.status === "failed").length
-  const unknownRules = ruleResults.filter((result) => result.status === "unknown").length
+  const requiredResults = ruleResults.filter((result) => item.rules.find((rule) => rule.id === result.rule_id)?.requirement_level === "required")
 
   let eligibility: OpportunityEvaluation["eligibility"]
-  if (!passport) eligibility = "missing_information"
-  else if (requiredFailures) eligibility = "not_eligible"
-  else if (unknownRules || ambiguousRules.length) eligibility = "eligibility_unclear"
-  else eligibility = confirmedRules.length ? "eligible" : "likely_eligible"
+  if (requiredResults.some((result) => result.status === "failed")) eligibility = "not_eligible"
+  else if (!confirmedRules.length && !ambiguousRules.length) eligibility = "eligibility_unclear"
+  else if (requiredResults.some((result) => result.status === "unknown")) eligibility = "missing_information"
+  else if (ambiguousRules.length) eligibility = "likely_eligible"
+  else eligibility = "eligible"
 
-  const artistTags = taxonomy([...(passport?.disciplines ?? []), ...(passport?.mediums ?? []), ...(passport?.themes ?? [])])
-  const opportunityTags = taxonomy([...item.disciplines, item.opportunity_type, item.summary, item.description])
-  const overlap = [...artistTags].filter((tag) => opportunityTags.has(tag)).length
-  const relevance: OpportunityEvaluation["relevance"] = !passport
-    ? "insufficient_information"
-    : overlap >= 2
-      ? "strong_relevance"
-      : overlap === 1
-        ? "moderate_relevance"
-        : "limited_relevance"
+  const artistTags = taxonomy([...(passport?.disciplines ?? []), ...(passport?.mediums ?? [])])
+  const opportunityTags = taxonomy(item.disciplines)
+  const overlapCount = [...artistTags].filter((tag) => opportunityTags.has(tag)).length
+  let relevance: OpportunityEvaluation["relevance"]
+  if (!artistTags.size || !opportunityTags.size) relevance = "insufficient_information"
+  else if (overlapCount >= 2) relevance = "strong_relevance"
+  else if (overlapCount === 1) relevance = "moderate_relevance"
+  else relevance = "limited_relevance"
 
-  const requiredMaterials = item.requirements.length ? item.requirements.filter((requirement) => requirement.required) : item.required_materials.map((label) => ({ material_key: label, label }))
-  const ready = requiredMaterials.filter((requirement) => materialReady(requirement.material_key, passport, portfolioWorks)).map((requirement) => requirement.label)
-  const missing = requiredMaterials.filter((requirement) => !materialReady(requirement.material_key, passport, portfolioWorks)).map((requirement) => requirement.label)
+  const requirements = item.requirements.filter((requirement) => requirement.required && requirement.verification_status === "confirmed")
+  const fallbackRequirements = requirements.length
+    ? requirements.map((requirement) => ({ key: requirement.material_key, label: requirement.label }))
+    : item.required_materials.map((label) => ({ key: cleanToken(label), label }))
+  const ready = fallbackRequirements.filter((requirement) => materialReady(requirement.key, passport, portfolioWorks)).map((requirement) => requirement.label)
+  const missing = fallbackRequirements.filter((requirement) => !materialReady(requirement.key, passport, portfolioWorks)).map((requirement) => requirement.label)
 
   return {
     eligibility,
@@ -407,69 +408,73 @@ export function evaluateOpportunity(item: OpportunityDirectoryItem, passport: Ex
     ruleResults,
     readiness: {
       readyCount: ready.length,
-      totalCount: requiredMaterials.length,
+      totalCount: fallbackRequirements.length,
       ready,
       missing,
-      unknown: !requiredMaterials.length,
+      unknown: fallbackRequirements.length === 0,
     },
   }
 }
 
-export async function saveOpportunity(opportunityId: string) {
+export async function setGlobalOpportunitySaved(opportunityId: string, saved: boolean) {
   const account = await loadKleioAccount()
   if (!account) throw new Error("Please sign in to save opportunities.")
   const supabase = getSupabaseBrowserClient()
-  const { error } = await supabase.from("saved_opportunities").upsert({
-    artist_user_id: account.user.id,
-    opportunity_id: opportunityId,
-    saved_at: new Date().toISOString(),
-  }, { onConflict: "artist_user_id,opportunity_id" })
+  const query = saved
+    ? supabase.from("saved_opportunities").upsert({ artist_user_id: account.user.id, opportunity_id: opportunityId, call_id: null }, { onConflict: "artist_user_id,opportunity_id" })
+    : supabase.from("saved_opportunities").delete().eq("artist_user_id", account.user.id).eq("opportunity_id", opportunityId)
+  const { error } = await query
+  if (error) throw error
+  await recordOpportunityEvent(saved ? "save" : "unsave", opportunityId)
+}
+
+export async function recordOpportunityEvent(eventName: string, opportunityId: string | null = null, searchQuery = "", metadata: Record<string, unknown> = {}) {
+  const supabase = getSupabaseBrowserClient()
+  const { error } = await supabase.rpc("record_opportunity_event", {
+    target_event_name: eventName,
+    target_opportunity_id: opportunityId,
+    target_search_query: searchQuery,
+    target_metadata: metadata,
+  })
   if (error) throw error
 }
 
-export async function unsaveOpportunity(opportunityId: string) {
-  const account = await loadKleioAccount()
-  if (!account) throw new Error("Please sign in to update saved opportunities.")
+export async function getOrCreateOpportunityConversation(opportunityId: string) {
   const supabase = getSupabaseBrowserClient()
-  const { error } = await supabase.from("saved_opportunities").delete().eq("artist_user_id", account.user.id).eq("opportunity_id", opportunityId)
+  const { data, error } = await supabase.rpc("get_or_create_opportunity_conversation", { target_opportunity_id: opportunityId })
   if (error) throw error
+  return String(data)
 }
 
-export async function listArtistOpportunityConversations() {
-  const account = await loadKleioAccount()
-  if (!account) throw new Error("Please sign in to view opportunity conversations.")
+export async function loadOpportunityConversations(): Promise<OpportunityConversationSummary[]> {
   const supabase = getSupabaseBrowserClient()
-  const { data, error } = await supabase.rpc("list_artist_opportunity_conversations")
+  const { data, error } = await supabase.rpc("list_my_opportunity_conversations")
   if (error) throw error
   return (data ?? []) as OpportunityConversationSummary[]
 }
 
-export async function loadOpportunityConversation(conversationId: string) {
-  const account = await loadKleioAccount()
-  if (!account) throw new Error("Please sign in to view this conversation.")
+export async function loadOpportunityMessages(conversationId: string): Promise<OpportunityMessageRecord[]> {
   const supabase = getSupabaseBrowserClient()
-  const [{ data: conversation, error: conversationError }, { data: messages, error: messagesError }] = await Promise.all([
-    supabase.from("opportunity_conversations").select("*").eq("id", conversationId).single(),
-    supabase.from("opportunity_messages").select("id, conversation_id, sender_user_id, sender_role, body, client_nonce, created_at").eq("conversation_id", conversationId).order("created_at", { ascending: true }).order("id", { ascending: true }),
-  ])
-  if (conversationError) throw conversationError
-  if (messagesError) throw messagesError
-  return { conversation, messages: (messages ?? []) as OpportunityMessageRecord[] }
+  const { data, error } = await supabase.from("opportunity_messages").select("*").eq("conversation_id", conversationId).order("created_at").order("id")
+  if (error) throw error
+  return (data ?? []) as OpportunityMessageRecord[]
 }
 
-export async function sendOpportunityMessage(input: { conversationId: string; body: string; senderRole: "artist" | "institution" }) {
-  const account = await loadKleioAccount()
-  if (!account) throw new Error("Please sign in to send a message.")
-  const body = input.body.trim()
-  if (!body || body.length > 5000) throw new Error("Write a message between 1 and 5,000 characters.")
+export async function sendOpportunityMessage(conversationId: string, body: string): Promise<OpportunityMessageRecord> {
   const supabase = getSupabaseBrowserClient()
-  const clientNonce = crypto.randomUUID()
   const { data, error } = await supabase.rpc("send_opportunity_message", {
-    target_conversation_id: input.conversationId,
-    sender_role_value: input.senderRole,
-    message_body: body,
-    message_client_nonce: clientNonce,
+    target_conversation_id: conversationId,
+    message_body: body.trim(),
+    request_nonce: crypto.randomUUID(),
   })
   if (error) throw error
-  return data as string
+  const row = Array.isArray(data) ? data[0] : data
+  if (!row) throw new Error("The opportunity message was not confirmed by the server.")
+  return row as OpportunityMessageRecord
+}
+
+export async function markOpportunityConversationRead(conversationId: string) {
+  const supabase = getSupabaseBrowserClient()
+  const { error } = await supabase.rpc("mark_opportunity_conversation_read", { target_conversation_id: conversationId })
+  if (error) throw error
 }
