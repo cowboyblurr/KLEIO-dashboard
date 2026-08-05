@@ -22,17 +22,20 @@ const KINDS: Array<{ value: DocumentDraftKind; label: string; note: string }> = 
   { value: "short_bio", label: "Short biography", note: "Approximately 50–75 words" },
   { value: "standard_bio", label: "Standard biography", note: "Approximately 120–160 words" },
   { value: "extended_bio", label: "Extended biography", note: "Approximately 220–300 words" },
+  { value: "first_person_bio", label: "First-person biography", note: "Artist-facing biography using approved facts" },
   { value: "practice_description", label: "Practice description", note: "Concise third-person practice language" },
   { value: "first_person_practice", label: "First-person practice introduction", note: "Artist-facing first-person language" },
+  { value: "artist_statement_support", label: "Artist statement support", note: "A grounded statement draft from approved artist language" },
 ]
 
 function kindLabel(value: unknown) {
-  return KINDS.find((item) => item.value === value)?.label ?? "KLEIO Assist draft"
+  return KINDS.find((item) => item.value === value)?.label ?? "KLEIO Gemini draft"
 }
 
 export function DocumentDraftStudio() {
   const [kind, setKind] = useState<DocumentDraftKind>("short_bio")
   const [configured, setConfigured] = useState<boolean | null>(null)
+  const [model, setModel] = useState("")
   const [drafts, setDrafts] = useState<DocumentAssistDraft[]>([])
   const [selectedDraft, setSelectedDraft] = useState<DocumentAssistDraft | null>(null)
   const [selectedOption, setSelectedOption] = useState(0)
@@ -43,22 +46,17 @@ export function DocumentDraftStudio() {
 
   const refresh = useCallback(async () => {
     try {
-      const [capabilities, nextDrafts] = await Promise.all([
-        loadDocumentDraftCapabilities(),
-        loadDocumentDrafts(),
-      ])
+      const [capabilities, nextDrafts] = await Promise.all([loadDocumentDraftCapabilities(), loadDocumentDrafts()])
       setConfigured(capabilities.configured)
+      setModel(capabilities.model || "")
       setDrafts(nextDrafts)
     } catch (reason) {
       setConfigured(false)
-      setError(reason instanceof Error ? reason.message : "KLEIO Assist drafting is unavailable.")
+      setError(reason instanceof Error ? reason.message : "Gemini drafting is unavailable.")
     }
   }, [])
 
-  useEffect(() => {
-    void refresh()
-  }, [refresh])
-
+  useEffect(() => { void refresh() }, [refresh])
   const currentOptions = useMemo(() => selectedDraft?.generated_output.options ?? [], [selectedDraft])
 
   function chooseDraft(draft: DocumentAssistDraft, optionIndex = 0) {
@@ -77,15 +75,15 @@ export function DocumentDraftStudio() {
     try {
       void trackKleioProductEvent("biography_draft_requested", {
         surface: "document_draft_studio",
-        metadata: { mode: kind, provider: "configured_server_provider" },
+        metadata: { mode: kind, provider: "gemini" },
       })
       const result = await requestDocumentDraft(kind)
       const draft = result.draft
       setDrafts((current) => [draft, ...current.filter((item) => item.id !== draft.id)])
       chooseDraft(draft, 0)
-      setMessage("Prepared by KLEIO Assist for review. The draft is private and uses only confirmed Passport records.")
+      setMessage("Prepared by KLEIO with Gemini from artist-approved records. Review and edit before saving or submitting.")
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "KLEIO Assist could not prepare this draft.")
+      setError(reason instanceof Error ? reason.message : "Gemini could not prepare this draft.")
     } finally {
       setWorking("")
     }
@@ -140,10 +138,10 @@ export function DocumentDraftStudio() {
     <section className={panel} aria-labelledby="document-drafting-title">
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
         <div>
-          <p className="text-[0.68rem] font-semibold uppercase tracking-[0.15em] text-[#75639E]">Confirmed facts only</p>
-          <h2 id="document-drafting-title" className="mt-1 font-serif text-2xl font-semibold text-[#292631]">Biography and practice drafting</h2>
-          <p className="mt-2 max-w-3xl text-sm leading-6 text-[#746E80]">KLEIO Assist can prepare writing only after you confirm source-backed Passport records. Approved correlations may shape language, but they never become facts automatically.</p>
-          <div className="mt-4 flex flex-wrap gap-3 text-xs font-semibold text-[#625C70]"><span className="inline-flex items-center gap-2"><ShieldCheck className="size-4 text-[#75639E]" />Private until approved</span><span className="inline-flex items-center gap-2"><Sparkles className="size-4 text-[#75639E]" />No prestige or intent invented</span></div>
+          <p className="text-[0.68rem] font-semibold uppercase tracking-[0.15em] text-[#75639E]">Artist-approved evidence only</p>
+          <h2 id="document-drafting-title" className="mt-1 font-serif text-2xl font-semibold text-[#292631]">Biography and practice drafting with Gemini</h2>
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-[#746E80]">Gemini can prepare writing only after you confirm source-backed Creative Passport records. It may use artist-approved correlations to preserve your language, but those correlations never become facts automatically.</p>
+          <div className="mt-4 flex flex-wrap gap-3 text-xs font-semibold text-[#625C70]"><span className="inline-flex items-center gap-2"><ShieldCheck className="size-4 text-[#75639E]" />Private until approved</span><span className="inline-flex items-center gap-2"><Sparkles className="size-4 text-[#75639E]" />Unsupported facts are rejected</span></div>
         </div>
 
         <div className="space-y-3 rounded-2xl border border-[#E7E1F7] bg-[#FCFBFE] p-4">
@@ -154,24 +152,26 @@ export function DocumentDraftStudio() {
             </select>
           </label>
           <p className="text-xs leading-5 text-[#81788E]">{KINDS.find((item) => item.value === kind)?.note}</p>
+          {model && <p className="text-[0.68rem] font-semibold text-[#8A8296]">Gemini model: {model}</p>}
           <button type="button" className={`${primary} w-full`} disabled={configured !== true || Boolean(working)} onClick={() => void generate()}>{working === "generate" ? <Loader2 className="size-4 animate-spin" /> : <FilePenLine className="size-4" />}Prepare two private options</button>
-          {configured === false && <p className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs leading-5 text-amber-900">Drafting is configured only when the approved server-side provider credentials are available. Document upload and deterministic extraction remain usable without it.</p>}
+          {configured === false && <p className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs leading-5 text-amber-900">Gemini drafting is temporarily unavailable. Your approved Passport records remain private and unchanged.</p>}
         </div>
       </div>
 
       {(error || message) && <div role={error ? "alert" : "status"} aria-live="polite" className={`mt-4 rounded-xl border px-4 py-3 text-sm ${error ? "border-red-200 bg-red-50 text-red-800" : "border-emerald-200 bg-emerald-50 text-emerald-800"}`}>{error || message}</div>}
 
       {drafts.length > 0 && <div className="mt-5 grid gap-5 lg:grid-cols-[280px_minmax(0,1fr)]">
-        <nav className="space-y-2" aria-label="Private KLEIO Assist drafts">
+        <nav className="space-y-2" aria-label="Private KLEIO Gemini drafts">
           {drafts.map((draft) => <button key={draft.id} type="button" className={`w-full rounded-xl border p-3 text-left transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#A997E8]/20 ${selectedDraft?.id === draft.id ? "border-[#A997E8] bg-[#F7F4FF]" : "border-[#E7E1F7] bg-white hover:bg-[#FBFAFE]"}`} onClick={() => chooseDraft(draft)}><span className="block text-sm font-semibold text-[#292631]">{kindLabel(draft.request_context.requested_kind)}</span><span className="mt-1 block text-xs text-[#746E80]">{draft.status.replaceAll("_", " ")} · {new Date(draft.created_at).toLocaleDateString()}</span></button>)}
         </nav>
 
         {selectedDraft && <article className="rounded-2xl border border-[#E7E1F7] bg-[#FCFBFE] p-4 sm:p-5">
-          <p className="text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-[#75639E]">Prepared by KLEIO Assist for review</p>
+          <p className="text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-[#75639E]">Prepared by KLEIO with Gemini from artist-approved records</p>
           <h3 className="mt-1 font-serif text-xl font-semibold text-[#292631]">{kindLabel(selectedDraft.request_context.requested_kind)}</h3>
+          <p className="mt-2 text-xs leading-5 text-[#81788E]">Review and edit before saving or submitting. Evidence references and source pages remain attached privately to this draft.</p>
           {currentOptions.length > 1 && <div className="mt-4 flex flex-wrap gap-2" role="tablist" aria-label="Draft options">{currentOptions.map((option, index) => <button key={index} type="button" role="tab" aria-selected={selectedOption === index} className={selectedOption === index ? primary : secondary} onClick={() => { setSelectedOption(index); setText(option.text) }}>{option.label}</button>)}</div>}
           <label className="mt-4 grid gap-1.5 text-xs font-semibold text-[#625C70]"><span>Edit before saving</span><textarea className={textarea} value={text} onChange={(event) => setText(event.target.value)} /></label>
-          <div className="mt-3 flex flex-wrap items-center justify-between gap-3"><p className="text-xs leading-5 text-[#81788E]">{text.trim() ? text.trim().split(/\s+/).length : 0} words · source references retained privately in the draft record</p><div className="flex flex-wrap gap-2"><button type="button" className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-red-200 bg-white px-3 py-2 text-sm font-semibold text-red-700 disabled:opacity-50" disabled={Boolean(working)} onClick={() => void reject()}><X className="size-4" />Reject</button><button type="button" className={secondary} disabled={Boolean(working) || !text.trim()} onClick={() => void save(false)}>Save private edit</button><button type="button" className={primary} disabled={Boolean(working) || !text.trim()} onClick={() => void save(true)}>{working === "save" ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />}Approve and save to Passport</button></div></div>
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-3"><p className="text-xs leading-5 text-[#81788E]">{text.trim() ? text.trim().split(/\s+/).length : 0} words · source references retained privately</p><div className="flex flex-wrap gap-2"><button type="button" className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-red-200 bg-white px-3 py-2 text-sm font-semibold text-red-700 disabled:opacity-50" disabled={Boolean(working)} onClick={() => void reject()}><X className="size-4" />Reject</button><button type="button" className={secondary} disabled={Boolean(working) || !text.trim()} onClick={() => void save(false)}>Save private edit</button><button type="button" className={primary} disabled={Boolean(working) || !text.trim()} onClick={() => void save(true)}>{working === "save" ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />}Approve and save to Passport</button></div></div>
         </article>}
       </div>}
     </section>

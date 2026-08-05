@@ -1,0 +1,22 @@
+{
+  "schema_version": "gemini_document_acceptance_v1",
+  "cases": [
+    {"id":"clean_native_cv","document_type":"artist_cv","expected_quality":["complete_review_ready","substantial_review_ready"],"must_find":["education","exhibition"],"must_not_invent":["awards not present"]},
+    {"id":"multi_column_cv","document_type":"artist_cv","expected_quality":["substantial_review_ready"],"must_find":["reading order","professional history"],"must_not_invent":["institutions not visible"]},
+    {"id":"partial_text_cv","document_type":"artist_cv","expected_quality":["substantial_review_ready","limited_analysis"],"must_find":["visual transcription"],"must_not_invent":["missing dates"]},
+    {"id":"fully_scanned_cv","document_type":"artist_cv","expected_quality":["substantial_review_ready","visual_reading_limited"],"must_find":["page evidence"],"must_not_invent":["unreadable entries"]},
+    {"id":"unconventional_headings_cv","document_type":"artist_cv","expected_quality":["substantial_review_ready"],"must_find":["semantic sections"],"must_not_invent":["standard headings not present"]},
+    {"id":"bilingual_cv","document_type":"artist_cv","expected_quality":["substantial_review_ready"],"must_find":["languages"],"must_not_invent":["translation certainty"]},
+    {"id":"artist_biography","document_type":"artist_biography","expected_quality":["complete_review_ready","substantial_review_ready"],"must_find":["artist-authored language"],"must_not_invent":["prestige"]},
+    {"id":"artist_statement","document_type":"artist_statement","expected_quality":["complete_review_ready","substantial_review_ready"],"must_find":["practice language"],"must_not_invent":["identity or intent beyond source"]},
+    {"id":"project_proposal","document_type":"project_proposal","expected_quality":["substantial_review_ready"],"must_find":["objectives","timeline"],"must_not_invent":["outcomes not stated"]},
+    {"id":"project_budget","document_type":"project_budget","expected_quality":["substantial_review_ready"],"must_find":["line items","currency"],"must_not_invent":["missing amounts"]},
+    {"id":"portfolio_with_images","document_type":"work_sample_list","expected_quality":["substantial_review_ready"],"must_find":["image-caption relationships"],"must_not_invent":["titles or media"]},
+    {"id":"duplicate_document","document_type":"artist_cv","expected_quality":["substantial_review_ready"],"must_find":["duplicate relationships"],"must_not_invent":["new records"]},
+    {"id":"conflicting_version","document_type":"artist_cv","expected_quality":["substantial_review_ready"],"must_find":["conflicts"],"must_not_invent":["silent replacement"]},
+    {"id":"sparse_document","document_type":"other_artist_material","expected_quality":["limited_analysis"],"must_find":["limitations"],"must_not_invent":["context"]},
+    {"id":"sensitive_eligibility","document_type":"proof_of_residency","expected_quality":["limited_analysis"],"must_find":["minimum processing"],"must_not_invent":["biography content"]},
+    {"id":"malformed_or_locked_pdf","document_type":"artist_cv","expected_quality":["failed"],"must_find":["stable error"],"must_not_invent":["analysis"]},
+    {"id":"seven_page_failure_equivalent","document_type":"artist_cv","expected_quality":["substantial_review_ready","limited_analysis"],"must_find":["visible report","page map","sections"],"must_not_invent":["complete success from one keyword"]}
+  ]
+}
