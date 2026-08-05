@@ -7,6 +7,12 @@ on:
     paths:
       - ".kleio-patch/**"
       - ".github/workflows/apply-gemini-patch.yml"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - ".kleio-patch/**"
+      - ".github/workflows/apply-gemini-patch.yml"
 
 permissions:
   contents: write
