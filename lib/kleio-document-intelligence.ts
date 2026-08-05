@@ -7,23 +7,23 @@ import {
 import { loadBetaImportAvailability } from "@/lib/kleio-import-source-availability"
 
 export const ARTIST_DOCUMENT_TYPE_OPTIONS = [
-  { value: "artist_cv", label: "Artist CV", canonical: "artist_cv" },
-  { value: "biography", label: "Biography", canonical: "artist_biography" },
-  { value: "artist_statement", label: "Artist statement", canonical: "artist_statement" },
-  { value: "practice_description", label: "Practice description", canonical: "other_artist_material" },
-  { value: "portfolio_document", label: "Portfolio document", canonical: "work_sample_list" },
-  { value: "exhibition_history", label: "Exhibition history", canonical: "exhibition_documentation" },
-  { value: "project_proposal", label: "Project proposal", canonical: "project_proposal" },
-  { value: "grant_application", label: "Grant application", canonical: "project_proposal" },
-  { value: "budget", label: "Budget", canonical: "project_budget" },
-  { value: "press_publication", label: "Press or publication", canonical: "press_publication" },
-  { value: "work_sample_list", label: "Work-sample list", canonical: "work_sample_list" },
-  { value: "residency_material", label: "Residency material", canonical: "application_requirement_file" },
+  { value: "artist_cv", label: "Artist CV", canonical: "artist_cv", sensitive: false },
+  { value: "biography", label: "Biography", canonical: "artist_biography", sensitive: false },
+  { value: "artist_statement", label: "Artist statement", canonical: "artist_statement", sensitive: false },
+  { value: "practice_description", label: "Practice description", canonical: "other_artist_material", sensitive: false },
+  { value: "portfolio_document", label: "Portfolio document", canonical: "work_sample_list", sensitive: false },
+  { value: "exhibition_history", label: "Exhibition history", canonical: "exhibition_documentation", sensitive: false },
+  { value: "project_proposal", label: "Project proposal", canonical: "project_proposal", sensitive: false },
+  { value: "grant_application", label: "Grant application", canonical: "project_proposal", sensitive: false },
+  { value: "budget", label: "Budget", canonical: "project_budget", sensitive: false },
+  { value: "press_publication", label: "Press or publication", canonical: "press_publication", sensitive: false },
+  { value: "work_sample_list", label: "Work-sample list", canonical: "work_sample_list", sensitive: false },
+  { value: "residency_material", label: "Residency material", canonical: "application_requirement_file", sensitive: false },
   { value: "reference_document", label: "Reference document", canonical: "reference_letter", sensitive: true },
-  { value: "general_artist_material", label: "General artist material", canonical: "other_artist_material" },
+  { value: "general_artist_material", label: "General artist material", canonical: "other_artist_material", sensitive: false },
   { value: "sensitive_eligibility_document", label: "Sensitive eligibility document", canonical: "proof_of_residency", sensitive: true },
-  { value: "mixed_document", label: "Mixed document", canonical: "other_artist_material" },
-  { value: "unknown", label: "Not sure yet", canonical: "needs_artist_classification" },
+  { value: "mixed_document", label: "Mixed document", canonical: "other_artist_material", sensitive: false },
+  { value: "unknown", label: "Not sure yet", canonical: "needs_artist_classification", sensitive: false },
 ] as const
 
 export type ArtistSelectedDocumentType = (typeof ARTIST_DOCUMENT_TYPE_OPTIONS)[number]["value"]
@@ -484,6 +484,8 @@ export async function refreshArtistDocumentCorrelations() {
   if (error) throw error
   return data as {
     correlations_created: number
+    interpretive_hypotheses_created?: number
+    conflicts_created?: number
     artist_confirmation_required: boolean
     interpretations_are_not_facts: boolean
   }
