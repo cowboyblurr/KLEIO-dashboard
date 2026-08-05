@@ -6,10 +6,11 @@ import { ApplicationArtistIdentityBar } from "@/components/kleio/application-art
 import { ApplicationSubmissionCover } from "@/components/kleio/application-submission-cover"
 import { ApplicationMediaImportBar } from "@/components/kleio/application-media-import-bar"
 import { ApplicationRequirementMedia } from "@/components/kleio/application-requirement-media"
+import { ApplicationRecipientLoopPanel } from "@/components/kleio/application-recipient-loop-panel"
 
 export const metadata: Metadata = {
   title: "KLEIO — Prepare application",
-  description: "Review source requirements, assemble reusable artist media, and approve an artist-controlled application package.",
+  description: "Review source requirements, assemble reusable artist media, approve an artist-controlled application package, and prepare a truthful recipient handoff.",
 }
 
 function PreparationFallback() {
@@ -37,6 +38,9 @@ export default function Page() {
             </Suspense>
           </div>
         </div>
+        <Suspense fallback={null}>
+          <ApplicationRecipientLoopPanel />
+        </Suspense>
       </div>
     </ArtistShell>
   )
