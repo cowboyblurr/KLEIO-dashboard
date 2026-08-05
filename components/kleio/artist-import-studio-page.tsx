@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { ArrowLeft } from "lucide-react"
 import { ArtistDocumentIntelligence } from "@/components/kleio/artist-document-intelligence"
+import { DocumentDraftStudio } from "@/components/kleio/document-draft-studio"
 import { ImportSourceHub } from "@/components/kleio/import-source-hub"
 
 export function ArtistImportStudioPage() {
@@ -14,6 +15,7 @@ export function ArtistImportStudioPage() {
         </Link>
         <ImportSourceHub />
         <ArtistDocumentIntelligence />
+        <DocumentDraftStudio />
       </div>
     </main>
   )
