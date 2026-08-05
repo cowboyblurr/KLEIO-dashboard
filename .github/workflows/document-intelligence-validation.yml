@@ -1,0 +1,51 @@
+name: Document Intelligence Validation
+
+on:
+  pull_request:
+    paths:
+      - "components/kleio/artist-document-intelligence.tsx"
+      - "components/kleio/document-draft-studio.tsx"
+      - "components/kleio/passport-updates-inbox.tsx"
+      - "components/kleio/import-source-hub.tsx"
+      - "components/kleio/artist-import-studio-page.tsx"
+      - "components/kleio/creative-passport-media-panel.tsx"
+      - "lib/kleio-document-intelligence.ts"
+      - "lib/kleio-document-drafting.ts"
+      - "lib/kleio-import-source-availability.ts"
+      - "lib/kleio-product-event-dictionary.ts"
+      - "supabase/functions/validate-artist-document/**"
+      - "supabase/functions/generate-artist-document-draft/**"
+      - "supabase/migrations/*document_intelligence*"
+      - "tests/fixtures/document-intelligence/**"
+      - "scripts/audit-document-intelligence-beta.mjs"
+      - "package.json"
+      - ".github/workflows/document-intelligence-validation.yml"
+  push:
+    branches: [main]
+    paths:
+      - "components/kleio/artist-document-intelligence.tsx"
+      - "components/kleio/document-draft-studio.tsx"
+      - "components/kleio/passport-updates-inbox.tsx"
+      - "lib/kleio-document-intelligence.ts"
+      - "lib/kleio-document-drafting.ts"
+      - "supabase/functions/validate-artist-document/**"
+      - "supabase/functions/generate-artist-document-draft/**"
+      - "supabase/migrations/*document_intelligence*"
+      - "tests/fixtures/document-intelligence/**"
+      - "scripts/audit-document-intelligence-beta.mjs"
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Run document-intelligence release audit
+        run: node scripts/audit-document-intelligence-beta.mjs
