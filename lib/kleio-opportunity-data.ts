@@ -98,6 +98,11 @@ export type OpportunityRecord = {
   source_published_at: string | null
   source_updated_at: string | null
   last_verified_at: string | null
+  submission_method: string
+  submission_email: string
+  contact_email: string
+  submission_instructions: string
+  data_scope: "real" | "guided_demo" | "synthetic_test"
 }
 
 export type OpportunityDirectoryItem = OpportunityRecord & {
@@ -183,6 +188,10 @@ export type OpportunityMessageRecord = {
   created_at: string
 }
 
+type OpportunityRoutingFields = Pick<OpportunityRecord,
+  "id" | "submission_method" | "submission_email" | "contact_email" | "submission_instructions" | "data_scope"
+>
+
 function relationMap<T extends { id: string }>(rows: T[] | null | undefined) {
   return new Map((rows ?? []).map((row) => [row.id, row]))
 }
@@ -206,17 +215,20 @@ export async function loadOpportunityDirectory(filters: OpportunityDirectoryFilt
   })
   if (error) throw error
 
-  const opportunities = (data ?? []) as OpportunityRecord[]
-  const opportunityIds = opportunities.map((item) => item.id)
-  const internalCallIds = opportunities.flatMap((item) => item.internal_call_id ? [item.internal_call_id] : [])
+  const searchRows = (data ?? []) as OpportunityRecord[]
+  const opportunityIds = searchRows.map((item) => item.id)
+  const internalCallIds = searchRows.flatMap((item) => item.internal_call_id ? [item.internal_call_id] : [])
 
-  const [sourceResponse, rulesResponse, requirementsResponse, passport, portfolioWorks, openCalls, savedResponse] = await Promise.all([
+  const [sourceResponse, rulesResponse, requirementsResponse, routingResponse, passport, portfolioWorks, openCalls, savedResponse] = await Promise.all([
     supabase.from("opportunity_sources").select("id, slug, name, base_domain, source_type, ingestion_method, attribution_required, active, last_successful_sync"),
     opportunityIds.length
       ? supabase.from("opportunity_eligibility_rules").select("*").in("opportunity_id", opportunityIds).order("sort_order")
       : Promise.resolve({ data: [], error: null }),
     opportunityIds.length
       ? supabase.from("opportunity_requirements").select("*").in("opportunity_id", opportunityIds).order("sort_order")
+      : Promise.resolve({ data: [], error: null }),
+    opportunityIds.length
+      ? supabase.from("opportunities").select("id, submission_method, submission_email, contact_email, submission_instructions, data_scope").in("id", opportunityIds)
       : Promise.resolve({ data: [], error: null }),
     loadArtistPassport() as Promise<ExtendedArtistPassport | null>,
     loadPortfolioWorks(),
@@ -227,9 +239,11 @@ export async function loadOpportunityDirectory(filters: OpportunityDirectoryFilt
   if (sourceResponse.error) throw sourceResponse.error
   if (rulesResponse.error) throw rulesResponse.error
   if (requirementsResponse.error) throw requirementsResponse.error
+  if (routingResponse.error) throw routingResponse.error
   if (savedResponse.error) throw savedResponse.error
 
   const sourceById = relationMap((sourceResponse.data ?? []) as OpportunitySourceRecord[])
+  const routingById = relationMap((routingResponse.data ?? []) as OpportunityRoutingFields[])
   const callById = relationMap(openCalls)
   const savedIds = new Set((savedResponse.data ?? []).map((row) => String(row.opportunity_id)))
   const rulesByOpportunity = new Map<string, OpportunityEligibilityRule[]>()
@@ -249,8 +263,13 @@ export async function loadOpportunityDirectory(filters: OpportunityDirectoryFilt
   return {
     passport,
     portfolioWorks,
-    items: opportunities.map((opportunity) => ({
+    items: searchRows.map((opportunity) => ({
       ...opportunity,
+      submission_method: routingById.get(opportunity.id)?.submission_method ?? opportunity.submission_method ?? "unknown",
+      submission_email: routingById.get(opportunity.id)?.submission_email ?? opportunity.submission_email ?? "",
+      contact_email: routingById.get(opportunity.id)?.contact_email ?? opportunity.contact_email ?? "",
+      submission_instructions: routingById.get(opportunity.id)?.submission_instructions ?? opportunity.submission_instructions ?? "",
+      data_scope: routingById.get(opportunity.id)?.data_scope ?? opportunity.data_scope ?? "real",
       source: sourceById.get(opportunity.source_id) ?? null,
       rules: rulesByOpportunity.get(opportunity.id) ?? [],
       requirements: requirementsByOpportunity.get(opportunity.id) ?? [],
@@ -358,30 +377,29 @@ export function evaluateOpportunity(item: OpportunityDirectoryItem, passport: Ex
   const confirmedRules = item.rules.filter((rule) => rule.verification_status === "confirmed")
   const ambiguousRules = item.rules.filter((rule) => rule.verification_status === "ambiguous")
   const ruleResults = item.rules.map((rule) => evaluateRule(rule, passport))
-  const requiredResults = ruleResults.filter((result) => item.rules.find((rule) => rule.id === result.rule_id)?.requirement_level === "required")
+  const requiredFailures = ruleResults.filter((result) => result.status === "failed").length
+  const unknownRules = ruleResults.filter((result) => result.status === "unknown").length
 
   let eligibility: OpportunityEvaluation["eligibility"]
-  if (requiredResults.some((result) => result.status === "failed")) eligibility = "not_eligible"
-  else if (!confirmedRules.length && !ambiguousRules.length) eligibility = "eligibility_unclear"
-  else if (requiredResults.some((result) => result.status === "unknown")) eligibility = "missing_information"
-  else if (ambiguousRules.length) eligibility = "likely_eligible"
-  else eligibility = "eligible"
+  if (!passport) eligibility = "missing_information"
+  else if (requiredFailures) eligibility = "not_eligible"
+  else if (unknownRules || ambiguousRules.length) eligibility = "eligibility_unclear"
+  else eligibility = confirmedRules.length ? "eligible" : "likely_eligible"
 
-  const artistTags = taxonomy([...(passport?.disciplines ?? []), ...(passport?.mediums ?? [])])
-  const opportunityTags = taxonomy(item.disciplines)
-  const overlapCount = [...artistTags].filter((tag) => opportunityTags.has(tag)).length
-  let relevance: OpportunityEvaluation["relevance"]
-  if (!artistTags.size || !opportunityTags.size) relevance = "insufficient_information"
-  else if (overlapCount >= 2) relevance = "strong_relevance"
-  else if (overlapCount === 1) relevance = "moderate_relevance"
-  else relevance = "limited_relevance"
+  const artistTags = taxonomy([...(passport?.disciplines ?? []), ...(passport?.mediums ?? []), ...(passport?.themes ?? [])])
+  const opportunityTags = taxonomy([...item.disciplines, item.opportunity_type, item.summary, item.description])
+  const overlap = [...artistTags].filter((tag) => opportunityTags.has(tag)).length
+  const relevance: OpportunityEvaluation["relevance"] = !passport
+    ? "insufficient_information"
+    : overlap >= 2
+      ? "strong_relevance"
+      : overlap === 1
+        ? "moderate_relevance"
+        : "limited_relevance"
 
-  const requirements = item.requirements.filter((requirement) => requirement.required && requirement.verification_status === "confirmed")
-  const fallbackRequirements = requirements.length
-    ? requirements.map((requirement) => ({ key: requirement.material_key, label: requirement.label }))
-    : item.required_materials.map((label) => ({ key: cleanToken(label), label }))
-  const ready = fallbackRequirements.filter((requirement) => materialReady(requirement.key, passport, portfolioWorks)).map((requirement) => requirement.label)
-  const missing = fallbackRequirements.filter((requirement) => !materialReady(requirement.key, passport, portfolioWorks)).map((requirement) => requirement.label)
+  const requiredMaterials = item.requirements.length ? item.requirements.filter((requirement) => requirement.required) : item.required_materials.map((label) => ({ material_key: label, label }))
+  const ready = requiredMaterials.filter((requirement) => materialReady(requirement.material_key, passport, portfolioWorks)).map((requirement) => requirement.label)
+  const missing = requiredMaterials.filter((requirement) => !materialReady(requirement.material_key, passport, portfolioWorks)).map((requirement) => requirement.label)
 
   return {
     eligibility,
@@ -389,73 +407,69 @@ export function evaluateOpportunity(item: OpportunityDirectoryItem, passport: Ex
     ruleResults,
     readiness: {
       readyCount: ready.length,
-      totalCount: fallbackRequirements.length,
+      totalCount: requiredMaterials.length,
       ready,
       missing,
-      unknown: fallbackRequirements.length === 0,
+      unknown: !requiredMaterials.length,
     },
   }
 }
 
-export async function setGlobalOpportunitySaved(opportunityId: string, saved: boolean) {
+export async function saveOpportunity(opportunityId: string) {
   const account = await loadKleioAccount()
   if (!account) throw new Error("Please sign in to save opportunities.")
   const supabase = getSupabaseBrowserClient()
-  const query = saved
-    ? supabase.from("saved_opportunities").upsert({ artist_user_id: account.user.id, opportunity_id: opportunityId, call_id: null }, { onConflict: "artist_user_id,opportunity_id" })
-    : supabase.from("saved_opportunities").delete().eq("artist_user_id", account.user.id).eq("opportunity_id", opportunityId)
-  const { error } = await query
-  if (error) throw error
-  await recordOpportunityEvent(saved ? "save" : "unsave", opportunityId)
-}
-
-export async function recordOpportunityEvent(eventName: string, opportunityId: string | null = null, searchQuery = "", metadata: Record<string, unknown> = {}) {
-  const supabase = getSupabaseBrowserClient()
-  const { error } = await supabase.rpc("record_opportunity_event", {
-    target_event_name: eventName,
-    target_opportunity_id: opportunityId,
-    target_search_query: searchQuery,
-    target_metadata: metadata,
-  })
+  const { error } = await supabase.from("saved_opportunities").upsert({
+    artist_user_id: account.user.id,
+    opportunity_id: opportunityId,
+    saved_at: new Date().toISOString(),
+  }, { onConflict: "artist_user_id,opportunity_id" })
   if (error) throw error
 }
 
-export async function getOrCreateOpportunityConversation(opportunityId: string) {
+export async function unsaveOpportunity(opportunityId: string) {
+  const account = await loadKleioAccount()
+  if (!account) throw new Error("Please sign in to update saved opportunities.")
   const supabase = getSupabaseBrowserClient()
-  const { data, error } = await supabase.rpc("get_or_create_opportunity_conversation", { target_opportunity_id: opportunityId })
+  const { error } = await supabase.from("saved_opportunities").delete().eq("artist_user_id", account.user.id).eq("opportunity_id", opportunityId)
   if (error) throw error
-  return String(data)
 }
 
-export async function loadOpportunityConversations(): Promise<OpportunityConversationSummary[]> {
+export async function listArtistOpportunityConversations() {
+  const account = await loadKleioAccount()
+  if (!account) throw new Error("Please sign in to view opportunity conversations.")
   const supabase = getSupabaseBrowserClient()
-  const { data, error } = await supabase.rpc("list_my_opportunity_conversations")
+  const { data, error } = await supabase.rpc("list_artist_opportunity_conversations")
   if (error) throw error
   return (data ?? []) as OpportunityConversationSummary[]
 }
 
-export async function loadOpportunityMessages(conversationId: string): Promise<OpportunityMessageRecord[]> {
+export async function loadOpportunityConversation(conversationId: string) {
+  const account = await loadKleioAccount()
+  if (!account) throw new Error("Please sign in to view this conversation.")
   const supabase = getSupabaseBrowserClient()
-  const { data, error } = await supabase.from("opportunity_messages").select("*").eq("conversation_id", conversationId).order("created_at").order("id")
-  if (error) throw error
-  return (data ?? []) as OpportunityMessageRecord[]
+  const [{ data: conversation, error: conversationError }, { data: messages, error: messagesError }] = await Promise.all([
+    supabase.from("opportunity_conversations").select("*").eq("id", conversationId).single(),
+    supabase.from("opportunity_messages").select("id, conversation_id, sender_user_id, sender_role, body, client_nonce, created_at").eq("conversation_id", conversationId).order("created_at", { ascending: true }).order("id", { ascending: true }),
+  ])
+  if (conversationError) throw conversationError
+  if (messagesError) throw messagesError
+  return { conversation, messages: (messages ?? []) as OpportunityMessageRecord[] }
 }
 
-export async function sendOpportunityMessage(conversationId: string, body: string): Promise<OpportunityMessageRecord> {
+export async function sendOpportunityMessage(input: { conversationId: string; body: string; senderRole: "artist" | "institution" }) {
+  const account = await loadKleioAccount()
+  if (!account) throw new Error("Please sign in to send a message.")
+  const body = input.body.trim()
+  if (!body || body.length > 5000) throw new Error("Write a message between 1 and 5,000 characters.")
   const supabase = getSupabaseBrowserClient()
+  const clientNonce = crypto.randomUUID()
   const { data, error } = await supabase.rpc("send_opportunity_message", {
-    target_conversation_id: conversationId,
-    message_body: body.trim(),
-    request_nonce: crypto.randomUUID(),
+    target_conversation_id: input.conversationId,
+    sender_role_value: input.senderRole,
+    message_body: body,
+    message_client_nonce: clientNonce,
   })
   if (error) throw error
-  const row = Array.isArray(data) ? data[0] : data
-  if (!row) throw new Error("The opportunity message was not confirmed by the server.")
-  return row as OpportunityMessageRecord
-}
-
-export async function markOpportunityConversationRead(conversationId: string) {
-  const supabase = getSupabaseBrowserClient()
-  const { error } = await supabase.rpc("mark_opportunity_conversation_read", { target_conversation_id: conversationId })
-  if (error) throw error
+  return data as string
 }
