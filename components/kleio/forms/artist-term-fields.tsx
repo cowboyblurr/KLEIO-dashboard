@@ -1,6 +1,6 @@
 "use client"
 
-import { useId, useMemo, useState } from "react"
+import { useEffect, useId, useMemo, useRef, useState } from "react"
 import { Plus, Search, X } from "lucide-react"
 import {
   ARTIST_DISCIPLINE_OPTIONS,
@@ -22,6 +22,8 @@ export function DisciplineMultiSelect({
   locale?: "en" | "es"
 }) {
   const id = useId()
+  const rootRef = useRef<HTMLFieldSetElement | null>(null)
+  const inputRef = useRef<HTMLInputElement | null>(null)
   const [query, setQuery] = useState("")
   const [open, setOpen] = useState(false)
   const [activeIndex, setActiveIndex] = useState(0)
@@ -37,21 +39,42 @@ export function DisciplineMultiSelect({
   const canAddCustom = Boolean(query.trim()) && !exactKnown && !selected.some((value) => value.toLowerCase() === query.trim().toLowerCase())
   const choices = [...filtered, ...(canAddCustom ? [{ value: `custom:${query.trim()}`, label: query.trim(), labelEs: query.trim() }] : [])]
 
+  useEffect(() => {
+    if (!open) return
+    function dismissOutside(event: PointerEvent) {
+      if (rootRef.current?.contains(event.target as Node)) return
+      setOpen(false)
+      setActiveIndex(0)
+    }
+    document.addEventListener("pointerdown", dismissOutside)
+    return () => document.removeEventListener("pointerdown", dismissOutside)
+  }, [open])
+
   function add(value: string) {
     const nextValue = value.startsWith("custom:") ? value.slice(7) : canonicalDisciplineValue(value)
     onChange(normalizeArtistTerms([...selected, nextValue], "discipline"))
     setQuery("")
     setOpen(false)
     setActiveIndex(0)
+    inputRef.current?.focus()
   }
 
   function remove(value: string) {
     onChange(selected.filter((entry) => entry !== value))
   }
 
+  function close() {
+    setOpen(false)
+    setActiveIndex(0)
+    inputRef.current?.focus()
+  }
+
   return (
-    <fieldset>
-      <legend className="mb-1.5 text-xs font-semibold text-[#746E80]">Disciplines</legend>
+    <fieldset ref={rootRef}>
+      <legend className="mb-1.5 text-xs font-semibold text-[#746E80]">{locale === "es" ? "Disciplinas creativas" : "Creative disciplines"}</legend>
+      <p id={`${id}-help`} className="mb-2 text-[0.68rem] leading-relaxed text-muted-foreground">
+        {locale === "es" ? "Elige los campos creativos amplios que describen tu práctica, como pintura, fotografía, cine o performance." : "Choose the broad creative fields that describe your practice, such as painting, photography, film, or performance."}
+      </p>
       <div className={field}>
         {selected.length > 0 && (
           <div className="mb-2 flex flex-wrap gap-1.5">
@@ -66,11 +89,13 @@ export function DisciplineMultiSelect({
         <div className="flex items-center gap-1">
           <Search className="ml-2 size-4 shrink-0 text-muted-foreground" aria-hidden />
           <input
+            ref={inputRef}
             id={id}
             role="combobox"
             aria-expanded={open}
             aria-controls={`${id}-listbox`}
             aria-activedescendant={open && choices[activeIndex] ? `${id}-option-${activeIndex}` : undefined}
+            aria-describedby={`${id}-help`}
             autoComplete="off"
             className={input}
             value={query}
@@ -81,10 +106,11 @@ export function DisciplineMultiSelect({
               if (event.key === "ArrowDown") { event.preventDefault(); setOpen(true); setActiveIndex((index) => Math.min(index + 1, Math.max(choices.length - 1, 0))) }
               if (event.key === "ArrowUp") { event.preventDefault(); setActiveIndex((index) => Math.max(index - 1, 0)) }
               if (event.key === "Enter" && open && choices[activeIndex]) { event.preventDefault(); add(choices[activeIndex].value) }
-              if (event.key === "Escape") setOpen(false)
+              if (event.key === "Escape") { event.preventDefault(); close() }
               if (event.key === "Backspace" && !query && selected.length) remove(selected[selected.length - 1])
             }}
           />
+          {open && <button type="button" onMouseDown={(event) => event.preventDefault()} onClick={close} className="grid size-8 shrink-0 place-items-center rounded-lg border border-[#E7E1F7] text-[#5B4B8A]" aria-label={locale === "es" ? "Cerrar opciones de disciplinas" : "Close discipline options"}><X className="size-4" /></button>}
         </div>
         {open && choices.length > 0 && (
           <div id={`${id}-listbox`} role="listbox" className="mt-1 max-h-52 overflow-auto rounded-lg border border-[#E7E1F7] bg-white py-1 shadow-lg">
@@ -107,7 +133,6 @@ export function DisciplineMultiSelect({
           </div>
         )}
       </div>
-      <p className="mt-1 text-[0.68rem] leading-relaxed text-muted-foreground">Select multiple standard disciplines or add a custom practice. Mediums and materials remain separate.</p>
     </fieldset>
   )
 }
@@ -117,12 +142,15 @@ export function TagEntryField({
   onChange,
   label,
   placeholder,
+  description,
 }: {
   values: string[]
   onChange: (values: string[]) => void
   label: string
   placeholder: string
+  description?: string
 }) {
+  const id = useId()
   const [draft, setDraft] = useState("")
   const selected = normalizeArtistTerms(values)
 
@@ -132,9 +160,14 @@ export function TagEntryField({
     setDraft("")
   }
 
+  const resolvedDescription = description || (label.toLowerCase().includes("medium")
+    ? "Describe what you work with or how you create the work—for example oil on canvas, analog photography, field recording, or digital collage."
+    : "Add values one at a time; capitalization and spacing duplicates are merged safely.")
+
   return (
     <fieldset>
       <legend className="mb-1.5 text-xs font-semibold text-[#746E80]">{label}</legend>
+      <p id={`${id}-help`} className="mb-2 text-[0.68rem] leading-relaxed text-muted-foreground">{resolvedDescription}</p>
       <div className={field}>
         {selected.length > 0 && (
           <div className="mb-2 flex flex-wrap gap-1.5">
@@ -147,6 +180,8 @@ export function TagEntryField({
         )}
         <div className="flex items-center gap-1">
           <input
+            id={id}
+            aria-describedby={`${id}-help`}
             className={input}
             value={draft}
             placeholder={placeholder}

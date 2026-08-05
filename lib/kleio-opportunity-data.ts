@@ -98,6 +98,11 @@ export type OpportunityRecord = {
   source_published_at: string | null
   source_updated_at: string | null
   last_verified_at: string | null
+  submission_method?: string
+  submission_email?: string
+  contact_email?: string
+  submission_instructions?: string
+  data_scope?: "real" | "guided_demo" | "synthetic_test"
 }
 
 export type OpportunityDirectoryItem = OpportunityRecord & {
@@ -183,6 +188,15 @@ export type OpportunityMessageRecord = {
   created_at: string
 }
 
+type OpportunityRoutingFields = {
+  id: string
+  submission_method: string
+  submission_email: string
+  contact_email: string
+  submission_instructions: string
+  data_scope: "real" | "guided_demo" | "synthetic_test"
+}
+
 function relationMap<T extends { id: string }>(rows: T[] | null | undefined) {
   return new Map((rows ?? []).map((row) => [row.id, row]))
 }
@@ -210,13 +224,16 @@ export async function loadOpportunityDirectory(filters: OpportunityDirectoryFilt
   const opportunityIds = opportunities.map((item) => item.id)
   const internalCallIds = opportunities.flatMap((item) => item.internal_call_id ? [item.internal_call_id] : [])
 
-  const [sourceResponse, rulesResponse, requirementsResponse, passport, portfolioWorks, openCalls, savedResponse] = await Promise.all([
+  const [sourceResponse, rulesResponse, requirementsResponse, routingResponse, passport, portfolioWorks, openCalls, savedResponse] = await Promise.all([
     supabase.from("opportunity_sources").select("id, slug, name, base_domain, source_type, ingestion_method, attribution_required, active, last_successful_sync"),
     opportunityIds.length
       ? supabase.from("opportunity_eligibility_rules").select("*").in("opportunity_id", opportunityIds).order("sort_order")
       : Promise.resolve({ data: [], error: null }),
     opportunityIds.length
       ? supabase.from("opportunity_requirements").select("*").in("opportunity_id", opportunityIds).order("sort_order")
+      : Promise.resolve({ data: [], error: null }),
+    opportunityIds.length
+      ? supabase.from("opportunities").select("id, submission_method, submission_email, contact_email, submission_instructions, data_scope").in("id", opportunityIds)
       : Promise.resolve({ data: [], error: null }),
     loadArtistPassport() as Promise<ExtendedArtistPassport | null>,
     loadPortfolioWorks(),
@@ -227,9 +244,11 @@ export async function loadOpportunityDirectory(filters: OpportunityDirectoryFilt
   if (sourceResponse.error) throw sourceResponse.error
   if (rulesResponse.error) throw rulesResponse.error
   if (requirementsResponse.error) throw requirementsResponse.error
+  if (routingResponse.error) throw routingResponse.error
   if (savedResponse.error) throw savedResponse.error
 
   const sourceById = relationMap((sourceResponse.data ?? []) as OpportunitySourceRecord[])
+  const routingById = relationMap((routingResponse.data ?? []) as OpportunityRoutingFields[])
   const callById = relationMap(openCalls)
   const savedIds = new Set((savedResponse.data ?? []).map((row) => String(row.opportunity_id)))
   const rulesByOpportunity = new Map<string, OpportunityEligibilityRule[]>()
@@ -251,6 +270,11 @@ export async function loadOpportunityDirectory(filters: OpportunityDirectoryFilt
     portfolioWorks,
     items: opportunities.map((opportunity) => ({
       ...opportunity,
+      submission_method: routingById.get(opportunity.id)?.submission_method ?? opportunity.submission_method ?? "unknown",
+      submission_email: routingById.get(opportunity.id)?.submission_email ?? opportunity.submission_email ?? "",
+      contact_email: routingById.get(opportunity.id)?.contact_email ?? opportunity.contact_email ?? "",
+      submission_instructions: routingById.get(opportunity.id)?.submission_instructions ?? opportunity.submission_instructions ?? "",
+      data_scope: routingById.get(opportunity.id)?.data_scope ?? opportunity.data_scope ?? "real",
       source: sourceById.get(opportunity.source_id) ?? null,
       rules: rulesByOpportunity.get(opportunity.id) ?? [],
       requirements: requirementsByOpportunity.get(opportunity.id) ?? [],
