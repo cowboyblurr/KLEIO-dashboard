@@ -15,14 +15,14 @@ export type KleioBetaImportSource =
 export type KleioBetaImportAvailability = Record<KleioBetaImportSource, boolean>
 
 export const DEFAULT_BETA_IMPORT_AVAILABILITY: KleioBetaImportAvailability = {
-  google_drive_image: true,
-  google_drive_document: true,
+  google_drive_image: false,
+  google_drive_document: false,
   existing_kleio_media: true,
   device_image: false,
-  device_document: false,
+  device_document: true,
   instagram_image: false,
   website: false,
-  pdf: false,
+  pdf: true,
   pasted_text: false,
   voice_transcript: false,
 }
