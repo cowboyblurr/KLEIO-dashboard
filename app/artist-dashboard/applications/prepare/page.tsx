@@ -7,6 +7,7 @@ import { ApplicationSubmissionCover } from "@/components/kleio/application-submi
 import { ApplicationMediaImportBar } from "@/components/kleio/application-media-import-bar"
 import { ApplicationRequirementMedia } from "@/components/kleio/application-requirement-media"
 import { ApplicationRecipientLoopPanel } from "@/components/kleio/application-recipient-loop-panel"
+import { ArtistRecipientConversation } from "@/components/kleio/artist-recipient-conversation"
 
 export const metadata: Metadata = {
   title: "KLEIO — Prepare application",
@@ -35,6 +36,9 @@ export default function Page() {
             </Suspense>
             <Suspense fallback={<PreparationFallback />}>
               <ApplicationPreparationWorkspace />
+            </Suspense>
+            <Suspense fallback={null}>
+              <ArtistRecipientConversation />
             </Suspense>
           </div>
         </div>
