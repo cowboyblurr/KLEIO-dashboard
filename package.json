@@ -18,6 +18,7 @@
     "audit:artist-import": "node scripts/audit-artist-import-studio.mjs",
     "audit:universal-media": "node scripts/audit-universal-media-import.mjs",
     "audit:upload-to-passport": "node scripts/audit-upload-to-passport-intelligence.mjs",
+    "audit:document-intelligence": "node scripts/audit-document-intelligence-beta.mjs",
     "audit:website-import": "node scripts/audit-website-import-assist.mjs",
     "audit:instagram-import": "node scripts/audit-instagram-import.mjs",
     "audit:gemini-website": "node scripts/audit-gemini-website-intelligence.mjs",
