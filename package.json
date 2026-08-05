@@ -8,6 +8,8 @@
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
+    "test:artist-workflow-services": "node --test tests/artist-workflow-services.test.mjs",
+    "audit:artist-recipient-loop": "node scripts/audit-artist-recipient-loop.mjs",
     "audit:navigation": "node scripts/audit-navigation.mjs",
     "audit:user-copy": "node scripts/audit-user-facing-copy.mjs",
     "audit:auth-redirect": "node scripts/audit-auth-redirect.mjs",
