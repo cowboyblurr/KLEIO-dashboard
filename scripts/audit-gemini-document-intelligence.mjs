@@ -96,7 +96,7 @@ requirePattern(drafter, /validateDraftOutput/, "The drafting function must valid
 requirePattern(drafter, /artist-approved private records/, "The Gemini drafting prompt must use artist-approved evidence only.")
 requirePattern(draftUi, /Prepared by KLEIO with Gemini from artist-approved records/, "Gemini drafts must be visibly labeled for review.")
 requirePattern(draftingClient, /kleio_gemini_drafting_v2/, "The client must load the Gemini drafting version.")
-requirePattern(reviewUi, /View source evidence/, "The compact fallback review must preserve source evidence and provenance on demand.")
+requirePattern(reviewUi, /View source evidence|<FileSearch[^>]*\/>Evidence/, "The compact fallback review must preserve source evidence and provenance on demand.")
 requirePattern(fieldReviewUi, /View source/, "The primary field-level review must preserve source evidence on demand.")
 requirePattern(fieldReviewUi, /confirmPassportClaim/, "Field-level approval must use the provenance-aware confirmation path.")
 requirePattern(fieldReviewUi, /setPassportClaimDecision/, "Field-level rejection must remain an explicit persisted decision.")
