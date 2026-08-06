@@ -12,6 +12,11 @@ const ALLOWED_ORIGINS = [
 ]
 
 type JsonObject = Record<string, unknown>
+type PdfDocumentInspector = {
+  getJSActions?: () => Promise<unknown>
+  getJavaScript?: () => Promise<unknown>
+  getAttachments?: () => Promise<unknown>
+}
 
 function corsHeaders(request: Request) {
   const origin = request.headers.get("origin") ?? ""
@@ -40,14 +45,72 @@ async function sha256(bytes: Uint8Array) {
   return Array.from(new Uint8Array(digest)).map((value) => value.toString(16).padStart(2, "0")).join("")
 }
 
-function pdfRiskFlags(bytes: Uint8Array) {
-  const sample = new TextDecoder("latin1").decode(bytes)
-  const flags: string[] = []
-  if (/\/JavaScript\b|\/JS\b/.test(sample)) flags.push("embedded_javascript")
-  if (/\/Launch\b/.test(sample)) flags.push("launch_action")
-  if (/\/EmbeddedFile\b/.test(sample)) flags.push("embedded_file")
-  if (/\/OpenAction\b/.test(sample)) flags.push("open_action")
-  return flags
+function hasMeaningfulValue(value: unknown): boolean {
+  if (typeof value === "string") return value.trim().length > 0
+  if (Array.isArray(value)) return value.some(hasMeaningfulValue)
+  if (isObject(value)) return Object.values(value).some(hasMeaningfulValue)
+  return false
+}
+
+function pdfSyntaxOutsideStreams(bytes: Uint8Array) {
+  const source = new TextDecoder("latin1").decode(bytes)
+  let output = ""
+  let cursor = 0
+  const streamStart = /\bstream(?:\r\n|\r|\n)/g
+
+  while (true) {
+    streamStart.lastIndex = cursor
+    const match = streamStart.exec(source)
+    if (!match) break
+
+    output += source.slice(cursor, match.index)
+    const end = source.indexOf("endstream", streamStart.lastIndex)
+    if (end < 0) {
+      output += source.slice(match.index)
+      cursor = source.length
+      break
+    }
+    cursor = end + "endstream".length
+  }
+
+  return output + source.slice(cursor)
+}
+
+async function pdfRiskFlags(pdf: PdfDocumentInspector, bytes: Uint8Array) {
+  const flags = new Set<string>()
+
+  try {
+    if (typeof pdf.getJSActions === "function" && hasMeaningfulValue(await pdf.getJSActions())) {
+      flags.add("embedded_javascript")
+    }
+  } catch {
+    // Structural checks below remain fail-closed for recognized active-action dictionaries.
+  }
+
+  try {
+    if (typeof pdf.getJavaScript === "function" && hasMeaningfulValue(await pdf.getJavaScript())) {
+      flags.add("embedded_javascript")
+    }
+  } catch {
+    // Some PDF.js builds do not expose this legacy helper.
+  }
+
+  try {
+    if (typeof pdf.getAttachments === "function") {
+      const attachments = await pdf.getAttachments()
+      if (isObject(attachments) && Object.keys(attachments).length > 0) flags.add("embedded_file")
+    }
+  } catch {
+    // Structural checks below still inspect attachment dictionaries.
+  }
+
+  const syntax = pdfSyntaxOutsideStreams(bytes)
+  if (/\/S\s*\/JavaScript\b/.test(syntax)) flags.add("embedded_javascript")
+  if (/\/S\s*\/Launch\b/.test(syntax)) flags.add("launch_action")
+  if (/\/Type\s*\/EmbeddedFile\b|\/EmbeddedFiles\b/.test(syntax)) flags.add("embedded_file")
+  if (/\/OpenAction\b/.test(syntax)) flags.add("open_action")
+
+  return Array.from(flags)
 }
 
 function pdfErrorCode(reason: unknown) {
@@ -127,28 +190,30 @@ Deno.serve(async (request: Request) => {
     return json(request, { error: "checksum_mismatch" }, 409)
   }
 
-  const riskFlags = pdfRiskFlags(bytes)
-  if (riskFlags.some((flag) => ["embedded_javascript", "launch_action", "embedded_file"].includes(flag))) {
-    await admin.from("artist_import_sources").update({
-      analysis_stage: "failed",
-      last_error_category: "unsafe_pdf_active_content",
-      review_summary: {
-        ...(isObject(source.review_summary) ? source.review_summary : {}),
-        validation_completed: false,
-        risk_flags: riskFlags,
-        malware_scanner_configured: false,
-        original_source_preserved: true,
-      },
-      updated_at: new Date().toISOString(),
-    }).eq("id", source.id).eq("artist_user_id", userData.user.id)
-    return json(request, { error: "unsafe_pdf_active_content" }, 422)
-  }
-
   try {
     const pdf = await getDocumentProxy(bytes)
     const pageCount = Number(pdf.numPages || 0)
     if (!pageCount) return json(request, { error: "empty_document" }, 422)
     if (pageCount > MAX_PAGES) return json(request, { error: "too_many_pages", pageCount, maxPages: MAX_PAGES }, 422)
+
+    const riskFlags = await pdfRiskFlags(pdf as unknown as PdfDocumentInspector, bytes)
+    if (riskFlags.some((flag) => ["embedded_javascript", "launch_action", "embedded_file"].includes(flag))) {
+      await admin.from("artist_import_sources").update({
+        page_count: pageCount,
+        analysis_stage: "failed",
+        last_error_category: "unsafe_pdf_active_content",
+        review_summary: {
+          ...(isObject(source.review_summary) ? source.review_summary : {}),
+          validation_completed: false,
+          risk_flags: riskFlags,
+          risk_detection_mode: "parsed_actions_and_pdf_dictionaries",
+          malware_scanner_configured: false,
+          original_source_preserved: true,
+        },
+        updated_at: new Date().toISOString(),
+      }).eq("id", source.id).eq("artist_user_id", userData.user.id)
+      return json(request, { error: "unsafe_pdf_active_content" }, 422)
+    }
 
     const extracted = await extractText(pdf, { mergePages: false })
     const pages = Array.isArray(extracted.text) ? extracted.text : [extracted.text]
@@ -182,6 +247,7 @@ Deno.serve(async (request: Request) => {
         text_layer_status: textLayerStatus,
         ocr_required: ocrRequired,
         risk_flags: riskFlags,
+        risk_detection_mode: "parsed_actions_and_pdf_dictionaries",
         malware_scanner_configured: false,
         active_content_screened: true,
         original_source_preserved: true,
