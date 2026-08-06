@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import { AlertTriangle, CheckCircle2, FileSearch, FileText, Loader2, LockKeyhole, ShieldCheck, UploadCloud } from "lucide-react"
 import {
   ARTIST_DOCUMENT_TYPE_OPTIONS,
@@ -11,6 +11,7 @@ import {
   type ArtistSelectedDocumentType,
   type DocumentUploadStage,
 } from "@/lib/kleio-document-intelligence"
+import { kleioSpanishError } from "@/lib/kleio-spanish-error"
 
 const panel = "rounded-[24px] border border-[#E2DCF1] bg-white shadow-[0_18px_52px_rgba(82,64,130,0.06)]"
 const primary = "inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#5B4B8A] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#4F407B] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#A997E8]/25 disabled:cursor-not-allowed disabled:opacity-50"
@@ -70,24 +71,26 @@ export function ArtistDocumentIntelligenceSpanish() {
   const [documents, setDocuments] = useState<ArtistDocumentSource[]>([])
   const [selectedType, setSelectedType] = useState<ArtistSelectedDocumentType>("artist_cv")
   const [file, setFile] = useState<File | null>(null)
+  const [fileInputKey, setFileInputKey] = useState(0)
   const [stage, setStage] = useState<DocumentUploadStage | null>(null)
   const [loading, setLoading] = useState(true)
   const [working, setWorking] = useState(false)
   const [error, setError] = useState("")
   const [notice, setNotice] = useState("")
 
-  async function refresh() {
+  const refresh = useCallback(async () => {
     setLoading(true)
+    setError("")
     try {
       setDocuments(await loadArtistDocuments())
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "No fue posible cargar tus documentos.")
+      setError(kleioSpanishError(reason, "No fue posible cargar tus documentos."))
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
-  useEffect(() => { void refresh() }, [])
+  useEffect(() => { void refresh() }, [refresh])
 
   const recentDocuments = useMemo(() => documents.slice(0, 6), [documents])
 
@@ -100,19 +103,15 @@ export function ArtistDocumentIntelligenceSpanish() {
     setError("")
     setNotice("")
     try {
-      const result = await uploadArtistDocument({
-        file,
-        selectedType,
-        analyze: true,
-        onStage: setStage,
-      })
+      const result = await uploadArtistDocument({ file, selectedType, analyze: true, onStage: setStage })
       setNotice(result.duplicate
         ? "KLEIO encontró la copia privada existente y actualizó su análisis sin duplicar el archivo."
         : "El documento quedó guardado de forma privada. Las sugerencias están listas para que las revises.")
       setFile(null)
+      setFileInputKey((current) => current + 1)
       await refresh()
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "No fue posible analizar este documento.")
+      setError(kleioSpanishError(reason, "No fue posible analizar este documento. El archivo original permanece privado."))
     } finally {
       setWorking(false)
       setStage(null)
@@ -132,45 +131,18 @@ export function ArtistDocumentIntelligenceSpanish() {
         </div>
 
         <div className="mt-5 grid gap-4 md:grid-cols-2">
-          <label className="grid gap-1.5 text-xs font-semibold text-[#625C70]">
-            <span>Tipo de documento</span>
-            <select className={field} value={selectedType} disabled={working} onChange={(event) => setSelectedType(event.target.value as ArtistSelectedDocumentType)}>
-              {ARTIST_DOCUMENT_TYPE_OPTIONS.map((option) => <option key={option.value} value={option.value}>{TYPE_LABELS[option.value]}</option>)}
-            </select>
-          </label>
-          <label className="grid gap-1.5 text-xs font-semibold text-[#625C70]">
-            <span>Archivo PDF</span>
-            <input
-              className={`${field} file:mr-3 file:rounded-lg file:border-0 file:bg-[#F0EAFB] file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-[#5B4B8A]`}
-              type="file"
-              accept="application/pdf"
-              disabled={working}
-              onChange={(event) => setFile(event.target.files?.[0] ?? null)}
-            />
-          </label>
+          <label className="grid gap-1.5 text-xs font-semibold text-[#625C70]"><span>Tipo de documento</span><select className={field} value={selectedType} disabled={working} onChange={(event) => setSelectedType(event.target.value as ArtistSelectedDocumentType)}>{ARTIST_DOCUMENT_TYPE_OPTIONS.map((option) => <option key={option.value} value={option.value}>{TYPE_LABELS[option.value]}</option>)}</select></label>
+          <label className="grid gap-1.5 text-xs font-semibold text-[#625C70]"><span>Archivo PDF</span><input key={fileInputKey} className={`${field} file:mr-3 file:rounded-lg file:border-0 file:bg-[#F0EAFB] file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-[#5B4B8A]`} type="file" accept="application/pdf" disabled={working} onChange={(event) => setFile(event.target.files?.[0] ?? null)} /></label>
         </div>
 
-        <div className="mt-4 flex flex-wrap items-center gap-3">
-          <button type="button" className={primary} disabled={working || !file} onClick={() => void analyze()}>
-            {working ? <Loader2 className="size-4 animate-spin" /> : <UploadCloud className="size-4" />}
-            {working ? "Analizando…" : "Analizar y preparar sugerencias"}
-          </button>
-          <p className="text-xs leading-5 text-[#8A8296]">PDF de hasta 15 MB y 100 páginas. El original permanece privado.</p>
-        </div>
-
+        <div className="mt-4 flex flex-wrap items-center gap-3"><button type="button" className={primary} disabled={working || !file} onClick={() => void analyze()}>{working ? <Loader2 className="size-4 animate-spin" /> : <UploadCloud className="size-4" />}{working ? "Analizando…" : "Analizar y preparar sugerencias"}</button><p className="text-xs leading-5 text-[#8A8296]">PDF de hasta 15 MB y 100 páginas. El original permanece privado.</p></div>
         {working && stage && <div role="status" aria-live="polite" className="mt-4 flex items-center gap-3 rounded-2xl border border-[#D8D0F2] bg-[#F8F5FF] p-4 text-sm font-semibold text-[#625C70]"><Loader2 className="size-4 animate-spin text-[#5B4B8A]" />{STAGE_LABELS[stage]}</div>}
         {notice && <div role="status" className="mt-4 flex items-start gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm leading-6 text-emerald-800"><CheckCircle2 className="mt-0.5 size-4 shrink-0" />{notice}</div>}
         {error && <div role="alert" className="mt-4 flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm leading-6 text-red-800"><AlertTriangle className="mt-0.5 size-4 shrink-0" />{error}</div>}
       </section>
 
       <section className={`${panel} p-5 sm:p-6`} aria-labelledby="confidence-explanation-title">
-        <div className="flex items-start gap-3">
-          <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-[#F0EAFB] text-[#5B4B8A]"><ShieldCheck className="size-4" /></span>
-          <div>
-            <h2 id="confidence-explanation-title" className="font-serif text-xl font-semibold text-[#292631]">Cómo decide KLEIO qué sugerir</h2>
-            <p className="mt-1 text-sm leading-6 text-[#746E80]">La confianza no significa que KLEIO tenga la última palabra. Indica cuánta evidencia clara encontró en el PDF.</p>
-          </div>
-        </div>
+        <div className="flex items-start gap-3"><span className="grid size-10 shrink-0 place-items-center rounded-xl bg-[#F0EAFB] text-[#5B4B8A]"><ShieldCheck className="size-4" /></span><div><h2 id="confidence-explanation-title" className="font-serif text-xl font-semibold text-[#292631]">Cómo decide KLEIO qué sugerir</h2><p className="mt-1 text-sm leading-6 text-[#746E80]">La confianza no significa que KLEIO tenga la última palabra. Indica cuánta evidencia clara encontró en el PDF.</p></div></div>
         <div className="mt-4 grid gap-3 md:grid-cols-3">
           <article className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4"><p className="text-sm font-semibold text-emerald-900">Claramente respaldado</p><p className="mt-1 text-xs leading-5 text-emerald-800">La información aparece de forma explícita, con una página o fragmento identificable y sin conflicto con el perfil.</p></article>
           <article className="rounded-2xl border border-amber-200 bg-amber-50 p-4"><p className="text-sm font-semibold text-amber-900">Necesita revisión</p><p className="mt-1 text-xs leading-5 text-amber-800">La información puede ser correcta, pero está incompleta, es ambigua o necesita contexto del artista.</p></article>
@@ -180,29 +152,16 @@ export function ArtistDocumentIntelligenceSpanish() {
       </section>
 
       <section className={`${panel} p-5 sm:p-6`} aria-labelledby="recent-documents-title">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div><p className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-[#75639E]">Biblioteca privada</p><h2 id="recent-documents-title" className="mt-1 font-serif text-xl font-semibold text-[#292631]">Documentos recientes</h2></div>
-          <Link href="/artist-dashboard/passport/review/" className={secondary}><FileSearch className="size-4" />Revisar sugerencias</Link>
-        </div>
-
+        <div className="flex flex-wrap items-start justify-between gap-3"><div><p className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-[#75639E]">Biblioteca privada</p><h2 id="recent-documents-title" className="mt-1 font-serif text-xl font-semibold text-[#292631]">Documentos recientes</h2></div><Link href="/artist-dashboard/passport/review/" className={secondary}><FileSearch className="size-4" />Revisar sugerencias</Link></div>
         {loading && <div role="status" className="mt-4 flex items-center gap-2 text-sm text-[#746E80]"><Loader2 className="size-4 animate-spin" />Cargando documentos…</div>}
         {!loading && recentDocuments.length === 0 && <div className="mt-4 rounded-2xl border border-dashed border-[#D8D0F2] bg-[#FCFBFE] p-6 text-center"><FileText className="mx-auto size-6 text-[#75639E]" /><p className="mt-2 text-sm font-semibold text-[#292631]">Aún no hay documentos</p><p className="mt-1 text-xs leading-5 text-[#746E80]">Sube un CV arriba para comenzar.</p></div>}
-
-        {!loading && recentDocuments.length > 0 && <div className="mt-4 grid gap-3 md:grid-cols-2">
-          {recentDocuments.map((source) => {
-            const summary = source.review_summary ?? {}
-            const supported = Number(summary.claim_count ?? 0)
-            const duplicates = Number(summary.duplicate_count ?? 0)
-            const conflicts = Number(summary.conflict_count ?? 0)
-            return <article key={source.id} className="rounded-2xl border border-[#E7E1F7] bg-[#FCFBFE] p-4">
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0"><p className="truncate text-sm font-semibold text-[#292631]">{source.original_filename || source.label}</p><p className="mt-1 text-xs text-[#8A8296]">{TYPE_LABELS[source.artist_selected_document_type] ?? "Documento artístico"} · {readableDate(source.updated_at)}</p></div>
-                <span className={`shrink-0 rounded-full border px-2.5 py-1 text-[0.64rem] font-semibold ${statusTone(source)}`}>{statusLabel(source)}</span>
-              </div>
-              <div className="mt-3 flex flex-wrap gap-2 text-xs text-[#625C70]"><span className="rounded-full bg-white px-2.5 py-1">{supported} sugerencias</span>{duplicates > 0 && <span className="rounded-full bg-white px-2.5 py-1">{duplicates} coincidencias</span>}{conflicts > 0 && <span className="rounded-full bg-white px-2.5 py-1">{conflicts} por resolver</span>}</div>
-            </article>
-          })}
-        </div>}
+        {!loading && recentDocuments.length > 0 && <div className="mt-4 grid gap-3 md:grid-cols-2">{recentDocuments.map((source) => {
+          const summary = source.review_summary ?? {}
+          const supported = Number(summary.claim_count ?? 0)
+          const duplicates = Number(summary.duplicate_count ?? 0)
+          const conflicts = Number(summary.conflict_count ?? 0)
+          return <article key={source.id} className="rounded-2xl border border-[#E7E1F7] bg-[#FCFBFE] p-4"><div className="flex items-start justify-between gap-3"><div className="min-w-0"><p className="truncate text-sm font-semibold text-[#292631]">{source.original_filename || source.label}</p><p className="mt-1 text-xs text-[#8A8296]">{TYPE_LABELS[source.artist_selected_document_type] ?? "Documento artístico"} · {readableDate(source.updated_at)}</p></div><span className={`shrink-0 rounded-full border px-2.5 py-1 text-[0.64rem] font-semibold ${statusTone(source)}`}>{statusLabel(source)}</span></div><div className="mt-3 flex flex-wrap gap-2 text-xs text-[#625C70]"><span className="rounded-full bg-white px-2.5 py-1">{supported} sugerencias</span>{duplicates > 0 && <span className="rounded-full bg-white px-2.5 py-1">{duplicates} coincidencias</span>}{conflicts > 0 && <span className="rounded-full bg-white px-2.5 py-1">{conflicts} por resolver</span>}</div></article>
+        })}</div>}
       </section>
     </div>
   )
