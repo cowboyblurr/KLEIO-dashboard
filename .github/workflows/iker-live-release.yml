@@ -1,5 +1,6 @@
 name: One-time Iker Live Review Release
 
+# Temporary same-repository release path for the August 7 Iker review.
 on:
   pull_request:
     branches:
