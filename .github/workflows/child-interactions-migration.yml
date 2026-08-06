@@ -1,6 +1,11 @@
 name: Child Gemini Interactions migration
 
 on:
+  push:
+    branches:
+      - agent/gemini-interactions-migration
+    paths:
+      - ".github/workflows/child-interactions-migration.yml"
   pull_request:
     branches:
       - main
