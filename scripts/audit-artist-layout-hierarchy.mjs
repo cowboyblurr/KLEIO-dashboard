@@ -37,13 +37,29 @@ if (applicationsPosition < 0 || notificationsPosition < 0 || applicationsPositio
 }
 requirePattern(applications, /<details[\s\S]*Notifications/, "Notifications must remain a collapsed supporting surface.")
 
+const portfolioPage = read("app/artist-dashboard/portfolio/page.tsx")
+requirePattern(portfolioPage, /FocusedVisualArtistPortfolioStudio/, "Portfolio must use the artwork-first live workspace.")
+forbidPattern(portfolioPage, /VisualArtistPortfolioStudio[^F]/, "The decorative Portfolio hero implementation must not return to the live route.")
+
+const portfolio = read("components/kleio/focused-visual-artist-portfolio-studio.tsx")
+requirePattern(portfolio, /title="Portfolio"[\s\S]*Add artwork/, "Portfolio must move directly from the page purpose to artwork controls.")
+forbidPattern(portfolio, /bg-\[linear-gradient/, "Portfolio must not place a decorative gradient hero above artwork controls.")
+
+const mediaPage = read("app/artist-dashboard/media/page.tsx")
+requirePattern(mediaPage, /FocusedArtistMediaLibrary/, "Media Library must use the utility-first live workspace.")
+
+const mediaLibrary = read("components/kleio/focused-artist-media-library.tsx")
+requirePattern(mediaLibrary, /primaryCta=\{\{ label: "Upload document"/, "Media Library must keep its primary upload action in the page header.")
+requirePattern(mediaLibrary, /SupportingTaskDisclosure[\s\S]*How private media moves through KLEIO/, "Media Library privacy methodology must remain available through progressive disclosure.")
+forbidPattern(mediaLibrary, /One private library for material you bring into KLEIO/, "Media Library must not restore the oversized explanatory hero.")
+
 const importHub = read("components/kleio/import-source-hub.tsx")
 requirePattern(importHub, /Upload a CV or artist document/, "Import must lead with the active artist task.")
 requirePattern(importHub, /SupportingTaskDisclosure[\s\S]*Connected import sources/, "Deferred providers must remain progressively disclosed.")
 forbidPattern(importHub, /mt-6 grid gap-4 md:grid-cols-2[\s\S]*min-h-48/, "Import methodology cards must not dominate before the upload workspace.")
 
 const preparation = read("app/artist-dashboard/applications/prepare/page.tsx")
-const primaryPosition = preparation.indexOf("ApplicationPreparationWorkspace")
+const primaryPosition = preparation.indexOf("<ApplicationPreparationWorkspace")
 for (const component of ["ApplicationRequirementMedia", "ApplicationMediaImportBar", "ApplicationSubmissionCover", "ArtistRecipientConversation", "ApplicationRecipientLoopPanel", "PracticeSubmissionResetControl"]) {
   const position = preparation.indexOf(`<${component}`)
   if (primaryPosition < 0 || position < 0 || primaryPosition > position) {
