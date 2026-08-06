@@ -42,7 +42,7 @@ const COPY = {
   },
   es: {
     privateTitle: "Vista previa privada del perfil.",
-    privateBody: "Creada con el Pasaporte Creativo y el portafolio guardados en esta cuenta.",
+    privateBody: "Los controles siguen el idioma del espacio de trabajo; el texto escrito por el artista conserva su idioma original.",
     edit: "Editar información",
     works: "Gestionar obras",
     loading: "Cargando la vista previa del perfil…",
@@ -129,7 +129,7 @@ export function LiveArtistProfilePreview() {
 
         {!loading && !error && passport && (
           <div className="kleio-live-artist-profile-position">
-            <style>{`.kleio-live-artist-profile-position img[alt$=" portrait"] { object-position: ${presentation.profile_image_position_x}% ${presentation.profile_image_position_y}% !important; }`}</style>
+            <style>{`.kleio-live-artist-profile-position img[alt$=" portrait"], .kleio-live-artist-profile-position img[alt^="retrato "] { object-position: ${presentation.profile_image_position_x}% ${presentation.profile_image_position_y}% !important; }`}</style>
             <EditorialArtistProfile
               locale={locale}
               eyebrow={copy.eyebrow}
