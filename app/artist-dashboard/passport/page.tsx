@@ -8,20 +8,20 @@ import { CreativePassportWorkspace } from "@/components/kleio/creative-passport-
 
 export const metadata: Metadata = {
   title: "KLEIO — Creative Passport",
-  description: "Review completion, then build a reusable Creative Passport through guided, full-form, existing-material, and private media entry.",
+  description: "Build a reusable Creative Passport with field-level document suggestions, direct editing, and artist approval.",
 }
 
 export default function Page() {
   return (
     <ArtistShell>
       <div className="flex h-full min-h-0 flex-col bg-white">
-        <div className="shrink-0 px-4 pt-4 sm:px-6">
+        <div className="shrink-0 px-4 pt-3 sm:px-6">
           <ArtistProfileContextBar active="passport" showKleioAssistStatus />
         </div>
-        <div className="shrink-0 px-4 py-4 sm:px-6">
+        <div className="shrink-0 px-4 pt-2 sm:px-6">
           <LiveModeView live={<CreativePassportMediaPanel />} preview={null} />
         </div>
-        <div className="min-h-0 flex-1">
+        <div className="min-h-0 flex-1 pt-2">
           <LiveModeView live={<CreativePassportWorkspace />} preview={<ArtistPassportPageView />} />
         </div>
       </div>
