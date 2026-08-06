@@ -4,19 +4,13 @@ on:
   pull_request:
     branches:
       - main
-    paths:
-      - ".kleio-trigger/gemini-interactions-migration"
-  push:
-    branches:
-      - agent/gemini-interactions-migration
-    paths:
-      - ".kleio-trigger/gemini-interactions-migration"
 
 permissions:
   contents: write
 
 jobs:
   apply:
+    if: github.head_ref == 'agent/gemini-interactions-migration'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
