@@ -3,7 +3,7 @@ name: Child Gemini Interactions migration
 on:
   pull_request:
     branches:
-      - agent/gemini-document-intelligence
+      - main
     paths:
       - ".github/workflows/child-interactions-migration.yml"
 
