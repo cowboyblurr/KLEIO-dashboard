@@ -1,0 +1,58 @@
+name: Creative Passport Record
+
+on:
+  pull_request:
+    paths:
+      - "components/kleio/creative-passport-workspace.tsx"
+      - "components/kleio/adaptive-artist-passport-experience.tsx"
+      - "components/kleio/live-artist-passport-editor.tsx"
+      - "scripts/audit-creative-passport-record.mjs"
+      - "scripts/audit-artist-relevance.mjs"
+      - "scripts/audit-passport-scroll-flow.mjs"
+      - ".github/workflows/creative-passport-record.yml"
+      - "package.json"
+      - "pnpm-lock.yaml"
+  push:
+    branches: [main]
+    paths:
+      - "components/kleio/creative-passport-workspace.tsx"
+      - "components/kleio/adaptive-artist-passport-experience.tsx"
+      - "components/kleio/live-artist-passport-editor.tsx"
+      - "scripts/audit-creative-passport-record.mjs"
+      - "scripts/audit-artist-relevance.mjs"
+      - "scripts/audit-passport-scroll-flow.mjs"
+      - ".github/workflows/creative-passport-record.yml"
+      - "package.json"
+      - "pnpm-lock.yaml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Audit complete Passport record
+        run: node scripts/audit-creative-passport-record.mjs
+      - name: Preserve artist relevance hierarchy
+        run: node scripts/audit-artist-relevance.mjs
+      - name: Preserve the single-scroll edit flow
+        run: node scripts/audit-passport-scroll-flow.mjs
+      - name: Typecheck
+        run: pnpm typecheck
+      - name: Build production export
+        env:
+          NEXT_PUBLIC_BASE_PATH: ""
+          NEXT_PUBLIC_SUPABASE_URL: https://trekynurdgxgtaaqqtyq.supabase.co
+          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_XdYXvd0fQm3IJKxNrFXgUQ_M4RgDj1M
+        run: pnpm build
