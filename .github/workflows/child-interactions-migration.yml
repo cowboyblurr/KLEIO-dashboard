@@ -99,3 +99,5 @@ export async function runGeminiStructured<T>(input: RunGeminiInput): Promise<Pro
           git add supabase/functions/_shared/gemini-document-intelligence.ts
           git commit -m "Use stateless Gemini Interactions API for document intelligence"
           git push origin HEAD:agent/gemini-interactions-migration
+
+# The workflow intentionally self-removes after the migration is merged.
