@@ -1,6 +1,6 @@
 import type { Metadata } from "next"
 import { ArtistShell } from "@/components/kleio/artist-shell"
-import { PassportUpdatesInbox } from "@/components/kleio/passport-updates-inbox"
+import { PassportUpdatesInboxLocalized } from "@/components/kleio/passport-updates-inbox-localized"
 
 export const metadata: Metadata = {
   title: "KLEIO — Passport Updates for Review",
@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 export default function Page() {
   return (
     <ArtistShell>
-      <PassportUpdatesInbox />
+      <PassportUpdatesInboxLocalized />
     </ArtistShell>
   )
 }
