@@ -64,14 +64,18 @@ requirePattern(extractor, /representativeClaims/, "The function must return an i
 requirePattern(extractor, /analysis_summary\.relevance/, "Coverage must account for relevance rather than proposal count alone.")
 forbidPattern(extractor, /console\.(log|info|debug)\(/, "The extractor must not log private document content.")
 
-requirePattern(uploadUi, /Document understanding result/, "The upload surface must immediately explain what Gemini perceived.")
-requirePattern(uploadUi, /What this document is/, "The upload surface must show a synopsis immediately.")
-requirePattern(uploadUi, /Information KLEIO can audit/, "The upload surface must show extractable information categories.")
+requirePattern(uploadUi, /Document analysis/, "The upload surface must immediately identify the Gemini result.")
+requirePattern(uploadUi, /What KLEIO understood/, "The upload surface must show a synopsis immediately.")
+requirePattern(uploadUi, /Information categories KLEIO can audit/, "The upload surface must preserve extractable information categories.")
 requirePattern(uploadUi, /Relevance/, "The upload surface must display document relevance.")
-requirePattern(uploadUi, /Review all extracted information/, "The upload surface must link to the full review inbox.")
-requirePattern(uploadUi, /Pages perceived/, "The upload surface must show page coverage.")
+requirePattern(uploadUi, /Review suggested Passport updates/, "The upload surface must link to the full review inbox.")
+requirePattern(uploadUi, /Page coverage/, "The upload surface must show page coverage.")
 requirePattern(uploadUi, /evidence_excerpt/, "The upload surface must show evidence excerpts.")
 requirePattern(uploadUi, /analysis_quality/, "The upload surface must show the canonical quality state.")
+requirePattern(uploadUi, /role="tablist"/, "The document result must use an accessible guided tab structure.")
+requirePattern(uploadUi, /Overview[\s\S]*Suggestions[\s\S]*Details & evidence/, "The guided result must separate overview, suggestions, and technical evidence.")
+requirePattern(uploadUi, /Open only the sections you want to inspect/, "Suggestions must use progressive disclosure rather than displaying every finding at once.")
+requirePattern(uploadUi, /View source evidence/, "Page evidence must remain available on demand.")
 requirePattern(client, /complete_review_ready/, "The client must understand the canonical analysis state contract.")
 requirePattern(client, /Gemini is understanding the document/, "The progress contract must describe semantic document understanding.")
 
@@ -97,4 +101,4 @@ if (failures.length) {
   process.exit(1)
 }
 
-console.log("KLEIO Gemini document intelligence audit passed: original-PDF vision, two-pass schema recovery, synopsis and relevance classification, structured validation, honest coverage, immediate evidence display, approved-evidence drafting, privacy controls, and 17 acceptance cases verified.")
+console.log("KLEIO Gemini document intelligence audit passed: original-PDF vision, two-pass schema recovery, guided progressive review, structured validation, honest coverage, evidence-on-demand, approved-evidence drafting, privacy controls, and 17 acceptance cases verified.")
