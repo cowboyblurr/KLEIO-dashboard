@@ -1,6 +1,11 @@
 name: Temporary Gemini Interactions migration
 
 on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - ".kleio-trigger/gemini-interactions-migration"
   push:
     branches:
       - agent/gemini-interactions-migration
