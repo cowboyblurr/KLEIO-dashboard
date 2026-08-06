@@ -13,6 +13,7 @@ const adaptivePassport = read("components/kleio/adaptive-artist-passport-experie
 const institutionPassport = read("components/kleio/artist-passport-view.tsx")
 const editorialProfile = read("components/kleio/profile/editorial-artist-profile.tsx")
 const discovery = read("components/kleio/live-artist-discovery.tsx")
+const aboutSlideshow = read("components/kleio/public-pages/about-image-slideshow.tsx")
 const guide = read("components/kleio/kleio-demo-guide.tsx")
 const globalCss = read("app/globals.css")
 
@@ -36,6 +37,7 @@ for (const [name, content] of [
   ["institution artist Passport", institutionPassport],
   ["editorial artist profile", editorialProfile],
   ["institution discovery profile", discovery],
+  ["About page slideshow", aboutSlideshow],
 ]) {
   requirePattern(content, /kleio-context-panel/, `${name} must use the non-blocking context panel policy.`)
   forbidPattern(content, /lg:sticky/, `${name} must not pin a page-local panel on ordinary laptop widths.`)
