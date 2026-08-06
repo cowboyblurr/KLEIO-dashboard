@@ -1,7 +1,7 @@
 name: Temporary Gemini Interactions migration
 
 on:
-  pull_request:
+  pull_request_target:
     branches:
       - main
 
@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   apply:
-    if: github.head_ref == 'agent/gemini-interactions-migration'
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'agent/gemini-interactions-migration'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
