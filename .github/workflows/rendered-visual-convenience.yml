@@ -6,6 +6,7 @@ on:
       - "app/**"
       - "components/**"
       - "scripts/audit_rendered_visual_convenience.mjs"
+      - "scripts/audit_passport_scroll_runtime.mjs"
       - ".github/workflows/rendered-visual-convenience.yml"
       - "package.json"
       - "pnpm-lock.yaml"
@@ -15,6 +16,7 @@ on:
       - "app/**"
       - "components/**"
       - "scripts/audit_rendered_visual_convenience.mjs"
+      - "scripts/audit_passport_scroll_runtime.mjs"
       - ".github/workflows/rendered-visual-convenience.yml"
       - "package.json"
       - "pnpm-lock.yaml"
@@ -61,6 +63,11 @@ jobs:
           CHROMIUM_PATH="$(find "$HOME/.cache/ms-playwright" -type f \( -path '*/chrome-linux/chrome' -o -path '*/chrome-linux64/chrome' \) | head -n 1)"
           test -n "$CHROMIUM_PATH"
           CHROMIUM_PATH="$CHROMIUM_PATH" node scripts/audit_rendered_visual_convenience.mjs
+      - name: Prove Creative Passport header scrolls with fields
+        run: |
+          CHROMIUM_PATH="$(find "$HOME/.cache/ms-playwright" -type f \( -path '*/chrome-linux/chrome' -o -path '*/chrome-linux64/chrome' \) | head -n 1)"
+          test -n "$CHROMIUM_PATH"
+          CHROMIUM_PATH="$CHROMIUM_PATH" node scripts/audit_passport_scroll_runtime.mjs
       - name: Upload rendered audit report
         if: always()
         uses: actions/upload-artifact@v4

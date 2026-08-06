@@ -1,0 +1,46 @@
+name: Creative Passport Scroll Flow
+
+on:
+  pull_request:
+    paths:
+      - "components/kleio/creative-passport-workspace.tsx"
+      - "components/kleio/adaptive-artist-passport-experience.tsx"
+      - "components/kleio/live-artist-passport-editor.tsx"
+      - "scripts/audit-passport-scroll-flow.mjs"
+      - ".github/workflows/passport-scroll-flow.yml"
+  push:
+    branches: [main]
+    paths:
+      - "components/kleio/creative-passport-workspace.tsx"
+      - "components/kleio/adaptive-artist-passport-experience.tsx"
+      - "components/kleio/live-artist-passport-editor.tsx"
+      - "scripts/audit-passport-scroll-flow.mjs"
+      - ".github/workflows/passport-scroll-flow.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Verify one Passport scroll owner
+        run: node scripts/audit-passport-scroll-flow.mjs
+      - name: Typecheck
+        run: pnpm typecheck
+      - name: Build production export
+        env:
+          NEXT_PUBLIC_BASE_PATH: ""
+          NEXT_PUBLIC_SUPABASE_URL: https://trekynurdgxgtaaqqtyq.supabase.co
+          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_XdYXvd0fQm3IJKxNrFXgUQ_M4RgDj1M
+        run: pnpm build

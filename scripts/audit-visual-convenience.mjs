@@ -25,10 +25,12 @@ requirePattern(documentUi, /Delete PDF/, "Artists must have an obvious Delete PD
 requirePattern(documentUi, /permanently removes the private PDF/, "PDF deletion confirmation must explain that removal is permanent.")
 requirePattern(documentUi, /role="alertdialog"/, "Destructive document actions require an accessible inline confirmation.")
 
-requirePattern(passportWorkspace, /Edit the information KLEIO can reuse with your approval/, "The Creative Passport edit header must remain compact and task-oriented.")
+requirePattern(passportWorkspace, /data-passport-scroll-owner="creative-passport"/, "The Creative Passport edit path must have one explicit page-level scroll owner.")
+requirePattern(passportWorkspace, /data-passport-edit-header[\s\S]*position: static !important/, "The Creative Passport edit header must remain compact and scroll with the fields.")
 requirePattern(passportWorkspace, /Why it matters[\s\S]*Overview/, "Creative Passport context and return actions must fit in the compact edit bar.")
 requirePattern(passportWorkspace, /pendingReviewCount > 0/, "Pending Gemini suggestions must open directly into the editable Passport fields.")
 forbidPattern(passportWorkspace, /Creative Passport · Edit mode[\s\S]*Edit reusable source information/, "The previous oversized pinned Creative Passport header must not return.")
+forbidPattern(passportWorkspace, /data-passport-edit-header className="shrink-0/, "The Creative Passport edit header must not be a non-shrinking pinned region.")
 
 requirePattern(adaptivePassport, /workflowOpen/, "The Creative Passport workflow chooser must be collapsible.")
 requirePattern(adaptivePassport, /Workflow[\s\S]*Change/, "The collapsed workflow bar must identify the active workflow and expose a change control.")
@@ -88,4 +90,4 @@ if (failures.length) {
   process.exit(1)
 }
 
-console.log(`KLEIO visual convenience audit passed: ${filesScanned} interface files scanned; ${stickyLines} sticky lines, ${fixedLines} fixed lines, and ${nestedScrollLines} nested-scroll lines inventoried. Document controls are reversible, Creative Passport chrome is compact, pending suggestions open in place, passive guidance is non-blocking, and page-local context panels remain static on ordinary laptop screens.`)
+console.log(`KLEIO visual convenience audit passed: ${filesScanned} interface files scanned; ${stickyLines} sticky lines, ${fixedLines} fixed lines, and ${nestedScrollLines} nested-scroll lines inventoried. Document controls are reversible, Creative Passport chrome scrolls with its fields, pending suggestions open in place, passive guidance is non-blocking, and page-local context panels remain static on ordinary laptop screens.`)

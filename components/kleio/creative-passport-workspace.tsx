@@ -78,22 +78,43 @@ export function CreativePassportWorkspace() {
 
   if (mode === "edit") {
     return (
-      <div className="flex h-full min-h-0 flex-col bg-white">
-        <div className="shrink-0 border-b border-[#EEEAF6] bg-white px-4 py-2 sm:px-6">
-          <div className="mx-auto flex max-w-[1180px] items-center justify-between gap-3">
-            <div className="min-w-0">
-              <p className="text-[0.68rem] font-semibold uppercase tracking-[0.15em] text-[#7F6EB4]">Creative Passport</p>
-              <p className="truncate text-xs text-[#746E80]">Edit the information KLEIO can reuse with your approval</p>
-            </div>
+      <main data-passport-scroll-owner="creative-passport" className="h-full overflow-y-auto bg-white">
+        <style>{`
+          [data-passport-scroll-owner="creative-passport"] [data-passport-edit-header] {
+            position: static !important;
+          }
+          [data-passport-scroll-owner="creative-passport"] [data-passport-edit-content] > div {
+            display: block !important;
+            height: auto !important;
+            min-height: 0 !important;
+          }
+          [data-passport-scroll-owner="creative-passport"] [data-passport-edit-content] > div > section[aria-label="Creative Passport workflow"] {
+            position: static !important;
+          }
+          [data-passport-scroll-owner="creative-passport"] [data-passport-edit-content] > div > div {
+            min-height: 0 !important;
+          }
+          [data-passport-scroll-owner="creative-passport"] [data-passport-edit-content] main {
+            height: auto !important;
+            overflow: visible !important;
+          }
+        `}</style>
+
+        <div data-passport-edit-header className="border-b border-[#EEEAF6] bg-white px-4 py-2 sm:px-6">
+          <div className="mx-auto flex max-w-[1180px] flex-wrap items-center justify-between gap-2">
+            <p className="min-w-0 truncate text-xs text-[#746E80]"><span className="font-semibold text-[#5B4B8A]">Creative Passport</span> · Edit your reusable artist information</p>
             <div className="flex shrink-0 items-center gap-2">
               <button type="button" className={compact} onClick={() => setGuidanceOpen((value) => !value)} aria-expanded={guidanceOpen}><ChevronDown className={`size-3.5 transition-transform ${guidanceOpen ? "rotate-180" : ""}`} />Why it matters</button>
               <button type="button" className={compact} onClick={() => { setRevision((value) => value + 1); setMode("overview") }}><LayoutDashboard className="size-3.5" />Overview</button>
             </div>
           </div>
-          {guidanceOpen && <div className="mx-auto mt-2 max-w-[1180px] rounded-lg border border-[#E7E1F7] bg-[#FAF9FD] px-3 py-2 text-xs leading-5 text-[#5F5968]">Your Passport is the artist-approved source record KLEIO can reuse for readiness and drafting. Gemini suggestions remain editable and private until you approve them in the matching field.</div>}
+          {guidanceOpen && <div className="mx-auto mt-2 max-w-[1180px] border-t border-[#EEEAF6] pt-2 text-xs leading-5 text-[#5F5968]">Your Passport is the artist-approved source record KLEIO can reuse for readiness and drafting. Gemini suggestions remain editable and private until you approve them in the matching field.</div>}
         </div>
-        <div className="min-h-0 flex-1"><AdaptiveArtistPassportExperience /></div>
-      </div>
+
+        <div data-passport-edit-content>
+          <AdaptiveArtistPassportExperience />
+        </div>
+      </main>
     )
   }
 
