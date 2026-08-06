@@ -28,7 +28,7 @@ export function ImportSourceHub() {
         <div className="max-w-3xl">
           <p className="text-[0.68rem] font-semibold uppercase tracking-[0.17em] text-[#75639E]">Artist document beta</p>
           <h1 id="import-source-title" className="mt-2 font-serif text-3xl font-semibold tracking-[-0.04em] text-[#292631]">Upload a CV or artist document</h1>
-          <p className="mt-2 text-sm leading-6 text-[#746E80]">Direct PDF upload is the active beta path. The private upload and review workspace begins immediately below.</p>
+          <p className="mt-2 text-sm leading-6 text-[#746E80]">Direct PDF upload is the active import method for this beta. The private upload and review workspace begins immediately below.</p>
         </div>
         <div className="flex flex-wrap gap-2 text-xs font-semibold text-[#625C70]">
           <span className="inline-flex items-center gap-2 rounded-full bg-[#F7F4FF] px-3 py-1.5"><ShieldCheck className="size-3.5 text-[#6A5896]" />Nothing publishes automatically</span>
