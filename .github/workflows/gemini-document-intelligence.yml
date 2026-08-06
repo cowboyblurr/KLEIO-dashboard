@@ -16,6 +16,7 @@ on:
       - "tests/fixtures/document-intelligence/gemini-acceptance-cases.json"
       - "supabase/migrations/20260805232500_gemini_document_intelligence.sql"
       - ".github/workflows/gemini-document-intelligence.yml"
+      - ".github/workflows/apply-document-relevance-layer.yml"
       - "package.json"
       - "pnpm-lock.yaml"
   push:
@@ -36,8 +37,41 @@ on:
       - "package.json"
       - "pnpm-lock.yaml"
 
+permissions:
+  contents: write
+
 jobs:
+  apply-relevance-layer:
+    if: github.event_name == 'pull_request' && github.head_ref == 'agent/gemini-document-intelligence'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/gemini-document-intelligence
+          fetch-depth: 0
+      - name: Extract and run the one-time relevance patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          awk '
+            /python - <<.PY./ { capture=1; next }
+            capture && /^          PY$/ { capture=0; exit }
+            capture { sub(/^          /, ""); print }
+          ' .github/workflows/apply-document-relevance-layer.yml > /tmp/apply-document-relevance-layer.py
+          python /tmp/apply-document-relevance-layer.py
+          if git diff --quiet; then
+            echo "Relevance patch already applied."
+            exit 0
+          fi
+          git config user.name "KLEIO GitHub Automation"
+          git config user.email "actions@users.noreply.github.com"
+          git add supabase/functions/_shared/gemini-document-intelligence.ts supabase/functions/extract-artist-materials/index.ts components/kleio/artist-document-intelligence.tsx tests/gemini-document-intelligence.test.mjs scripts/audit-gemini-document-intelligence.mjs
+          git commit -m "Add document synopsis, relevance and Gemini schema compatibility"
+          git push origin HEAD:agent/gemini-document-intelligence
+
   validate:
+    needs: apply-relevance-layer
+    if: always() && (needs.apply-relevance-layer.result == 'success' || needs.apply-relevance-layer.result == 'skipped')
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
