@@ -64,6 +64,46 @@ function isSchemaRejection(response: Response, payload: JsonObject) {
     || (status.includes("invalid_argument") && message.includes("argument"))
 }
 
+function requestedSchema(requestBody: JsonObject) {
+  const generationConfig = isObject(requestBody.generationConfig) ? requestBody.generationConfig : {}
+  const responseFormat = isObject(generationConfig.responseFormat) ? generationConfig.responseFormat : {}
+  const text = isObject(responseFormat.text) ? responseFormat.text : {}
+  if (isObject(text.schema)) return text.schema
+  return isObject(generationConfig.responseJsonSchema) ? generationConfig.responseJsonSchema : {}
+}
+
+function schemaExample(schema: unknown, depth = 0): unknown {
+  if (!isObject(schema) || depth > 7) return ""
+  const declared = Array.isArray(schema.type)
+    ? schema.type.find((value) => value !== "null")
+    : schema.type
+  const type = cleanText(declared, 30)
+
+  if (type === "object" || isObject(schema.properties)) {
+    const properties = isObject(schema.properties) ? schema.properties : {}
+    const output: JsonObject = {}
+    for (const [key, value] of Object.entries(properties)) {
+      output[key] = schemaExample(value, depth + 1)
+    }
+    return output
+  }
+  if (type === "array") return [schemaExample(schema.items, depth + 1)]
+  if (type === "boolean") return false
+  if (type === "integer" || type === "number") return 0
+  const values = Array.isArray(schema.enum) ? schema.enum : []
+  return values.length ? values[0] : ""
+}
+
+function compactSchemaContract(requestBody: JsonObject) {
+  const schema = requestedSchema(requestBody)
+  if (!Object.keys(schema).length) return ""
+  try {
+    return JSON.stringify(schemaExample(schema)).slice(0, 50_000)
+  } catch {
+    return ""
+  }
+}
+
 function interactionInput(requestBody: JsonObject) {
   const result: JsonObject[] = []
   const textParts: string[] = []
@@ -87,11 +127,12 @@ function interactionInput(requestBody: JsonObject) {
     }
   }
 
+  const contract = compactSchemaContract(requestBody)
   const combined = textParts.filter(Boolean).join("\n\n")
   if (combined) {
     result.push({
       type: "text",
-      text: `${combined}\n\nReturn exactly one syntactically valid JSON object matching the requested KLEIO contract. Do not add markdown, commentary, or unsupported fields.`,
+      text: `${combined}\n\nReturn exactly one syntactically valid JSON object. Do not add markdown, commentary, or unsupported fields.${contract ? `\nUse this exact JSON shape and retain every shown key. Replace placeholder values with supported findings; use empty arrays or empty strings instead of omitting keys:\n${contract}` : ""}`,
     })
   }
   return result
@@ -101,8 +142,9 @@ function interactionInput(requestBody: JsonObject) {
  * Gemini can reject very large or deeply nested response schemas even when they
  * use supported JSON Schema keywords. KLEIO first attempts the strict schema
  * through the normal Interactions shim. Only when Google explicitly rejects the
- * schema, this adapter retries the same private request as JSON-only output and
- * leaves KLEIO's existing semantic validator as the final authority.
+ * schema, this adapter retries the same private request as JSON-only output,
+ * supplies a compact schema-derived shape in the prompt, and leaves KLEIO's
+ * existing semantic validator as the final authority.
  */
 export function installGeminiSchemaFallbackFetchShim() {
   const delegatedFetch = globalThis.fetch.bind(globalThis)
