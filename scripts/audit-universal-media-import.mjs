@@ -3,8 +3,9 @@ import path from "node:path"
 
 const root = process.cwd()
 const read = (file) => fs.readFileSync(path.join(root, file), "utf8")
-const requireText = (file, text, message) => { if (!read(file).includes(text)) throw new Error(`${message} (${file})`) }
-const forbidText = (file, text, message) => { if (read(file).includes(text)) throw new Error(`${message} (${file})`) }
+const failures = []
+const requireText = (file, text, message) => { if (!read(file).includes(text)) failures.push(`${message} (${file})`) }
+const forbidText = (file, text, message) => { if (read(file).includes(text)) failures.push(`${message} (${file})`) }
 
 const architecture = "lib/kleio-universal-media.ts"
 const googleCapabilities = "lib/kleio-google-capabilities.ts"
@@ -26,45 +27,47 @@ for (const context of ["artist_onboarding", "creative_passport", "portfolio", "p
 for (const source of ["device", "google_drive", "kleio_library", "instagram"]) {
   requireText(architecture, `type: \"${source}\"`, `future-ready adapter registry must retain ${source}`)
 }
-requireText(architecture, "drive.file", "Drive adapter must use the narrow file-specific scope")
+requireText(architecture, "drive.file", "deferred Drive adapter must retain the narrow file-specific scope")
 requireText(architecture, "fileSignatureMatches", "shared media upload must validate byte signatures")
-requireText(architecture, "fileChecksum", "shared media upload must calculate a duplicate checksum")
-requireText(architecture, "recordMediaUsage", "media selection must stay separate from destination usage")
+requireText(architecture, "fileChecksum", "shared media upload must calculate duplicate checksums")
+requireText(architecture, "recordMediaUsage", "selection must remain separate from destination usage")
 requireText(architecture, "createPortfolioWorkFromMedia", "portfolio must reuse canonical media records")
-requireText(architecture, "attachMediaToCreativePassportCv", "Creative Passport documents must reuse library media")
+requireText(architecture, "attachMediaToCreativePassportCv", "Passport documents must reuse library records")
 forbidText(architecture, "localStorage.setItem(\"google", "Drive tokens must not be written to local storage")
 
-requireText(googleCapabilities, "NEXT_PUBLIC_GOOGLE_AUTH_ENABLED", "Google authentication must use an explicit deployment capability gate")
-requireText(googleCapabilities, "NEXT_PUBLIC_GOOGLE_DRIVE_CLIENT_ID", "Drive availability must require its public OAuth client configuration")
-requireText(googleCapabilities, "NEXT_PUBLIC_GOOGLE_PICKER_API_KEY", "Drive availability must require its restricted Picker key")
+requireText(googleCapabilities, "NEXT_PUBLIC_GOOGLE_AUTH_ENABLED", "Google authentication must remain explicitly gated")
+requireText(googleCapabilities, "NEXT_PUBLIC_GOOGLE_DRIVE_CLIENT_ID", "future Drive availability must require OAuth configuration")
+requireText(googleCapabilities, "NEXT_PUBLIC_GOOGLE_PICKER_API_KEY", "future Drive availability must require a restricted Picker key")
 forbidText(googleCapabilities, "GOCSPX-", "Google client secrets must never enter client capability code")
 
-requireText(availability, "google_drive_image: true", "artist beta availability must enable Google Drive images")
-requireText(availability, "google_drive_document: true", "artist beta availability must enable Google Drive documents")
-requireText(availability, "existing_kleio_media: true", "existing private KLEIO media must remain reusable internally")
-requireText(availability, "device_image: false", "device image upload must be disabled during the initial beta")
-requireText(availability, "instagram_image: false", "Instagram import must be disabled during the initial beta")
+requireText(availability, "device_document: true", "direct private documents must be enabled in the current beta")
+requireText(availability, "pdf: true", "PDF analysis must be enabled in the current beta")
+requireText(availability, "existing_kleio_media: true", "existing private KLEIO media must remain reusable")
+requireText(availability, "google_drive_image: false", "Google Drive images must remain deferred")
+requireText(availability, "google_drive_document: false", "Google Drive documents must remain deferred")
+requireText(availability, "device_image: false", "device image import must remain deferred")
+requireText(availability, "instagram_image: false", "Instagram import must remain deferred")
+requireText(availability, "website: false", "Website Import must remain deferred")
 
-requireText(quick, "New beta import", "Quick Import must distinguish new import from internal reuse")
-requireText(quick, "Choose from Google Drive", "Quick Import must expose Google Drive as its only new source")
-requireText(quick, "Reuse existing private media", "Quick Import must preserve internal Media Library reuse")
-requireText(quick, "loadBetaImportAvailability", "Quick Import must use shared runtime availability")
-requireText(quick, "nothing has changed yet", "Quick Import must distinguish selection from confirmation")
-requireText(quick, "h-dvh", "Quick Import must use a full viewport on mobile")
-forbidText(quick, 'type="file"', "Quick Import must not expose device upload during the initial beta")
-forbidText(quick, "Instagram Professional Account", "Quick Import must not expose Instagram as an interactive source")
+requireText(quick, "Reuse existing private media", "Quick Media must remain an internal library picker")
+requireText(quick, "Connected providers are deferred during the direct-document beta", "Quick Media must explain the current source boundary")
+requireText(quick, "loadBetaImportAvailability", "Quick Media must use shared runtime availability")
+requireText(quick, 'source: "kleio_library"', "Quick Media must confirm only existing KLEIO Library records")
+requireText(quick, "h-dvh", "Quick Media must use the full viewport on mobile")
+forbidText(quick, 'type="file"', "Quick Media must not expose direct device upload")
+forbidText(quick, "Choose from Google Drive", "Quick Media must not expose deferred Drive importing")
 
-requireText(signup, "isGoogleAuthenticationConfigured", "artist signup must gate Google authentication until the provider is configured")
-requireText(signup, "Create with email", "email signup must remain available while Google authentication is pending")
+requireText(signup, "isGoogleAuthenticationConfigured", "artist signup must gate Google authentication")
+requireText(signup, "Create with email", "email signup must remain available")
 requireText(portfolio, "Choose the work first. Add details second.", "portfolio creation must remain image-first")
 requireText(portfolio, "New work queue", "portfolio must show selected media before metadata entry")
 requireText(portfolio, "Add story, series, and accessibility details", "secondary portfolio fields must remain progressive")
-forbidText(portfolio, 'type=\"file\"', "visual portfolio page must not expose a direct file input")
+forbidText(portfolio, 'type=\"file\"', "portfolio must not bypass the shared media architecture")
 requireText(profile, 'context=\"profile_image\"', "profile media must use the shared private media picker")
 requireText(passport, "Choose CV", "Creative Passport must expose reusable document selection")
 requireText(application, 'context=\"application_material\"', "application preparation must expose requirement-aware media selection")
-requireText(library, 'title="Media Library"', "artists must have a private reusable media surface")
-requireText(library, 'href="/artist-dashboard/import/"', "guided importing must begin from the private Media Library surface")
+requireText(library, 'title="Media Library"', "artists must retain a private reusable media surface")
+requireText(library, 'href="/artist-dashboard/import/"', "guided document importing must begin from the import workspace")
 requireText(sidebar, 'href: \"/artist-dashboard/media/\"', "the private media library must remain reachable")
 
 requireText(migration, "artist_media_usages", "database must record explicit destination usages")
@@ -81,4 +84,10 @@ for (const file of [architecture, googleCapabilities, availability, quick, signu
   forbidText(file, "GOCSPX-", "Google client secrets must not be committed")
 }
 
-console.log("Universal Media Import audit passed: future adapters remain isolated, Google Drive is the only active new artist-beta source, private KLEIO Library reuse remains internal, device and Instagram paths are not interactive, explicit destination usage remains separate, and owner-scoped RLS and database availability enforcement are intact.")
+if (failures.length) {
+  console.error("Universal Media Import audit failed:\n")
+  for (const failure of failures) console.error(`- ${failure}`)
+  process.exit(1)
+}
+
+console.log("Universal Media Import audit passed: direct private PDFs are active, existing KLEIO media remains reusable, connected providers are deferred but safely preserved, explicit destination usage remains separate, and owner-scoped RLS and secret hygiene are intact.")
