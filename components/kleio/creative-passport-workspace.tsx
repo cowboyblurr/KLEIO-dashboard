@@ -24,6 +24,7 @@ import {
   type ArtistPassportRecord,
   type PortfolioWorkRecord,
 } from "@/lib/kleio-live-data"
+import { loadPassportReviewCount } from "@/lib/kleio-upload-to-passport"
 
 const surface = "rounded-xl border border-[#E7E1F7] bg-white shadow-[0_12px_32px_rgba(82,64,130,0.04)]"
 const primary = "inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-[#5B4B8A] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#4F407B] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#A997E8]/20"
@@ -53,10 +54,11 @@ export function CreativePassportWorkspace() {
     setLoading(true)
     setError("")
     try {
-      const [loadedProfile, loadedWorks, applications] = await Promise.all([
+      const [loadedProfile, loadedWorks, applications, pendingReviewCount] = await Promise.all([
         loadArtistPassport(),
         loadPortfolioWorks(),
         loadArtistApplications(),
+        loadPassportReviewCount().catch(() => 0),
       ])
       const result = calculatePassportCompletion(loadedProfile, loadedWorks)
       setProfile(loadedProfile)
@@ -64,7 +66,7 @@ export function CreativePassportWorkspace() {
       setApplicationCount(applications.filter((application) => !["declined", "withdrawn"].includes(application.status)).length)
       setCompletion(result)
       const meaningful = Boolean(loadedProfile?.professional_name?.trim() || loadedProfile?.bio?.trim() || loadedWorks.length)
-      if (!meaningful) setMode("edit")
+      if (!meaningful || pendingReviewCount > 0) setMode("edit")
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "Unable to load the Creative Passport overview.")
     } finally {
