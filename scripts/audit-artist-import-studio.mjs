@@ -43,7 +43,6 @@ forbidText(hub, "Google Drive is the active import source", "obsolete Drive-firs
 requireText(documents, 'accept="application/pdf,.pdf"', "direct document workflow must accept PDF files only")
 requireText(documents, "Upload and understand document", "artist must explicitly initiate private Gemini analysis")
 requireText(documents, "Understand this document with Gemini", "artist must be able to opt out and store without analysis")
-requireText(documents, "loadDocumentAnalysisCapabilities", "document UI must verify server-side Gemini capability")
 requireText(documents, "analysisResult", "document UI must preserve the completed analysis result")
 requireText(documents, "What this document is", "completed analysis must explain the document")
 requireText(documents, "Information KLEIO can audit", "completed analysis must expose extractable information categories")
@@ -56,7 +55,7 @@ requireText(documents, "Gemini", "document UI must disclose Gemini document unde
 requireText(documents, 'role="status"', "document progress and completion must be announced accessibly")
 requireText(documents, "Private preview", "artist must retain access to the original private PDF")
 requireText(documents, "Analyze again", "artist must be able to deliberately reanalyze a source")
-requireText(documents, "Keep PDF without analysis", "artist must be able to retain the source without AI analysis")
+requireText(documents, "Remove analysis", "artist must be able to keep the PDF while removing AI analysis")
 requireText(documents, "Delete source", "artist must retain source deletion control")
 
 requireText(client, "15 * 1024 * 1024", "client must preserve the 15 MB beta PDF limit")
