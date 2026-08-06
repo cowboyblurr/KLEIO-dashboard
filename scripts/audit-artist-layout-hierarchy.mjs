@@ -55,7 +55,7 @@ forbidPattern(mediaLibrary, /One private library for material you bring into KLE
 
 const importHub = read("components/kleio/import-source-hub.tsx")
 requirePattern(importHub, /Upload a CV or artist document/, "Import must lead with the active artist task.")
-requirePattern(importHub, /SupportingTaskDisclosure[\s\S]*Connected import sources/, "Deferred providers must remain progressively disclosed.")
+requirePattern(importHub, /SupportingTaskDisclosure[\s\S]*Deferred connected sources/, "Deferred providers must remain progressively disclosed.")
 forbidPattern(importHub, /mt-6 grid gap-4 md:grid-cols-2[\s\S]*min-h-48/, "Import methodology cards must not dominate before the upload workspace.")
 
 const preparation = read("app/artist-dashboard/applications/prepare/page.tsx")
