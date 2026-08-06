@@ -64,11 +64,13 @@ requireText(intelligence, /visibility: options\.visibility \?\? "private"/, "Con
 requireText(intelligence, /from\("artist_document_versions"\)/, "Requirement attachments must resolve the canonical source version.")
 
 requireText(inbox, /Passport Updates for Review/, "The artist review inbox is missing.")
-requireText(inbox, /View source evidence/, "Claims must expose their source evidence.")
+requireText(inbox, /Review evidence and provenance/, "Claims must expose their source evidence and provenance.")
 requireText(inbox, /Confirm privately/, "The artist must explicitly confirm extracted information.")
 requireText(inbox, /Replace existing/, "Conflict resolution must remain an artist decision.")
-requireText(inbox, /Keep existing/, "Duplicate resolution must preserve existing records when the artist chooses.")
-requireText(inbox, /Restricted source/, "Sensitive records need a non-color restricted-state label.")
+requireText(inbox, /mergeDuplicateClaim/, "Duplicate resolution must preserve the existing Passport record when the artist chooses.")
+requireText(inbox, /Merge evidence/, "The duplicate-preservation control must be visible to the artist.")
+requireText(inbox, /label: "Sensitive"/, "Sensitive records need a non-color text label.")
+requireText(inbox, /stays private unless you deliberately authorize another use/, "Sensitive-state guidance must explain the privacy boundary.")
 
 requireText(requirementSlots, /Attach the right source to the right requirement/, "Requirement-specific application slots are missing.")
 requireText(requirementSlots, /validate and include|Validate and include/i, "Requirement confirmation language is missing.")
