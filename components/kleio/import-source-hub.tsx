@@ -57,7 +57,7 @@ export function ImportSourceHub() {
       <SupportingTaskDisclosure
         icon={Cloud}
         label="Later release"
-        title="Connected import sources"
+        title="Deferred connected sources"
         description="These foundations are preserved but disabled so they do not compete with the active PDF workflow."
         className="mt-4 shadow-none"
       >
@@ -65,7 +65,7 @@ export function ImportSourceHub() {
         <div className="mt-4 flex flex-wrap gap-2" aria-label="Deferred import sources">
           {[{ label: "Google Drive", icon: Cloud }, { label: "Instagram", icon: Images }, { label: "Website Import", icon: Cloud }, { label: "Pinterest", icon: Images }].map((item) => {
             const Icon = item.icon
-            return <span key={item.label} className="inline-flex items-center gap-2 rounded-full border border-[#E7E1F7] bg-[#FAF9FD] px-3 py-1.5 text-xs font-semibold text-[#746E80]"><Icon className="size-3.5" />{item.label} · Deferred</span>
+            return <span key={item.label} className="inline-flex items-center gap-2 rounded-full border border-[#E7E1F7] bg-[#FAF9FD] px-3 py-1.5 text-xs text-[#746E80]"><Icon className="size-3.5" /><strong className="text-[#625C70]">{item.label}</strong><span>· Deferred</span></span>
           })}
         </div>
       </SupportingTaskDisclosure>
