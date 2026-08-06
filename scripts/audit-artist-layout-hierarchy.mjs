@@ -84,6 +84,10 @@ forbidPattern(opportunityFilters, /Filtered opportunity view|These filters are r
 const profilePreview = read("components/kleio/live-artist-profile-preview.tsx")
 forbidPattern(profilePreview, /actions=\{/, "Profile preview must not duplicate edit and portfolio actions inside the profile presentation.")
 
+const messagesPage = read("app/artist-dashboard/messages/page.tsx")
+requirePattern(messagesPage, /FocusedLiveMessages/, "Messages must wrap the live inbox in a focused page-flow layout.")
+requirePattern(messagesPage, /\[&>div>button\]:!static/, "The institution invitation control must remain inside the Messages flow instead of floating over conversations.")
+
 const disclosure = read("components/kleio/supporting-task-disclosure.tsx")
 requirePattern(disclosure, /<details/, "The shared supporting-task pattern must use native progressive disclosure.")
 requirePattern(disclosure, /focus-visible/, "The shared supporting-task pattern must retain visible keyboard focus.")
