@@ -265,7 +265,7 @@ export function PassportUpdatesInbox() {
                   <div className="divide-y divide-[#EEEAF6] border-y border-[#EEEAF6]">
                     {fieldClaims.map((claim) => {
                       const busy = activeId === claim.id
-                      const draft = edits[claim.id] ?? claim.artist_edited_value || claim.proposed_value
+                      const draft = edits[claim.id] ?? (claim.artist_edited_value || claim.proposed_value)
                       const conflict = claim.relationship_status === "conflict"
                       const duplicate = claim.relationship_status === "duplicate"
                       return (
