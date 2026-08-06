@@ -15,6 +15,8 @@ function availabilityTone(available: boolean) {
     : "border-amber-200 bg-amber-50 text-amber-800"
 }
 
+const deferredSourceClass = "inline-flex items-center gap-2 rounded-full border border-[#E7E1F7] bg-[#FAF9FD] px-3 py-1.5 text-xs text-[#746E80]"
+
 export function ImportSourceHub() {
   const [availability, setAvailability] = useState<KleioBetaImportAvailability | null>(null)
   useEffect(() => { void loadBetaImportAvailability().then(setAvailability).catch(() => setAvailability(null)) }, [])
@@ -63,10 +65,10 @@ export function ImportSourceHub() {
       >
         <p className="text-sm leading-6 text-[#746E80]">Google Drive, Instagram, Website Import, and Pinterest remain disabled in the interface and database beta gate until reliability, demand, and operational readiness support activation.</p>
         <div className="mt-4 flex flex-wrap gap-2" aria-label="Deferred import sources">
-          {[{ label: "Google Drive", icon: Cloud }, { label: "Instagram", icon: Images }, { label: "Website Import", icon: Cloud }, { label: "Pinterest", icon: Images }].map((item) => {
-            const Icon = item.icon
-            return <span key={item.label} className="inline-flex items-center gap-2 rounded-full border border-[#E7E1F7] bg-[#FAF9FD] px-3 py-1.5 text-xs text-[#746E80]"><Icon className="size-3.5" /><strong className="text-[#625C70]">{item.label}</strong><span>· Deferred</span></span>
-          })}
+          <span className={deferredSourceClass}><Cloud className="size-3.5" /><strong className="text-[#625C70]">Google Drive</strong><span>· Deferred</span></span>
+          <span className={deferredSourceClass}><Images className="size-3.5" /><strong className="text-[#625C70]">Instagram</strong><span>· Deferred</span></span>
+          <span className={deferredSourceClass}><Cloud className="size-3.5" /><strong className="text-[#625C70]">Website Import</strong><span>· Deferred</span></span>
+          <span className={deferredSourceClass}><Images className="size-3.5" /><strong className="text-[#625C70]">Pinterest</strong><span>· Deferred</span></span>
         </div>
       </SupportingTaskDisclosure>
     </section>
