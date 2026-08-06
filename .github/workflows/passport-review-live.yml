@@ -28,6 +28,28 @@ jobs:
     timeout-minutes: 20
 
     steps:
+      - name: Publish pending verification status
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          payload="$(jq -n \
+            --arg state "pending" \
+            --arg target_url "$RUN_URL" \
+            --arg description "Waiting for compact Passport review deployment" \
+            --arg context "KLEIO Passport Review Live" \
+            '{state:$state,target_url:$target_url,description:$description,context:$context}')"
+
+          curl --silent --show-error --fail \
+            --request POST \
+            --header "Authorization: Bearer ${GH_TOKEN}" \
+            --header "Accept: application/vnd.github+json" \
+            --header "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" \
+            --data "$payload"
+
       - name: Wait for the compact Passport review to be live
         id: live_check
         shell: bash
@@ -70,7 +92,7 @@ jobs:
             exit 1
           fi
 
-      - name: Publish verification status
+      - name: Publish final verification status
         if: always()
         env:
           GH_TOKEN: ${{ github.token }}
