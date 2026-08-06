@@ -284,7 +284,7 @@ export function EditorialArtistProfile({
             </section>
           </div>
 
-          <aside id="profile" className="scroll-mt-8 lg:sticky lg:top-5 lg:self-start">
+          <aside id="profile" className="kleio-context-panel scroll-mt-8 lg:self-start">
             <div className="relative overflow-hidden border-y border-[#DDD7E7] bg-white/84 px-1 py-5 backdrop-blur-sm sm:px-5 lg:border lg:p-5">
               <LavenderGrain />
               <div className="relative z-10">

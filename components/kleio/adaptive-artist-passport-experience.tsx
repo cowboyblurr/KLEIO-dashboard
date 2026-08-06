@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { Check, ChevronLeft, ChevronRight, FileText, FormInput, Loader2, Save, Sparkles } from "lucide-react"
+import { Check, ChevronDown, ChevronLeft, ChevronRight, FileText, FormInput, Loader2, Save, Sparkles } from "lucide-react"
 import { LiveArtistPassportEditor } from "@/components/kleio/live-artist-passport-editor"
 import { ArtistImportReview } from "@/components/kleio/artist-import-review"
 import { PassportDraftRecoveryNotice } from "@/components/kleio/passport-draft-recovery-notice"
@@ -74,6 +74,7 @@ export function AdaptiveArtistPassportExperience() {
   const hydratedRef = useRef(false)
   const lastSerializedRef = useRef("")
   const [mode, setMode] = useState<PassportMode>("full")
+  const [workflowOpen, setWorkflowOpen] = useState(false)
   const [record, setRecord] = useState(blankPassport)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -151,6 +152,7 @@ export function AdaptiveArtistPassportExperience() {
 
   function chooseMode(nextMode: PassportMode) {
     setMode(nextMode)
+    setWorkflowOpen(false)
     window.localStorage.setItem(MODE_KEY, nextMode)
     setStatus("")
     setError("")
@@ -209,11 +211,29 @@ export function AdaptiveArtistPassportExperience() {
   }
 
   const saveLabel = saveState === "saving" ? "Saving to KLEIO…" : saveState === "saved" ? "Saved to KLEIO" : saveState === "local" ? "Saved locally" : saveState === "offline" ? "Offline — saved locally" : saveState === "conflict" ? "Conflict detected" : saveState === "error" ? "Retry required" : ""
+  const workflowLabel = mode === "guided" ? (es ? "Guía paso a paso" : "Guided steps") : mode === "import" ? (es ? "Importar materiales" : "Import materials") : (es ? "Formulario completo" : "Full form")
 
   return (
     <div className="flex h-full min-h-0 flex-col bg-white">
-      <section className="shrink-0 border-b border-[#E7E1F7] bg-[#FDFCFF] px-4 py-3 sm:px-6" aria-label="Creative Passport entry mode">
-        <div className="mx-auto max-w-[1180px]"><div className="flex flex-wrap items-start justify-between gap-3"><div><p className="text-xs font-semibold uppercase tracking-[0.15em] text-[#6A5896]">{es ? "Cómo quieres trabajar" : "How you want to work"}</p><p className="mt-1 text-xs text-[#746E80]">{es ? "Todos los modos actualizan el mismo Pasaporte." : "Every mode updates the same Passport."}</p></div>{saveLabel && <p role="status" aria-live="polite" className={`text-xs font-semibold ${saveState === "conflict" || saveState === "error" ? "text-amber-700" : "text-[#746E80]"}`}>{saveLabel}</p>}</div><div className="mt-3 flex gap-2 overflow-x-auto pb-1"><ModeButton active={mode === "guided"} icon={Sparkles} title={es ? "Guíame paso a paso" : "Guide me step by step"} description={es ? "Preguntas breves y ayuda por voz." : "Short prompts and optional voice help."} onClick={() => chooseMode("guided")} /><ModeButton active={mode === "full"} icon={FormInput} title={es ? "Déjame completarlo" : "Let me fill it out"} description={es ? "Formulario completo para entrada directa." : "The complete form for direct entry."} onClick={() => chooseMode("full")} /><ModeButton active={mode === "import"} icon={FileText} title={es ? "Empezar con lo que tengo" : "Start from what I have"} description={es ? "Extrae propuestas de CV y texto." : "Extract proposals from PDFs and text."} onClick={() => chooseMode("import")} /></div></div>
+      <section className="shrink-0 border-b border-[#E7E1F7] bg-[#FDFCFF] px-4 py-2 sm:px-6" aria-label="Creative Passport workflow">
+        <div className="mx-auto max-w-[1180px]">
+          <div className="flex min-h-10 flex-wrap items-center justify-between gap-2">
+            <button type="button" onClick={() => setWorkflowOpen((value) => !value)} aria-expanded={workflowOpen} className="inline-flex min-h-9 items-center gap-2 rounded-lg px-2 text-left text-xs font-semibold text-[#5B4B8A] transition hover:bg-[#F4F0FB] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#A997E8]/15">
+              <ChevronDown className={`size-3.5 transition-transform ${workflowOpen ? "rotate-180" : ""}`} />
+              <span className="text-[#81788E]">Workflow</span>
+              <span>{workflowLabel}</span>
+              <span className="font-normal text-[#81788E]">· Change</span>
+            </button>
+            {saveLabel && <p role="status" aria-live="polite" className={`text-xs font-semibold ${saveState === "conflict" || saveState === "error" ? "text-amber-700" : "text-[#746E80]"}`}>{saveLabel}</p>}
+          </div>
+          {workflowOpen && (
+            <div className="grid gap-2 border-t border-[#EEEAF6] pt-3 md:grid-cols-3">
+              <ModeButton active={mode === "guided"} icon={Sparkles} title={es ? "Guíame paso a paso" : "Guide me step by step"} description={es ? "Preguntas breves y ayuda por voz." : "Short prompts and optional voice help."} onClick={() => chooseMode("guided")} />
+              <ModeButton active={mode === "full"} icon={FormInput} title={es ? "Déjame completarlo" : "Let me fill it out"} description={es ? "Formulario completo para entrada directa." : "The complete form for direct entry."} onClick={() => chooseMode("full")} />
+              <ModeButton active={mode === "import"} icon={FileText} title={es ? "Empezar con lo que tengo" : "Start from what I have"} description={es ? "Extrae propuestas de CV y texto." : "Extract proposals from PDFs and text."} onClick={() => chooseMode("import")} />
+            </div>
+          )}
+        </div>
       </section>
 
       {mode !== "full" && recovery && (

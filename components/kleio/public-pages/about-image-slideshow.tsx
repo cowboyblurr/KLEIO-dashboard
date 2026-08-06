@@ -76,7 +76,7 @@ export function AboutImageSlideshow() {
   )
 
   return (
-    <aside className="relative mx-auto w-full max-w-[400px] lg:sticky lg:top-28 lg:mx-auto xl:max-w-[430px]">
+    <aside className="kleio-context-panel relative mx-auto w-full max-w-[400px] lg:mx-auto xl:max-w-[430px]">
       <div className="absolute -left-6 top-8 h-36 w-36 rounded-full bg-[#F7F4FF] blur-3xl" aria-hidden />
       <div className="absolute -right-5 bottom-16 h-32 w-32 rounded-full bg-[#E7E1F7]/70 blur-3xl" aria-hidden />
 

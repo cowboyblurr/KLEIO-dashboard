@@ -276,7 +276,7 @@ export function ArtistPassportView({ artistId }: { artistId: string }) {
             <ArtistPassportHero artist={resolvedArtist} mode="institution" />
             <ArtistPassportSections artist={resolvedArtist} mode="institution" />
           </div>
-          <div className="lg:sticky lg:top-0">
+          <div className="kleio-context-panel">
             <ReviewContextPanel submission={submission} />
           </div>
         </div>

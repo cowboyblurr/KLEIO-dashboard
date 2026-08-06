@@ -76,6 +76,13 @@ requirePattern(uploadUi, /role="tablist"/, "The document result must use an acce
 requirePattern(uploadUi, /Overview[\s\S]*Suggestions[\s\S]*Details & evidence/, "The guided result must separate overview, suggestions, and technical evidence.")
 requirePattern(uploadUi, /Open only the sections you want to inspect/, "Suggestions must use progressive disclosure rather than displaying every finding at once.")
 requirePattern(uploadUi, /View source evidence/, "Page evidence must remain available on demand.")
+requirePattern(uploadUi, /Collapse results/, "Artists must be able to collapse the analysis result from its header.")
+requirePattern(uploadUi, /Expand results/, "Artists must be able to restore a collapsed analysis result.")
+requirePattern(uploadUi, /Clear analysis/, "Artists must have a clear analysis-removal action beside the result.")
+requirePattern(uploadUi, /original PDF stays private/, "Clearing analysis must explicitly preserve the private PDF.")
+requirePattern(uploadUi, /Delete PDF/, "Artists must have a visible PDF deletion action beside the result.")
+requirePattern(uploadUi, /permanently removes the private PDF/, "PDF deletion confirmation must explain permanent removal.")
+requirePattern(uploadUi, /role="alertdialog"/, "Destructive document controls must use an accessible inline confirmation.")
 requirePattern(client, /complete_review_ready/, "The client must understand the canonical analysis state contract.")
 requirePattern(client, /Gemini is understanding the document/, "The progress contract must describe semantic document understanding.")
 
@@ -101,4 +108,4 @@ if (failures.length) {
   process.exit(1)
 }
 
-console.log("KLEIO Gemini document intelligence audit passed: original-PDF vision, two-pass schema recovery, guided progressive review, structured validation, honest coverage, evidence-on-demand, approved-evidence drafting, privacy controls, and 17 acceptance cases verified.")
+console.log("KLEIO Gemini document intelligence audit passed: original-PDF vision, two-pass schema recovery, guided progressive review, immediate reversible document controls, structured validation, honest coverage, evidence-on-demand, approved-evidence drafting, privacy controls, and 17 acceptance cases verified.")

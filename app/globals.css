@@ -299,25 +299,33 @@
   }
 }
 
-/* ── KLEIO Assist — docked desktop layout ───────────────────────────────── */
+/* ── KLEIO Assist — non-blocking workspace behavior ────────────────── */
 
 @media (min-width: 1280px) {
-  body:has(.kleio-demo-guide-panel) {
-    padding-right: 25.5rem;
-    transition: padding-right 220ms ease;
-  }
-
-  body:has(.kleio-demo-guide-panel) .kleio-demo-guide-anchor {
+  .kleio-demo-guide-anchor {
     right: 1rem !important;
   }
 }
 
-@media (min-width: 1280px) and (max-width: 1500px) {
-  body:has(.kleio-demo-guide-panel) {
-    padding-right: 23rem;
-  }
+/* Page-local context should never pin itself over ordinary laptop-height forms. */
+.kleio-context-panel {
+  position: static;
+  max-height: none;
+  overflow: visible;
+}
 
-  body:has(.kleio-demo-guide-panel) .kleio-demo-guide-anchor {
-    width: min(100vw - 1.5rem, 22rem) !important;
+@media (min-width: 1536px) and (min-height: 850px) {
+  .kleio-context-panel {
+    position: sticky;
+    top: 1rem;
+    max-height: calc(100dvh - 2rem);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-gutter: stable;
   }
+}
+
+/* Modal decisions take precedence over passive guidance. */
+body:has([role="dialog"][aria-modal="true"]) .kleio-demo-guide-anchor {
+  display: none;
 }

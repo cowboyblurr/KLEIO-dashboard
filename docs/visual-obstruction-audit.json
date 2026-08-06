@@ -1,0 +1,2966 @@
+{
+  "summary": {
+    "files_scanned": 266,
+    "files_flagged": 106,
+    "records": 261,
+    "pattern_totals": {
+      "sticky": 9,
+      "fixed": 20,
+      "viewport_height": 14,
+      "large_max_height": 0,
+      "nested_scroll": 94,
+      "clipped_overflow": 112,
+      "viewport_edge": 41,
+      "high_z_index": 10,
+      "large_min_height": 5
+    }
+  },
+  "priority_files": [
+    {
+      "path": "components/kleio/live-artist-discovery.tsx",
+      "counts": {
+        "clipped_overflow": 4,
+        "large_min_height": 2,
+        "viewport_edge": 4,
+        "fixed": 2,
+        "nested_scroll": 2,
+        "sticky": 1
+      },
+      "records": [
+        {
+          "path": "components/kleio/live-artist-discovery.tsx",
+          "line": 18,
+          "kinds": [
+            "clipped_overflow"
+          ],
+          "snippet": "const card = \"overflow-hidden border border-[#E7E1F7] bg-white shadow-[0_18px_48px_rgba(82,64,130,0.06)]\""
+        },
+        {
+          "path": "components/kleio/live-artist-discovery.tsx",
+          "line": 32,
+          "kinds": [
+            "large_min_height"
+          ],
+          "snippet": "<article className={`${card} group flex min-h-[460px] flex-col`}>"
+        },
+        {
+          "path": "components/kleio/live-artist-discovery.tsx",
+          "line": 33,
+          "kinds": [
+            "clipped_overflow"
+          ],
+          "snippet": "<button type=\"button\" onClick={onOpen} className=\"relative block min-h-[245px] overflow-hidden bg-[#F3EFF8] text-left\">"
+        },
+        {
+          "path": "components/kleio/live-artist-discovery.tsx",
+          "line": 35,
+          "kinds": [
+            "viewport_edge"
+          ],
+          "snippet": "<div className=\"absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-black/60 to-transparent\" />"
+        },
+        {
+          "path": "components/kleio/live-artist-discovery.tsx",
+          "line": 51,
+          "kinds": [
+            "fixed",
+            "nested_scroll",
+            "viewport_edge"
+          ],
+          "snippet": "return <div className=\"fixed inset-0 z-[80] overflow-y-auto bg-[#201B2B]/55 p-3 backdrop-blur-sm sm:p-6\" role=\"dialog\" aria-modal=\"true\" aria-label={`${artist.professional_name} discovery profile`}>"
+        },
+        {
+          "path": "components/kleio/live-artist-discovery.tsx",
+          "line": 53,
+          "kinds": [
+            "sticky",
+            "viewport_edge"
+          ],
+          "snippet": "<div className=\"sticky top-0 z-20 flex items-center justify-between border-b border-[#E7E1F7] bg-white/95 px-4 py-3 backdrop-blur\"><p className=\"text-xs font-semibold uppercase tracking-[0.15em] text-[#6A5896]\">Institution discovery profile</p><button type=\"button\" onClick={onClose} className=\"grid size-9 place-items-center rounded-full border border-[#E7E1F7]\" aria-label=\"Close profile\"><X className=\"size-4\" /></button></div>"
+        },
+        {
+          "path": "components/kleio/live-artist-discovery.tsx",
+          "line": 55,
+          "kinds": [
+            "clipped_overflow",
+            "large_min_height"
+          ],
+          "snippet": "<div><div className=\"relative overflow-hidden bg-[#F3EFF8]\">{artist.selected_works[0]?.image_url ? <img src={artist.selected_works[0].image_url || \"\"} alt={artist.selected_works[0].title} className=\"max-h-[620px] w-full object-contain\" /> : <div className=\"grid min-h-[420px] place-items-center\"><ImageIcon className=\"size-10 text-[#7867AA]\" /></div>}{artist.profile_image_url && <img src={artist.profile_image_url} alt={`${artist.professional_name} portrait`} className=\"absolute bottom-5 right-5 as"
+        },
+        {
+          "path": "components/kleio/live-artist-discovery.tsx",
+          "line": 56,
+          "kinds": [
+            "clipped_overflow"
+          ],
+          "snippet": "<div className=\"mt-8 grid gap-5 sm:grid-cols-2\">{artist.selected_works.slice(1).map((work) => <figure key={work.id}><div className=\"grid min-h-52 place-items-center overflow-hidden bg-[#F3EFF8]\">{work.image_url ? <img src={work.image_url} alt={work.title} className=\"max-h-[420px] w-full object-contain\" /> : <ImageIcon className=\"size-6 text-[#7867AA]\" />}</div><figcaption className=\"mt-2 border-t border-[#DDD7E7] pt-2 text-xs text-[#746F7C]\"><strong className=\"text-[#292631]\">{work.title}</stron"
+        },
+        {
+          "path": "components/kleio/live-artist-discovery.tsx",
+          "line": 70,
+          "kinds": [
+            "fixed",
+            "viewport_edge"
+          ],
+          "snippet": "return <div className=\"fixed inset-0 z-[90] grid place-items-center bg-[#201B2B]/60 p-4 backdrop-blur-sm\" role=\"dialog\" aria-modal=\"true\" aria-label=\"Invite artist\"><div className=\"w-full max-w-xl rounded-3xl border border-[#E7E1F7] bg-white p-6 shadow-2xl\"><div className=\"flex items-start justify-between gap-4\"><div><p className=\"text-xs font-semibold uppercase tracking-[0.15em] text-[#6A5896]\">Opportunity-linked outreach</p><h2 className=\"mt-2 font-serif text-2xl\">Invite {artist.professional_n"
+        },
+        {
+          "path": "components/kleio/live-artist-discovery.tsx",
+          "line": 88,
+          "kinds": [
+            "nested_scroll"
+          ],
+          "snippet": "return <main className=\"h-full overflow-y-auto bg-[#FCFBFD] px-4 py-5 sm:px-6 sm:py-6\"><div className=\"mx-auto max-w-[1320px] space-y-5\"><WorkspacePageHeader eyebrow=\"Institution workspace\" title=\"Artist Discovery\" description=\"Browse artwork-led profiles that artists have explicitly chosen to share with authenticated institutions. Discovery is not an applicant ranking or a public social directory.\" secondaryCta={{ label: \"Applicant records\", href: \"/artists/applicants/\" }} />{message && <p role"
+        }
+      ],
+      "score": 36
+    },
+    {
+      "path": "components/kleio/live-artist-message-center.tsx",
+      "counts": {
+        "fixed": 3,
+        "nested_scroll": 1,
+        "viewport_edge": 2
+      },
+      "records": [
+        {
+          "path": "components/kleio/live-artist-message-center.tsx",
+          "line": 242,
+          "kinds": [
+            "fixed"
+          ],
+          "snippet": "className=\"fixed bottom-5 right-5 z-40 inline-flex h-11 items-center gap-2 rounded-full border border-[#D8D0F2] bg-white px-5 text-sm font-semibold text-[#5B4B8A] shadow-[0_18px_50px_rgba(82,64,130,0.18)]\""
+        },
+        {
+          "path": "components/kleio/live-artist-message-center.tsx",
+          "line": 249,
+          "kinds": [
+            "fixed",
+            "nested_scroll",
+            "viewport_edge"
+          ],
+          "snippet": "<div className=\"fixed inset-0 z-[90] overflow-y-auto bg-[#201B2B]/55 p-4 backdrop-blur-sm\" role=\"dialog\" aria-modal=\"true\" aria-label=\"Institution opportunity invitations\">"
+        },
+        {
+          "path": "components/kleio/live-artist-message-center.tsx",
+          "line": 295,
+          "kinds": [
+            "fixed",
+            "viewport_edge"
+          ],
+          "snippet": "<div className=\"fixed inset-0 z-[100] grid place-items-center bg-[#201B2B]/65 p-4\" role=\"dialog\" aria-modal=\"true\" aria-label=\"Report outreach\">"
+        }
+      ],
+      "score": 28
+    },
+    {
+      "path": "components/kleio/kleio-demo-guide.tsx",
+      "counts": {
+        "fixed": 2,
+        "clipped_overflow": 1,
+        "nested_scroll": 2,
+        "viewport_edge": 1
+      },
+      "records": [
+        {
+          "path": "components/kleio/kleio-demo-guide.tsx",
+          "line": 383,
+          "kinds": [
+            "fixed"
+          ],
+          "snippet": "<div className=\"kleio-demo-guide-anchor pointer-events-none fixed bottom-4 right-4 z-40 max-md:bottom-3 max-md:right-3\">"
+        },
+        {
+          "path": "components/kleio/kleio-demo-guide.tsx",
+          "line": 398,
+          "kinds": [
+            "fixed"
+          ],
+          "snippet": "<div className=\"kleio-demo-guide-anchor fixed bottom-4 right-4 z-40 w-[min(100vw-1.5rem,21rem)] max-md:bottom-3 max-md:right-3\" role=\"complementary\" aria-label={locale === \"es\" ? \"Demo guiado de KLEIO\" : \"KLEIO guided demo\"}>"
+        },
+        {
+          "path": "components/kleio/kleio-demo-guide.tsx",
+          "line": 408,
+          "kinds": [
+            "clipped_overflow"
+          ],
+          "snippet": "<div className=\"kleio-demo-guide-panel max-h-[min(72dvh,38rem)] overflow-hidden rounded-2xl border border-[#E7E1F7] bg-[#F7F4FF]/95 shadow-[0_12px_40px_rgba(82,64,130,0.12)] backdrop-blur-sm\">"
+        },
+        {
+          "path": "components/kleio/kleio-demo-guide.tsx",
+          "line": 422,
+          "kinds": [
+            "nested_scroll"
+          ],
+          "snippet": "<div className=\"max-h-[min(54dvh,29rem)] overflow-y-auto px-3.5 py-3\">"
+        },
+        {
+          "path": "components/kleio/kleio-demo-guide.tsx",
+          "line": 456,
+          "kinds": [
+            "nested_scroll"
+          ],
+          "snippet": "<ul className=\"mt-2 max-h-[18rem] space-y-2 overflow-y-auto pr-1\">"
+        },
+        {
+          "path": "components/kleio/kleio-demo-guide.tsx",
+          "line": 489,
+          "kinds": [
+            "viewport_edge"
+          ],
+          "snippet": "<div className=\"absolute left-[0.875rem] top-5 bottom-5 border-l border-dashed border-[#D8D0F2]\" aria-hidden />"
+        }
+      ],
+      "score": 22
+    },
+    {
+      "path": "components/kleio/top-bar.tsx",
+      "counts": {
+        "sticky": 1,
+        "viewport_edge": 3,
+        "clipped_overflow": 2,
+        "high_z_index": 2,
+        "nested_scroll": 2
+      },
+      "records": [
+        {
+          "path": "components/kleio/top-bar.tsx",
+          "line": 85,
+          "kinds": [
+            "sticky",
+            "viewport_edge"
+          ],
+          "snippet": "<header className=\"sticky top-0 z-20 flex min-h-14 items-center gap-2 overflow-x-auto border-b border-border bg-background/85 px-3 py-2 backdrop-blur-xl sm:px-4 xl:px-5\">"
+        },
+        {
+          "path": "components/kleio/top-bar.tsx",
+          "line": 104,
+          "kinds": [
+            "clipped_overflow",
+            "viewport_edge",
+            "high_z_index"
+          ],
+          "snippet": "<div className=\"absolute left-0 right-0 top-11 z-50 overflow-hidden rounded-xl border border-border bg-card shadow-[0_18px_50px_rgba(40,30,70,0.14)]\">"
+        },
+        {
+          "path": "components/kleio/top-bar.tsx",
+          "line": 112,
+          "kinds": [
+            "nested_scroll"
+          ],
+          "snippet": "<div className=\"max-h-[23rem] overflow-y-auto p-1.5\">"
+        },
+        {
+          "path": "components/kleio/top-bar.tsx",
+          "line": 138,
+          "kinds": [
+            "clipped_overflow",
+            "viewport_edge",
+            "high_z_index"
+          ],
+          "snippet": "<div className=\"absolute right-0 top-11 z-50 w-[22rem] overflow-hidden rounded-xl border border-border bg-card shadow-[0_18px_50px_rgba(40,30,70,0.14)]\">"
+        },
+        {
+          "path": "components/kleio/top-bar.tsx",
+          "line": 140,
+          "kinds": [
+            "nested_scroll"
+          ],
+          "snippet": "<div className=\"max-h-[20rem] overflow-y-auto p-1.5\">{notificationThreads.map((thread) => { const linkedMessage = getDemoMessageForThread(thread.linkedMessageId); const task = taskForThread(thread, locale); const TaskIcon = task.icon; return <Link key={thread.id} href={`/messages/?thread=${thread.id}`} onClick={() => setNotificationsOpen(false)} className=\"block rounded-lg px-2.5 py-2.5 transition-colors hover:bg-accent/40\"><div className=\"flex items-start gap-2.5\"><InitialAvatar name={thread.co"
+        }
+      ],
+      "score": 22
+    },
+    {
+      "path": "components/kleio/application-recipient-loop-panel.tsx",
+      "counts": {
+        "fixed": 2,
+        "viewport_edge": 1,
+        "high_z_index": 1,
+        "clipped_overflow": 1,
+        "nested_scroll": 1
+      },
+      "records": [
+        {
+          "path": "components/kleio/application-recipient-loop-panel.tsx",
+          "line": 256,
+          "kinds": [
+            "fixed"
+          ],
+          "snippet": "<button type=\"button\" onClick={() => setOpen(true)} className=\"fixed bottom-5 right-5 z-40 inline-flex min-h-12 items-center gap-2 rounded-full bg-[#332A4D] px-5 text-sm font-semibold text-white shadow-[0_18px_48px_rgba(51,42,77,0.3)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#A997E8]/30\">"
+        },
+        {
+          "path": "components/kleio/application-recipient-loop-panel.tsx",
+          "line": 261,
+          "kinds": [
+            "fixed",
+            "viewport_edge",
+            "high_z_index"
+          ],
+          "snippet": "<div className=\"fixed inset-0 z-50 bg-[#201A2E]/35 p-3 backdrop-blur-sm sm:p-6\" role=\"presentation\" onMouseDown={(event) => { if (event.target === event.currentTarget) setOpen(false) }}>"
+        },
+        {
+          "path": "components/kleio/application-recipient-loop-panel.tsx",
+          "line": 262,
+          "kinds": [
+            "clipped_overflow"
+          ],
+          "snippet": "<div ref={dialogRef} role=\"dialog\" aria-modal=\"true\" aria-labelledby=\"recipient-loop-title\" className=\"ml-auto flex h-full w-full max-w-[620px] flex-col overflow-hidden rounded-3xl border border-[#E7E1F7] bg-[#F9F8FC] shadow-[0_30px_90px_rgba(32,26,46,0.28)]\">"
+        },
+        {
+          "path": "components/kleio/application-recipient-loop-panel.tsx",
+          "line": 268,
+          "kinds": [
+            "nested_scroll"
+          ],
+          "snippet": "<div className=\"min-h-0 flex-1 space-y-5 overflow-y-auto p-4 sm:p-6\">"
+        }
+      ],
+      "score": 21
+    },
+    {
+      "path": "components/kleio/demo-internal-messenger-accent.tsx",
+      "counts": {
+        "fixed": 1,
+        "high_z_index": 1,
+        "viewport_height": 1,
+        "clipped_overflow": 1,
+        "nested_scroll": 2
+      },
+      "records": [
+        {
+          "path": "components/kleio/demo-internal-messenger-accent.tsx",
+          "line": 117,
+          "kinds": [
+            "fixed",
+            "high_z_index"
+          ],
+          "snippet": "<div className=\"fixed bottom-4 right-5 z-50 max-lg:right-3\">"
+        },
+        {
+          "path": "components/kleio/demo-internal-messenger-accent.tsx",
+          "line": 120,
+          "kinds": [
+            "viewport_height",
+            "clipped_overflow"
+          ],
+          "snippet": "{open && selectedThread && <section className=\"flex max-h-[min(680px,calc(100vh-2rem))] w-[390px] max-w-[calc(100vw-1.5rem)] flex-col overflow-hidden rounded-[1.4rem] border border-[#E7E1F7] bg-white shadow-[0_24px_72px_rgba(82,64,130,0.18)]\">"
+        },
+        {
+          "path": "components/kleio/demo-internal-messenger-accent.tsx",
+          "line": 123,
+          "kinds": [
+            "nested_scroll"
+          ],
+          "snippet": "<aside className=\"min-h-0 overflow-y-auto border-r border-[#E7E1F7] bg-[#FDFBFF] p-2\">{visibleThreads.map((thread) => { const active = thread.id === selectedThread.id; const pageMatch = threadMatchesPath(thread, pathname); return <button key={thread.id} type=\"button\" onClick={() => { setSelectedThreadId(thread.id); setDraft(\"\"); setConfirmation(null) }} className={cn(\"mb-1 w-full rounded-2xl border px-2.5 py-2 text-left transition-colors\", active ? \"border-[#D8D0F2] bg-white shadow-sm\" : \"border"
+        },
+        {
+          "path": "components/kleio/demo-internal-messenger-accent.tsx",
+          "line": 126,
+          "kinds": [
+            "nested_scroll"
+          ],
+          "snippet": "<ul className=\"min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-4\">{selectedMessages.map((message) => <InternalMessageBubble key={message.id} message={message} self={message.author === session.name} es={es} />)}</ul>"
+        }
+      ],
+      "score": 20
+    },
+    {
+      "path": "components/kleio/institution-messenger-live.tsx",
+      "counts": {
+        "fixed": 1,
+        "high_z_index": 1,
+        "viewport_height": 1,
+        "clipped_overflow": 1,
+        "nested_scroll": 2
+      },
+      "records": [
+        {
+          "path": "components/kleio/institution-messenger-live.tsx",
+          "line": 349,
+          "kinds": [
+            "fixed",
+            "high_z_index"
+          ],
+          "snippet": "<div className=\"fixed bottom-4 right-5 z-50 max-lg:right-3\">"
+        },
+        {
+          "path": "components/kleio/institution-messenger-live.tsx",
+          "line": 358,
+          "kinds": [
+            "viewport_height",
+            "clipped_overflow"
+          ],
+          "snippet": "<section className=\"flex max-h-[min(720px,calc(100vh-2rem))] w-[440px] max-w-[calc(100vw-1.5rem)] flex-col overflow-hidden rounded-[1.4rem] border border-[#E7E1F7] bg-white shadow-[0_24px_72px_rgba(82,64,130,0.18)]\" aria-label={es ? \"Mensajer\u00eda interna de la instituci\u00f3n\" : \"Internal institution messenger\"}>"
+        },
+        {
+          "path": "components/kleio/institution-messenger-live.tsx",
+          "line": 375,
+          "kinds": [
+            "nested_scroll"
+          ],
+          "snippet": "<aside className=\"min-h-0 overflow-y-auto border-r border-[#E7E1F7] bg-[#FDFBFF] p-2\">"
+        },
+        {
+          "path": "components/kleio/institution-messenger-live.tsx",
+          "line": 396,
+          "kinds": [
+            "nested_scroll"
+          ],
+          "snippet": "<ul className=\"min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-4\">"
+        }
+      ],
+      "score": 20
+    },
+    {
+      "path": "components/kleio/media-import/quick-media-import.tsx",
+      "counts": {
+        "fixed": 1,
+        "viewport_height": 1,
+        "clipped_overflow": 2,
+        "viewport_edge": 1,
+        "large_min_height": 1,
+        "nested_scroll": 1
+      },
+      "records": [
+        {
+          "path": "components/kleio/media-import/quick-media-import.tsx",
+          "line": 131,
+          "kinds": [
+            "fixed",
+            "viewport_height",
+            "clipped_overflow",
+            "viewport_edge"
+          ],
+          "snippet": "className=\"fixed inset-0 m-0 h-dvh max-h-none w-screen max-w-none overflow-hidden border-0 bg-white p-0 text-[#292631] shadow-2xl backdrop:bg-[#20182D]/45 backdrop:backdrop-blur-sm sm:inset-auto sm:m-auto sm:h-auto sm:max-h-[min(820px,calc(100dvh-32px))] sm:w-[min(920px,calc(100vw-32px))] sm:rounded-[28px] sm:border sm:border-[#DCD4EF]\""
+        },
+        {
+          "path": "components/kleio/media-import/quick-media-import.tsx",
+          "line": 133,
+          "kinds": [
+            "large_min_height"
+          ],
+          "snippet": "<div className=\"flex max-h-full min-h-full flex-col bg-[#FCFBFE] sm:min-h-[620px]\">"
+        },
+        {
+          "path": "components/kleio/media-import/quick-media-import.tsx",
+          "line": 145,
+          "kinds": [
+            "nested_scroll"
+          ],
+          "snippet": "<main className=\"min-h-0 flex-1 overflow-y-auto p-4 sm:p-6\">"
+        },
+        {
+          "path": "components/kleio/media-import/quick-media-import.tsx",
+          "line": 158,
+          "kinds": [
+            "clipped_overflow"
+          ],
+          "snippet": "<button key={item.id} type=\"button\" aria-pressed={active} onClick={() => toggle(item)} className={`overflow-hidden rounded-2xl border bg-white text-left transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#A997E8]/20 ${active ? \"border-[#8C78BF] ring-2 ring-[#A997E8]/20\" : \"border-[#E7E1F7]\"}`}>"
+        }
+      ],
+      "score": 18
+    },
+    {
+      "path": "components/kleio/artist-import-studio.tsx",
+      "counts": {
+        "fixed": 1,
+        "viewport_height": 1,
+        "clipped_overflow": 2,
+        "viewport_edge": 1,
+        "nested_scroll": 1
+      },
+      "records": [
+        {
+          "path": "components/kleio/artist-import-studio.tsx",
+          "line": 511,
+          "kinds": [
+            "fixed",
+            "viewport_height",
+            "clipped_overflow",
+            "viewport_edge"
+          ],
+          "snippet": "<dialog ref={dialogRef} aria-labelledby=\"drive-import-title\" aria-describedby=\"drive-import-description\" className=\"fixed inset-0 m-0 h-dvh max-h-none w-screen max-w-none overflow-hidden border-0 bg-white p-0 text-[#292631] shadow-2xl backdrop:bg-[#20182D]/45 backdrop:backdrop-blur-sm sm:inset-auto sm:m-auto sm:h-[min(840px,calc(100dvh-32px))] sm:w-[min(1120px,calc(100vw-32px))] sm:rounded-[28px] sm:border sm:border-[#DCD4EF]\" onCancel={() => setStatus(\"Import progress is saved. Reopen the Studi"
+        },
+        {
+          "path": "components/kleio/artist-import-studio.tsx",
+          "line": 520,
+          "kinds": [
+            "nested_scroll"
+          ],
+          "snippet": "<div className=\"min-h-0 flex-1 overflow-y-auto p-4 sm:p-6\">"
+        },
+        {
+          "path": "components/kleio/artist-import-studio.tsx",
+          "line": 544,
+          "kinds": [
+            "clipped_overflow"
+          ],
+          "snippet": "<div className=\"mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3\">{draft.items.map((item) => <article key={item.id} className=\"overflow-hidden rounded-[22px] border border-[#E7E1F7] bg-white shadow-[0_14px_38px_rgba(82,64,130,0.05)]\"><div className=\"grid aspect-[4/3] place-items-center bg-[#F4F1F8]\">{previewUrls[item.id] ? <img src={previewUrls[item.id]} alt={item.fields.altText.value || \"Selected artwork preview\"} className=\"size-full object-cover\" /> : <Loader2 className=\"size-4 animate-spin\" />}"
+        }
+      ],
+      "score": 17
+    },
+    {
+      "path": "components/kleio/instagram-import-gallery-ui.tsx",
+      "counts": {
+        "clipped_overflow": 5,
+        "fixed": 1,
+        "viewport_edge": 1,
+        "high_z_index": 1,
+        "nested_scroll": 1
+      },
+      "records": [
+        {
+          "path": "components/kleio/instagram-import-gallery-ui.tsx",
+          "line": 55,
+          "kinds": [
+            "clipped_overflow"
+          ],
+          "snippet": "<div key={index} className=\"overflow-hidden rounded-2xl border border-[#E7E1F7] bg-white\">"
+        },
+        {
+          "path": "components/kleio/instagram-import-gallery-ui.tsx",
+          "line": 100,
+          "kinds": [
+            "clipped_overflow"
+          ],
+          "snippet": "<article className={`group overflow-hidden rounded-2xl border bg-white transition [content-visibility:auto] [contain-intrinsic-size:320px] ${selected ? \"border-[#8C78BF] ring-2 ring-[#A997E8]/25\" : \"border-[#E7E1F7] hover:border-[#CFC4E8]\"}`} aria-label={`${assetName(asset)}${selected ? \", selected\" : \"\"}${saved ? \", already saved\" : \"\"}`}>"
+        },
+        {
+          "path": "components/kleio/instagram-import-gallery-ui.tsx",
+          "line": 101,
+          "kinds": [
+            "clipped_overflow"
+          ],
+          "snippet": "<div className=\"relative aspect-square overflow-hidden bg-[#F2EFF7]\">"
+        },
+        {
+          "path": "components/kleio/instagram-import-gallery-ui.tsx",
+          "line": 192,
+          "kinds": [
+            "fixed",
+            "viewport_edge",
+            "high_z_index"
+          ],
+          "snippet": "<div className=\"fixed inset-0 z-50 flex items-end justify-center bg-[#211B2E]/55 p-0 backdrop-blur-[2px] sm:items-center sm:p-5\" role=\"presentation\" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose() }}>"
+        },
+        {
+          "path": "components/kleio/instagram-import-gallery-ui.tsx",
+          "line": 193,
+          "kinds": [
+            "clipped_overflow"
+          ],
+          "snippet": "<div ref={dialogRef} role=\"dialog\" aria-modal=\"true\" aria-labelledby=\"instagram-preview-title\" aria-describedby=\"instagram-preview-description\" className=\"flex max-h-[96dvh] w-full max-w-6xl flex-col overflow-hidden rounded-t-[28px] border border-[#DED7EF] bg-white shadow-[0_30px_100px_rgba(25,18,40,0.3)] sm:max-h-[90vh] sm:rounded-[28px] lg:grid lg:grid-cols-[minmax(0,1.4fr)_minmax(320px,0.65fr)]\">"
+        },
+        {
+          "path": "components/kleio/instagram-import-gallery-ui.tsx",
+          "line": 207,
+          "kinds": [
+            "nested_scroll"
+          ],
+          "snippet": "<div className=\"min-h-0 flex-1 overflow-y-auto px-5 py-5\">"
+        },
+        {
+          "path": "components/kleio/instagram-import-gallery-ui.tsx",
+          "line": 209,
+          "kinds": [
+            "clipped_overflow"
+          ],
+          "snippet": "{carouselAssets.length > 1 && <div className=\"mt-4\" aria-label=\"Carousel images\"><p className=\"mb-2 text-xs font-semibold text-[#625C70]\">Carousel images</p><div className=\"flex gap-2 overflow-x-auto pb-1\">{carouselAssets.map((item) => <button key={item.id} type=\"button\" className={`relative size-16 shrink-0 overflow-hidden rounded-xl border-2 bg-[#F3F0F7] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#A997E8]/25 ${item.id === asset.id ? \"border-[#7964AD]\" : \"border-transpa"
+        }
+      ],
+      "score": 14
+    },
+    {
+      "path": "components/kleio/profile/editorial-artist-profile.tsx",
+      "counts": {
+        "clipped_overflow": 6,
+        "viewport_edge": 7
+      },
+      "records": [
+        {
+          "path": "components/kleio/profile/editorial-artist-profile.tsx",
+          "line": 76,
+          "kinds": [
+            "clipped_overflow",
+            "viewport_edge"
+          ],
+          "snippet": "<div aria-hidden=\"true\" className=\"pointer-events-none absolute inset-0 overflow-hidden\">"
+        },
+        {
+          "path": "components/kleio/profile/editorial-artist-profile.tsx",
+          "line": 77,
+          "kinds": [
+            "viewport_edge"
+          ],
+          "snippet": "<div className=\"absolute inset-0 bg-[radial-gradient(circle_at_15%_20%,rgba(169,151,232,0.24),transparent_34%),radial-gradient(circle_at_84%_78%,rgba(216,208,242,0.3),transparent_30%),linear-gradient(135deg,rgba(247,244,255,0.9),rgba(255,255,255,0.2))]\" />"
+        },
+        {
+          "path": "components/kleio/profile/editorial-artist-profile.tsx",
+          "line": 79,
+          "kinds": [
+            "viewport_edge"
+          ],
+          "snippet": "className=\"absolute inset-0 opacity-[0.075] mix-blend-multiply\""
+        },
+        {
+          "path": "components/kleio/profile/editorial-artist-profile.tsx",
+          "line": 103,
+          "kinds": [
+            "clipped_overflow"
+          ],
+          "snippet": "<div className={`relative isolate overflow-hidden bg-[#F3EFF8] ${aspect}`}>"
+        },
+        {
+          "path": "components/kleio/profile/editorial-artist-profile.tsx",
+          "line": 107,
+          "kinds": [
+            "viewport_edge"
+          ],
+          "snippet": "<img aria-hidden=\"true\" src={src} alt=\"\" className=\"absolute inset-0 size-full scale-110 object-cover opacity-30 blur-2xl saturate-75\" />"
+        },
+        {
+          "path": "components/kleio/profile/editorial-artist-profile.tsx",
+          "line": 108,
+          "kinds": [
+            "viewport_edge"
+          ],
+          "snippet": "<div className=\"absolute inset-0 bg-white/16\" />"
+        },
+        {
+          "path": "components/kleio/profile/editorial-artist-profile.tsx",
+          "line": 145,
+          "kinds": [
+            "clipped_overflow"
+          ],
+          "snippet": "<div className=\"absolute bottom-4 right-4 z-20 w-24 overflow-hidden border-[5px] border-[#FCFBFD] bg-[#EEE9F4] shadow-[0_18px_50px_rgba(40,32,52,0.2)] sm:w-32 lg:-right-16 lg:bottom-8 lg:w-36\">"
+        },
+        {
+          "path": "components/kleio/profile/editorial-artist-profile.tsx",
+          "line": 210,
+          "kinds": [
+            "clipped_overflow"
+          ],
+          "snippet": "<article className=\"relative mx-auto w-full max-w-[1440px] overflow-hidden bg-[#FCFBFD] text-[#242129]\">"
+        },
+        {
+          "path": "components/kleio/profile/editorial-artist-profile.tsx",
+          "line": 212,
+          "kinds": [
+            "viewport_edge"
+          ],
+          "snippet": "<div aria-hidden=\"true\" className=\"absolute -left-44 top-[54rem] size-[380px] rounded-full bg-[#F5F1FC]/70 blur-3xl\" />"
+        },
+        {
+          "path": "components/kleio/profile/editorial-artist-profile.tsx",
+          "line": 243,
+          "kinds": [
+            "viewport_edge"
+          ],
+          "snippet": "<div className=\"pointer-events-none absolute inset-x-0 bottom-0 z-10 h-2/5 bg-gradient-to-t from-[#201C25]/42 via-[#201C25]/10 to-transparent\" />"
+        },
+        {
+          "path": "components/kleio/profile/editorial-artist-profile.tsx",
+          "line": 279,
+          "kinds": [
+            "clipped_overflow"
+          ],
+          "snippet": "<div className=\"relative overflow-hidden border border-[#E2DCEE] bg-white px-6 py-14 text-center\">"
+        },
+        {
+          "path": "components/kleio/profile/editorial-artist-profile.tsx",
+          "line": 288,
+          "kinds": [
+            "clipped_overflow"
+          ],
+          "snippet": "<div className=\"relative overflow-hidden border-y border-[#DDD7E7] bg-white/84 px-1 py-5 backdrop-blur-sm sm:px-5 lg:border lg:p-5\">"
+        }
+      ],
+      "score": 14
+    },
+    {
+      "path": "components/kleio/instagram-import-assist.tsx",
+      "counts": {
+        "large_min_height": 1,
+        "sticky": 2
+      },
+      "records": [
+        {
+          "path": "components/kleio/instagram-import-assist.tsx",
+          "line": 545,
+          "kinds": [
+            "large_min_height"
+          ],
+          "snippet": "return <section className=\"grid min-h-[420px] place-items-center rounded-[28px] border border-[#E2DCF1] bg-[#FCFBFE] p-6\" aria-labelledby=\"instagram-callback-title\">"
+        },
+        {
+          "path": "components/kleio/instagram-import-assist.tsx",
+          "line": 606,
+          "kinds": [
+            "sticky"
+          ],
+          "snippet": "{selectedCount > 0 && <div className=\"sticky bottom-3 z-30 mt-6 rounded-2xl border border-[#CFC4E8] bg-white/95 p-3 pb-[max(.75rem,env(safe-area-inset-bottom))] shadow-[0_18px_60px_rgba(64,45,105,0.18)] backdrop-blur-md sm:p-4\" aria-label=\"Instagram selection actions\">"
+        },
+        {
+          "path": "components/kleio/instagram-import-assist.tsx",
+          "line": 648,
+          "kinds": [
+            "sticky"
+          ],
+          "snippet": "{preparedPending.length > 0 && <section className=\"sticky bottom-3 z-20 mt-6 rounded-[22px] border border-[#CFC4E8] bg-white/95 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] shadow-[0_18px_60px_rgba(64,45,105,0.18)] backdrop-blur-md\" aria-labelledby=\"instagram-save-summary-title\"><div className=\"flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between\"><div><h4 id=\"instagram-save-summary-title\" className=\"text-sm font-semibold text-[#292631]\">Save this group once</h4><div className=\"m"
+        }
+      ],
+      "score": 13
+    },
+    {
+      "path": "components/kleio/artist-sidebar.tsx",
+      "counts": {
+        "fixed": 1,
+        "viewport_edge": 1,
+        "nested_scroll": 1
+      },
+      "records": [
+        {
+          "path": "components/kleio/artist-sidebar.tsx",
+          "line": 163,
+          "kinds": [
+            "fixed",
+            "viewport_edge"
+          ],
+          "snippet": "<div className=\"fixed inset-x-0 top-0 z-40 flex h-14 items-center gap-3 border-b border-[#E7E1F7] bg-white px-3 md:hidden\">"
+        },
+        {
+          "path": "components/kleio/artist-sidebar.tsx",
+          "line": 195,
+          "kinds": [
+            "nested_scroll"
+          ],
+          "snippet": "<nav className=\"flex-1 overflow-y-auto px-2.5 pb-3\">"
+        }
+      ],
+      "score": 12
+    },
+    {
+      "path": "components/kleio/landing-page.tsx",
+      "counts": {
+        "sticky": 1,
+        "viewport_edge": 2,
+        "high_z_index": 1,
+        "clipped_overflow": 2
+      },
+      "records": [
+        {
+          "path": "components/kleio/landing-page.tsx",
+          "line": 106,
+          "kinds": [
+            "sticky",
+            "viewport_edge",
+            "high_z_index"
+          ],
+          "snippet": "<header className=\"sticky top-0 z-50 border-b border-[#EEEAF4] bg-white/95 backdrop-blur-xl\">"
+        },
+        {
+          "path": "components/kleio/landing-page.tsx",
+          "line": 124,
+          "kinds": [
+            "viewport_edge"
+          ],
+          "snippet": "<div aria-hidden=\"true\" className=\"absolute left-[12%] top-12 size-[420px] rounded-full bg-[radial-gradient(circle,rgba(229,221,247,0.55),rgba(255,255,255,0)_70%)]\" />"
+        },
+        {
+          "path": "components/kleio/landing-page.tsx",
+          "line": 151,
+          "kinds": [
+            "clipped_overflow"
+          ],
+          "snippet": "<section className=\"relative isolate overflow-hidden bg-white px-0 pb-10 sm:pb-16\" aria-labelledby=\"landing-visual-title\">"
+        },
+        {
+          "path": "components/kleio/landing-page.tsx",
+          "line": 156,
+          "kinds": [
+            "clipped_overflow"
+          ],
+          "snippet": "<div className=\"relative mx-auto mt-4 max-w-[1440px] overflow-hidden bg-white\">"
+        }
+      ],
+      "score": 12
+    },
+    {
+      "path": "components/kleio/live-institution-opportunity-workspace.tsx",
+      "counts": {
+        "fixed": 1,
+        "nested_scroll": 1,
+        "clipped_overflow": 1,
+        "viewport_edge": 1
+      },
+      "records": [
+        {
+          "path": "components/kleio/live-institution-opportunity-workspace.tsx",
+          "line": 91,
+          "kinds": [
+            "fixed",
+            "nested_scroll",
+            "clipped_overflow",
+            "viewport_edge"
+          ],
+          "snippet": "return <div className=\"relative h-full\"><LiveInstitutionCallsWithImages /><button type=\"button\" onClick={() => setOpen(true)} className=\"fixed bottom-5 right-5 z-40 inline-flex h-11 items-center gap-2 rounded-full border border-[#D8D0F2] bg-white px-5 text-sm font-semibold text-[#5B4B8A] shadow-[0_18px_50px_rgba(82,64,130,0.18)]\"><ImagePlus className=\"size-4\" />Submission covers</button>{open && <div className=\"fixed inset-0 z-[90] overflow-y-auto bg-[#201B2B]/55 p-4 backdrop-blur-sm\" role=\"dial"
+        }
+      ],
+      "score": 12
+    },
+    {
+      "path": "components/kleio/sidebar.tsx",
+      "counts": {
+        "fixed": 1,
+        "viewport_edge": 1,
+        "nested_scroll": 1
+      },
+      "records": [
+        {
+          "path": "components/kleio/sidebar.tsx",
+          "line": 88,
+          "kinds": [
+            "fixed",
+            "viewport_edge"
+          ],
+          "snippet": "<div className=\"fixed inset-x-0 top-0 z-40 flex h-14 items-center gap-3 border-b border-border bg-sidebar px-3 md:hidden\">"
+        },
+        {
+          "path": "components/kleio/sidebar.tsx",
+          "line": 97,
+          "kinds": [
+            "nested_scroll"
+          ],
+          "snippet": "<nav className=\"flex-1 overflow-y-auto px-2.5 pb-3\">"
+        }
+      ],
+      "score": 12
+    },
+    {
+      "path": "app/globals.css",
+      "counts": {
+        "sticky": 1,
+        "viewport_height": 1
+      },
+      "records": [
+        {
+          "path": "app/globals.css",
+          "line": 319,
+          "kinds": [
+            "sticky"
+          ],
+          "snippet": "position: sticky;"
+        },
+        {
+          "path": "app/globals.css",
+          "line": 321,
+          "kinds": [
+            "viewport_height"
+          ],
+          "snippet": "max-height: calc(100dvh - 2rem);"
+        }
+      ],
+      "score": 11
+    },
+    {
+      "path": "components/kleio/auth-gate.tsx",
+      "counts": {
+        "viewport_height": 2
+      },
+      "records": [
+        {
+          "path": "components/kleio/auth-gate.tsx",
+          "line": 85,
+          "kinds": [
+            "viewport_height"
+          ],
+          "snippet": "<div className=\"flex min-h-screen items-center justify-center bg-[oklch(0.985_0.005_287)] px-5 py-12\">"
+        },
+        {
+          "path": "components/kleio/auth-gate.tsx",
+          "line": 152,
+          "kinds": [
+            "viewport_height"
+          ],
+          "snippet": "if (!auth || onboarding) return <div className=\"flex min-h-screen items-center justify-center bg-[oklch(0.985_0.005_287)] px-6\"><div className=\"max-w-sm\"><KleioAssistObject mode=\"reviewing\" title={t(\"assist.object.complete.title\")} description={t(\"assist.object.complete.description\")} size=\"sm\" compact /></div></div>"
+        }
+      ],
+      "score": 10
+    },
+    {
+      "path": "components/kleio/live-institution-workspace.tsx",
+      "counts": {
+        "nested_scroll": 2,
+        "viewport_edge": 1,
+        "high_z_index": 1
+      },
+      "records": [
+        {
+          "path": "components/kleio/live-institution-workspace.tsx",
+          "line": 44,
+          "kinds": [
+            "nested_scroll"
+          ],
+          "snippet": "return <main className=\"h-full overflow-y-auto px-4 py-5 sm:px-6 sm:py-6\"><div className=\"mx-auto max-w-[1180px] space-y-5\"><WorkspacePageHeader eyebrow=\"Institution workspace\" title={title} description={description} />{children}</div></main>"
+        },
+        {
+          "path": "components/kleio/live-institution-workspace.tsx",
+          "line": 128,
+          "kinds": [
+            "nested_scroll",
+            "viewport_edge",
+            "high_z_index"
+          ],
+          "snippet": "return <div className=\"relative\"><button type=\"button\" onClick={() => setOpen((value) => !value)} className=\"relative grid size-10 place-items-center rounded-xl border border-border bg-card text-muted-foreground shadow-sm\"><Bell className=\"size-4\" />{unread > 0 && <span className=\"absolute -right-1 -top-1 grid size-5 place-items-center rounded-full bg-primary text-[0.65rem] font-semibold text-primary-foreground\">{unread}</span>}</button>{open && <div className=\"absolute right-0 top-12 z-50 w-[mi"
+        }
+      ],
+      "score": 10
+    },
+    {
+      "path": "components/kleio/public-pages/about-image-slideshow.tsx",
+      "counts": {
+        "sticky": 1,
+        "clipped_overflow": 2,
+        "viewport_edge": 2
+      },
+      "records": [
+        {
+          "path": "components/kleio/public-pages/about-image-slideshow.tsx",
+          "line": 79,
+          "kinds": [
+            "sticky"
+          ],
+          "snippet": "<aside className=\"relative mx-auto w-full max-w-[400px] lg:sticky lg:top-28 lg:mx-auto xl:max-w-[430px]\">"
+        },
+        {
+          "path": "components/kleio/public-pages/about-image-slideshow.tsx",
+          "line": 84,
+          "kinds": [
+            "clipped_overflow"
+          ],
+          "snippet": "<div className=\"relative mx-auto aspect-[3/4] w-full overflow-hidden rounded-[1.45rem] bg-[#F7F4FF] shadow-[0_18px_46px_rgba(31,27,41,0.12)]\">"
+        },
+        {
+          "path": "components/kleio/public-pages/about-image-slideshow.tsx",
+          "line": 94,
+          "kinds": [
+            "viewport_edge"
+          ],
+          "snippet": "\"absolute inset-0 h-full w-full object-cover transition-opacity duration-700 ease-out [backface-visibility:hidden]\","
+        },
+        {
+          "path": "components/kleio/public-pages/about-image-slideshow.tsx",
+          "line": 101,
+          "kinds": [
+            "viewport_edge"
+          ],
+          "snippet": "<div className=\"absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#1F1B29]/78 via-[#1F1B29]/24 to-transparent p-4 pt-16 text-white\">"
+        },
+        {
+          "path": "components/kleio/public-pages/about-image-slideshow.tsx",
+          "line": 123,
+          "kinds": [
+            "clipped_overflow"
+          ],
+          "snippet": "className=\"group relative aspect-[4/3] overflow-hidden rounded-xl border border-[#E7E1F7] bg-[#F7F4FF]\""
+        }
+      ],
+      "score": 10
+    },
+    {
+      "path": "components/kleio/application-preparation-workspace.tsx",
+      "counts": {
+        "nested_scroll": 3
+      },
+      "records": [
+        {
+          "path": "components/kleio/application-preparation-workspace.tsx",
+          "line": 372,
+          "kinds": [
+            "nested_scroll"
+          ],
+          "snippet": "return <main className=\"h-full overflow-y-auto px-4 py-6 sm:px-6\"><div className=\"mx-auto flex max-w-[1120px] items-center gap-2 rounded-2xl border border-[#E7E1F7] bg-white p-5 text-sm text-muted-foreground\"><Loader2 className=\"size-4 animate-spin\" />Preparing the application workspace\u2026</div></main>"
+        },
+        {
+          "path": "components/kleio/application-preparation-workspace.tsx",
+          "line": 376,
+          "kinds": [
+            "nested_scroll"
+          ],
+          "snippet": "return <main className=\"h-full overflow-y-auto px-4 py-6 sm:px-6\"><div className=\"mx-auto max-w-[1120px] space-y-4\"><Link className={secondary} href=\"/artist-dashboard/opportunities/\"><ArrowLeft className=\"size-4\" />Back to opportunities</Link><div role=\"alert\" className={`${surface} border-red-200 text-sm text-red-700`}>{error}</div></div></main>"
+        },
+        {
+          "path": "components/kleio/application-preparation-workspace.tsx",
+          "line": 385,
+          "kinds": [
+            "nested_scroll"
+          ],
+          "snippet": "<main className=\"h-full overflow-y-auto px-4 py-5 sm:px-6 sm:py-6\">"
+        }
+      ],
+      "score": 9
+    },
+    {
+      "path": "components/kleio/artist-workspace/artist-opportunities-page-view.tsx",
+      "counts": {
+        "sticky": 1,
+        "nested_scroll": 1
+      },
+      "records": [
+        {
+          "path": "components/kleio/artist-workspace/artist-opportunities-page-view.tsx",
+          "line": 99,
+          "kinds": [
+            "sticky"
+          ],
+          "snippet": "<aside className=\"sticky top-6 rounded-2xl border bg-white\" style={cardStyle}>"
+        },
+        {
+          "path": "components/kleio/artist-workspace/artist-opportunities-page-view.tsx",
+          "line": 185,
+          "kinds": [
+            "nested_scroll"
+          ],
+          "snippet": "<main className=\"h-full overflow-y-auto px-6 py-6\">"
+        }
+      ],
+      "score": 9
+    },
+    {
+      "path": "components/kleio/demo-proof-links.tsx",
+      "counts": {
+        "fixed": 1,
+        "high_z_index": 1
+      },
+      "records": [
+        {
+          "path": "components/kleio/demo-proof-links.tsx",
+          "line": 11,
+          "kinds": [
+            "fixed",
+            "high_z_index"
+          ],
+          "snippet": "<div className=\"fixed bottom-4 right-4 z-50 flex max-w-[calc(100vw-2rem)] flex-wrap items-center gap-1.5 rounded-full border border-[#E7E1F7] bg-white/90 px-2.5 py-2 shadow-[0_12px_34px_rgba(82,64,130,0.12)] backdrop-blur-sm max-md:hidden\">"
+        }
+      ],
+      "score": 9
+    },
+    {
+      "path": "components/kleio/messages-view.tsx",
+      "counts": {
+        "nested_scroll": 3,
+        "clipped_overflow": 2
+      },
+      "records": [
+        {
+          "path": "components/kleio/messages-view.tsx",
+          "line": 58,
+          "kinds": [
+            "nested_scroll"
+          ],
+          "snippet": "<main className=\"flex h-full min-h-0 flex-col overflow-auto px-5 py-6 xl:px-7 xl:py-7\">"
+        },
+        {
+          "path": "components/kleio/messages-view.tsx",
+          "line": 63,
+          "kinds": [
+            "clipped_overflow"
+          ],
+          "snippet": "<section className=\"flex min-h-0 flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm\">"
+        },
+        {
+          "path": "components/kleio/messages-view.tsx",
+          "line": 65,
+          "kinds": [
+            "nested_scroll"
+          ],
+          "snippet": "<ul className=\"min-h-0 flex-1 overflow-y-auto\">"
+        },
+        {
+          "path": "components/kleio/messages-view.tsx",
+          "line": 70,
+          "kinds": [
+            "clipped_overflow"
+          ],
+          "snippet": "{selected && <section className=\"flex min-h-0 flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm\">"
+        },
+        {
+          "path": "components/kleio/messages-view.tsx",
+          "line": 73,
+          "kinds": [
+            "nested_scroll"
+          ],
+          "snippet": "<div className=\"min-h-0 flex-1 space-y-4 overflow-y-auto px-5 py-5\">{visibleMessages.map((message) => <div key={message.id} className=\"flex items-start gap-3\"><InitialAvatar name={message.role === \"System\" ? \"KLEIO\" : message.author} className=\"size-8 text-[0.65rem]\" /><div className=\"min-w-0 flex-1 rounded-2xl border border-border bg-background p-3\"><div className=\"flex items-center justify-between gap-2\"><p className=\"truncate text-sm font-medium text-foreground\">{message.author}</p><p classNa"
+        }
+      ],
+      "score": 9
+    },
+    {
+      "path": "components/kleio/member-opportunity-directory.tsx",
+      "counts": {
+        "sticky": 1,
+        "viewport_edge": 1
+      },
+      "records": [
+        {
+          "path": "components/kleio/member-opportunity-directory.tsx",
+          "line": 136,
+          "kinds": [
+            "sticky",
+            "viewport_edge"
+          ],
+          "snippet": "<header className=\"sticky top-0 z-40 border-b border-[#E7E1F7] bg-white/95 backdrop-blur\">"
+        }
+      ],
+      "score": 8
+    },
+    {
+      "path": "components/kleio/demo-click-feedback-layer.tsx",
+      "counts": {
+        "fixed": 1
+      },
+      "records": [
+        {
+          "path": "components/kleio/demo-click-feedback-layer.tsx",
+          "line": 210,
+          "kinds": [
+            "fixed"
+          ],
+          "snippet": "<div className=\"pointer-events-none fixed bottom-5 left-1/2 z-[70] w-[min(100vw-2rem,26rem)] -translate-x-1/2 rounded-2xl border border-[#E7E1F7] bg-white/95 px-4 py-3 shadow-[0_18px_48px_rgba(82,64,130,0.16)] backdrop-blur-md\">"
+        }
+      ],
+      "score": 7
+    },
+    {
+      "path": "components/kleio/demo-return-control.tsx",
+      "counts": {
+        "fixed": 1
+      },
+      "records": [
+        {
+          "path": "components/kleio/demo-return-control.tsx",
+          "line": 63,
+          "kinds": [
+            "fixed"
+          ],
+          "snippet": "className=\"fixed bottom-3 left-3 z-[55] inline-flex min-h-10 items-center gap-2 rounded-full border border-[#D8D0F2] bg-white/95 px-3.5 py-2 text-xs font-semibold text-[#5B4B8A] shadow-[0_10px_30px_rgba(82,64,130,0.14)] backdrop-blur-sm transition-colors hover:bg-[#F7F4FF] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#A997E8]/25 md:bottom-4 md:left-4\""
+        }
+      ],
+      "score": 7
+    },
+    {
+      "path": "app/artist-dashboard/applications/prepare/page.tsx",
+      "counts": {
+        "nested_scroll": 2
+      },
+      "records": [
+        {
+          "path": "app/artist-dashboard/applications/prepare/page.tsx",
+          "line": 19,
+          "kinds": [
+            "nested_scroll"
+          ],
+          "snippet": "return <main className=\"h-full overflow-y-auto px-4 py-6 sm:px-6\"><div className=\"mx-auto max-w-[1120px] rounded-2xl border border-[#E7E1F7] bg-white p-5 text-sm text-muted-foreground\">Preparing the application workspace\u2026</div></main>"
+        },
+        {
+          "path": "app/artist-dashboard/applications/prepare/page.tsx",
+          "line": 33,
+          "kinds": [
+            "nested_scroll"
+          ],
+          "snippet": "<div className=\"min-h-0 flex-1 overflow-y-auto\">"
+        }
+      ],
+      "score": 6
+    },
+    {
+      "path": "components/kleio/adaptive-artist-passport-experience.tsx",
+      "counts": {
+        "nested_scroll": 2,
+        "clipped_overflow": 1
+      },
+      "records": [
+        {
+          "path": "components/kleio/adaptive-artist-passport-experience.tsx",
+          "line": 254,
+          "kinds": [
+            "nested_scroll"
+          ],
+          "snippet": "{mode === \"import\" && <main className=\"h-full overflow-y-auto bg-white px-4 py-6 sm:px-6\"><div className=\"mx-auto max-w-3xl\"><ArtistImportReview onPassportChanged={() => void reloadPassport()} /></div></main>}"
+        },
+        {
+          "path": "components/kleio/adaptive-artist-passport-experience.tsx",
+          "line": 255,
+          "kinds": [
+            "nested_scroll",
+            "clipped_overflow"
+          ],
+          "snippet": "{mode === \"guided\" && <main className=\"h-full overflow-y-auto bg-white px-4 py-6 sm:px-6\"><div className=\"mx-auto max-w-3xl\">{loading ? <div className={`${card} flex items-center gap-2 text-sm text-muted-foreground`}><Loader2 className=\"size-4 animate-spin\" />{es ? \"Cargando tu Pasaporte\u2026\" : \"Loading your Passport\u2026\"}</div> : <section className={card}><div className=\"flex items-start justify-between gap-4\"><div><p className=\"text-xs font-semibold uppercase tracking-[0.15em] text-[#7F6EB4]\">{es ? "
+        }
+      ],
+      "score": 6
+    },
+    {
+      "path": "components/kleio/artist-dashboard-view.tsx",
+      "counts": {
+        "nested_scroll": 2
+      },
+      "records": [
+        {
+          "path": "components/kleio/artist-dashboard-view.tsx",
+          "line": 82,
+          "kinds": [
+            "nested_scroll"
+          ],
+          "snippet": "<main className=\"kleio-artist-dashboard-main h-full overflow-y-auto bg-white text-[#292631]\">"
+        },
+        {
+          "path": "components/kleio/artist-dashboard-view.tsx",
+          "line": 122,
+          "kinds": [
+            "nested_scroll"
+          ],
+          "snippet": "<main className=\"kleio-artist-dashboard-main h-full overflow-y-auto bg-white text-[#292631]\">"
+        }
+      ],
+      "score": 6
+    },
+    {
+      "path": "components/kleio/live-reviewer-workspace.tsx",
+      "counts": {
+        "clipped_overflow": 1,
+        "nested_scroll": 2
+      },
+      "records": [
+        {
+          "path": "components/kleio/live-reviewer-workspace.tsx",
+          "line": 98,
+          "kinds": [
+            "clipped_overflow"
+          ],
+          "snippet": "<article className={`${surface} overflow-hidden`}>"
+        },
+        {
+          "path": "components/kleio/live-reviewer-workspace.tsx",
+          "line": 211,
+          "kinds": [
+            "nested_scroll"
+          ],
+          "snippet": "if (loading) return <main className=\"h-full overflow-y-auto px-6 py-6\"><div className=\"mx-auto flex max-w-[1120px] items-center gap-2 rounded-2xl border border-[#E7E1F7] bg-white p-5 text-sm text-muted-foreground\"><Loader2 className=\"size-4 animate-spin\" />Loading assigned reviews\u2026</div></main>"
+        },
+        {
+          "path": "components/kleio/live-reviewer-workspace.tsx",
+          "line": 214,
+          "kinds": [
+            "nested_scroll"
+          ],
+          "snippet": "<main className=\"h-full overflow-y-auto px-4 py-5 sm:px-6 sm:py-6\">"
+        }
+      ],
+      "score": 6
+    },
+    {
+      "path": "app/auth/accept-invite/page.tsx",
+      "counts": {
+        "viewport_height": 1
+      },
+      "records": [
+        {
+          "path": "app/auth/accept-invite/page.tsx",
+          "line": 8,
+          "kinds": [
+            "viewport_height"
+          ],
+          "snippet": "<main className=\"grid min-h-screen place-items-center bg-[oklch(0.985_0.005_287)] px-5\">"
+        }
+      ],
+      "score": 5
+    },
+    {
+      "path": "components/kleio/artists-directory.tsx",
+      "counts": {
+        "clipped_overflow": 3,
+        "nested_scroll": 1,
+        "viewport_edge": 1
+      },
+      "records": [
+        {
+          "path": "components/kleio/artists-directory.tsx",
+          "line": 64,
+          "kinds": [
+            "clipped_overflow"
+          ],
+          "snippet": "<div className=\"size-16 overflow-hidden rounded-full border border-[#E7E1F7] bg-[#F7F4FF]\">"
+        },
+        {
+          "path": "components/kleio/artists-directory.tsx",
+          "line": 113,
+          "kinds": [
+            "nested_scroll"
+          ],
+          "snippet": "<main className=\"h-full overflow-auto px-6 py-6\">"
+        },
+        {
+          "path": "components/kleio/artists-directory.tsx",
+          "line": 151,
+          "kinds": [
+            "clipped_overflow",
+            "viewport_edge"
+          ],
+          "snippet": "<div className=\"absolute left-0 right-0 top-12 z-40 overflow-hidden rounded-2xl border border-[#E7E1F7] bg-white shadow-[0_16px_40px_rgba(82,64,130,0.12)]\">"
+        },
+        {
+          "path": "components/kleio/artists-directory.tsx",
+          "line": 234,
+          "kinds": [
+            "clipped_overflow"
+          ],
+          "snippet": "<div className=\"h-1.5 overflow-hidden rounded-full bg-[#F1ECFB]\">"
+        }
+      ],
+      "score": 5
+    },
+    {
+      "path": "components/kleio/auth/accept-invitation.tsx",
+      "counts": {
+        "viewport_height": 1
+      },
+      "records": [
+        {
+          "path": "components/kleio/auth/accept-invitation.tsx",
+          "line": 24,
+          "kinds": [
+            "viewport_height"
+          ],
+          "snippet": "return <main className=\"grid min-h-screen place-items-center bg-[oklch(0.985_0.005_287)] px-5\"><section className=\"w-full max-w-lg rounded-2xl border border-[#E7E1F7] bg-white p-7 shadow-sm\">{accepted ? <><CheckCircle2 className=\"size-8 text-emerald-600\" /><h1 className=\"mt-4 font-serif text-2xl font-semibold\">Invitation accepted</h1><p className=\"mt-2 text-sm text-muted-foreground\">Your institution membership is active and ready to use.</p><Link href=\"/collaborator-dashboard/\" className=\"mt-5 i"
+        }
+      ],
+      "score": 5
+    },
+    {
+      "path": "components/kleio/auth/auth-callback-client.tsx",
+      "counts": {
+        "viewport_height": 1
+      },
+      "records": [
+        {
+          "path": "components/kleio/auth/auth-callback-client.tsx",
+          "line": 128,
+          "kinds": [
+            "viewport_height"
+          ],
+          "snippet": "<main className=\"flex min-h-screen items-center justify-center bg-[oklch(0.985_0.005_287)] px-5 py-12\">"
+        }
+      ],
+      "score": 5
+    },
+    {
+      "path": "components/kleio/collaborator-shell.tsx",
+      "counts": {
+        "viewport_height": 1
+      },
+      "records": [
+        {
+          "path": "components/kleio/collaborator-shell.tsx",
+          "line": 24,
+          "kinds": [
+            "viewport_height"
+          ],
+          "snippet": "<div className=\"relative flex h-screen overflow-x-auto overflow-y-hidden bg-background text-foreground\">"
+        }
+      ],
+      "score": 5
+    },
+    {
+      "path": "components/kleio/public-page-shell.tsx",
+      "counts": {
+        "viewport_height": 1
+      },
+      "records": [
+        {
+          "path": "components/kleio/public-page-shell.tsx",
+          "line": 36,
+          "kinds": [
+            "viewport_height"
+          ],
+          "snippet": "<div className=\"min-h-screen bg-white text-[#292631]\">"
+        }
+      ],
+      "score": 5
+    },
+    {
+      "path": "components/kleio/signup/signup-landing.tsx",
+      "counts": {
+        "viewport_height": 1
+      },
+      "records": [
+        {
+          "path": "components/kleio/signup/signup-landing.tsx",
+          "line": 8,
+          "kinds": [
+            "viewport_height"
+          ],
+          "snippet": "<div className=\"flex min-h-screen flex-col bg-[oklch(0.985_0.005_287)]\">"
+        }
+      ],
+      "score": 5
+    },
+    {
+      "path": "components/kleio/signup/signup-shell.tsx",
+      "counts": {
+        "viewport_height": 1,
+        "clipped_overflow": 1
+      },
+      "records": [
+        {
+          "path": "components/kleio/signup/signup-shell.tsx",
+          "line": 28,
+          "kinds": [
+            "viewport_height"
+          ],
+          "snippet": "<div className=\"min-h-screen bg-[oklch(0.985_0.005_287)]\">"
+        },
+        {
+          "path": "components/kleio/signup/signup-shell.tsx",
+          "line": 68,
+          "kinds": [
+            "clipped_overflow"
+          ],
+          "snippet": "<div className=\"mt-2 h-0.5 w-full overflow-hidden rounded-full bg-border\">"
+        }
+      ],
+      "score": 5
+    },
+    {
+      "path": "components/kleio/demo-safe-action.tsx",
+      "counts": {
+        "viewport_edge": 1,
+        "high_z_index": 1
+      },
+      "records": [
+        {
+          "path": "components/kleio/demo-safe-action.tsx",
+          "line": 38,
+          "kinds": [
+            "viewport_edge",
+            "high_z_index"
+          ],
+          "snippet": "<span className=\"absolute right-0 top-[calc(100%+0.5rem)] z-50 w-56 rounded-xl border border-[#E7E1F7] bg-white px-3 py-2 text-left text-[0.7rem] leading-snug text-[#6F6882] shadow-[0_14px_38px_rgba(82,64,130,0.12)]\">"
+        }
+      ],
+      "score": 4
+    },
+    {
+      "path": "components/kleio/opportunity-preview-image.tsx",
+      "counts": {
+        "clipped_overflow": 1,
+        "viewport_edge": 2
+      },
+      "records": [
+        {
+          "path": "components/kleio/opportunity-preview-image.tsx",
+          "line": 71,
+          "kinds": [
+            "clipped_overflow"
+          ],
+          "snippet": "<div className={`relative w-full overflow-hidden rounded-2xl border border-white/70 bg-gradient-to-br shadow-[0_18px_44px_rgba(70,54,114,0.10)] ${sizeClass} ${visual.classes}`}>"
+        },
+        {
+          "path": "components/kleio/opportunity-preview-image.tsx",
+          "line": 77,
+          "kinds": [
+            "viewport_edge"
+          ],
+          "snippet": "className=\"absolute inset-0 block size-full object-cover\""
+        },
+        {
+          "path": "components/kleio/opportunity-preview-image.tsx",
+          "line": 79,
+          "kinds": [
+            "viewport_edge"
+          ],
+          "snippet": "/> : <div className=\"absolute inset-0 flex min-w-0 flex-col justify-between p-4 sm:p-5\">"
+        }
+      ],
+      "score": 4
+    },
+    {
+      "path": "components/kleio/visual-artist-portfolio-studio.tsx",
+      "counts": {
+        "clipped_overflow": 6,
+        "large_min_height": 1,
+        "nested_scroll": 1
+      },
+      "records": [
+        {
+          "path": "components/kleio/visual-artist-portfolio-studio.tsx",
+          "line": 53,
+          "kinds": [
+            "clipped_overflow"
+          ],
+          "snippet": "<section className={`${surface} overflow-hidden`} aria-labelledby=\"new-work-editor-title\">"
+        },
+        {
+          "path": "components/kleio/visual-artist-portfolio-studio.tsx",
+          "line": 55,
+          "kinds": [
+            "large_min_height"
+          ],
+          "snippet": "<div className=\"relative min-h-[320px] bg-[#F2EFF7] p-4 sm:p-6 lg:min-h-[620px] lg:p-8\">"
+        },
+        {
+          "path": "components/kleio/visual-artist-portfolio-studio.tsx",
+          "line": 56,
+          "kinds": [
+            "clipped_overflow"
+          ],
+          "snippet": "<div className=\"flex h-full items-center justify-center overflow-hidden rounded-3xl border border-white/80 bg-white shadow-[0_24px_70px_rgba(58,43,92,0.14)]\">"
+        },
+        {
+          "path": "components/kleio/visual-artist-portfolio-studio.tsx",
+          "line": 158,
+          "kinds": [
+            "nested_scroll"
+          ],
+          "snippet": "<main className=\"h-full overflow-y-auto bg-[#FCFBFE] px-4 py-5 sm:px-6 sm:py-6\">"
+        },
+        {
+          "path": "components/kleio/visual-artist-portfolio-studio.tsx",
+          "line": 162,
+          "kinds": [
+            "clipped_overflow"
+          ],
+          "snippet": "<section className=\"relative overflow-hidden rounded-[28px] border border-[#DED7EF] bg-[linear-gradient(135deg,#F5F0FE_0%,#FFFFFF_55%,#F7F4FF_100%)] p-5 shadow-[0_24px_70px_rgba(82,64,130,0.08)] sm:p-7\">"
+        },
+        {
+          "path": "components/kleio/visual-artist-portfolio-studio.tsx",
+          "line": 169,
+          "kinds": [
+            "clipped_overflow"
+          ],
+          "snippet": "{drafts.length > 0 && <section className=\"space-y-3\"><div className=\"flex flex-wrap items-center justify-between gap-3\"><div><p className=\"text-xs font-semibold uppercase tracking-[0.15em] text-[#75639E]\">New work queue</p><p className=\"mt-1 text-sm text-[#746E80]\">Review one image at a time. The rest stay safely in the tray.</p></div><span className=\"rounded-full bg-[#EEE8FA] px-3 py-1.5 text-xs font-semibold text-[#5B4B8A]\">{activeDraft + 1} of {drafts.length}</span></div><div className=\"flex "
+        },
+        {
+          "path": "components/kleio/visual-artist-portfolio-studio.tsx",
+          "line": 171,
+          "kinds": [
+            "clipped_overflow"
+          ],
+          "snippet": "{editing && <section className={`${surface} overflow-hidden`}><div className=\"flex items-center justify-between border-b border-[#E7E1F7] px-5 py-4\"><div><p className=\"text-xs font-semibold uppercase tracking-[0.15em] text-[#75639E]\">Edit existing work</p><h2 className=\"mt-1 font-serif text-2xl font-semibold\">{editing.title}</h2></div><button type=\"button\" className=\"grid size-10 place-items-center rounded-xl border border-[#E7E1F7]\" onClick={() => setEditing(null)} aria-label=\"Close artwork edi"
+        },
+        {
+          "path": "components/kleio/visual-artist-portfolio-studio.tsx",
+          "line": 174,
+          "kinds": [
+            "clipped_overflow"
+          ],
+          "snippet": "{loading ? <div className={`${surface} flex items-center justify-center p-8 text-sm text-[#746E80]`}><Loader2 className=\"mr-2 size-4 animate-spin\" />Loading your portfolio\u2026</div> : visibleWorks.length ? <div className=\"grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4\">{visibleWorks.map((work) => <article key={work.id} className=\"group overflow-hidden rounded-[22px] border border-[#E7E1F7] bg-white shadow-[0_14px_38px_rgba(82,64,130,0.05)] transition hover:-translate-y-0.5 hover:shadow-[0_"
+        }
+      ],
+      "score": 4
+    },
+    {
+      "path": "app/activity-log/page.tsx",
+      "counts": {
+        "nested_scroll": 1
+      },
+      "records": [
+        {
+          "path": "app/activity-log/page.tsx",
+          "line": 69,
+          "kinds": [
+            "nested_scroll"
+          ],
+          "snippet": "<main className=\"h-full overflow-y-auto px-6 py-6\">"
+        }
+      ],
+      "score": 3
+    },
+    {
+      "path": "app/artist-dashboard/settings/page.tsx",
+      "counts": {
+        "nested_scroll": 1
+      },
+      "records": [
+        {
+          "path": "app/artist-dashboard/settings/page.tsx",
+          "line": 16,
+          "kinds": [
+            "nested_scroll"
+          ],
+          "snippet": "<main className=\"h-full overflow-y-auto bg-[#FCFBFE] px-4 py-5 sm:px-6 sm:py-6\">"
+        }
+      ],
+      "score": 3
+    },
+    {
+      "path": "app/opportunities/submit/page.tsx",
+      "counts": {
+        "nested_scroll": 1
+      },
+      "records": [
+        {
+          "path": "app/opportunities/submit/page.tsx",
+          "line": 12,
+          "kinds": [
+            "nested_scroll"
+          ],
+          "snippet": "return <main className=\"h-full overflow-y-auto px-6 py-8\"><div className=\"mx-auto max-w-3xl rounded-2xl border border-[#E7E1F7] bg-white p-6\"><h1 className=\"font-serif text-2xl font-semibold\">Submit an opportunity</h1><p className=\"mt-2 text-sm text-muted-foreground\">Provider submissions are available only in an authenticated institution workspace. Guided-demo records remain synthetic and are not submitted for publication.</p></div></main>"
+        }
+      ],
+      "score": 3
+    },
+    {
+      "path": "app/programs/[programId]/page.tsx",
+      "counts": {
+        "nested_scroll": 1
+      },
+      "records": [
+        {
+          "path": "app/programs/[programId]/page.tsx",
+          "line": 53,
+          "kinds": [
+            "nested_scroll"
+          ],
+          "snippet": "<main className=\"h-full overflow-auto px-6 py-6\">"
+        }
+      ],
+      "score": 3
+    },
+    {
+      "path": "app/submissions/[submissionId]/page.tsx",
+      "counts": {
+        "nested_scroll": 1
+      },
+      "records": [
+        {
+          "path": "app/submissions/[submissionId]/page.tsx",
+          "line": 45,
+          "kinds": [
+            "nested_scroll"
+          ],
+          "snippet": "<main className=\"h-full overflow-auto px-6 py-6\">"
+        }
+      ],
+      "score": 3
+    },
+    {
+      "path": "app/submissions/page.tsx",
+      "counts": {
+        "nested_scroll": 1
+      },
+      "records": [
+        {
+          "path": "app/submissions/page.tsx",
+          "line": 40,
+          "kinds": [
+            "nested_scroll"
+          ],
+          "snippet": "<main className=\"h-full overflow-auto px-6 py-6\">"
+        }
+      ],
+      "score": 3
+    },
+    {
+      "path": "components/kleio/applicant-records-preview.tsx",
+      "counts": {
+        "nested_scroll": 1,
+        "clipped_overflow": 1
+      },
+      "records": [
+        {
+          "path": "components/kleio/applicant-records-preview.tsx",
+          "line": 10,
+          "kinds": [
+            "nested_scroll"
+          ],
+          "snippet": "<main className=\"h-full overflow-y-auto bg-[#FCFBFD] px-4 py-5 sm:px-6 sm:py-6\">"
+        },
+        {
+          "path": "components/kleio/applicant-records-preview.tsx",
+          "line": 22,
+          "kinds": [
+            "clipped_overflow"
+          ],
+          "snippet": "<div className=\"size-14 overflow-hidden rounded-full border border-[#E7E1F7] bg-[#F7F4FF]\">"
+        }
+      ],
+      "score": 3
+    },
+    {
+      "path": "components/kleio/artist-import-studio-page.tsx",
+      "counts": {
+        "nested_scroll": 1
+      },
+      "records": [
+        {
+          "path": "components/kleio/artist-import-studio-page.tsx",
+          "line": 11,
+          "kinds": [
+            "nested_scroll"
+          ],
+          "snippet": "<main className=\"h-full overflow-y-auto bg-[#FCFBFE] px-4 py-6 sm:px-6 sm:py-8\">"
+        }
+      ],
+      "score": 3
+    },
+    {
+      "path": "components/kleio/artist-media-library.tsx",
+      "counts": {
+        "nested_scroll": 1,
+        "clipped_overflow": 2
+      },
+      "records": [
+        {
+          "path": "components/kleio/artist-media-library.tsx",
+          "line": 112,
+          "kinds": [
+            "nested_scroll"
+          ],
+          "snippet": "<main className=\"h-full overflow-y-auto bg-[#FCFBFE] px-4 py-5 sm:px-6 sm:py-6\">"
+        },
+        {
+          "path": "components/kleio/artist-media-library.tsx",
+          "line": 137,
+          "kinds": [
+            "clipped_overflow"
+          ],
+          "snippet": "{loading ? <div className=\"flex items-center justify-center rounded-[22px] border border-[#E7E1F7] bg-white p-10 text-sm text-[#746E80]\"><Loader2 className=\"mr-2 size-4 animate-spin\" />Loading your private media library\u2026</div> : visible.length ? <div className=\"grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4\">{visible.map((item) => <article key={item.id} className=\"group overflow-hidden rounded-[22px] border border-[#E7E1F7] bg-white shadow-[0_14px_38px_rgba(82,64,130,0.05)]\">"
+        },
+        {
+          "path": "components/kleio/artist-media-library.tsx",
+          "line": 138,
+          "kinds": [
+            "clipped_overflow"
+          ],
+          "snippet": "<div className=\"relative grid aspect-[4/3] place-items-center overflow-hidden bg-[#F4F1F8]\">{item.previewUrl ? <img src={item.previewUrl} alt=\"\" className=\"size-full object-cover transition duration-500 group-hover:scale-[1.02]\" loading=\"lazy\" /> : item.mediaKind === \"document\" ? <FileText className=\"size-9 text-[#75639E]\" /> : <ImageIcon className=\"size-9 text-[#75639E]\" />}<span className=\"absolute left-2 top-2 rounded-full bg-white/95 px-2.5 py-1 text-[0.65rem] font-semibold text-[#5B4B8A]\">{"
+        }
+      ],
+      "score": 3
+    },
+    {
+      "path": "components/kleio/artist-passport-view.tsx",
+      "counts": {
+        "clipped_overflow": 2,
+        "nested_scroll": 1
+      },
+      "records": [
+        {
+          "path": "components/kleio/artist-passport-view.tsx",
+          "line": 64,
+          "kinds": [
+            "clipped_overflow"
+          ],
+          "snippet": "<div className=\"overflow-hidden rounded-2xl border border-border bg-card shadow-sm\">"
+        },
+        {
+          "path": "components/kleio/artist-passport-view.tsx",
+          "line": 117,
+          "kinds": [
+            "clipped_overflow"
+          ],
+          "snippet": "<div className=\"mb-2 h-1.5 overflow-hidden rounded-full bg-muted\">"
+        },
+        {
+          "path": "components/kleio/artist-passport-view.tsx",
+          "line": 242,
+          "kinds": [
+            "nested_scroll"
+          ],
+          "snippet": "<main className=\"h-full overflow-y-auto bg-background\">"
+        }
+      ],
+      "score": 3
+    },
+    {
+      "path": "components/kleio/artist-profile-page-view.tsx",
+      "counts": {
+        "nested_scroll": 1
+      },
+      "records": [
+        {
+          "path": "components/kleio/artist-profile-page-view.tsx",
+          "line": 25,
+          "kinds": [
+            "nested_scroll"
+          ],
+          "snippet": "<main className=\"h-full overflow-y-auto bg-white px-4 py-4 sm:px-6\">"
+        }
+      ],
+      "score": 3
+    },
+    {
+      "path": "components/kleio/artist-recipient-conversation.tsx",
+      "counts": {
+        "nested_scroll": 1
+      },
+      "records": [
+        {
+          "path": "components/kleio/artist-recipient-conversation.tsx",
+          "line": 94,
+          "kinds": [
+            "nested_scroll"
+          ],
+          "snippet": "<div className=\"mt-5 max-h-[420px] space-y-3 overflow-y-auto rounded-2xl border border-[#E7E1F7] bg-[#FAF9FD] p-4\">"
+        }
+      ],
+      "score": 3
+    },
+    {
+      "path": "components/kleio/artist-workspace/artist-applications-page-view.tsx",
+      "counts": {
+        "nested_scroll": 1
+      },
+      "records": [
+        {
+          "path": "components/kleio/artist-workspace/artist-applications-page-view.tsx",
+          "line": 35,
+          "kinds": [
+            "nested_scroll"
+          ],
+          "snippet": "<main className=\"h-full overflow-y-auto px-6 py-6\">"
+        }
+      ],
+      "score": 3
+    },
+    {
+      "path": "components/kleio/artist-workspace/artist-calendar-page-view.tsx",
+      "counts": {
+        "nested_scroll": 1
+      },
+      "records": [
+        {
+          "path": "components/kleio/artist-workspace/artist-calendar-page-view.tsx",
+          "line": 50,
+          "kinds": [
+            "nested_scroll"
+          ],
+          "snippet": "<main className=\"h-full overflow-y-auto px-6 py-6\">"
+        }
+      ],
+      "score": 3
+    },
+    {
+      "path": "components/kleio/artist-workspace/artist-collaborators-page-view.tsx",
+      "counts": {
+        "nested_scroll": 1
+      },
+      "records": [
+        {
+          "path": "components/kleio/artist-workspace/artist-collaborators-page-view.tsx",
+          "line": 17,
+          "kinds": [
+            "nested_scroll"
+          ],
+          "snippet": "<main className=\"h-full overflow-y-auto px-6 py-6\">"
+        }
+      ],
+      "score": 3
+    },
+    {
+      "path": "components/kleio/artist-workspace/artist-funding-page-view.tsx",
+      "counts": {
+        "clipped_overflow": 1,
+        "nested_scroll": 1
+      },
+      "records": [
+        {
+          "path": "components/kleio/artist-workspace/artist-funding-page-view.tsx",
+          "line": 24,
+          "kinds": [
+            "clipped_overflow"
+          ],
+          "snippet": "<div className=\"h-1.5 overflow-hidden rounded-full bg-[#F1ECFB]\">"
+        },
+        {
+          "path": "components/kleio/artist-workspace/artist-funding-page-view.tsx",
+          "line": 43,
+          "kinds": [
+            "nested_scroll"
+          ],
+          "snippet": "<main className=\"h-full overflow-y-auto px-6 py-6\">"
+        }
+      ],
+      "score": 3
+    },
+    {
+      "path": "components/kleio/artist-workspace/artist-insights-page-view.tsx",
+      "counts": {
+        "nested_scroll": 1
+      },
+      "records": [
+        {
+          "path": "components/kleio/artist-workspace/artist-insights-page-view.tsx",
+          "line": 47,
+          "kinds": [
+            "nested_scroll"
+          ],
+          "snippet": "<main className=\"h-full overflow-y-auto px-6 py-6\">"
+        }
+      ],
+      "score": 3
+    },
+    {
+      "path": "components/kleio/artist-workspace/artist-messages-page-view.tsx",
+      "counts": {
+        "nested_scroll": 1
+      },
+      "records": [
+        {
+          "path": "components/kleio/artist-workspace/artist-messages-page-view.tsx",
+          "line": 25,
+          "kinds": [
+            "nested_scroll"
+          ],
+          "snippet": "<main className=\"h-full overflow-y-auto px-6 py-6\">"
+        }
+      ],
+      "score": 3
+    },
+    {
+      "path": "components/kleio/artist-workspace/artist-opportunity-detail-page-view.tsx",
+      "counts": {
+        "nested_scroll": 1
+      },
+      "records": [
+        {
+          "path": "components/kleio/artist-workspace/artist-opportunity-detail-page-view.tsx",
+          "line": 48,
+          "kinds": [
+            "nested_scroll"
+          ],
+          "snippet": "<main className=\"h-full overflow-y-auto px-6 py-6\">"
+        }
+      ],
+      "score": 3
+    },
+    {
+      "path": "components/kleio/artist-workspace/artist-passport-page-view.tsx",
+      "counts": {
+        "nested_scroll": 1,
+        "clipped_overflow": 1
+      },
+      "records": [
+        {
+          "path": "components/kleio/artist-workspace/artist-passport-page-view.tsx",
+          "line": 33,
+          "kinds": [
+            "nested_scroll"
+          ],
+          "snippet": "<main className=\"h-full overflow-y-auto px-6 py-6\">"
+        },
+        {
+          "path": "components/kleio/artist-workspace/artist-passport-page-view.tsx",
+          "line": 84,
+          "kinds": [
+            "clipped_overflow"
+          ],
+          "snippet": "<div className=\"size-14 overflow-hidden rounded-full border border-[#E7E1F7] bg-[#F7F4FF]\">"
+        }
+      ],
+      "score": 3
+    },
+    {
+      "path": "components/kleio/artist-workspace/artist-portfolio-page-view.tsx",
+      "counts": {
+        "nested_scroll": 1,
+        "clipped_overflow": 2
+      },
+      "records": [
+        {
+          "path": "components/kleio/artist-workspace/artist-portfolio-page-view.tsx",
+          "line": 26,
+          "kinds": [
+            "nested_scroll"
+          ],
+          "snippet": "<main className=\"h-full overflow-y-auto px-6 py-6\">"
+        },
+        {
+          "path": "components/kleio/artist-workspace/artist-portfolio-page-view.tsx",
+          "line": 39,
+          "kinds": [
+            "clipped_overflow"
+          ],
+          "snippet": "<article key={work.title} className=\"overflow-hidden rounded-2xl border bg-white\" style={{ borderColor: lavenderSoftLine }}>"
+        },
+        {
+          "path": "components/kleio/artist-workspace/artist-portfolio-page-view.tsx",
+          "line": 40,
+          "kinds": [
+            "clipped_overflow"
+          ],
+          "snippet": "<div className=\"relative aspect-[4/3] overflow-hidden bg-[#F7F4FF]\">"
+        }
+      ],
+      "score": 3
+    },
+    {
+      "path": "components/kleio/artist-workspace/artist-settings-page-view.tsx",
+      "counts": {
+        "nested_scroll": 1
+      },
+      "records": [
+        {
+          "path": "components/kleio/artist-workspace/artist-settings-page-view.tsx",
+          "line": 36,
+          "kinds": [
+            "nested_scroll"
+          ],
+          "snippet": "<main className=\"h-full overflow-y-auto px-6 py-6\">"
+        }
+      ],
+      "score": 3
+    },
+    {
+      "path": "components/kleio/collaborator-assignments-page-view.tsx",
+      "counts": {
+        "nested_scroll": 1
+      },
+      "records": [
+        {
+          "path": "components/kleio/collaborator-assignments-page-view.tsx",
+          "line": 49,
+          "kinds": [
+            "nested_scroll"
+          ],
+          "snippet": "<main className=\"h-full overflow-y-auto px-6 py-6\">"
+        }
+      ],
+      "score": 3
+    },
+    {
+      "path": "components/kleio/collaborator-dashboard-view.tsx",
+      "counts": {
+        "nested_scroll": 1,
+        "clipped_overflow": 1
+      },
+      "records": [
+        {
+          "path": "components/kleio/collaborator-dashboard-view.tsx",
+          "line": 30,
+          "kinds": [
+            "nested_scroll"
+          ],
+          "snippet": "<main className=\"h-full overflow-y-auto px-6 py-6\">"
+        },
+        {
+          "path": "components/kleio/collaborator-dashboard-view.tsx",
+          "line": 44,
+          "kinds": [
+            "clipped_overflow"
+          ],
+          "snippet": "<div className=\"h-1.5 overflow-hidden rounded-full bg-[#F1ECFB]\"><div className=\"h-full rounded-full bg-primary transition-all\" style={{ width: `${analytics.completionRate}%` }} /></div>"
+        }
+      ],
+      "score": 3
+    },
+    {
+      "path": "components/kleio/collaborator-guidelines-page-view.tsx",
+      "counts": {
+        "nested_scroll": 1
+      },
+      "records": [
+        {
+          "path": "components/kleio/collaborator-guidelines-page-view.tsx",
+          "line": 50,
+          "kinds": [
+            "nested_scroll"
+          ],
+          "snippet": "<main className=\"h-full overflow-y-auto px-6 py-6\">"
+        }
+      ],
+      "score": 3
+    },
+    {
+      "path": "components/kleio/collaborator-messages-page-view.tsx",
+      "counts": {
+        "nested_scroll": 1
+      },
+      "records": [
+        {
+          "path": "components/kleio/collaborator-messages-page-view.tsx",
+          "line": 24,
+          "kinds": [
+            "nested_scroll"
+          ],
+          "snippet": "<main className=\"h-full overflow-y-auto px-6 py-6\">"
+        }
+      ],
+      "score": 3
+    },
+    {
+      "path": "components/kleio/collaborator-review-queue-page-view.tsx",
+      "counts": {
+        "nested_scroll": 1
+      },
+      "records": [
+        {
+          "path": "components/kleio/collaborator-review-queue-page-view.tsx",
+          "line": 24,
+          "kinds": [
+            "nested_scroll"
+          ],
+          "snippet": "<main className=\"h-full overflow-y-auto px-6 py-6\">"
+        }
+      ],
+      "score": 3
+    },
+    {
+      "path": "components/kleio/collaborator-sidebar.tsx",
+      "counts": {
+        "nested_scroll": 1
+      },
+      "records": [
+        {
+          "path": "components/kleio/collaborator-sidebar.tsx",
+          "line": 100,
+          "kinds": [
+            "nested_scroll"
+          ],
+          "snippet": "<nav className=\"flex-1 overflow-y-auto px-3 pb-4\">"
+        }
+      ],
+      "score": 3
+    },
+    {
+      "path": "components/kleio/collaborator-submitted-page-view.tsx",
+      "counts": {
+        "nested_scroll": 1
+      },
+      "records": [
+        {
+          "path": "components/kleio/collaborator-submitted-page-view.tsx",
+          "line": 20,
+          "kinds": [
+            "nested_scroll"
+          ],
+          "snippet": "<main className=\"h-full overflow-y-auto px-6 py-6\">"
+        }
+      ],
+      "score": 3
+    },
+    {
+      "path": "components/kleio/creative-passport-workspace.tsx",
+      "counts": {
+        "nested_scroll": 1,
+        "clipped_overflow": 1
+      },
+      "records": [
+        {
+          "path": "components/kleio/creative-passport-workspace.tsx",
+          "line": 93,
+          "kinds": [
+            "nested_scroll"
+          ],
+          "snippet": "<main className=\"h-full overflow-y-auto bg-[#FCFBFE] px-4 py-5 sm:px-6 sm:py-6\">"
+        },
+        {
+          "path": "components/kleio/creative-passport-workspace.tsx",
+          "line": 95,
+          "kinds": [
+            "clipped_overflow"
+          ],
+          "snippet": "<header className={`${surface} overflow-hidden`}>"
+        }
+      ],
+      "score": 3
+    },
+    {
+      "path": "components/kleio/demo-page-shell.tsx",
+      "counts": {
+        "nested_scroll": 1
+      },
+      "records": [
+        {
+          "path": "components/kleio/demo-page-shell.tsx",
+          "line": 49,
+          "kinds": [
+            "nested_scroll"
+          ],
+          "snippet": "<main data-kleio-guide-target={target} className=\"flex h-full min-h-0 flex-col overflow-auto px-5 py-6 xl:px-7 xl:py-7\">"
+        }
+      ],
+      "score": 3
+    },
+    {
+      "path": "components/kleio/forms/artist-beta-taxonomy-fields.tsx",
+      "counts": {
+        "nested_scroll": 1
+      },
+      "records": [
+        {
+          "path": "components/kleio/forms/artist-beta-taxonomy-fields.tsx",
+          "line": 187,
+          "kinds": [
+            "nested_scroll"
+          ],
+          "snippet": "<div id={`${id}-listbox`} role=\"listbox\" className=\"mt-1 max-h-56 overflow-auto rounded-lg border border-border bg-background py-1 shadow-lg\">"
+        }
+      ],
+      "score": 3
+    },
+    {
+      "path": "components/kleio/forms/artist-term-fields.tsx",
+      "counts": {
+        "nested_scroll": 1
+      },
+      "records": [
+        {
+          "path": "components/kleio/forms/artist-term-fields.tsx",
+          "line": 116,
+          "kinds": [
+            "nested_scroll"
+          ],
+          "snippet": "<div id={`${id}-listbox`} role=\"listbox\" className=\"mt-1 max-h-52 overflow-auto rounded-lg border border-[#E7E1F7] bg-white py-1 shadow-lg\">"
+        }
+      ],
+      "score": 3
+    },
+    {
+      "path": "components/kleio/institution-workspace/institution-settings-page-view.tsx",
+      "counts": {
+        "nested_scroll": 1
+      },
+      "records": [
+        {
+          "path": "components/kleio/institution-workspace/institution-settings-page-view.tsx",
+          "line": 30,
+          "kinds": [
+            "nested_scroll"
+          ],
+          "snippet": "<main className=\"h-full overflow-y-auto px-6 py-6\">"
+        }
+      ],
+      "score": 3
+    },
+    {
+      "path": "components/kleio/institution-workspace/reports-new-page-view.tsx",
+      "counts": {
+        "nested_scroll": 1
+      },
+      "records": [
+        {
+          "path": "components/kleio/institution-workspace/reports-new-page-view.tsx",
+          "line": 15,
+          "kinds": [
+            "nested_scroll"
+          ],
+          "snippet": "<main className=\"h-full overflow-y-auto px-6 py-6\">"
+        }
+      ],
+      "score": 3
+    },
+    {
+      "path": "components/kleio/institution-workspace/templates-new-page-view.tsx",
+      "counts": {
+        "nested_scroll": 1
+      },
+      "records": [
+        {
+          "path": "components/kleio/institution-workspace/templates-new-page-view.tsx",
+          "line": 25,
+          "kinds": [
+            "nested_scroll"
+          ],
+          "snippet": "<main className=\"h-full overflow-y-auto px-6 py-6\">"
+        }
+      ],
+      "score": 3
+    },
+    {
+      "path": "components/kleio/institution-workspace/templates-page-view.tsx",
+      "counts": {
+        "nested_scroll": 1
+      },
+      "records": [
+        {
+          "path": "components/kleio/institution-workspace/templates-page-view.tsx",
+          "line": 34,
+          "kinds": [
+            "nested_scroll"
+          ],
+          "snippet": "<main className=\"h-full overflow-y-auto px-6 py-6\">"
+        }
+      ],
+      "score": 3
+    },
+    {
+      "path": "components/kleio/live-artist-identity-settings.tsx",
+      "counts": {
+        "nested_scroll": 1,
+        "clipped_overflow": 3
+      },
+      "records": [
+        {
+          "path": "components/kleio/live-artist-identity-settings.tsx",
+          "line": 103,
+          "kinds": [
+            "nested_scroll"
+          ],
+          "snippet": "<main className=\"h-full overflow-y-auto px-4 py-5 sm:px-6 sm:py-6\">"
+        },
+        {
+          "path": "components/kleio/live-artist-identity-settings.tsx",
+          "line": 112,
+          "kinds": [
+            "clipped_overflow"
+          ],
+          "snippet": "<div className=\"grid aspect-[4/5] place-items-center overflow-hidden rounded-xl border border-[#D8D0F2] bg-[#F7F4FF]\">"
+        },
+        {
+          "path": "components/kleio/live-artist-identity-settings.tsx",
+          "line": 130,
+          "kinds": [
+            "clipped_overflow"
+          ],
+          "snippet": "<section className={`${card} relative overflow-hidden`}>"
+        },
+        {
+          "path": "components/kleio/live-artist-identity-settings.tsx",
+          "line": 147,
+          "kinds": [
+            "clipped_overflow"
+          ],
+          "snippet": "<div><div className=\"flex items-end justify-between gap-3\"><div><h3 className=\"text-sm font-semibold text-[#292631]\">Works included in discovery</h3><p className=\"mt-1 text-xs text-[#7F7890]\">Choose up to eight works. Other portfolio records remain private unless submitted in an application.</p></div><span className=\"text-xs font-semibold text-[#6A5896]\">{selectedWorkIds.length}/8</span></div>{works.length ? <div className=\"mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3\">{works.map((work) => <but"
+        }
+      ],
+      "score": 3
+    },
+    {
+      "path": "components/kleio/live-artist-passport-editor.tsx",
+      "counts": {
+        "nested_scroll": 1,
+        "clipped_overflow": 2
+      },
+      "records": [
+        {
+          "path": "components/kleio/live-artist-passport-editor.tsx",
+          "line": 190,
+          "kinds": [
+            "nested_scroll"
+          ],
+          "snippet": "<main className=\"h-full overflow-y-auto bg-white px-4 py-5 sm:px-6 sm:py-6\">"
+        },
+        {
+          "path": "components/kleio/live-artist-passport-editor.tsx",
+          "line": 213,
+          "kinds": [
+            "clipped_overflow"
+          ],
+          "snippet": "<section className={`${card} relative overflow-hidden`}>"
+        },
+        {
+          "path": "components/kleio/live-artist-passport-editor.tsx",
+          "line": 225,
+          "kinds": [
+            "clipped_overflow"
+          ],
+          "snippet": "<div className=\"grid aspect-[4/5] place-items-center overflow-hidden border border-[#D8D0F2] bg-[#F7F4FF]\">"
+        }
+      ],
+      "score": 3
+    },
+    {
+      "path": "components/kleio/live-artist-profile-preview.tsx",
+      "counts": {
+        "nested_scroll": 1
+      },
+      "records": [
+        {
+          "path": "components/kleio/live-artist-profile-preview.tsx",
+          "line": 65,
+          "kinds": [
+            "nested_scroll"
+          ],
+          "snippet": "<main className=\"h-full overflow-y-auto bg-white px-4 py-4 text-[#292631] sm:px-6\">"
+        }
+      ],
+      "score": 3
+    },
+    {
+      "path": "components/kleio/live-artist-workspace.tsx",
+      "counts": {
+        "nested_scroll": 1,
+        "clipped_overflow": 1
+      },
+      "records": [
+        {
+          "path": "components/kleio/live-artist-workspace.tsx",
+          "line": 44,
+          "kinds": [
+            "nested_scroll"
+          ],
+          "snippet": "return <main className=\"h-full overflow-y-auto px-4 py-5 sm:px-6 sm:py-6\"><div className=\"mx-auto max-w-[1180px] space-y-5\"><WorkspacePageHeader eyebrow=\"Artist workspace\" title={title} description={description} />{children}</div></main>"
+        },
+        {
+          "path": "components/kleio/live-artist-workspace.tsx",
+          "line": 117,
+          "kinds": [
+            "clipped_overflow"
+          ],
+          "snippet": "{works.length === 0 ? <StateNotice loading={false} error=\"\" empty=\"No portfolio works yet. Add the first work above.\" /> : <section className=\"grid gap-4 sm:grid-cols-2 lg:grid-cols-3\">{works.map((work) => <article className={`${card} overflow-hidden p-0`} key={work.id}>{work.image_url ? <img src={work.image_url} alt={work.title} className=\"aspect-[4/3] w-full object-cover\" /> : <div className=\"grid aspect-[4/3] place-items-center bg-[#F7F4FF] text-sm text-muted-foreground\">No image uploaded</di"
+        }
+      ],
+      "score": 3
+    },
+    {
+      "path": "components/kleio/live-global-artist-opportunities-with-images.tsx",
+      "counts": {
+        "nested_scroll": 1,
+        "clipped_overflow": 1
+      },
+      "records": [
+        {
+          "path": "components/kleio/live-global-artist-opportunities-with-images.tsx",
+          "line": 61,
+          "kinds": [
+            "nested_scroll"
+          ],
+          "snippet": "return <main className=\"h-full overflow-y-auto px-4 py-5 sm:px-6 sm:py-6\"><div className=\"mx-auto max-w-[1180px] space-y-5\"><WorkspacePageHeader eyebrow=\"Artist workspace\" title=\"Opportunities\" description=\"Search sourced artist opportunities by medium, location, type, or format.\" />{children}</div></main>"
+        },
+        {
+          "path": "components/kleio/live-global-artist-opportunities-with-images.tsx",
+          "line": 355,
+          "kinds": [
+            "clipped_overflow"
+          ],
+          "snippet": "return <article key={item.id} className={`${card} overflow-hidden`} aria-labelledby={`opportunity-title-${item.id}`}>"
+        }
+      ],
+      "score": 3
+    },
+    {
+      "path": "components/kleio/live-institution-artists.tsx",
+      "counts": {
+        "nested_scroll": 1
+      },
+      "records": [
+        {
+          "path": "components/kleio/live-institution-artists.tsx",
+          "line": 77,
+          "kinds": [
+            "nested_scroll"
+          ],
+          "snippet": "<main className=\"h-full overflow-y-auto px-4 py-5 sm:px-6 sm:py-6\">"
+        }
+      ],
+      "score": 3
+    },
+    {
+      "path": "components/kleio/live-institution-calls-with-images.tsx",
+      "counts": {
+        "nested_scroll": 1
+      },
+      "records": [
+        {
+          "path": "components/kleio/live-institution-calls-with-images.tsx",
+          "line": 241,
+          "kinds": [
+            "nested_scroll"
+          ],
+          "snippet": "return <main className=\"h-full overflow-y-auto px-4 py-5 sm:px-6 sm:py-6\"><div className=\"mx-auto max-w-[1180px] space-y-5\">"
+        }
+      ],
+      "score": 3
+    },
+    {
+      "path": "components/kleio/live-institution-overview.tsx",
+      "counts": {
+        "nested_scroll": 1,
+        "clipped_overflow": 1
+      },
+      "records": [
+        {
+          "path": "components/kleio/live-institution-overview.tsx",
+          "line": 168,
+          "kinds": [
+            "nested_scroll"
+          ],
+          "snippet": "<main className=\"h-full overflow-y-auto bg-[#FEFDFF] px-4 py-4 sm:px-4 xl:px-5 xl:py-5\">"
+        },
+        {
+          "path": "components/kleio/live-institution-overview.tsx",
+          "line": 182,
+          "kinds": [
+            "clipped_overflow"
+          ],
+          "snippet": "<section className=\"mt-4 overflow-hidden rounded-[1.1rem] border border-[#E7E1F7] bg-[linear-gradient(135deg,#F8F5FF_0%,#FFFFFF_70%)] p-4 shadow-[0_14px_38px_rgba(82,64,130,0.055)] md:p-5\">"
+        }
+      ],
+      "score": 3
+    },
+    {
+      "path": "components/kleio/live-institution-settings-beta.tsx",
+      "counts": {
+        "nested_scroll": 1
+      },
+      "records": [
+        {
+          "path": "components/kleio/live-institution-settings-beta.tsx",
+          "line": 62,
+          "kinds": [
+            "nested_scroll"
+          ],
+          "snippet": "<main className=\"h-full overflow-y-auto px-4 py-5 sm:px-6 sm:py-6\">"
+        }
+      ],
+      "score": 3
+    },
+    {
+      "path": "components/kleio/live-institution-unavailable.tsx",
+      "counts": {
+        "nested_scroll": 1
+      },
+      "records": [
+        {
+          "path": "components/kleio/live-institution-unavailable.tsx",
+          "line": 7,
+          "kinds": [
+            "nested_scroll"
+          ],
+          "snippet": "<main className=\"h-full overflow-y-auto px-4 py-5 sm:px-6 sm:py-6\">"
+        }
+      ],
+      "score": 3
+    },
+    {
+      "path": "components/kleio/live-opportunity-submission.tsx",
+      "counts": {
+        "nested_scroll": 1
+      },
+      "records": [
+        {
+          "path": "components/kleio/live-opportunity-submission.tsx",
+          "line": 171,
+          "kinds": [
+            "nested_scroll"
+          ],
+          "snippet": "return <main className=\"h-full overflow-y-auto px-4 py-5 sm:px-6 sm:py-6\"><div className=\"mx-auto max-w-[1180px] space-y-5\">"
+        }
+      ],
+      "score": 3
+    },
+    {
+      "path": "components/kleio/live-opportunity-workspace.tsx",
+      "counts": {
+        "nested_scroll": 1
+      },
+      "records": [
+        {
+          "path": "components/kleio/live-opportunity-workspace.tsx",
+          "line": 62,
+          "kinds": [
+            "nested_scroll"
+          ],
+          "snippet": "return <main className=\"h-full overflow-y-auto px-4 py-5 sm:px-6 sm:py-6\"><div className=\"mx-auto max-w-[1180px] space-y-5\"><WorkspacePageHeader eyebrow={eyebrow} title={title} description={description} />{children}</div></main>"
+        }
+      ],
+      "score": 3
+    },
+    {
+      "path": "components/kleio/overview.tsx",
+      "counts": {
+        "clipped_overflow": 2,
+        "nested_scroll": 1
+      },
+      "records": [
+        {
+          "path": "components/kleio/overview.tsx",
+          "line": 61,
+          "kinds": [
+            "clipped_overflow"
+          ],
+          "snippet": "className=\"overflow-hidden rounded-[1.1rem] border border-[#E7E1F7] bg-[linear-gradient(135deg,#F8F5FF_0%,#FFFFFF_70%)] p-4 shadow-[0_14px_38px_rgba(82,64,130,0.055)] md:p-5\""
+        },
+        {
+          "path": "components/kleio/overview.tsx",
+          "line": 154,
+          "kinds": [
+            "clipped_overflow"
+          ],
+          "snippet": "<div className=\"flex h-full min-h-0 overflow-hidden\">"
+        },
+        {
+          "path": "components/kleio/overview.tsx",
+          "line": 155,
+          "kinds": [
+            "nested_scroll"
+          ],
+          "snippet": "<main data-kleio-guide-target=\"institution-overview\" className=\"min-w-0 flex-1 overflow-y-auto px-4 py-4 sm:px-4 xl:px-5 xl:py-5\">"
+        }
+      ],
+      "score": 3
+    },
+    {
+      "path": "components/kleio/passport-updates-inbox.tsx",
+      "counts": {
+        "nested_scroll": 1,
+        "clipped_overflow": 2
+      },
+      "records": [
+        {
+          "path": "components/kleio/passport-updates-inbox.tsx",
+          "line": 249,
+          "kinds": [
+            "nested_scroll"
+          ],
+          "snippet": "<main className=\"h-full overflow-y-auto bg-[#FCFBFE] px-4 py-5 sm:px-6 sm:py-6\">"
+        },
+        {
+          "path": "components/kleio/passport-updates-inbox.tsx",
+          "line": 251,
+          "kinds": [
+            "clipped_overflow"
+          ],
+          "snippet": "<header className={`${panel} overflow-hidden bg-[linear-gradient(135deg,#F8F5FF,#FFFFFF)] p-5 sm:p-7`}>"
+        },
+        {
+          "path": "components/kleio/passport-updates-inbox.tsx",
+          "line": 281,
+          "kinds": [
+            "clipped_overflow"
+          ],
+          "snippet": "return <section key={group.source.id} className={`${panel} overflow-hidden`}>"
+        }
+      ],
+      "score": 3
+    },
+    {
+      "path": "components/kleio/placeholder-page.tsx",
+      "counts": {
+        "nested_scroll": 1
+      },
+      "records": [
+        {
+          "path": "components/kleio/placeholder-page.tsx",
+          "line": 11,
+          "kinds": [
+            "nested_scroll"
+          ],
+          "snippet": "<main className=\"flex h-full items-center justify-center overflow-y-auto px-6 py-10\">"
+        }
+      ],
+      "score": 3
+    },
+    {
+      "path": "components/kleio/production-artist-opportunity-directory.tsx",
+      "counts": {
+        "nested_scroll": 1,
+        "clipped_overflow": 1
+      },
+      "records": [
+        {
+          "path": "components/kleio/production-artist-opportunity-directory.tsx",
+          "line": 278,
+          "kinds": [
+            "nested_scroll"
+          ],
+          "snippet": "<main className=\"h-full overflow-y-auto px-4 py-5 sm:px-6 sm:py-6\">"
+        },
+        {
+          "path": "components/kleio/production-artist-opportunity-directory.tsx",
+          "line": 334,
+          "kinds": [
+            "clipped_overflow"
+          ],
+          "snippet": "return <article key={item.id} className={`${card} overflow-hidden`} aria-labelledby={`opportunity-title-${item.id}`}>"
+        }
+      ],
+      "score": 3
+    },
+    {
+      "path": "components/kleio/profile/editorial-artist-profile-test.tsx",
+      "counts": {
+        "nested_scroll": 1
+      },
+      "records": [
+        {
+          "path": "components/kleio/profile/editorial-artist-profile-test.tsx",
+          "line": 8,
+          "kinds": [
+            "nested_scroll"
+          ],
+          "snippet": "<main className=\"h-full overflow-y-auto bg-white text-[#242129]\">"
+        }
+      ],
+      "score": 3
+    },
+    {
+      "path": "components/kleio/programs-new-page-view.tsx",
+      "counts": {
+        "nested_scroll": 1
+      },
+      "records": [
+        {
+          "path": "components/kleio/programs-new-page-view.tsx",
+          "line": 86,
+          "kinds": [
+            "nested_scroll"
+          ],
+          "snippet": "<main className=\"min-h-0 overflow-auto px-5 py-6 xl:px-7 xl:py-7\">"
+        }
+      ],
+      "score": 3
+    },
+    {
+      "path": "components/kleio/signup/entity-autocomplete.tsx",
+      "counts": {
+        "nested_scroll": 1
+      },
+      "records": [
+        {
+          "path": "components/kleio/signup/entity-autocomplete.tsx",
+          "line": 148,
+          "kinds": [
+            "nested_scroll"
+          ],
+          "snippet": "<ul id={listboxId} role=\"listbox\" className=\"absolute z-40 mt-2 max-h-72 w-full overflow-y-auto rounded-2xl border border-border bg-card p-1.5 shadow-xl\">"
+        }
+      ],
+      "score": 3
+    },
+    {
+      "path": "components/kleio/submission-drawer.tsx",
+      "counts": {
+        "nested_scroll": 1,
+        "clipped_overflow": 2
+      },
+      "records": [
+        {
+          "path": "components/kleio/submission-drawer.tsx",
+          "line": 72,
+          "kinds": [
+            "nested_scroll"
+          ],
+          "snippet": "<div className=\"min-h-0 flex-1 overflow-y-auto\">"
+        },
+        {
+          "path": "components/kleio/submission-drawer.tsx",
+          "line": 75,
+          "kinds": [
+            "clipped_overflow"
+          ],
+          "snippet": "<Link href={submissionHref(submission.id)} className=\"relative block aspect-[4/3] w-full overflow-hidden rounded-2xl border border-border bg-muted shadow-sm\"><Image src={assetPath(submission.image || \"/placeholder.svg\")} alt={`${submission.projectTitle} by ${submission.artist}`} fill sizes=\"384px\" className=\"object-cover transition-transform duration-500 hover:scale-[1.03]\" /></Link>"
+        },
+        {
+          "path": "components/kleio/submission-drawer.tsx",
+          "line": 82,
+          "kinds": [
+            "clipped_overflow"
+          ],
+          "snippet": "{reviewerProgress.total > 0 && <Section title=\"Reviewer Progress\" actionHref=\"/committee/#reviewer-progress\" action=\"View reviewers\"><div className=\"rounded-xl border border-border bg-background p-3\"><div className=\"flex items-center justify-between text-sm\"><span className=\"font-medium text-foreground\">Reviews completed</span><span className=\"font-semibold text-primary\">{reviewerProgress.completed}/{reviewerProgress.total}</span></div><div className=\"mt-2 h-1.5 overflow-hidden rounded-full bg-m"
+        }
+      ],
+      "score": 3
+    },
+    {
+      "path": "components/kleio/application-submission-cover.tsx",
+      "counts": {
+        "clipped_overflow": 2,
+        "viewport_edge": 1
+      },
+      "records": [
+        {
+          "path": "components/kleio/application-submission-cover.tsx",
+          "line": 60,
+          "kinds": [
+            "clipped_overflow"
+          ],
+          "snippet": "<div className=\"mx-auto grid max-w-[1120px] overflow-hidden rounded-2xl border border-[#E7E1F7] bg-white sm:grid-cols-[240px_minmax(0,1fr)]\">"
+        },
+        {
+          "path": "components/kleio/application-submission-cover.tsx",
+          "line": 61,
+          "kinds": [
+            "clipped_overflow"
+          ],
+          "snippet": "<div className=\"relative min-h-40 overflow-hidden bg-[#F3EFF8]\">"
+        },
+        {
+          "path": "components/kleio/application-submission-cover.tsx",
+          "line": 62,
+          "kinds": [
+            "viewport_edge"
+          ],
+          "snippet": "{imageUrl ? <img src={imageUrl} alt={record.submission_cover_alt_text || `${record.title} application cover`} className=\"absolute inset-0 size-full object-cover\" style={{ objectPosition: `${record.submission_cover_position_x}% ${record.submission_cover_position_y}%` }} /> : <div className=\"grid size-full place-items-center\"><ImageIcon className=\"size-6 text-[#7867AA]\" /></div>}"
+        }
+      ],
+      "score": 2
+    },
+    {
+      "path": "components/kleio/artist-passport-body.tsx",
+      "counts": {
+        "clipped_overflow": 4,
+        "viewport_edge": 1
+      },
+      "records": [
+        {
+          "path": "components/kleio/artist-passport-body.tsx",
+          "line": 102,
+          "kinds": [
+            "clipped_overflow"
+          ],
+          "snippet": "<div className={cn(\"group overflow-hidden rounded-2xl border border-border bg-card\", primary && \"col-span-2 row-span-2\")}>"
+        },
+        {
+          "path": "components/kleio/artist-passport-body.tsx",
+          "line": 103,
+          "kinds": [
+            "clipped_overflow"
+          ],
+          "snippet": "<div className=\"relative aspect-[4/3] overflow-hidden bg-muted\">"
+        },
+        {
+          "path": "components/kleio/artist-passport-body.tsx",
+          "line": 207,
+          "kinds": [
+            "clipped_overflow"
+          ],
+          "snippet": "<div className=\"overflow-hidden rounded-2xl border border-border bg-card shadow-sm\">"
+        },
+        {
+          "path": "components/kleio/artist-passport-body.tsx",
+          "line": 208,
+          "kinds": [
+            "clipped_overflow"
+          ],
+          "snippet": "<div className=\"relative w-full overflow-hidden bg-muted\" style={{ aspectRatio: \"16/7\" }}>"
+        },
+        {
+          "path": "components/kleio/artist-passport-body.tsx",
+          "line": 221,
+          "kinds": [
+            "viewport_edge"
+          ],
+          "snippet": "<div className=\"absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent\" />"
+        }
+      ],
+      "score": 2
+    },
+    {
+      "path": "components/kleio/kleio-assist-object.tsx",
+      "counts": {
+        "viewport_edge": 1,
+        "clipped_overflow": 1
+      },
+      "records": [
+        {
+          "path": "components/kleio/kleio-assist-object.tsx",
+          "line": 61,
+          "kinds": [
+            "viewport_edge"
+          ],
+          "snippet": "className=\"absolute inset-0 rounded-full opacity-60\""
+        },
+        {
+          "path": "components/kleio/kleio-assist-object.tsx",
+          "line": 242,
+          "kinds": [
+            "clipped_overflow"
+          ],
+          "snippet": "className=\"h-1 overflow-hidden rounded-full bg-[#E7E1F7]\""
+        }
+      ],
+      "score": 2
+    },
+    {
+      "path": "components/kleio/public-opportunity-carousel.tsx",
+      "counts": {
+        "clipped_overflow": 2,
+        "viewport_edge": 1
+      },
+      "records": [
+        {
+          "path": "components/kleio/public-opportunity-carousel.tsx",
+          "line": 218,
+          "kinds": [
+            "clipped_overflow"
+          ],
+          "snippet": "<article key={item.id} data-opportunity-card className=\"relative min-w-[84vw] snap-start self-start overflow-hidden rounded-[1.4rem] border border-[#E4DDF1] bg-white shadow-[0_22px_60px_rgba(70,52,112,0.08)] sm:min-w-[390px] lg:min-w-[calc((100%-32px)/3)]\" role=\"group\" aria-roledescription=\"slide\" aria-label={`${index + 1} of ${items.length}: ${item.title}`}>"
+        },
+        {
+          "path": "components/kleio/public-opportunity-carousel.tsx",
+          "line": 219,
+          "kinds": [
+            "clipped_overflow"
+          ],
+          "snippet": "<div className=\"relative h-36 overflow-hidden bg-[radial-gradient(circle_at_15%_0%,#EAE2FA,transparent_52%),linear-gradient(145deg,#F7F3FF,#EEE8F8)]\">"
+        },
+        {
+          "path": "components/kleio/public-opportunity-carousel.tsx",
+          "line": 220,
+          "kinds": [
+            "viewport_edge"
+          ],
+          "snippet": "{item.preview_image_url ? <img src={item.preview_image_url} alt={item.preview_image_alt_text || \"\"} className=\"size-full object-cover\" loading=\"lazy\" /> : <div className=\"absolute inset-0 grid place-items-center\"><span className=\"font-serif text-5xl italic text-[#8D79B4]/35\">K</span></div>}"
+        }
+      ],
+      "score": 2
+    },
+    {
+      "path": "components/kleio/review-queue.tsx",
+      "counts": {
+        "clipped_overflow": 2,
+        "viewport_edge": 1
+      },
+      "records": [
+        {
+          "path": "components/kleio/review-queue.tsx",
+          "line": 36,
+          "kinds": [
+            "clipped_overflow"
+          ],
+          "snippet": "return <div className=\"flex items-center gap-2\"><span className=\"w-9 text-xs font-medium tabular-nums text-foreground\">{value}%</span><span className=\"h-1.5 w-20 overflow-hidden rounded-full bg-muted\"><span className={cn(\"block h-full rounded-full\", tone)} style={{ width: `${value}%` }} /></span></div>"
+        },
+        {
+          "path": "components/kleio/review-queue.tsx",
+          "line": 86,
+          "kinds": [
+            "clipped_overflow",
+            "viewport_edge"
+          ],
+          "snippet": "<div className=\"flex flex-wrap items-center gap-2\"><div className=\"relative min-w-56 flex-1\"><Search className=\"pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground\" /><input type=\"search\" value={search} onFocus={() => setSuggestionsOpen(true)} onBlur={() => window.setTimeout(() => setSuggestionsOpen(false), 120)} onChange={(event) => { setSearch(event.target.value); setSuggestionsOpen(true) }} onKeyDown={(event) => { if (event.key === \"Escape\") setSuggestion"
+        }
+      ],
+      "score": 2
+    },
+    {
+      "path": "components/kleio/search-filter-bar.tsx",
+      "counts": {
+        "clipped_overflow": 1,
+        "viewport_edge": 1
+      },
+      "records": [
+        {
+          "path": "components/kleio/search-filter-bar.tsx",
+          "line": 65,
+          "kinds": [
+            "clipped_overflow",
+            "viewport_edge"
+          ],
+          "snippet": "<div className=\"absolute left-0 right-0 top-12 z-40 overflow-hidden rounded-2xl border border-[#E7E1F7] bg-white shadow-[0_16px_40px_rgba(82,64,130,0.12)]\">"
+        }
+      ],
+      "score": 2
+    },
+    {
+      "path": "components/kleio/status-breakdown.tsx",
+      "counts": {
+        "viewport_edge": 1
+      },
+      "records": [
+        {
+          "path": "components/kleio/status-breakdown.tsx",
+          "line": 37,
+          "kinds": [
+            "viewport_edge"
+          ],
+          "snippet": "<div className=\"pointer-events-none absolute inset-0 flex flex-col items-center justify-center\">"
+        }
+      ],
+      "score": 2
+    }
+  ]
+}

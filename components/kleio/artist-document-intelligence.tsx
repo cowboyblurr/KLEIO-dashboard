@@ -4,7 +4,10 @@ import Link from "next/link"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import {
   AlertTriangle,
+  ChevronDown,
+  ChevronUp,
   Check,
+  Eraser,
   FileCheck2,
   FileSearch,
   FileText,
@@ -195,15 +198,21 @@ function AnalysisResultPanel({
   source,
   onPreview,
   onReanalyze,
+  onClearAnalysis,
+  onDelete,
   working,
 }: {
   result: AnalysisResult
   source?: ArtistDocumentSource
   onPreview: () => void
   onReanalyze: () => void
+  onClearAnalysis: () => Promise<void>
+  onDelete: () => Promise<void>
   working: boolean
 }) {
   const [view, setView] = useState<AnalysisView>("overview")
+  const [collapsed, setCollapsed] = useState(false)
+  const [confirmAction, setConfirmAction] = useState<"clear" | "delete" | null>(null)
   const assessment = result.summary.document_assessment ?? {}
   const insight = result.summary.analysis_summary ?? {}
   const limitations = assessment.analysis_limitations ?? []
@@ -229,6 +238,14 @@ function AnalysisResultPanel({
     { id: "details", label: "Details & evidence", count: resolutionCount || undefined },
   ]
 
+  async function confirmDocumentAction() {
+    const action = confirmAction
+    if (!action || working) return
+    setConfirmAction(null)
+    if (action === "clear") await onClearAnalysis()
+    else await onDelete()
+  }
+
   return (
     <section className={`${panel} overflow-hidden`} aria-labelledby="latest-document-analysis-title">
       <header className="border-b border-[#E7E1F7] bg-[#FCFBFE] px-5 py-5 sm:px-6">
@@ -247,11 +264,21 @@ function AnalysisResultPanel({
             <p className="mt-1 text-sm text-[#746E80]">Private source · Gemini analysis · Artist approval required</p>
           </div>
           <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              className={secondary}
+              aria-expanded={!collapsed}
+              aria-controls="document-analysis-content"
+              onClick={() => setCollapsed((current) => !current)}
+            >
+              {collapsed ? <ChevronDown className="size-4" /> : <ChevronUp className="size-4" />}
+              {collapsed ? "Expand results" : "Collapse results"}
+            </button>
             <button type="button" className={secondary} onClick={onPreview} disabled={!source || working}><FileSearch className="size-4" />Open PDF</button>
-            <button type="button" className={subtle} onClick={onReanalyze} disabled={!source || working}>{working ? <Loader2 className="size-4 animate-spin" /> : <RefreshCcw className="size-4" />}Analyze again</button>
           </div>
         </div>
 
+        {!collapsed && (
         <dl className="mt-5 grid grid-cols-2 overflow-hidden rounded-2xl border border-[#E7E1F7] bg-white sm:grid-cols-4">
           {summaryItems.map(([value, label], index) => (
             <div key={label} className={`px-4 py-3 ${index % 2 ? "border-l border-[#E7E1F7]" : ""} ${index > 1 ? "border-t border-[#E7E1F7] sm:border-t-0 sm:border-l" : ""}`}>
@@ -260,8 +287,54 @@ function AnalysisResultPanel({
             </div>
           ))}
         </dl>
+        )}
       </header>
 
+      {confirmAction && (
+        <div role="alertdialog" aria-modal="false" aria-labelledby="document-action-confirmation-title" className={`border-b px-5 py-4 sm:px-6 ${confirmAction === "delete" ? "border-red-200 bg-red-50" : "border-amber-200 bg-amber-50"}`}>
+          <div className="mx-auto flex max-w-5xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p id="document-action-confirmation-title" className={`text-sm font-semibold ${confirmAction === "delete" ? "text-red-900" : "text-amber-950"}`}>
+                {confirmAction === "delete" ? `Delete ${result.filename}?` : "Clear this analysis?"}
+              </p>
+              <p className={`mt-1 text-xs leading-5 ${confirmAction === "delete" ? "text-red-800" : "text-amber-900"}`}>
+                {confirmAction === "delete"
+                  ? "This permanently removes the private PDF and its analysis from your document library."
+                  : "This removes Gemini analysis and unconfirmed suggestions. The original PDF stays private in your library."}
+              </p>
+            </div>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <button type="button" className={secondary} onClick={() => setConfirmAction(null)} disabled={working}>Keep it</button>
+              <button
+                type="button"
+                className={confirmAction === "delete" ? "inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-red-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-800 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-red-200 disabled:opacity-50" : primary}
+                onClick={() => void confirmDocumentAction()}
+                disabled={working}
+              >
+                {working ? <Loader2 className="size-4 animate-spin" /> : confirmAction === "delete" ? <Trash2 className="size-4" /> : <Eraser className="size-4" />}
+                {confirmAction === "delete" ? "Delete PDF" : "Clear analysis"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="border-b border-[#EEEAF6] bg-white px-5 py-3 sm:px-6">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-xs font-semibold text-[#292631]">Document controls</p>
+            <p className="mt-0.5 text-xs leading-5 text-[#81788E]">Clear only the analysis, or delete the PDF entirely.</p>
+          </div>
+          <div className="grid gap-2 sm:flex sm:flex-wrap">
+            <button type="button" className={subtle} onClick={onReanalyze} disabled={!source || working}>{working ? <Loader2 className="size-4 animate-spin" /> : <RefreshCcw className="size-4" />}Analyze again</button>
+            <button type="button" className={subtle} onClick={() => setConfirmAction("clear")} disabled={!source || working}><Eraser className="size-4" />Clear analysis</button>
+            <button type="button" className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-red-100 disabled:opacity-50" onClick={() => setConfirmAction("delete")} disabled={!source || working}><Trash2 className="size-4" />Delete PDF</button>
+          </div>
+        </div>
+      </div>
+
+      {!collapsed && (
+      <div id="document-analysis-content">
       <div className="px-5 pt-4 sm:px-6">
         <div className="flex gap-1 overflow-x-auto rounded-xl bg-[#F5F2FA] p-1" role="tablist" aria-label="Document analysis views">
           {views.map((item) => (
@@ -416,6 +489,8 @@ function AnalysisResultPanel({
           </div>
         )}
       </div>
+      </div>
+      )}
     </section>
   )
 }
@@ -722,10 +797,13 @@ export function ArtistDocumentIntelligence() {
 
       {displayedResult && (
         <AnalysisResultPanel
+          key={displayedResult.sourceId}
           result={displayedResult}
           source={resultSource}
           onPreview={() => resultSource && void preview(resultSource)}
           onReanalyze={() => resultSource && void reanalyze(resultSource)}
+          onClearAnalysis={() => resultSource ? stopAnalysis(resultSource) : Promise.resolve()}
+          onDelete={() => resultSource ? removeSource(resultSource) : Promise.resolve()}
           working={Boolean(resultSource && workingId === resultSource.id)}
         />
       )}
@@ -767,8 +845,8 @@ export function ArtistDocumentIntelligence() {
                   <div className="flex flex-wrap gap-2">
                     <button type="button" className={secondary} disabled={Boolean(workingId)} onClick={() => void preview(source)}><FileSearch className="size-4" />Private preview</button>
                     <button type="button" className={secondary} disabled={Boolean(workingId)} onClick={() => void reanalyze(source)}>{workingId === source.id ? <Loader2 className="size-4 animate-spin" /> : <RefreshCcw className="size-4" />}Analyze again</button>
-                    {!source.keep_without_analysis && <button type="button" className={subtle} disabled={Boolean(workingId)} onClick={() => void stopAnalysis(source)}>Remove analysis</button>}
-                    <button type="button" className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-red-200 bg-white px-3 py-2 text-sm font-semibold text-red-700 disabled:opacity-50" disabled={Boolean(workingId)} onClick={() => void removeSource(source)}><Trash2 className="size-4" />Delete source</button>
+                    {!source.keep_without_analysis && <button type="button" className={subtle} disabled={Boolean(workingId)} onClick={() => void stopAnalysis(source)}><Eraser className="size-4" />Clear analysis</button>}
+                    <button type="button" className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-red-200 bg-white px-3 py-2 text-sm font-semibold text-red-700 disabled:opacity-50" disabled={Boolean(workingId)} onClick={() => void removeSource(source)}><Trash2 className="size-4" />Delete PDF</button>
                   </div>
                 </div>
               </article>
