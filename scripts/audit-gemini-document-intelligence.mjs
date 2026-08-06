@@ -71,4 +71,12 @@ if (failures.length) {
   for (const failure of failures) console.error(`- ${failure}`)
   process.exit(1)
 }
+requireText(shared, "document_synopsis", "Gemini analysis must return a document synopsis")
+requireText(shared, "not_relevant", "Gemini analysis must classify document relevance")
+requireText(shared, "extractable_information", "Gemini analysis must explain auditable information categories")
+requireText(shared, "supportedJsonSchema", "Gemini requests must use a provider-compatible schema subset")
+requireText(extractor, "analysis_summary.relevance", "coverage must account for relevance rather than proposal count alone")
+requireText(component, "What this document is", "the upload page must show a synopsis immediately")
+requireText(component, "Information KLEIO can audit", "the upload page must show extractable information categories")
+
 console.log("KLEIO Gemini document intelligence audit passed: original-PDF vision, structured validation, honest coverage, immediate evidence display, approved-evidence drafting, privacy controls, and 17 acceptance cases verified.")

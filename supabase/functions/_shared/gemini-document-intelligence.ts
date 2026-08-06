@@ -50,7 +50,18 @@ export type GeminiDocumentAnalysis = {
   sections: Array<{ section_type: string; source_heading: string; start_page: number; end_page: number; confidence: number }>
   claims: GeminiDocumentClaim[]
   unresolved_content: Array<{ page_number: number; issue: string; possible_meanings: string[]; recommended_artist_action: string }>
-  analysis_summary: { what_was_found: string[]; what_was_not_found: string[]; what_needs_review: string[]; coverage_level: string; coverage_explanation: string }
+  analysis_summary: {
+    document_synopsis: string
+    relevance: "highly_relevant" | "partially_relevant" | "not_relevant" | "requires_artist_review"
+    relevance_explanation: string
+    extractable_information: Array<{ category: string; approximate_items: number; confidence: number; passport_or_application_use: string }>
+    recommended_use: string[]
+    what_was_found: string[]
+    what_was_not_found: string[]
+    what_needs_review: string[]
+    coverage_level: string
+    coverage_explanation: string
+  }
 }
 
 export type ProviderResult<T> = {
@@ -102,9 +113,16 @@ function base64(bytes: Uint8Array) {
 function supportedJsonSchema(value: unknown): unknown {
   if (Array.isArray(value)) return value.map(supportedJsonSchema)
   if (!object(value)) return value
-  const supported = new Set(["$id", "$defs", "$ref", "$anchor", "type", "format", "title", "description", "enum", "items", "prefixItems", "minItems", "maxItems", "minimum", "maximum", "anyOf", "oneOf", "properties", "additionalProperties", "required", "propertyOrdering"])
+  const supported = new Set(["type", "format", "title", "description", "enum", "items", "properties", "required", "propertyOrdering"])
   const next: JsonObject = {}
-  for (const [key, item] of Object.entries(value)) if (supported.has(key)) next[key] = supportedJsonSchema(item)
+  for (const [key, item] of Object.entries(value)) {
+    if (!supported.has(key)) continue
+    if (key === "type" && Array.isArray(item)) {
+      next.type = item.find((candidate) => candidate !== "null") || "string"
+      continue
+    }
+    next[key] = supportedJsonSchema(item)
+  }
   return next
 }
 
@@ -199,7 +217,7 @@ export function documentAnalysisSchema(): JsonObject {
       sections: { type: "array", maxItems: 80, items: { type: "object", additionalProperties: false, required: ["section_type", "source_heading", "start_page", "end_page", "confidence"], properties: { section_type: { type: "string" }, source_heading: { type: "string" }, start_page: { type: "integer", minimum: 1 }, end_page: { type: "integer", minimum: 1 }, confidence: { type: "number", minimum: 0, maximum: 1 } } } },
       claims: { type: "array", maxItems: 160, items: claim },
       unresolved_content: { type: "array", maxItems: 80, items: { type: "object", additionalProperties: false, required: ["page_number", "issue", "possible_meanings", "recommended_artist_action"], properties: { page_number: { type: "integer", minimum: 1 }, issue: { type: "string" }, possible_meanings: stringArray, recommended_artist_action: { type: "string" } } } },
-      analysis_summary: { type: "object", additionalProperties: false, required: ["what_was_found", "what_was_not_found", "what_needs_review", "coverage_level", "coverage_explanation"], properties: { what_was_found: stringArray, what_was_not_found: stringArray, what_needs_review: stringArray, coverage_level: { type: "string" }, coverage_explanation: { type: "string" } } },
+      analysis_summary: { type: "object", additionalProperties: false, required: ["document_synopsis", "relevance", "relevance_explanation", "extractable_information", "recommended_use", "what_was_found", "what_was_not_found", "what_needs_review", "coverage_level", "coverage_explanation"], properties: { document_synopsis: { type: "string" }, relevance: { type: "string", enum: ["highly_relevant", "partially_relevant", "not_relevant", "requires_artist_review"] }, relevance_explanation: { type: "string" }, extractable_information: { type: "array", items: { type: "object", additionalProperties: false, required: ["category", "approximate_items", "confidence", "passport_or_application_use"], properties: { category: { type: "string" }, approximate_items: { type: "integer" }, confidence: { type: "number" }, passport_or_application_use: { type: "string" } } } }, recommended_use: stringArray, what_was_found: stringArray, what_was_not_found: stringArray, what_needs_review: stringArray, coverage_level: { type: "string" }, coverage_explanation: { type: "string" } } },
     },
   }
 }
@@ -229,6 +247,10 @@ export function validateDocumentAnalysis(raw: GeminiDocumentAnalysis, input: { t
   if (!object(raw) || !object(raw.document_assessment) || !Array.isArray(raw.claims)) throw new Error("gemini_invalid_document_schema")
   const totalPages = Math.max(1, Math.min(100, input.totalPages))
   const assessment = raw.document_assessment
+  const rawSummary = object(raw.analysis_summary) ? raw.analysis_summary : {}
+  const relevance = ["highly_relevant", "partially_relevant", "not_relevant", "requires_artist_review"].includes(String(rawSummary.relevance))
+    ? String(rawSummary.relevance) as GeminiDocumentAnalysis["analysis_summary"]["relevance"]
+    : "requires_artist_review"
   const validPages = (values: unknown) => Array.from(new Set((Array.isArray(values) ? values : []).map(Number).filter((value) => Number.isInteger(value) && value >= 1 && value <= totalPages))).sort((a, b) => a - b)
   const pagesAnalyzed = validPages(assessment.pages_analyzed)
   const unreadablePages = validPages(assessment.unreadable_pages)
@@ -271,14 +293,15 @@ export function validateDocumentAnalysis(raw: GeminiDocumentAnalysis, input: { t
   }).slice(0, 80)
   return {
     document_assessment: { document_type: cleanText(assessment.document_type, 80) || input.requestedClassification, secondary_types: (Array.isArray(assessment.secondary_types) ? assessment.secondary_types : []).map((value) => cleanText(value, 80)).filter(Boolean).slice(0, 10), languages: (Array.isArray(assessment.languages) ? assessment.languages : []).map((value) => cleanText(value, 80)).filter(Boolean).slice(0, 10), total_pages: totalPages, pages_analyzed: pagesAnalyzed, unreadable_pages: unreadablePages, text_quality: ["native_text", "partial_text", "scanned", "mixed", "unknown"].includes(assessment.text_quality) ? assessment.text_quality : "unknown", layout_complexity: ["simple", "moderate", "complex"].includes(assessment.layout_complexity) ? assessment.layout_complexity : "moderate", column_structure: ["single", "multi", "mixed", "unknown"].includes(assessment.column_structure) ? assessment.column_structure : "unknown", contains_tables: assessment.contains_tables === true, contains_artwork_images: assessment.contains_artwork_images === true, contains_scanned_pages: assessment.contains_scanned_pages === true, analysis_limitations: limitations },
-    sections, claims, unresolved_content: unresolved,
-    analysis_summary: { what_was_found: (Array.isArray(raw.analysis_summary?.what_was_found) ? raw.analysis_summary.what_was_found : []).map((value) => cleanText(value, 500)).filter(Boolean).slice(0, 30), what_was_not_found: (Array.isArray(raw.analysis_summary?.what_was_not_found) ? raw.analysis_summary.what_was_not_found : []).map((value) => cleanText(value, 500)).filter(Boolean).slice(0, 30), what_needs_review: (Array.isArray(raw.analysis_summary?.what_needs_review) ? raw.analysis_summary.what_needs_review : []).map((value) => cleanText(value, 500)).filter(Boolean).slice(0, 30), coverage_level: cleanText(raw.analysis_summary?.coverage_level, 80), coverage_explanation: cleanText(raw.analysis_summary?.coverage_explanation, 2_000) },
+    sections, claims: relevance === "not_relevant" ? [] : claims, unresolved_content: unresolved,
+    analysis_summary: { document_synopsis: cleanText(rawSummary.document_synopsis, 2_000), relevance, relevance_explanation: cleanText(rawSummary.relevance_explanation, 2_000), extractable_information: (Array.isArray(rawSummary.extractable_information) ? rawSummary.extractable_information : []).filter(object).map((item) => ({ category: cleanText(item.category, 200), approximate_items: Math.max(0, Math.min(500, Number(item.approximate_items) || 0)), confidence: Math.max(0, Math.min(1, Number(item.confidence) || 0)), passport_or_application_use: cleanText(item.passport_or_application_use, 1_000) })).filter((item) => item.category).slice(0, 40), recommended_use: (Array.isArray(rawSummary.recommended_use) ? rawSummary.recommended_use : []).map((value) => cleanText(value, 500)).filter(Boolean).slice(0, 20), what_was_found: (Array.isArray(raw.analysis_summary?.what_was_found) ? raw.analysis_summary.what_was_found : []).map((value) => cleanText(value, 500)).filter(Boolean).slice(0, 30), what_was_not_found: (Array.isArray(raw.analysis_summary?.what_was_not_found) ? raw.analysis_summary.what_was_not_found : []).map((value) => cleanText(value, 500)).filter(Boolean).slice(0, 30), what_needs_review: (Array.isArray(raw.analysis_summary?.what_needs_review) ? raw.analysis_summary.what_needs_review : []).map((value) => cleanText(value, 500)).filter(Boolean).slice(0, 30), coverage_level: cleanText(raw.analysis_summary?.coverage_level, 80), coverage_explanation: cleanText(raw.analysis_summary?.coverage_explanation, 2_000) },
   }
 }
 
-export function assessDocumentCoverage(input: { classification: string; totalPages: number; pagesAnalyzed: number[]; unreadablePages: number[]; claims: Array<{ claim_type: string; confidence: number; information_layer: string }>; sections: Array<{ section_type: string }>; providerAvailable: boolean; textQuality: string }): { quality: DocumentQuality; explanation: string; score: number } {
+export function assessDocumentCoverage(input: { classification: string; totalPages: number; pagesAnalyzed: number[]; unreadablePages: number[]; claims: Array<{ claim_type: string; confidence: number; information_layer: string }>; sections: Array<{ section_type: string }>; providerAvailable: boolean; relevance?: string; textQuality: string }): { quality: DocumentQuality; explanation: string; score: number } {
   if (!input.providerAvailable) return { quality: "provider_unavailable", explanation: "Gemini document understanding was unavailable. KLEIO preserved the source without claiming a complete analysis.", score: 0 }
-  if (["needs_artist_classification", "unknown_document"].includes(input.classification)) return { quality: "classification_required", explanation: "KLEIO needs the artist to confirm the document type before applying document-specific interpretation.", score: 0.25 }
+  if (input.relevance === "not_relevant") return { quality: "complete_review_ready", explanation: "Gemini reviewed the complete document and determined that it is not relevant for populating this artist's Creative Passport or application materials. KLEIO preserved the synopsis and relevance explanation without creating Passport proposals.", score: 1 }
+  if (["needs_artist_classification", "unknown_document"].includes(input.classification) && input.relevance === "requires_artist_review") return { quality: "classification_required", explanation: "KLEIO needs the artist to confirm the document type before applying document-specific interpretation.", score: 0.25 }
   const pageCoverage = Math.min(1, input.pagesAnalyzed.length / Math.max(1, input.totalPages))
   const unreadableRatio = input.unreadablePages.length / Math.max(1, input.totalPages)
   const factualClaims = input.claims.filter((claim) => claim.information_layer === "factual" || claim.information_layer === "artist_authored")
@@ -294,11 +317,11 @@ export function assessDocumentCoverage(input: { classification: string; totalPag
 }
 
 export function documentSystemInstruction() {
-  return `You are the multimodal document-understanding engine for KLEIO, an artist-controlled Creative Passport and application platform. Inspect the original PDF visually and semantically. Understand layout, columns, headings, tables, images, captions, chronology, and relationships across pages. Extract only information supported by the PDF. Never invent dates, exhibitions, institutions, awards, grants, education, identities, materials, intent, collaborators, recognition, impact, or prestige. Distinguish factual records, artist-authored narrative, cautious interpretation, and uncertainty. Every claim must include a valid page reference and a concise supporting excerpt. Use visual_transcription when information is visually readable but not available in an embedded text layer. Use artist_authored_narrative for the artist's own descriptive language. Interpretive themes must never be presented as artist-stated intent. Return only JSON matching the provided schema.`
+  return `You are the multimodal document-understanding engine for KLEIO, an artist-controlled Creative Passport and application platform. Inspect the original PDF visually and semantically. Understand layout, columns, headings, tables, images, captions, chronology, and relationships across pages. First identify what the document actually is, summarize it concisely, assess whether it is relevant to an artist Creative Passport or opportunity application, explain that relevance, and name the categories of information it can safely support. Extract only information supported by the PDF. Never invent dates, exhibitions, institutions, awards, grants, education, identities, materials, intent, collaborators, recognition, impact, or prestige. Distinguish factual records, artist-authored narrative, cautious interpretation, and uncertainty. Every claim must include a valid page reference and a concise supporting excerpt. Use visual_transcription when information is visually readable but not available in an embedded text layer. Use artist_authored_narrative for the artist's own descriptive language. Interpretive themes must never be presented as artist-stated intent. Return only JSON matching the provided schema.`
 }
 
 export function documentPrompt(input: { requestedClassification: string; filename: string; verifiedPages: number; nativeTextQuality: string; nativeTextCharacterCount: number }) {
-  return `Analyze this private artist PDF for KLEIO.\n\nARTIST-SELECTED DOCUMENT TYPE: ${input.requestedClassification}\nPRIVATE SOURCE LABEL: ${input.filename}\nSERVER-VERIFIED PAGE COUNT: ${input.verifiedPages}\nEMBEDDED TEXT QUALITY: ${input.nativeTextQuality}\nEMBEDDED TEXT CHARACTER COUNT: ${input.nativeTextCharacterCount}\n\nProtocol:\n1. Perceive every page, including scanned and visually structured content.\n2. Map sections and reading order.\n3. Extract source-supported Creative Passport proposals.\n4. Recognize professional history even with unconventional headings.\n5. Connect portfolio images to captions and metadata.\n6. Preserve artist-authored language without turning interpretation into fact.\n7. Identify unreadable, ambiguous, contradictory, or incomplete content.\n8. Do not infer protected characteristics, identity, relationships, motives, or achievements.\n9. Do not return a claim without page evidence.\n10. Explain coverage honestly; a multi-page document with a few weak findings is limited, not complete.`
+  return `Analyze this private artist PDF for KLEIO.\n\nARTIST-SELECTED DOCUMENT TYPE: ${input.requestedClassification}\nPRIVATE SOURCE LABEL: ${input.filename}\nSERVER-VERIFIED PAGE COUNT: ${input.verifiedPages}\nEMBEDDED TEXT QUALITY: ${input.nativeTextQuality}\nEMBEDDED TEXT CHARACTER COUNT: ${input.nativeTextCharacterCount}\n\nProtocol:\n1. Perceive every page, including scanned and visually structured content.\n2. Identify the actual document type independently of the artist-selected label.\nn3. Write a concise document synopsis and assess relevance to the Creative Passport or an opportunity application.\n4. Explain which information categories are extractable and their appropriate use.\n5. Map sections and reading order.\n6. Extract source-supported Creative Passport proposals only when the document is relevant.\n4. Recognize professional history even with unconventional headings.\n5. Connect portfolio images to captions and metadata.\n6. Preserve artist-authored language without turning interpretation into fact.\n7. Identify unreadable, ambiguous, contradictory, or incomplete content.\n8. Do not infer protected characteristics, identity, relationships, motives, or achievements.\n9. Do not return a claim without page evidence.\n10. Explain coverage honestly; a multi-page document with a few weak findings is limited, not complete.`
 }
 
 export function draftSchema(): JsonObject {

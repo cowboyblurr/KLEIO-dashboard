@@ -94,6 +94,16 @@ type AnalysisSummary = {
     confidence?: number
   }>
   analysis_summary?: {
+    document_synopsis?: string
+    relevance?: "highly_relevant" | "partially_relevant" | "not_relevant" | "requires_artist_review"
+    relevance_explanation?: string
+    extractable_information?: Array<{
+      category?: string
+      approximate_items?: number
+      confidence?: number
+      passport_or_application_use?: string
+    }>
+    recommended_use?: string[]
     what_was_found?: string[]
     what_was_not_found?: string[]
     what_needs_review?: string[]
@@ -192,6 +202,7 @@ function AnalysisResultPanel({
   working: boolean
 }) {
   const assessment = result.summary.document_assessment ?? {}
+  const insight = result.summary.analysis_summary ?? {}
   const grouped = Object.entries(result.summary.grouped_counts ?? {}).sort((left, right) => right[1] - left[1])
   const limitations = assessment.analysis_limitations ?? []
   const pagesAnalyzed = assessment.pages_analyzed?.length ?? 0
@@ -216,9 +227,10 @@ function AnalysisResultPanel({
           </span>
         </div>
 
-        <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-6">
+        <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-7">
           {[
             ["Document type", assessment.document_type ? titleCase(assessment.document_type) : "Needs review"],
+            ["Relevance", insight.relevance ? titleCase(insight.relevance) : "Needs review"],
             ["Pages perceived", pagesTotal ? `${pagesAnalyzed}/${pagesTotal}` : "Unavailable"],
             ["Text quality", assessment.text_quality ? titleCase(assessment.text_quality) : "Unknown"],
             ["Layout", assessment.layout_complexity ? titleCase(assessment.layout_complexity) : "Unknown"],
@@ -234,6 +246,43 @@ function AnalysisResultPanel({
       </div>
 
       <div className="space-y-5 p-5 sm:p-6">
+        {(insight.document_synopsis || insight.relevance_explanation) && (
+<section className="rounded-2xl border border-[#D8D0F2] bg-[#FCFBFE] p-4 sm:p-5" aria-labelledby="document-synopsis-title">
+  <div className="flex flex-wrap items-center justify-between gap-2">
+    <h3 id="document-synopsis-title" className="font-serif text-xl font-semibold text-[#292631]">What this document is</h3>
+    {insight.relevance && <span className={`rounded-full border px-3 py-1 text-xs font-semibold ${insight.relevance === "not_relevant" ? "border-amber-200 bg-amber-50 text-amber-900" : insight.relevance === "highly_relevant" ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "border-[#D8D0F2] bg-white text-[#625C70]"}`}>{titleCase(insight.relevance)}</span>}
+  </div>
+  {insight.document_synopsis && <p className="mt-3 text-sm leading-7 text-[#4B4654]">{insight.document_synopsis}</p>}
+  {insight.relevance_explanation && <p className="mt-3 text-sm leading-7 text-[#746E80]">{insight.relevance_explanation}</p>}
+</section>
+        )}
+
+        {(insight.extractable_information?.length ?? 0) > 0 && (
+<section>
+  <h3 className="font-serif text-xl font-semibold text-[#292631]">Information KLEIO can audit</h3>
+  <p className="mt-1 text-sm leading-6 text-[#746E80]">These categories describe what the document can support. Only page-backed, artist-reviewed items become Passport proposals.</p>
+  <div className="mt-3 grid gap-3 sm:grid-cols-2">
+    {insight.extractable_information?.slice(0, 10).map((item, index) => (
+      <article key={`${item.category}-${index}`} className="rounded-2xl border border-[#E7E1F7] bg-white p-4">
+        <div className="flex items-start justify-between gap-3">
+          <p className="text-sm font-semibold text-[#292631]">{item.category || "Document information"}</p>
+          {typeof item.confidence === "number" && <span className="text-xs font-semibold text-[#75639E]">{Math.round(item.confidence * 100)}%</span>}
+        </div>
+        <p className="mt-2 text-xs leading-5 text-[#746E80]">{item.passport_or_application_use || "Artist review required before use."}</p>
+        {typeof item.approximate_items === "number" && <p className="mt-2 text-[0.68rem] font-semibold uppercase tracking-wide text-[#8A8296]">About {item.approximate_items} supported item{item.approximate_items === 1 ? "" : "s"}</p>}
+      </article>
+    ))}
+  </div>
+</section>
+        )}
+
+        {(insight.recommended_use?.length ?? 0) > 0 && (
+<section className="rounded-2xl border border-[#E7E1F7] bg-white p-4">
+  <h3 className="text-sm font-semibold text-[#292631]">Recommended use</h3>
+  <ul className="mt-2 space-y-2 text-sm leading-6 text-[#746E80]">{insight.recommended_use?.map((item, index) => <li key={index}>• {item}</li>)}</ul>
+</section>
+        )}
+
         <div className={`rounded-2xl border p-4 text-sm leading-6 ${qualityTone(result.summary.analysis_quality)}`}>
           <p className="font-semibold">{result.summary.coverage_explanation || result.summary.analysis_summary?.coverage_explanation || "Review the supported findings and limitations below."}</p>
           {result.summary.analysis_quality === "limited_analysis" && (

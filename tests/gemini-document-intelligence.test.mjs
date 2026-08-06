@@ -4,8 +4,9 @@ import fs from "node:fs"
 
 const cases = JSON.parse(fs.readFileSync(new URL("./fixtures/document-intelligence/gemini-acceptance-cases.json", import.meta.url), "utf8")).cases
 
-function assess({ classification, totalPages, pagesAnalyzed, unreadablePages = [], claims, sections, providerAvailable = true, textQuality = "native_text" }) {
+function assess({ classification, totalPages, pagesAnalyzed, unreadablePages = [], claims, sections, providerAvailable = true, relevance = "highly_relevant", textQuality = "native_text" }) {
   if (!providerAvailable) return "provider_unavailable"
+  if (relevance === "not_relevant") return "complete_review_ready"
   if (["needs_artist_classification", "unknown_document"].includes(classification)) return "classification_required"
   const factual = claims.filter((claim) => ["factual", "artist_authored"].includes(claim.layer))
   const claimTypes = new Set(factual.map((claim) => claim.type)).size
@@ -50,4 +51,9 @@ test("scanned document with thin visual evidence is visibly limited", () => {
 
 test("provider failure never becomes successful analysis", () => {
   assert.equal(assess({ classification: "artist_cv", totalPages: 4, pagesAnalyzed: [], claims: [], sections: [], providerAvailable: false }), "provider_unavailable")
+})
+
+
+test("fully reviewed non-artist document is complete without Passport proposals", () => {
+  assert.equal(assess({ classification: "artist_cv", totalPages: 8, pagesAnalyzed: [1,2,3,4,5,6,7,8], claims: [], sections: ["overview", "features"], relevance: "not_relevant" }), "complete_review_ready")
 })
