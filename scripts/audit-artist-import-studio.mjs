@@ -55,7 +55,10 @@ requireText(client, "analysisSummary", "client must expose the canonical analysi
 requireText(uploadService, "extract-artist-materials", "shared extraction service must invoke the protected analyzer")
 
 requireText(drafting, "Prepared by KLEIO with Gemini from artist-approved records", "draft UI must label its approved evidence source")
-requireText(drafting, "Artist approval required", "draft UI must preserve artist approval")
+requireText(drafting, "Private until approved", "draft UI must explain its private pre-approval state")
+requireText(drafting, "Approve and save to Passport", "draft UI must require an explicit approval action")
+requireText(drafting, "Save private edit", "draft UI must allow saving without approval")
+requireText(drafting, "Reject", "draft UI must allow rejection")
 requireText(draftClient, "generate-artist-document-draft", "draft client must use the protected function")
 
 requireText(availability, "device_document: true", "direct documents must be enabled")
@@ -91,4 +94,4 @@ if (failures.length) {
   process.exit(1)
 }
 
-console.log("Artist PDF workflow audit passed: direct private PDF upload, Gemini synopsis and relevance, visible evidence results, shared protected extraction, approved-evidence drafting, artist controls, and secret hygiene verified.")
+console.log("Artist PDF workflow audit passed: direct private PDF upload, Gemini synopsis and relevance, visible evidence results, shared protected extraction, explicit draft approval controls, artist controls, and secret hygiene verified.")
