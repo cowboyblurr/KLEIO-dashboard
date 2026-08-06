@@ -1,0 +1,41 @@
+name: Quality checks
+
+on:
+  push:
+    branches:
+      - main
+      - "agent/**"
+      - "fix/**"
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Audit artist import workflow
+        run: |
+          npm run audit:artist-import
+          npm run audit:universal-media
+          npm run audit:upload-to-passport
+          npm run audit:document-intelligence
