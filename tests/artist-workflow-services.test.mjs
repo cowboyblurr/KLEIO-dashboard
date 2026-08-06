@@ -18,10 +18,10 @@ function loadTypeScriptModule(relativePath) {
       strict: true,
     },
   }).outputText
-  const module = { exports: {} }
+  const commonJsModule = { exports: {} }
   const execute = new Function("exports", "module", "require", "__filename", "__dirname", transpiled)
-  execute(module.exports, module, () => { throw new Error(`Unexpected runtime import while testing ${relativePath}`) }, filename, path.dirname(filename))
-  return module.exports
+  execute(commonJsModule.exports, commonJsModule, () => { throw new Error(`Unexpected runtime import while testing ${relativePath}`) }, filename, path.dirname(filename))
+  return commonJsModule.exports
 }
 
 const { calculatePassportCompletion } = loadTypeScriptModule("lib/kleio-passport-completion.ts")
