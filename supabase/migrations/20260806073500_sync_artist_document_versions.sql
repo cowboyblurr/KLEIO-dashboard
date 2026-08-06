@@ -15,7 +15,7 @@ alter table public.artist_document_versions
 create or replace function public.sync_artist_document_version()
 returns trigger
 language plpgsql
-security definer
+security invoker
 set search_path = public, pg_temp
 as $$
 declare
@@ -272,8 +272,6 @@ begin
 end;
 $$;
 
-revoke all on function public.sync_artist_document_version() from public;
-
 -- Separate insert and update triggers let the update path ignore extractor
 -- writes that repeat the same classification during re-analysis.
 drop trigger if exists sync_artist_document_version_on_insert on public.artist_import_sources;
@@ -292,14 +290,15 @@ create trigger sync_artist_document_version_on_change
   )
   execute function public.sync_artist_document_version();
 
--- Backfill existing classified PDFs in creation order. The trigger assigns a
--- stable monotonically increasing version per artist and document family.
+-- Backfill existing classified PDFs in creation order. A temporary in-transaction
+-- classification transition is used only for rows that do not yet have a
+-- version record; no transient state is visible outside this migration.
 do $$
 declare
-  v_source_id uuid;
+  v_source record;
 begin
-  for v_source_id in
-    select id
+  for v_source in
+    select id, classification
       from public.artist_import_sources
      where mime_type = 'application/pdf'
        and deleted_at is null
@@ -310,19 +309,16 @@ begin
        ])
      order by created_at, id
   loop
-    update public.artist_import_sources
-       set classification = classification
-     where id = v_source_id;
-
-    -- The update trigger intentionally ignores unchanged classifications, so
-    -- invoke the same synchronization function through a temporary meaningful
-    -- transition only when this source has not already been registered.
     if not exists (
-      select 1 from public.artist_document_versions where source_id = v_source_id
+      select 1 from public.artist_document_versions where source_id = v_source.id
     ) then
       update public.artist_import_sources
-         set mime_type = mime_type || ''
-       where id = v_source_id;
+         set classification = 'needs_artist_classification'
+       where id = v_source.id;
+
+      update public.artist_import_sources
+         set classification = v_source.classification
+       where id = v_source.id;
     end if;
   end loop;
 end;
