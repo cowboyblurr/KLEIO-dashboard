@@ -5,6 +5,8 @@ on:
     paths:
       - "supabase/functions/_shared/gemini-document-intelligence.ts"
       - "supabase/functions/_shared/gemini-interactions-fetch-shim.ts"
+      - "supabase/functions/_shared/gemini-schema-fallback-fetch-shim.ts"
+      - "supabase/functions/_shared/gemini-document-two-pass-fetch-shim.ts"
       - "supabase/functions/extract-artist-materials/**"
       - "supabase/functions/generate-artist-document-draft/**"
       - "components/kleio/artist-document-intelligence.tsx"
@@ -23,6 +25,8 @@ on:
     paths:
       - "supabase/functions/_shared/gemini-document-intelligence.ts"
       - "supabase/functions/_shared/gemini-interactions-fetch-shim.ts"
+      - "supabase/functions/_shared/gemini-schema-fallback-fetch-shim.ts"
+      - "supabase/functions/_shared/gemini-document-two-pass-fetch-shim.ts"
       - "supabase/functions/extract-artist-materials/**"
       - "supabase/functions/generate-artist-document-draft/**"
       - "components/kleio/artist-document-intelligence.tsx"
