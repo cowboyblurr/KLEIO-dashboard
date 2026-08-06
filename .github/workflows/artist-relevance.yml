@@ -1,0 +1,43 @@
+name: Artist Relevance
+
+on:
+  pull_request:
+    paths:
+      - "app/artist-dashboard/**"
+      - "components/kleio/**"
+      - "scripts/audit-artist-relevance.mjs"
+      - ".github/workflows/artist-relevance.yml"
+      - "package.json"
+      - "pnpm-lock.yaml"
+  push:
+    branches: [main]
+    paths:
+      - "app/artist-dashboard/**"
+      - "components/kleio/**"
+      - "scripts/audit-artist-relevance.mjs"
+      - "package.json"
+      - "pnpm-lock.yaml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Audit artist relevance hierarchy
+        run: node scripts/audit-artist-relevance.mjs
+      - name: Typecheck
+        run: pnpm typecheck
+      - name: Build complete static export
+        run: pnpm build

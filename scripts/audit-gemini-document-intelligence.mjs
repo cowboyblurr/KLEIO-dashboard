@@ -16,6 +16,7 @@ const draftingClient = read("lib/kleio-document-drafting.ts")
 const uploadUi = read("components/kleio/artist-document-intelligence.tsx")
 const draftUi = read("components/kleio/document-draft-studio.tsx")
 const reviewUi = read("components/kleio/passport-updates-inbox.tsx")
+const fieldReviewUi = read("components/kleio/live-artist-passport-editor.tsx")
 const migration = read("supabase/migrations/20260805232500_gemini_document_intelligence.sql")
 const interactionsShim = read("supabase/functions/_shared/gemini-interactions-fetch-shim.ts")
 const schemaFallback = read("supabase/functions/_shared/gemini-schema-fallback-fetch-shim.ts")
@@ -95,7 +96,10 @@ requirePattern(drafter, /validateDraftOutput/, "The drafting function must valid
 requirePattern(drafter, /artist-approved private records/, "The Gemini drafting prompt must use artist-approved evidence only.")
 requirePattern(draftUi, /Prepared by KLEIO with Gemini from artist-approved records/, "Gemini drafts must be visibly labeled for review.")
 requirePattern(draftingClient, /kleio_gemini_drafting_v2/, "The client must load the Gemini drafting version.")
-requirePattern(reviewUi, /Review evidence and provenance/, "The existing full proposal review must preserve evidence and provenance.")
+requirePattern(reviewUi, /View source evidence/, "The compact fallback review must preserve source evidence and provenance on demand.")
+requirePattern(fieldReviewUi, /View source/, "The primary field-level review must preserve source evidence on demand.")
+requirePattern(fieldReviewUi, /confirmPassportClaim/, "Field-level approval must use the provenance-aware confirmation path.")
+requirePattern(fieldReviewUi, /setPassportClaimDecision/, "Field-level rejection must remain an explicit persisted decision.")
 
 requirePattern(migration, /'analyze_document'/, "The AI usage contract must allow document analysis.")
 requirePattern(migration, /artist_ai_usage_events_document_daily_idx/, "Document rate limits need an indexed usage path.")
@@ -108,4 +112,4 @@ if (failures.length) {
   process.exit(1)
 }
 
-console.log("KLEIO Gemini document intelligence audit passed: original-PDF vision, two-pass schema recovery, guided progressive review, immediate reversible document controls, structured validation, honest coverage, evidence-on-demand, approved-evidence drafting, privacy controls, and 17 acceptance cases verified.")
+console.log("KLEIO Gemini document intelligence audit passed: original-PDF vision, two-pass schema recovery, guided progressive review, immediate reversible document controls, field-level evidence and approval, structured validation, honest coverage, approved-evidence drafting, privacy controls, and 17 acceptance cases verified.")

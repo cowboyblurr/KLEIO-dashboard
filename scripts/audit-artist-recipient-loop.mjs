@@ -81,8 +81,9 @@ for (const key of ["identity", "discipline", "narrative", "cv", "portfolio", "ar
   requirePattern(completion, new RegExp(`key: "${key}"`), `Passport completion category is missing: ${key}`)
 requirePattern(completion, /Math\.min\(rawPercentage, 99\)/, "Passport completion must remain below 100 while critical categories are missing.")
 requirePattern(consistency, /calculate_artist_passport_completion/, "The database must enforce the same weighted Passport completion direction.")
-requirePattern(passportWorkspace, /Passport completion is separate from readiness/, "The interface must separate Passport completion from opportunity readiness.")
-requirePattern(passportWorkspace, /Critical materials still missing/, "The Passport overview must surface critical missing categories.")
+requirePattern(passportWorkspace, /completion\?\.percentage/, "The compact interface must display Passport completion independently.")
+requirePattern(passportWorkspace, /Active applications/, "The compact interface must display opportunity activity independently from Passport completion.")
+requirePattern(passportWorkspace, /criticalMissing[\s\S]*Next information to complete/, "The Passport overview must surface critical missing categories as the next useful actions.")
 requirePattern(terms, /Creative disciplines/, "The broad creative field must be labeled Creative disciplines.")
 requirePattern(terms, /Describe what you work with or how you create the work/, "Mediums, materials, and methods must explain the distinction.")
 requirePattern(terms, /pointerdown/, "The discipline picker must dismiss on outside interaction.")
@@ -101,4 +102,4 @@ if (failures.length) {
   process.exit(1)
 }
 
-console.log("KLEIO artist-recipient workflow audit passed: synthetic isolation, weighted completion, requirement normalization, approval gates, secure guest review, truthful mailto handoff, verified recipient conversation, artist reply, access revocation, and safe reset boundaries verified.")
+console.log("KLEIO artist-recipient workflow audit passed: synthetic isolation, weighted completion, compact next-action hierarchy, requirement normalization, approval gates, secure guest review, truthful mailto handoff, verified recipient conversation, artist reply, access revocation, and safe reset boundaries verified.")
