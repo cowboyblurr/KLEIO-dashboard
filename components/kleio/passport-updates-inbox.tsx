@@ -11,6 +11,7 @@ import {
   FileSearch,
   FileText,
   Loader2,
+  PencilLine,
   RefreshCcw,
   Sparkles,
   X,
@@ -32,8 +33,9 @@ import { trackKleioProductEvent } from "@/lib/kleio-product-analytics"
 
 const primary = "inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-[#5B4B8A] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#4F407B] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#A997E8]/20 disabled:cursor-not-allowed disabled:opacity-50"
 const secondary = "inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-[#D8D0F2] bg-white px-3 py-2 text-sm font-semibold text-[#5B4B8A] transition hover:bg-[#FBFAFE] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#A997E8]/15 disabled:cursor-not-allowed disabled:opacity-50"
-const quiet = "inline-flex min-h-9 items-center justify-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-[#6F6882] transition hover:bg-[#F4F0FB] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#A997E8]/15 disabled:opacity-50"
-const textarea = "w-full rounded-lg border border-[#D8D0F2] bg-white px-3 py-2.5 text-sm leading-6 outline-none transition focus:border-[#A997E8] focus:ring-4 focus:ring-[#A997E8]/12"
+const compactApprove = "inline-flex min-h-8 items-center justify-center gap-1.5 rounded-lg bg-[#5B4B8A] px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-[#4F407B] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#A997E8]/20 disabled:cursor-not-allowed disabled:opacity-50"
+const quiet = "inline-flex min-h-8 items-center justify-center gap-1.5 rounded-lg px-2 py-1 text-xs font-semibold text-[#6F6882] transition hover:bg-[#F4F0FB] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#A997E8]/15 disabled:opacity-50"
+const textarea = "w-full rounded-lg border border-[#D8D0F2] bg-white px-3 py-2 text-sm leading-5 outline-none transition focus:border-[#A997E8] focus:ring-4 focus:ring-[#A997E8]/12"
 const pendingStatuses = new Set<PassportClaim["status"]>(["proposed", "needs_clarification", "conflicting", "deferred"])
 
 function titleCase(value: string) {
@@ -90,6 +92,7 @@ function sourceStatus(group: PassportReviewGroup) {
 export function PassportUpdatesInbox() {
   const [groups, setGroups] = useState<PassportReviewGroup[]>([])
   const [edits, setEdits] = useState<Record<string, string>>({})
+  const [editingId, setEditingId] = useState("")
   const [activeId, setActiveId] = useState("")
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
@@ -140,6 +143,7 @@ export function PassportUpdatesInbox() {
         visibility: "private",
         replaceExisting: claim.relationship_status === "conflict" && Boolean(claim.existing_record_id),
       })
+      setEditingId("")
       setMessage(`${fieldLabel(claim)} approved and added to the private Passport.`)
       void trackKleioProductEvent("proposal_approved", { surface: "passport_updates", metadata: { source: "document", section: claim.target_section, edited: (edits[claim.id] ?? claim.proposed_value) !== claim.proposed_value } })
       await refresh()
@@ -156,6 +160,7 @@ export function PassportUpdatesInbox() {
     setMessage("")
     try {
       await setPassportClaimDecision(claim.id, "rejected", "Artist rejected this suggestion.")
+      setEditingId("")
       setMessage("Suggestion rejected. The Passport was not changed.")
       void trackKleioProductEvent("proposal_rejected", { surface: "passport_updates", metadata: { source: "document", section: claim.target_section, reason: "artist_rejected" } })
       await refresh()
@@ -172,6 +177,7 @@ export function PassportUpdatesInbox() {
     setMessage("")
     try {
       await mergeDuplicateClaim(claim)
+      setEditingId("")
       setMessage("The current Passport value was kept and this document was linked as supporting evidence.")
       await refresh()
     } catch (reason) {
@@ -229,14 +235,14 @@ export function PassportUpdatesInbox() {
 
   return (
     <main className="h-full overflow-y-auto bg-white px-4 pb-8 pt-4 sm:px-6">
-      <div className="mx-auto max-w-[920px]">
+      <div className="mx-auto max-w-[1080px]">
         <header className="border-b border-[#EEEAF6] pb-4">
           <Link href="/artist-dashboard/passport/" className="inline-flex min-h-9 items-center gap-2 text-xs font-semibold text-[#5B4B8A]"><ArrowLeft className="size-3.5" />Creative Passport</Link>
           <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <p className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-[#75639E]">Document suggestions</p>
               <h1 className="mt-1 font-serif text-2xl font-semibold tracking-[-0.03em] text-[#292631] sm:text-3xl">Review information by field</h1>
-              <p className="mt-1 max-w-2xl text-sm leading-6 text-[#746E80]">Most suggestions now appear directly in the matching Passport field. Use this page for structured records, conflicts, duplicates, and document maintenance.</p>
+              <p className="mt-1 max-w-2xl text-sm leading-6 text-[#746E80]">Scan each suggestion, expand the evidence only when needed, and edit only before approval.</p>
             </div>
             <div className="flex flex-wrap gap-2"><Link href="/artist-dashboard/passport/" className={primary}><Sparkles className="size-4" />Review in fields</Link><Link href="/artist-dashboard/import/" className={secondary}><FileText className="size-4" />Upload PDF</Link></div>
           </div>
@@ -252,7 +258,7 @@ export function PassportUpdatesInbox() {
         ) : (
           <>
             {safeClaims.length > 0 && (
-              <div className="flex flex-col gap-2 border-b border-[#EEEAF6] py-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex flex-col gap-2 border-b border-[#EEEAF6] py-2.5 sm:flex-row sm:items-center sm:justify-between">
                 <p className="text-xs leading-5 text-[#746E80]">{safeClaims.length} high-confidence factual update{safeClaims.length === 1 ? "" : "s"} can be approved together. Descriptions and conflicts stay individual.</p>
                 <button type="button" className={secondary} disabled={activeId === "bulk"} onClick={() => void approveSafe()}>{activeId === "bulk" ? <Loader2 className="size-4 animate-spin" /> : <CheckCheck className="size-4" />}Approve safe facts</button>
               </div>
@@ -260,25 +266,49 @@ export function PassportUpdatesInbox() {
 
             <div className="divide-y divide-[#EEEAF6]">
               {groupedByField.map(([label, fieldClaims]) => (
-                <section key={label} className="py-5" aria-labelledby={`field-${label.replace(/[^a-z0-9]+/gi, "-").toLowerCase()}`}>
-                  <div className="mb-3 flex items-center justify-between gap-3"><h2 id={`field-${label.replace(/[^a-z0-9]+/gi, "-").toLowerCase()}`} className="font-serif text-xl font-semibold text-[#292631]">{label}</h2><span className="rounded-full bg-[#EEE9F8] px-2.5 py-1 text-[0.68rem] font-semibold text-[#5B4B8A]">{fieldClaims.length}</span></div>
+                <section key={label} className="py-3" aria-labelledby={`field-${label.replace(/[^a-z0-9]+/gi, "-").toLowerCase()}`}>
+                  <div className="mb-2 flex items-center justify-between gap-3"><h2 id={`field-${label.replace(/[^a-z0-9]+/gi, "-").toLowerCase()}`} className="font-serif text-lg font-semibold text-[#292631]">{label}</h2><span className="rounded-full bg-[#EEE9F8] px-2 py-0.5 text-[0.68rem] font-semibold text-[#5B4B8A]">{fieldClaims.length}</span></div>
                   <div className="divide-y divide-[#EEEAF6] border-y border-[#EEEAF6]">
                     {fieldClaims.map((claim) => {
                       const busy = activeId === claim.id
+                      const editing = editingId === claim.id
                       const draft = edits[claim.id] ?? (claim.artist_edited_value || claim.proposed_value)
                       const conflict = claim.relationship_status === "conflict"
                       const duplicate = claim.relationship_status === "duplicate"
                       return (
-                        <article key={claim.id} className="py-3">
-                          <div className="flex flex-wrap items-center justify-between gap-2 text-[0.7rem] text-[#746E80]">
-                            <p className="min-w-0 truncate"><span className="font-semibold text-[#5B4B8A]">{sourceLabel(claim)}</span>{claim.page_number ? ` · page ${claim.page_number}` : ""}</p>
-                            <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-semibold ${conflict ? "bg-amber-100 text-amber-800" : duplicate ? "bg-blue-100 text-blue-800" : "bg-[#F7F4FF] text-[#6F6882]"}`}>{conflict ? <AlertTriangle className="size-3" /> : duplicate ? <CopyCheck className="size-3" /> : null}{confidenceLabel(claim)}</span>
-                          </div>
-                          <textarea className={`${textarea} mt-2`} rows={Math.min(6, Math.max(2, draft.split("\n").length + 1))} value={draft} onChange={(event) => setEdits((current) => ({ ...current, [claim.id]: event.target.value }))} />
-                          {claim.existing_record && <details className="mt-2 text-xs text-[#746E80]"><summary className="cursor-pointer font-semibold text-[#6A5896]">Compare current Passport value</summary><p className="mt-2 whitespace-pre-wrap rounded-lg bg-[#FAF9FD] px-3 py-2 leading-5">{claim.existing_record.display_value}</p></details>}
-                          <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
-                            <details className="text-xs text-[#746E80]"><summary className="cursor-pointer inline-flex items-center gap-1 font-semibold text-[#6A5896]"><FileSearch className="size-3.5" />View source evidence</summary><div className="mt-2 max-w-2xl rounded-lg bg-[#FAF9FD] px-3 py-2 leading-5"><p>{claim.evidence_excerpt || "No readable excerpt was returned. Open the original document before approving."}</p><p className="mt-1 text-[0.68rem] text-[#8A8296]">{claim.extraction_method.replaceAll("_", " ")}</p></div></details>
-                            <div className="flex flex-wrap gap-1.5">{duplicate && <button type="button" className={quiet} disabled={busy} onClick={() => void keepCurrent(claim)}><Check className="size-3.5" />Keep current</button>}<button type="button" className={quiet} disabled={busy} onClick={() => void reject(claim)}><X className="size-3.5" />Reject</button><button type="button" className={primary} disabled={busy || !draft.trim()} onClick={() => void approve(claim)}>{busy ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />}{conflict ? "Approve replacement" : "Approve"}</button></div>
+                        <article key={claim.id} className="py-2.5">
+                          <div className="grid gap-2 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start">
+                            <div className="min-w-0">
+                              <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[0.7rem] text-[#746E80]">
+                                <p className="min-w-0 truncate"><span className="font-semibold text-[#5B4B8A]">{sourceLabel(claim)}</span>{claim.page_number ? ` · page ${claim.page_number}` : ""}</p>
+                                <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-semibold ${conflict ? "bg-amber-100 text-amber-800" : duplicate ? "bg-blue-100 text-blue-800" : "bg-[#F7F4FF] text-[#6F6882]"}`}>{conflict ? <AlertTriangle className="size-3" /> : duplicate ? <CopyCheck className="size-3" /> : null}{confidenceLabel(claim)}</span>
+                              </div>
+
+                              {editing ? (
+                                <textarea
+                                  autoFocus
+                                  aria-label={`Edit ${label} suggestion`}
+                                  className={`${textarea} mt-1.5`}
+                                  rows={Math.min(6, Math.max(2, draft.split("\n").length + 1))}
+                                  value={draft}
+                                  onChange={(event) => setEdits((current) => ({ ...current, [claim.id]: event.target.value }))}
+                                />
+                              ) : (
+                                <p className="mt-1.5 whitespace-pre-wrap text-sm leading-5 text-[#292631]">{draft}</p>
+                              )}
+
+                              <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1">
+                                <details className="text-xs text-[#746E80]"><summary className="cursor-pointer inline-flex items-center gap-1 font-semibold text-[#6A5896]"><FileSearch className="size-3.5" />Evidence</summary><div className="mt-1.5 max-w-2xl rounded-lg bg-[#FAF9FD] px-3 py-2 leading-5"><p>{claim.evidence_excerpt || "No readable excerpt was returned. Open the original document before approving."}</p><p className="mt-1 text-[0.68rem] text-[#8A8296]">{claim.extraction_method.replaceAll("_", " ")}</p></div></details>
+                                {claim.existing_record && <details className="text-xs text-[#746E80]"><summary className="cursor-pointer font-semibold text-[#6A5896]">Compare current value</summary><p className="mt-1.5 whitespace-pre-wrap rounded-lg bg-[#FAF9FD] px-3 py-2 leading-5">{claim.existing_record.display_value}</p></details>}
+                              </div>
+                            </div>
+
+                            <div className="flex flex-wrap items-center justify-end gap-1 lg:pt-4">
+                              {duplicate && <button type="button" className={quiet} disabled={busy} onClick={() => void keepCurrent(claim)}><Check className="size-3.5" />Keep current</button>}
+                              <button type="button" className={quiet} disabled={busy} aria-expanded={editing} onClick={() => setEditingId(editing ? "" : claim.id)}><PencilLine className="size-3.5" />{editing ? "Done" : "Edit"}</button>
+                              <button type="button" className={quiet} disabled={busy} onClick={() => void reject(claim)}><X className="size-3.5" />Reject</button>
+                              <button type="button" className={compactApprove} disabled={busy || !draft.trim()} onClick={() => void approve(claim)}>{busy ? <Loader2 className="size-3.5 animate-spin" /> : <Check className="size-3.5" />}{conflict ? "Approve replacement" : "Approve"}</button>
+                            </div>
                           </div>
                         </article>
                       )
