@@ -13,6 +13,7 @@ import {
   PencilLine,
   RefreshCw,
   ShieldAlert,
+  type LucideIcon,
 } from "lucide-react"
 import { AdaptiveArtistPassportExperience } from "@/components/kleio/adaptive-artist-passport-experience"
 import { calculatePassportCompletion, type PassportCompletionResult } from "@/lib/kleio-passport-completion"
@@ -30,6 +31,12 @@ const secondary = "inline-flex min-h-10 items-center justify-center gap-2 rounde
 const compact = "inline-flex min-h-9 items-center justify-center gap-2 rounded-lg border border-[#D8D0F2] bg-white px-3 py-1.5 text-xs font-semibold text-[#5B4B8A] transition hover:bg-[#FAF8FE] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#A997E8]/15"
 
 type Mode = "overview" | "edit"
+type PassportSummaryItem = {
+  value: number
+  label: string
+  icon: LucideIcon
+  href: string | null
+}
 
 export function CreativePassportWorkspace() {
   const [mode, setMode] = useState<Mode>("overview")
@@ -90,6 +97,12 @@ export function CreativePassportWorkspace() {
 
   const imageCount = works.filter((work) => work.image_path).length
   const missing = completion?.criticalMissing ?? []
+  const summaryItems: PassportSummaryItem[] = [
+    { value: works.length, label: "Portfolio works", icon: ImageIcon, href: "/artist-dashboard/portfolio/" },
+    { value: imageCount, label: "Usable images", icon: CheckCircle2, href: "/artist-dashboard/media/" },
+    { value: profile?.cv_file_path ? 1 : 0, label: "Core documents", icon: FileText, href: null },
+    { value: applicationCount, label: "Active applications", icon: LayoutDashboard, href: "/artist-dashboard/applications/" },
+  ]
 
   return (
     <main className="h-full overflow-y-auto bg-[#FCFBFE] px-4 pb-6 pt-2 sm:px-6">
@@ -120,15 +133,13 @@ export function CreativePassportWorkspace() {
           <>
             <section className={`${surface} overflow-hidden`} aria-label="Passport summary">
               <div className="grid grid-cols-2 sm:grid-cols-4">
-                {[
-                  [works.length, "Portfolio works", ImageIcon, "/artist-dashboard/portfolio/"],
-                  [imageCount, "Usable images", CheckCircle2, "/artist-dashboard/media/"],
-                  [profile?.cv_file_path ? 1 : 0, "Core documents", FileText, null],
-                  [applicationCount, "Active applications", LayoutDashboard, "/artist-dashboard/applications/"],
-                ].map(([value, label, Icon, href], index) => {
-                  const content = <><Icon className="size-4 text-[#6A5896]" /><div><p className="text-lg font-semibold text-[#292631]">{String(value)}</p><p className="text-xs text-[#746E80]">{String(label)}</p></div></>
+                {summaryItems.map((item, index) => {
+                  const Icon = item.icon
+                  const content = <><Icon className="size-4 text-[#6A5896]" /><div><p className="text-lg font-semibold text-[#292631]">{item.value}</p><p className="text-xs text-[#746E80]">{item.label}</p></div></>
                   const className = `flex items-center gap-3 px-4 py-3 ${index % 2 ? "border-l border-[#EEEAF6]" : ""} ${index > 1 ? "border-t border-[#EEEAF6] sm:border-t-0 sm:border-l" : ""}`
-                  return href ? <Link key={String(label)} href={String(href)} className={`${className} transition hover:bg-[#FCFBFE]`}>{content}</Link> : <button key={String(label)} type="button" onClick={() => setMode("edit")} className={`${className} text-left transition hover:bg-[#FCFBFE]`}>{content}</button>
+                  return item.href
+                    ? <Link key={item.label} href={item.href} className={`${className} transition hover:bg-[#FCFBFE]`}>{content}</Link>
+                    : <button key={item.label} type="button" onClick={() => setMode("edit")} className={`${className} text-left transition hover:bg-[#FCFBFE]`}>{content}</button>
                 })}
               </div>
             </section>
