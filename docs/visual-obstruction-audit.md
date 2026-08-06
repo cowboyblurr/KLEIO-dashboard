@@ -3,14 +3,14 @@
 Generated from the current branch. This is an inventory, not an automatic verdict: every flagged surface requires product review.
 
 - Files scanned: 266
-- Files flagged: 105
-- Flagged lines: 262
+- Files flagged: 106
+- Flagged lines: 261
 
 ## Highest-priority files
 
-### `components/kleio/live-artist-discovery.tsx` — score 42
+### `components/kleio/live-artist-discovery.tsx` — score 36
 
-clipped_overflow: 4, fixed: 2, large_min_height: 2, nested_scroll: 2, sticky: 2, viewport_edge: 4
+clipped_overflow: 4, fixed: 2, large_min_height: 2, nested_scroll: 2, sticky: 1, viewport_edge: 4
 
 - L18 · clipped_overflow: `const card = "overflow-hidden border border-[#E7E1F7] bg-white shadow-[0_18px_48px_rgba(82,64,130,0.06)]"`
 - L32 · large_min_height: `<article className={`${card} group flex min-h-[460px] flex-col`}>`
@@ -20,20 +20,8 @@ clipped_overflow: 4, fixed: 2, large_min_height: 2, nested_scroll: 2, sticky: 2,
 - L53 · sticky, viewport_edge: `<div className="sticky top-0 z-20 flex items-center justify-between border-b border-[#E7E1F7] bg-white/95 px-4 py-3 backdrop-blur"><p className="text-xs font-semibold uppercase tracking-[0.15em] text-[#6A5896]">Institution discovery profile</p><button type="button" onClick={onClose} className="grid size-9 place-items-center rounded-full border border-[#E7E1F7]" aria-label="Close profile"><X className="size-4" /></button></div>`
 - L55 · clipped_overflow, large_min_height: `<div><div className="relative overflow-hidden bg-[#F3EFF8]">{artist.selected_works[0]?.image_url ? <img src={artist.selected_works[0].image_url || ""} alt={artist.selected_works[0].title} className="max-h-[620px] w-full object-contain" /> : <div className="grid min-h-[420px] place-items-center"><ImageIcon className="size-10 text-[#7867AA]" /></div>}{artist.profile_image_url && <img src={artist.profile_image_url} alt={`${artist.professional_name} portrait`} className="absolute bottom-5 right-5 as`
 - L56 · clipped_overflow: `<div className="mt-8 grid gap-5 sm:grid-cols-2">{artist.selected_works.slice(1).map((work) => <figure key={work.id}><div className="grid min-h-52 place-items-center overflow-hidden bg-[#F3EFF8]">{work.image_url ? <img src={work.image_url} alt={work.title} className="max-h-[420px] w-full object-contain" /> : <ImageIcon className="size-6 text-[#7867AA]" />}</div><figcaption className="mt-2 border-t border-[#DDD7E7] pt-2 text-xs text-[#746F7C]"><strong className="text-[#292631]">{work.title}</stron`
-- L58 · sticky: `<aside className="lg:sticky lg:top-20 lg:self-start"><p className="text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-[#6A5896]">Artist-approved presentation</p><h1 className="mt-3 font-serif text-4xl tracking-[-0.05em] text-[#292631]">{artist.professional_name}</h1><p className="mt-2 text-sm text-[#746F7C]">{[artist.disciplines.join(" · "), artist.location].filter(Boolean).join(" / ")}</p><p className="mt-6 whitespace-pre-wrap text-sm leading-7 text-[#4F4957]">{artist.bio || "Biograp`
 - L70 · fixed, viewport_edge: `return <div className="fixed inset-0 z-[90] grid place-items-center bg-[#201B2B]/60 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="Invite artist"><div className="w-full max-w-xl rounded-3xl border border-[#E7E1F7] bg-white p-6 shadow-2xl"><div className="flex items-start justify-between gap-4"><div><p className="text-xs font-semibold uppercase tracking-[0.15em] text-[#6A5896]">Opportunity-linked outreach</p><h2 className="mt-2 font-serif text-2xl">Invite {artist.professional_n`
 - L88 · nested_scroll: `return <main className="h-full overflow-y-auto bg-[#FCFBFD] px-4 py-5 sm:px-6 sm:py-6"><div className="mx-auto max-w-[1320px] space-y-5"><WorkspacePageHeader eyebrow="Institution workspace" title="Artist Discovery" description="Browse artwork-led profiles that artists have explicitly chosen to share with authenticated institutions. Discovery is not an applicant ranking or a public social directory." secondaryCta={{ label: "Applicant records", href: "/artists/applicants/" }} />{message && <p role`
-
-### `components/kleio/kleio-demo-guide.tsx` — score 31
-
-clipped_overflow: 1, fixed: 2, large_max_height: 1, nested_scroll: 2, viewport_edge: 1, viewport_height: 1
-
-- L372 · fixed: `<div className="kleio-demo-guide-anchor pointer-events-none fixed bottom-4 right-4 z-40 max-md:bottom-3 max-md:right-3">`
-- L387 · fixed: `<div className="kleio-demo-guide-anchor fixed bottom-4 right-4 z-40 w-[min(100vw-1.5rem,24rem)] max-md:bottom-3 max-md:right-3" role="complementary" aria-label={locale === "es" ? "Demo guiado de KLEIO" : "KLEIO guided demo"}>`
-- L397 · viewport_height, large_max_height, clipped_overflow: `<div className="kleio-demo-guide-panel max-h-[calc(100dvh-1.5rem)] overflow-hidden rounded-2xl border border-[#E7E1F7] bg-[#F7F4FF]/95 shadow-[0_12px_40px_rgba(82,64,130,0.12)] backdrop-blur-sm">`
-- L411 · nested_scroll: `<div className="max-h-[min(64dvh,34rem)] overflow-y-auto px-3.5 py-3">`
-- L445 · nested_scroll: `<ul className="mt-2 max-h-[18rem] space-y-2 overflow-y-auto pr-1">`
-- L478 · viewport_edge: `<div className="absolute left-[0.875rem] top-5 bottom-5 border-l border-dashed border-[#D8D0F2]" aria-hidden />`
 
 ### `components/kleio/live-artist-message-center.tsx` — score 28
 
@@ -42,6 +30,17 @@ fixed: 3, nested_scroll: 1, viewport_edge: 2
 - L242 · fixed: `className="fixed bottom-5 right-5 z-40 inline-flex h-11 items-center gap-2 rounded-full border border-[#D8D0F2] bg-white px-5 text-sm font-semibold text-[#5B4B8A] shadow-[0_18px_50px_rgba(82,64,130,0.18)]"`
 - L249 · fixed, nested_scroll, viewport_edge: `<div className="fixed inset-0 z-[90] overflow-y-auto bg-[#201B2B]/55 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="Institution opportunity invitations">`
 - L295 · fixed, viewport_edge: `<div className="fixed inset-0 z-[100] grid place-items-center bg-[#201B2B]/65 p-4" role="dialog" aria-modal="true" aria-label="Report outreach">`
+
+### `components/kleio/kleio-demo-guide.tsx` — score 22
+
+clipped_overflow: 1, fixed: 2, nested_scroll: 2, viewport_edge: 1
+
+- L383 · fixed: `<div className="kleio-demo-guide-anchor pointer-events-none fixed bottom-4 right-4 z-40 max-md:bottom-3 max-md:right-3">`
+- L398 · fixed: `<div className="kleio-demo-guide-anchor fixed bottom-4 right-4 z-40 w-[min(100vw-1.5rem,21rem)] max-md:bottom-3 max-md:right-3" role="complementary" aria-label={locale === "es" ? "Demo guiado de KLEIO" : "KLEIO guided demo"}>`
+- L408 · clipped_overflow: `<div className="kleio-demo-guide-panel max-h-[min(72dvh,38rem)] overflow-hidden rounded-2xl border border-[#E7E1F7] bg-[#F7F4FF]/95 shadow-[0_12px_40px_rgba(82,64,130,0.12)] backdrop-blur-sm">`
+- L422 · nested_scroll: `<div className="max-h-[min(54dvh,29rem)] overflow-y-auto px-3.5 py-3">`
+- L456 · nested_scroll: `<ul className="mt-2 max-h-[18rem] space-y-2 overflow-y-auto pr-1">`
+- L489 · viewport_edge: `<div className="absolute left-[0.875rem] top-5 bottom-5 border-l border-dashed border-[#D8D0F2]" aria-hidden />`
 
 ### `components/kleio/top-bar.tsx` — score 22
 
@@ -80,24 +79,6 @@ clipped_overflow: 1, fixed: 1, high_z_index: 1, nested_scroll: 2, viewport_heigh
 - L375 · nested_scroll: `<aside className="min-h-0 overflow-y-auto border-r border-[#E7E1F7] bg-[#FDFBFF] p-2">`
 - L396 · nested_scroll: `<ul className="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-4">`
 
-### `components/kleio/profile/editorial-artist-profile.tsx` — score 20
-
-clipped_overflow: 6, sticky: 1, viewport_edge: 7
-
-- L76 · clipped_overflow, viewport_edge: `<div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">`
-- L77 · viewport_edge: `<div className="absolute inset-0 bg-[radial-gradient(circle_at_15%_20%,rgba(169,151,232,0.24),transparent_34%),radial-gradient(circle_at_84%_78%,rgba(216,208,242,0.3),transparent_30%),linear-gradient(135deg,rgba(247,244,255,0.9),rgba(255,255,255,0.2))]" />`
-- L79 · viewport_edge: `className="absolute inset-0 opacity-[0.075] mix-blend-multiply"`
-- L103 · clipped_overflow: `<div className={`relative isolate overflow-hidden bg-[#F3EFF8] ${aspect}`}>`
-- L107 · viewport_edge: `<img aria-hidden="true" src={src} alt="" className="absolute inset-0 size-full scale-110 object-cover opacity-30 blur-2xl saturate-75" />`
-- L108 · viewport_edge: `<div className="absolute inset-0 bg-white/16" />`
-- L145 · clipped_overflow: `<div className="absolute bottom-4 right-4 z-20 w-24 overflow-hidden border-[5px] border-[#FCFBFD] bg-[#EEE9F4] shadow-[0_18px_50px_rgba(40,32,52,0.2)] sm:w-32 lg:-right-16 lg:bottom-8 lg:w-36">`
-- L210 · clipped_overflow: `<article className="relative mx-auto w-full max-w-[1440px] overflow-hidden bg-[#FCFBFD] text-[#242129]">`
-- L212 · viewport_edge: `<div aria-hidden="true" className="absolute -left-44 top-[54rem] size-[380px] rounded-full bg-[#F5F1FC]/70 blur-3xl" />`
-- L243 · viewport_edge: `<div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-2/5 bg-gradient-to-t from-[#201C25]/42 via-[#201C25]/10 to-transparent" />`
-- L279 · clipped_overflow: `<div className="relative overflow-hidden border border-[#E2DCEE] bg-white px-6 py-14 text-center">`
-- L287 · sticky: `<aside id="profile" className="scroll-mt-8 lg:sticky lg:top-5 lg:self-start">`
-- … 1 additional flagged lines
-
 ### `components/kleio/media-import/quick-media-import.tsx` — score 18
 
 clipped_overflow: 2, fixed: 1, large_min_height: 1, nested_scroll: 1, viewport_edge: 1, viewport_height: 1
@@ -126,6 +107,23 @@ clipped_overflow: 5, fixed: 1, high_z_index: 1, nested_scroll: 1, viewport_edge:
 - L193 · clipped_overflow: `<div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="instagram-preview-title" aria-describedby="instagram-preview-description" className="flex max-h-[96dvh] w-full max-w-6xl flex-col overflow-hidden rounded-t-[28px] border border-[#DED7EF] bg-white shadow-[0_30px_100px_rgba(25,18,40,0.3)] sm:max-h-[90vh] sm:rounded-[28px] lg:grid lg:grid-cols-[minmax(0,1.4fr)_minmax(320px,0.65fr)]">`
 - L207 · nested_scroll: `<div className="min-h-0 flex-1 overflow-y-auto px-5 py-5">`
 - L209 · clipped_overflow: `{carouselAssets.length > 1 && <div className="mt-4" aria-label="Carousel images"><p className="mb-2 text-xs font-semibold text-[#625C70]">Carousel images</p><div className="flex gap-2 overflow-x-auto pb-1">{carouselAssets.map((item) => <button key={item.id} type="button" className={`relative size-16 shrink-0 overflow-hidden rounded-xl border-2 bg-[#F3F0F7] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#A997E8]/25 ${item.id === asset.id ? "border-[#7964AD]" : "border-transpa`
+
+### `components/kleio/profile/editorial-artist-profile.tsx` — score 14
+
+clipped_overflow: 6, viewport_edge: 7
+
+- L76 · clipped_overflow, viewport_edge: `<div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">`
+- L77 · viewport_edge: `<div className="absolute inset-0 bg-[radial-gradient(circle_at_15%_20%,rgba(169,151,232,0.24),transparent_34%),radial-gradient(circle_at_84%_78%,rgba(216,208,242,0.3),transparent_30%),linear-gradient(135deg,rgba(247,244,255,0.9),rgba(255,255,255,0.2))]" />`
+- L79 · viewport_edge: `className="absolute inset-0 opacity-[0.075] mix-blend-multiply"`
+- L103 · clipped_overflow: `<div className={`relative isolate overflow-hidden bg-[#F3EFF8] ${aspect}`}>`
+- L107 · viewport_edge: `<img aria-hidden="true" src={src} alt="" className="absolute inset-0 size-full scale-110 object-cover opacity-30 blur-2xl saturate-75" />`
+- L108 · viewport_edge: `<div className="absolute inset-0 bg-white/16" />`
+- L145 · clipped_overflow: `<div className="absolute bottom-4 right-4 z-20 w-24 overflow-hidden border-[5px] border-[#FCFBFD] bg-[#EEE9F4] shadow-[0_18px_50px_rgba(40,32,52,0.2)] sm:w-32 lg:-right-16 lg:bottom-8 lg:w-36">`
+- L210 · clipped_overflow: `<article className="relative mx-auto w-full max-w-[1440px] overflow-hidden bg-[#FCFBFD] text-[#242129]">`
+- L212 · viewport_edge: `<div aria-hidden="true" className="absolute -left-44 top-[54rem] size-[380px] rounded-full bg-[#F5F1FC]/70 blur-3xl" />`
+- L243 · viewport_edge: `<div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-2/5 bg-gradient-to-t from-[#201C25]/42 via-[#201C25]/10 to-transparent" />`
+- L279 · clipped_overflow: `<div className="relative overflow-hidden border border-[#E2DCEE] bg-white px-6 py-14 text-center">`
+- L288 · clipped_overflow: `<div className="relative overflow-hidden border-y border-[#DDD7E7] bg-white/84 px-1 py-5 backdrop-blur-sm sm:px-5 lg:border lg:p-5">`
 
 ### `components/kleio/instagram-import-assist.tsx` — score 13
 
@@ -164,14 +162,12 @@ fixed: 1, nested_scroll: 1, viewport_edge: 1
 - L88 · fixed, viewport_edge: `<div className="fixed inset-x-0 top-0 z-40 flex h-14 items-center gap-3 border-b border-border bg-sidebar px-3 md:hidden">`
 - L97 · nested_scroll: `<nav className="flex-1 overflow-y-auto px-2.5 pb-3">`
 
-### `components/kleio/artist-passport-view.tsx` — score 11
+### `app/globals.css` — score 11
 
-clipped_overflow: 2, nested_scroll: 1, sticky: 1, viewport_edge: 1
+sticky: 1, viewport_height: 1
 
-- L64 · clipped_overflow: `<div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">`
-- L117 · clipped_overflow: `<div className="mb-2 h-1.5 overflow-hidden rounded-full bg-muted">`
-- L242 · nested_scroll: `<main className="h-full overflow-y-auto bg-background">`
-- L279 · sticky, viewport_edge: `<div className="lg:sticky lg:top-0">`
+- L319 · sticky: `position: sticky;`
+- L321 · viewport_height: `max-height: calc(100dvh - 2rem);`
 
 ### `components/kleio/auth-gate.tsx` — score 10
 
@@ -257,8 +253,8 @@ nested_scroll: 2
 
 clipped_overflow: 1, nested_scroll: 2
 
-- L234 · nested_scroll: `{mode === "import" && <main className="h-full overflow-y-auto bg-white px-4 py-6 sm:px-6"><div className="mx-auto max-w-3xl"><ArtistImportReview onPassportChanged={() => void reloadPassport()} /></div></main>}`
-- L235 · nested_scroll, clipped_overflow: `{mode === "guided" && <main className="h-full overflow-y-auto bg-white px-4 py-6 sm:px-6"><div className="mx-auto max-w-3xl">{loading ? <div className={`${card} flex items-center gap-2 text-sm text-muted-foreground`}><Loader2 className="size-4 animate-spin" />{es ? "Cargando tu Pasaporte…" : "Loading your Passport…"}</div> : <section className={card}><div className="flex items-start justify-between gap-4"><div><p className="text-xs font-semibold uppercase tracking-[0.15em] text-[#7F6EB4]">{es ? `
+- L254 · nested_scroll: `{mode === "import" && <main className="h-full overflow-y-auto bg-white px-4 py-6 sm:px-6"><div className="mx-auto max-w-3xl"><ArtistImportReview onPassportChanged={() => void reloadPassport()} /></div></main>}`
+- L255 · nested_scroll, clipped_overflow: `{mode === "guided" && <main className="h-full overflow-y-auto bg-white px-4 py-6 sm:px-6"><div className="mx-auto max-w-3xl">{loading ? <div className={`${card} flex items-center gap-2 text-sm text-muted-foreground`}><Loader2 className="size-4 animate-spin" />{es ? "Cargando tu Pasaporte…" : "Loading your Passport…"}</div> : <section className={card}><div className="flex items-start justify-between gap-4"><div><p className="text-xs font-semibold uppercase tracking-[0.15em] text-[#7F6EB4]">{es ? `
 
 ### `components/kleio/artist-dashboard-view.tsx` — score 6
 
@@ -411,6 +407,14 @@ clipped_overflow: 2, nested_scroll: 1
 - L137 · clipped_overflow: `{loading ? <div className="flex items-center justify-center rounded-[22px] border border-[#E7E1F7] bg-white p-10 text-sm text-[#746E80]"><Loader2 className="mr-2 size-4 animate-spin" />Loading your private media library…</div> : visible.length ? <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">{visible.map((item) => <article key={item.id} className="group overflow-hidden rounded-[22px] border border-[#E7E1F7] bg-white shadow-[0_14px_38px_rgba(82,64,130,0.05)]">`
 - L138 · clipped_overflow: `<div className="relative grid aspect-[4/3] place-items-center overflow-hidden bg-[#F4F1F8]">{item.previewUrl ? <img src={item.previewUrl} alt="" className="size-full object-cover transition duration-500 group-hover:scale-[1.02]" loading="lazy" /> : item.mediaKind === "document" ? <FileText className="size-9 text-[#75639E]" /> : <ImageIcon className="size-9 text-[#75639E]" />}<span className="absolute left-2 top-2 rounded-full bg-white/95 px-2.5 py-1 text-[0.65rem] font-semibold text-[#5B4B8A]">{`
 
+### `components/kleio/artist-passport-view.tsx` — score 3
+
+clipped_overflow: 2, nested_scroll: 1
+
+- L64 · clipped_overflow: `<div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">`
+- L117 · clipped_overflow: `<div className="mb-2 h-1.5 overflow-hidden rounded-full bg-muted">`
+- L242 · nested_scroll: `<main className="h-full overflow-y-auto bg-background">`
+
 ### `components/kleio/artist-profile-page-view.tsx` — score 3
 
 nested_scroll: 1
@@ -534,8 +538,8 @@ nested_scroll: 1
 
 clipped_overflow: 1, nested_scroll: 1
 
-- L92 · nested_scroll: `<main className="h-full overflow-y-auto bg-[#FCFBFE] px-4 py-5 sm:px-6 sm:py-6">`
-- L94 · clipped_overflow: `<header className={`${surface} overflow-hidden`}>`
+- L93 · nested_scroll: `<main className="h-full overflow-y-auto bg-[#FCFBFE] px-4 py-5 sm:px-6 sm:py-6">`
+- L95 · clipped_overflow: `<header className={`${surface} overflow-hidden`}>`
 
 ### `components/kleio/demo-page-shell.tsx` — score 3
 
@@ -587,11 +591,3 @@ clipped_overflow: 3, nested_scroll: 1
 - L112 · clipped_overflow: `<div className="grid aspect-[4/5] place-items-center overflow-hidden rounded-xl border border-[#D8D0F2] bg-[#F7F4FF]">`
 - L130 · clipped_overflow: `<section className={`${card} relative overflow-hidden`}>`
 - L147 · clipped_overflow: `<div><div className="flex items-end justify-between gap-3"><div><h3 className="text-sm font-semibold text-[#292631]">Works included in discovery</h3><p className="mt-1 text-xs text-[#7F7890]">Choose up to eight works. Other portfolio records remain private unless submitted in an application.</p></div><span className="text-xs font-semibold text-[#6A5896]">{selectedWorkIds.length}/8</span></div>{works.length ? <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{works.map((work) => <but`
-
-### `components/kleio/live-artist-passport-editor.tsx` — score 3
-
-clipped_overflow: 2, nested_scroll: 1
-
-- L190 · nested_scroll: `<main className="h-full overflow-y-auto bg-white px-4 py-5 sm:px-6 sm:py-6">`
-- L213 · clipped_overflow: `<section className={`${card} relative overflow-hidden`}>`
-- L225 · clipped_overflow: `<div className="grid aspect-[4/5] place-items-center overflow-hidden border border-[#D8D0F2] bg-[#F7F4FF]">`
