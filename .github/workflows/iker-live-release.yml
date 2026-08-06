@@ -1,0 +1,95 @@
+name: One-time Iker Live Review Release
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - .github/workflows/iker-live-release.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: iker-live-review-release
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    name: Build and publish current KLEIO
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out release candidate
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+          run_install: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Validate artist workspace fixes
+        run: |
+          pnpm run typecheck
+          pnpm run audit:artist-import
+          pnpm run audit:universal-media
+          pnpm run audit:upload-to-passport
+          pnpm run audit:document-intelligence
+
+      - name: Build custom-domain export
+        env:
+          GITHUB_ACTIONS: "true"
+          NEXT_PUBLIC_BASE_PATH: ""
+          NEXT_PUBLIC_SITE_URL: https://www.kleioarthouse.com
+          NEXT_PUBLIC_SUPABASE_URL: https://trekynurdgxgtaaqqtyq.supabase.co
+          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_XdYXvd0fQm3IJKxNrFXgUQ_M4RgDj1M
+        run: pnpm run build
+
+      - name: Verify release artifact
+        run: |
+          test -f out/index.html
+          test -f out/CNAME
+          grep -Fq "www.kleioarthouse.com" out/CNAME
+          test -f out/artist-dashboard/profile/index.html
+          test -f out/artist-dashboard/import-studio/index.html
+          touch out/.nojekyll
+
+      - name: Upload GitHub Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./out
+
+      - name: Deploy GitHub Pages artifact
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+      - name: Verify custom domain is serving the release
+        shell: bash
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 30); do
+            homepage="$(curl --silent --show-error --location --max-time 30 "https://www.kleioarthouse.com/?iker_release=${GITHUB_SHA}" || true)"
+            profile_status="$(curl --silent --show-error --location --output /dev/null --write-out '%{http_code}' --max-time 30 "https://www.kleioarthouse.com/artist-dashboard/profile/?iker_release=${GITHUB_SHA}" || true)"
+            import_status="$(curl --silent --show-error --location --output /dev/null --write-out '%{http_code}' --max-time 30 "https://www.kleioarthouse.com/artist-dashboard/import-studio/?iker_release=${GITHUB_SHA}" || true)"
+            if printf '%s' "$homepage" | grep -Fq "Enter your KLEIO workspace" && [ "$profile_status" = "200" ] && [ "$import_status" = "200" ]; then
+              echo "Live KLEIO release verified on the custom domain."
+              exit 0
+            fi
+            echo "Waiting for Pages propagation: attempt ${attempt}/30; profile=${profile_status}; import=${import_status}"
+            sleep 10
+          done
+          echo "Custom-domain verification did not confirm the release."
+          exit 1
