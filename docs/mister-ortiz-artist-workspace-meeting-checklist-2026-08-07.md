@@ -7,9 +7,10 @@ Meeting date: August 7, 2026
 1. Profile-photo uploads are allowed through the active artist image path.
 2. Safe CV facts can use the extracted value when the artist has not edited the suggestion.
 3. Spanish workspaces use a focused Spanish CV upload and analysis screen.
-4. Confidence is explained as evidence strength, not as automatic truth.
-5. Artist-written profile content remains in its original language unless the artist explicitly requests a translated version.
-6. Repeated discipline and medium labels are shown once in the public-profile preview.
+4. The suggestion-review screen and document errors also remain in Spanish.
+5. Confidence is explained as evidence strength, not as automatic truth.
+6. Artist-written profile content remains in its original language unless the artist explicitly requests a translated version.
+7. Repeated discipline and medium labels are shown once in the artist-profile preview.
 
 ## Five-minute walkthrough
 
@@ -24,7 +25,7 @@ Meeting date: August 7, 2026
 
 ## Pass criteria
 
-- No mixed English/Spanish copy in the focused Spanish CV flow.
+- No mixed English/Spanish copy in the focused Spanish CV and suggestion-review flow.
 - Profile photo uploads without being removed after storage succeeds.
 - Approving a safe fact does not show “Confirmed information cannot be empty.”
 - Existing profile information is not visibly repeated after CV analysis.
