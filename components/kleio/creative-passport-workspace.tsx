@@ -11,7 +11,6 @@ import {
   FileText,
   Globe2,
   ImageIcon,
-  Instagram,
   LayoutDashboard,
   Loader2,
   MapPin,
@@ -68,6 +67,7 @@ function PassportHeader({ profile, completion, pendingReviewCount, preview = fal
   const name = profile?.professional_name?.trim() || "Your Creative Passport"
   const descriptor = profile?.disciplines?.[0] || "Professional artist record"
   const updatedAt = formatUpdatedAt(profile)
+  const completionPercentage = completion?.percentage ?? 0
 
   return (
     <header className={`${surface} px-4 py-4 sm:px-5`}>
@@ -89,7 +89,7 @@ function PassportHeader({ profile, completion, pendingReviewCount, preview = fal
           </div>
           <div className="mt-3 flex flex-wrap gap-3 text-xs font-semibold text-[#5B4B8A]">
             {profile?.website_url?.trim() && <a href={profile.website_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 hover:underline"><Globe2 className="size-3.5" />Website</a>}
-            {profile?.instagram_url?.trim() && <a href={profile.instagram_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 hover:underline"><Instagram className="size-3.5" />Instagram</a>}
+            {profile?.instagram_url?.trim() && <a href={profile.instagram_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 hover:underline"><span aria-hidden="true">@</span>Instagram</a>}
           </div>
         </div>
 
@@ -101,10 +101,10 @@ function PassportHeader({ profile, completion, pendingReviewCount, preview = fal
       </div>
 
       <div className="mt-4 flex items-center gap-3 border-t border-[#EEEAF6] pt-3">
-        <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-[#EEE9F8]" aria-label={`${completion.percentage}% complete`}>
-          <div className="h-full rounded-full bg-[#7F6EB4] transition-[width]" style={{ width: `${completion.percentage}%` }} />
+        <div className="h-2 flex-1 overflow-hidden rounded-full bg-[#EEE9F8]" aria-label={`${completionPercentage}% complete`}>
+          <div className="h-full rounded-full bg-[#7F6EB4] transition-[width]" style={{ width: `${completionPercentage}%` }} />
         </div>
-        <span className="shrink-0 text-xs font-semibold text-[#5B4B8A]">{completion.percentage}% complete</span>
+        <span className="shrink-0 text-xs font-semibold text-[#5B4B8A]">{completionPercentage}% complete</span>
       </div>
     </header>
   )
@@ -250,7 +250,8 @@ function ContinuePassport({ completion, onEdit }: { completion: PassportCompleti
         <div className="flex items-start gap-3">
           <ShieldAlert className="mt-0.5 size-5 shrink-0 text-amber-700" />
           <div>
-            <h2 id="continue-passport-title" className="text-sm font-semibold text-[#292631]">Continue building your Passport</h2>
+            <p className="text-[0.68rem] font-semibold uppercase tracking-[0.12em] text-[#7F6EB4]">Next information to complete</p>
+            <h2 id="continue-passport-title" className="mt-1 text-sm font-semibold text-[#292631]">Continue building your Passport</h2>
             <p className="mt-1 text-xs leading-5 text-[#746E80]">The next useful additions are shown here without replacing the record you already completed.</p>
           </div>
         </div>
@@ -264,6 +265,20 @@ function ContinuePassport({ completion, onEdit }: { completion: PassportCompleti
           </button>
         ))}
       </div>
+      <details className="mt-3 border-t border-[#EEEAF6] pt-3">
+        <summary className="cursor-pointer text-xs font-semibold text-[#5B4B8A]">View completion rules by category</summary>
+        <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+          {completion.categories.map((item) => (
+            <div key={item.key} className="flex items-start justify-between gap-3 rounded-lg bg-white px-3 py-2.5">
+              <div>
+                <p className="text-xs font-semibold text-[#292631]">{item.label}</p>
+                <p className="mt-0.5 text-[0.7rem] leading-4 text-[#746E80]">{item.complete ? "Ready" : item.explanation}</p>
+              </div>
+              <span className={`text-[0.65rem] font-semibold ${item.complete ? "text-emerald-700" : "text-[#5B4B8A]"}`}>{item.complete ? "Complete" : item.tier}</span>
+            </div>
+          ))}
+        </div>
+      </details>
     </section>
   )
 }
@@ -396,7 +411,7 @@ export function CreativePassportWorkspace() {
             <p className="min-w-0 truncate text-xs text-[#746E80]"><span className="font-semibold text-[#5B4B8A]">Creative Passport</span> · Edit your reusable artist information</p>
             <div className="flex shrink-0 items-center gap-2">
               <button type="button" className={compact} onClick={() => setGuidanceOpen((value) => !value)} aria-expanded={guidanceOpen}><ChevronDown className={`size-3.5 transition-transform ${guidanceOpen ? "rotate-180" : ""}`} />Why it matters</button>
-              <button type="button" className={compact} onClick={() => { setRevision((value) => value + 1); setMode("overview") }}><LayoutDashboard className="size-3.5" />Passport view</button>
+              <button type="button" className={compact} onClick={() => { setRevision((value) => value + 1); setMode("overview") }}><LayoutDashboard className="size-3.5" />Overview</button>
             </div>
           </div>
           {guidanceOpen && <div className="mx-auto mt-2 max-w-[1180px] border-t border-[#EEEAF6] pt-2 text-xs leading-5 text-[#5F5968]">Your Passport is the artist-approved source record KLEIO can reuse for readiness and drafting. Gemini suggestions remain editable and private until you approve them in the matching field.</div>}
