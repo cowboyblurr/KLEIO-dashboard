@@ -1,0 +1,30 @@
+name: Apply Visual Convenience Pass
+
+on:
+  push:
+    branches:
+      - ui/document-result-controls
+    paths:
+      - scripts/apply_visual_convenience_pass.py
+      - .github/workflows/apply-visual-convenience-pass.yml
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ui/document-result-controls
+          fetch-depth: 0
+      - name: Apply site-wide convenience pass
+        run: python scripts/apply_visual_convenience_pass.py
+      - name: Commit convenience improvements
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/globals.css components/kleio/adaptive-artist-passport-experience.tsx components/kleio/artist-passport-view.tsx components/kleio/creative-passport-workspace.tsx components/kleio/kleio-demo-guide.tsx components/kleio/live-artist-discovery.tsx components/kleio/profile/editorial-artist-profile.tsx
+          git diff --cached --quiet || git commit -m "Reduce pinned and obstructive workspace surfaces"
+          git push origin HEAD:ui/document-result-controls
