@@ -21,12 +21,12 @@ jobs:
         with:
           ref: ui/document-result-controls
           fetch-depth: 0
-      - name: Inventory sticky, fixed and oversized surfaces
+      - name: Inventory sticky, fixed and oversized surfaces after the convenience pass
         run: python scripts/audit_visual_obstructions.py
       - name: Commit audit report
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add docs/visual-obstruction-audit.json docs/visual-obstruction-audit.md
-          git diff --cached --quiet || git commit -m "Audit site-wide visual obstructions"
+          git diff --cached --quiet || git commit -m "Refresh site-wide visual obstruction audit"
           git push origin HEAD:ui/document-result-controls
