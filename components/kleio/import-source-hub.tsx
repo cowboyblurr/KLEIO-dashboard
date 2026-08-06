@@ -28,6 +28,7 @@ const COPY = {
     deferredBody: "These foundations remain in the codebase but are disabled in both the interface and database beta gate. They will not compete with direct PDF upload until demand, reliability, review completion, and operational readiness support activation.",
     deferred: "Deferred",
     deferredAria: "Deferred import sources",
+    websiteImport: "Website Import",
   },
   es: {
     eyebrow: "Beta de documentos para artistas",
@@ -49,6 +50,7 @@ const COPY = {
     deferredBody: "Estas conexiones permanecen desactivadas para que no compitan con el flujo activo de PDF hasta que su fiabilidad y preparación operativa permitan activarlas.",
     deferred: "Pospuesto",
     deferredAria: "Fuentes de importación pospuestas",
+    websiteImport: "Importación web",
   },
 } as const
 
@@ -98,7 +100,7 @@ export function ImportSourceHub() {
         <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4" aria-label={copy.deferredAria}>
           <div className="rounded-xl border border-[#E7E1F7] bg-[#FAF9FD] px-4 py-3 text-sm text-[#746E80]"><Cloud className="mb-2 size-4" /><strong className="text-[#625C70]">Google Drive</strong><span className="block text-xs font-semibold uppercase tracking-wide">{copy.deferred}</span></div>
           <div className="rounded-xl border border-[#E7E1F7] bg-[#FAF9FD] px-4 py-3 text-sm text-[#746E80]"><Images className="mb-2 size-4" /><strong className="text-[#625C70]">Instagram</strong><span className="block text-xs font-semibold uppercase tracking-wide">{copy.deferred}</span></div>
-          <div className="rounded-xl border border-[#E7E1F7] bg-[#FAF9FD] px-4 py-3 text-sm text-[#746E80]"><Cloud className="mb-2 size-4" /><strong className="text-[#625C70]">Website Import</strong><span className="block text-xs font-semibold uppercase tracking-wide">{copy.deferred}</span></div>
+          <div className="rounded-xl border border-[#E7E1F7] bg-[#FAF9FD] px-4 py-3 text-sm text-[#746E80]"><Cloud className="mb-2 size-4" /><strong className="text-[#625C70]">{copy.websiteImport}</strong><span className="block text-xs font-semibold uppercase tracking-wide">{copy.deferred}</span></div>
           <div className="rounded-xl border border-[#E7E1F7] bg-[#FAF9FD] px-4 py-3 text-sm text-[#746E80]"><Images className="mb-2 size-4" /><strong className="text-[#625C70]">Pinterest</strong><span className="block text-xs font-semibold uppercase tracking-wide">{copy.deferred}</span></div>
         </div>
       </section>
