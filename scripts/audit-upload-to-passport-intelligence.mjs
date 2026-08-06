@@ -50,8 +50,9 @@ requireText(extractor, /sourceId/, "The extractor must operate on canonical sour
 requireText(extractor, /artist_extraction_jobs/, "The extractor must persist idempotent extraction jobs.")
 requireText(extractor, /artist_import_proposals/, "The extractor must persist reviewable claims rather than overwrite the Passport.")
 requireText(extractor, /classification: input\.classification/, "Extraction results must persist the artist-confirmed document family on the canonical source.")
-requireText(extractor, /sensitivity === "standard" \? mergedText : ""/, "Sensitive sources must not retain full extracted text in the generic job record.")
-requireText(extractor, /ocr_required/, "Image-only PDF handling must report the OCR limitation honestly.")
+requireText(extractor, /sensitivity === "standard" \? merged : ""/, "Sensitive sources must not retain full extracted text in the generic job record.")
+requireText(extractor, /text_layer_status: textLayerStatus\(input\.nativePages\)/, "Image-only and partial-text PDF handling must preserve the verified text-layer state.")
+requireText(extractor, /ocr_status: "not_required"/, "The extractor must preserve an explicit OCR state rather than imply OCR was performed.")
 requireText(extractor, /artist_confirmation_required: true/, "Extraction must always require artist confirmation.")
 
 requireText(intelligence, /confirmPassportClaim/, "Missing artist-controlled Passport confirmation action.")
