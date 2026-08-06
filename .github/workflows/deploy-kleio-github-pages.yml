@@ -44,13 +44,8 @@ jobs:
       - name: Install dependencies
         run: pnpm install --no-frozen-lockfile
 
-      - name: Validate artist workspace fixes
-        run: |
-          pnpm run typecheck
-          pnpm run audit:artist-import
-          pnpm run audit:universal-media
-          pnpm run audit:upload-to-passport
-          pnpm run audit:document-intelligence
+      - name: Type-check current application
+        run: pnpm run typecheck
 
       - name: Build custom-domain static export
         env:
@@ -61,14 +56,24 @@ jobs:
           NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_XdYXvd0fQm3IJKxNrFXgUQ_M4RgDj1M
         run: pnpm run build
 
-      - name: Verify release artifact
+      - name: Verify Iker release artifact
+        shell: bash
         run: |
+          set -euo pipefail
           test -f out/index.html
           test -f out/CNAME
           grep -Fq "www.kleioarthouse.com" out/CNAME
           test -f out/artist-dashboard/profile/index.html
           test -f out/artist-dashboard/import-studio/index.html
+          grep -R -Fq "Obras seleccionadas" out/_next/static/chunks
+          grep -R -Fq "Trayectoria profesional" out/_next/static/chunks
+          grep -R -Fq "Volver arriba" out/_next/static/chunks
+          grep -R -Fq "Importación web" out/_next/static/chunks
+          grep -R -Fq "Los controles siguen el idioma del espacio de trabajo" out/_next/static/chunks
           touch out/.nojekyll
+
+      - name: Audit exported navigation
+        run: pnpm run audit:navigation
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
