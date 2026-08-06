@@ -7,6 +7,7 @@ import { ArtistProfileContextBar } from "@/components/kleio/artist-profile-conte
 import { EditorialArtistProfile } from "@/components/kleio/profile/editorial-artist-profile"
 import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
 import { disciplineLabel } from "@/lib/kleio-artist-taxonomy"
+import { kleioSpanishError } from "@/lib/kleio-spanish-error"
 import {
   loadArtistPassport,
   loadPortfolioWorks,
@@ -41,7 +42,7 @@ const COPY = {
   },
   es: {
     privateTitle: "Vista previa privada del perfil.",
-    privateBody: "Creada con el Pasaporte Creativo y el portafolio guardados en esta cuenta.",
+    privateBody: "Los controles siguen el idioma del espacio de trabajo; el texto escrito por el artista conserva su idioma original.",
     edit: "Editar información",
     works: "Gestionar obras",
     loading: "Cargando la vista previa del perfil…",
@@ -109,6 +110,9 @@ export function LiveArtistProfilePreview() {
   }, [presentation.featured_work_id, works])
   const disciplines = (passport?.disciplines ?? []).map((value) => disciplineLabel(value, locale))
   const profileTags = uniqueDisplayValues([...disciplines, ...(passport?.mediums ?? [])])
+  const displayedError = locale === "es" && error
+    ? kleioSpanishError(new Error(error), "No fue posible cargar la vista previa del perfil.")
+    : error
 
   return (
     <main className="h-full overflow-y-auto bg-white px-4 py-4 text-[#292631] sm:px-6">
@@ -120,13 +124,14 @@ export function LiveArtistProfilePreview() {
         </div>
 
         {loading && <div role="status" className="flex items-center gap-2 border border-[#E7E1F7] bg-white p-5 text-sm text-muted-foreground"><Loader2 className="size-4 animate-spin" />{copy.loading}</div>}
-        {error && <div role="alert" className="border border-red-200 bg-white p-5 text-sm text-red-700">{error}</div>}
+        {displayedError && <div role="alert" className="border border-red-200 bg-white p-5 text-sm text-red-700">{displayedError}</div>}
         {!loading && !error && !passport && <section className="border border-[#E7E1F7] bg-white p-7 text-center"><UserRound className="mx-auto size-7 text-[#5B4B8A]" /><h2 className="mt-3 font-serif text-xl font-semibold">{copy.emptyTitle}</h2><p className="mx-auto mt-2 max-w-xl text-sm leading-relaxed text-muted-foreground">{copy.emptyBody}</p><Link href="/artist-dashboard/passport/" className={`${primary} mt-5`}>{copy.create}</Link></section>}
 
         {!loading && !error && passport && (
           <div className="kleio-live-artist-profile-position">
-            <style>{`.kleio-live-artist-profile-position img[alt$=" portrait"] { object-position: ${presentation.profile_image_position_x}% ${presentation.profile_image_position_y}% !important; }`}</style>
+            <style>{`.kleio-live-artist-profile-position img[alt$=" portrait"], .kleio-live-artist-profile-position img[alt^="retrato "] { object-position: ${presentation.profile_image_position_x}% ${presentation.profile_image_position_y}% !important; }`}</style>
             <EditorialArtistProfile
+              locale={locale}
               eyebrow={copy.eyebrow}
               data={{
                 name: passport.professional_name || copy.missingName,
