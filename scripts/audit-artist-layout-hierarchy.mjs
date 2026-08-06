@@ -39,7 +39,7 @@ requirePattern(applications, /<details[\s\S]*Notifications/, "Notifications must
 
 const portfolioPage = read("app/artist-dashboard/portfolio/page.tsx")
 requirePattern(portfolioPage, /FocusedVisualArtistPortfolioStudio/, "Portfolio must use the artwork-first live workspace.")
-forbidPattern(portfolioPage, /VisualArtistPortfolioStudio[^F]/, "The decorative Portfolio hero implementation must not return to the live route.")
+forbidPattern(portfolioPage, /\bVisualArtistPortfolioStudio\b/, "The decorative Portfolio hero implementation must not return to the live route.")
 
 const portfolio = read("components/kleio/focused-visual-artist-portfolio-studio.tsx")
 requirePattern(portfolio, /title="Portfolio"[\s\S]*Add artwork/, "Portfolio must move directly from the page purpose to artwork controls.")
