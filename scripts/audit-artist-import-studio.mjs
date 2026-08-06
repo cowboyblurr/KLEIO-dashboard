@@ -3,88 +3,95 @@ import path from "node:path"
 
 const root = process.cwd()
 const read = (relative) => fs.readFileSync(path.join(root, relative), "utf8")
-const requireText = (file, text, message) => { if (!read(file).includes(text)) throw new Error(`${message} (${file})`) }
-const forbidText = (file, text, message) => { if (read(file).includes(text)) throw new Error(`${message} (${file})`) }
+const failures = []
+const requireText = (file, text, message) => { if (!read(file).includes(text)) failures.push(`${message} (${file})`) }
+const forbidText = (file, text, message) => { if (read(file).includes(text)) failures.push(`${message} (${file})`) }
 
-const studio = "components/kleio/artist-import-studio.tsx"
 const page = "components/kleio/artist-import-studio-page.tsx"
 const hub = "components/kleio/import-source-hub.tsx"
-const mediaLibrary = "components/kleio/artist-media-library.tsx"
-const quick = "components/kleio/media-import/quick-media-import.tsx"
+const documents = "components/kleio/artist-document-intelligence.tsx"
+const drafting = "components/kleio/document-draft-studio.tsx"
+const client = "lib/kleio-document-intelligence.ts"
+const uploadService = "lib/kleio-upload-to-passport.ts"
+const draftClient = "lib/kleio-document-drafting.ts"
 const availability = "lib/kleio-import-source-availability.ts"
-const receipt = "lib/kleio-import-receipt.ts"
-const helper = "lib/kleio-google-drive-beta-import.ts"
-const migration = "supabase/migrations/20260803133000_beta_import_source_availability.sql"
-const instagram = "supabase/functions/instagram-import/index.ts"
-const websiteGateway = "supabase/functions/analyze-artist-website/index.ts"
+const extractor = "supabase/functions/extract-artist-materials/index.ts"
+const draftFunction = "supabase/functions/generate-artist-document-draft/index.ts"
+const interactionsShim = "supabase/functions/_shared/gemini-interactions-fetch-shim.ts"
+const extractionEntrypoint = "supabase/functions/extract-artist-materials/interactions-entrypoint.ts"
+const draftEntrypoint = "supabase/functions/generate-artist-document-draft/interactions-entrypoint.ts"
 
-requireText(studio, "<dialog", "Import Studio must use native modal dialog semantics")
-requireText(studio, 'aria-labelledby="drive-import-title"', "Import Studio must expose an accessible name")
-requireText(studio, "drive.file", "Drive selection must use the narrow file-specific scope")
-requireText(studio, "MULTISELECT_ENABLED", "Drive Picker must support intentional multiple selection")
-requireText(studio, "Confirm private import", "private Media Library confirmation must be explicit")
-requireText(studio, "View Media Library", "completed import must provide a Media Library handoff")
-requireText(studio, 'href="/artist-dashboard/media/"', "Media Library handoff must use the canonical route")
-requireText(studio, "Import more", "completed import must allow another import without redirecting")
-requireText(studio, 'role="status"', "completed import must announce success accessibly")
-requireText(studio, "duplicateCount", "completed import must distinguish duplicate selections")
-requireText(studio, "failedCount", "completed import must report partial failures")
-requireText(studio, "saveMediaImportReceipt", "completed import must persist a receipt for direct Media Library navigation")
-requireText(studio, "saveArtworkImportDraftLocally", "import progress must remain locally recoverable")
-requireText(studio, "saveArtworkImportDraft", "import progress must autosave remotely")
-requireText(studio, "h-dvh", "mobile Import Studio must use the full viewport")
-forbidText(studio, 'type="file"', "device file inputs must not be exposed during the initial beta")
-forbidText(studio, 'sourceType: "device_image"', "device upload must not be activatable through stale code")
+requireText(page, "<ImportSourceHub />", "artist import page must explain the active source")
+requireText(page, "<ArtistDocumentIntelligence />", "artist import page must mount private PDF analysis")
+requireText(page, "<DocumentDraftStudio />", "artist import page must mount approved-evidence drafting")
+forbidText(page, "<ArtistImportStudio />", "legacy Drive studio must not compete with direct PDF analysis")
 
-requireText(hub, "Google Drive is the active import source", "source hub must make the active beta source unambiguous")
-requireText(hub, "Instagram", "Instagram must remain visible only as future capability context")
-requireText(hub, "Pinterest", "Pinterest must remain visible only as future capability context")
-requireText(hub, "Coming soon", "inactive connected providers must be labeled honestly")
-forbidText(hub, "Connect Instagram", "Instagram must not expose an active connection control")
-forbidText(hub, "Connect Pinterest", "Pinterest must not expose an active connection control")
-forbidText(hub, 'href="#website-import"', "Website Import must not compete with Google Drive in the artist beta")
+requireText(hub, "Direct PDF upload is the active import method", "direct PDF must be the active beta source")
+requireText(hub, "device_document", "source hub must read the direct-document gate")
+requireText(hub, "availability?.pdf", "source hub must read the PDF gate")
+requireText(hub, "Deferred", "inactive connected providers must be labeled honestly")
 
-requireText(page, "<ArtistImportStudio />", "Google Drive Import Studio must remain mounted")
-forbidText(page, "WebsiteImportAssist", "Website Import must be feature-gated out of the artist beta UI")
-forbidText(page, "InstagramImportAssist", "Instagram Import must be feature-gated out of the artist beta UI")
-forbidText(page, "PinterestImportAssist", "Pinterest Import must be feature-gated out of the artist beta UI")
+requireText(documents, 'accept="application/pdf,.pdf"', "document workflow must accept PDF files only")
+requireText(documents, "Upload and understand document", "artist must deliberately initiate Gemini analysis")
+requireText(documents, "Understand this document with Gemini", "artist must be able to opt out")
+requireText(documents, "What this document is", "analysis must display a synopsis")
+requireText(documents, "Information KLEIO can audit", "analysis must display extractable categories")
+requireText(documents, "Relevance", "analysis must display relevance")
+requireText(documents, "Pages perceived", "analysis must display page coverage")
+requireText(documents, "Supported updates", "analysis must display supported findings")
+requireText(documents, "Needs resolution", "analysis must display conflicts and uncertainty")
+requireText(documents, "Review all extracted information", "analysis must link to full evidence review")
+requireText(documents, "Private preview", "artist must retain private source access")
+requireText(documents, "Analyze again", "artist must be able to initiate reanalysis")
+requireText(documents, "Remove analysis", "artist must be able to keep the PDF without analysis")
+requireText(documents, "Delete source", "artist must retain deletion control")
+requireText(documents, 'role="status"', "processing states must be announced accessibly")
 
-requireText(quick, "New beta import", "Quick Media must separate new imports from internal reuse")
-requireText(quick, "Google Drive", "Quick Media must use Google Drive as its only new import source")
-requireText(quick, "Reuse existing private media", "existing KLEIO media may remain reusable internally")
-forbidText(quick, 'type="file"', "Quick Media must not expose device upload during the initial beta")
-forbidText(quick, "Instagram Professional Account", "Quick Media must not surface Instagram as an interactive provider")
+requireText(client, "15 * 1024 * 1024", "client must preserve the 15 MB PDF limit")
+requireText(client, "validate-artist-document", "client must retain server-side PDF validation")
+requireText(client, "requestSourceExtraction", "client must use the shared extraction service")
+requireText(client, "reanalyzeArtistDocument", "manual reanalysis must be an explicit client action")
+requireText(client, "analysisSummary", "client must expose the canonical analysis summary")
+requireText(uploadService, "extract-artist-materials", "shared extraction service must invoke the protected analyzer")
 
-requireText(mediaLibrary, "readMediaImportReceipt", "Media Library must restore the completed import result")
-requireText(mediaLibrary, "kleio:media-import-completed", "Media Library must refresh when an import completes in the same session")
-requireText(mediaLibrary, "Import from Google Drive", "Media Library must direct new imports to the only active source")
-forbidText(mediaLibrary, "QuickMediaImport", "Media Library must not expose direct device upload during the initial beta")
+requireText(drafting, "Prepared by KLEIO with Gemini from artist-approved records", "draft UI must label its approved evidence source")
+requireText(drafting, "Private until approved", "draft UI must explain its private pre-approval state")
+requireText(drafting, "Approve and save to Passport", "draft UI must require an explicit approval action")
+requireText(drafting, "Save private edit", "draft UI must allow saving without approval")
+requireText(drafting, "Reject", "draft UI must allow rejection")
+requireText(draftClient, "generate-artist-document-draft", "draft client must use the protected function")
 
-requireText(availability, "google_drive_image: true", "frontend availability must enable Google Drive images")
-requireText(availability, "device_image: false", "frontend availability must disable device images")
-requireText(availability, "instagram_image: false", "frontend availability must disable Instagram")
-requireText(availability, "website: false", "frontend availability must disable Website Import")
-requireText(receipt, "localStorage", "Media Library import receipts must survive navigation")
-requireText(helper, "betaWasDuplicate", "Google Drive helper must distinguish existing files from new records")
-requireText(helper, "artist_confirmed_private_library_import", "private import confirmation must be recorded without public approval")
+requireText(availability, "device_document: true", "direct documents must be enabled")
+requireText(availability, "pdf: true", "PDF analysis must be enabled")
+requireText(availability, "existing_kleio_media: true", "existing private sources must remain reusable")
+requireText(availability, "google_drive_document: false", "Drive documents must remain deferred")
+requireText(availability, "instagram_image: false", "Instagram must remain deferred")
+requireText(availability, "website: false", "Website Import must remain deferred")
 
-requireText(migration, "kleio_import_source_availability", "database must retain the shared beta availability source of truth")
-requireText(migration, "enforce_beta_import_source_availability", "database must block unavailable source insertion")
-requireText(migration, "google_drive_image', true", "database must enable Google Drive image import")
-requireText(migration, "device_image', false", "database must disable device image import")
-requireText(migration, "instagram_image', false", "database must disable Instagram import")
-requireText(migration, "website', false", "database must disable Website Import during the initial beta")
-requireText(migration, "security invoker", "availability enforcement must not bypass RLS")
-forbidText(migration, "disable row level security", "availability migration must not weaken RLS")
+requireText(extractor, "gemini_native_pdf_v2", "extractor must record native-PDF Gemini analysis")
+requireText(extractor, "provider_unavailable", "extractor must preserve an honest provider failure state")
+requireText(extractor, "limited_analysis", "extractor must prevent sparse results from appearing complete")
+requireText(extractor, "artist_confirmation_required", "proposals must remain artist-controlled")
+requireText(extractor, "analysis_summary.relevance", "coverage must account for document relevance")
+requireText(draftFunction, "confirmed_facts_required", "drafting must require confirmed evidence")
+requireText(draftFunction, "unsupported_claim_detected", "drafting must reject unsupported claims")
+requireText(draftFunction, "is_sensitive", "sensitive records must be excluded from general drafting")
 
-requireText(instagram, "instagram_import_beta_disabled", "Instagram OAuth gateway must be disabled during the initial beta")
-forbidText(instagram, "META_INSTAGRAM_APP_SECRET", "disabled Instagram gateway must not load provider secrets")
-requireText(websiteGateway, "WEBSITE_IMPORT_BETA_ENABLED", "Website Import must require an explicit server-side feature gate")
-requireText(websiteGateway, "website_import_beta_disabled", "Website Import must fail closed during the initial beta")
+requireText(interactionsShim, "v1beta/interactions", "runtime adapter must use Gemini Interactions")
+requireText(interactionsShim, "store: false", "Gemini Interactions must remain stateless")
+requireText(interactionsShim, 'type: "document"', "runtime adapter must pass original PDF bytes")
+requireText(extractionEntrypoint, "installGeminiInteractionsFetchShim", "extraction must install the proven transport adapter")
+requireText(draftEntrypoint, "installGeminiInteractionsFetchShim", "drafting must install the proven transport adapter")
 
-for (const file of [studio, page, hub, mediaLibrary, quick, availability, receipt, helper, migration, instagram, websiteGateway]) {
+for (const file of [page, hub, documents, drafting, client, uploadService, draftClient, availability, extractor, draftFunction, interactionsShim, extractionEntrypoint, draftEntrypoint]) {
   forbidText(file, "AIzaSy", "Google API keys must not be committed")
   forbidText(file, "GOCSPX-", "Google client secrets must not be committed")
 }
 
-console.log("Artist beta import audit passed: Google Drive is the only active new-import source, inactive providers are feature-gated in UI and backend, private Media Library confirmation is explicit, duplicate and partial results are truthful, completed imports persist across navigation, internal library reuse remains separate, and no provider secrets are exposed.")
+if (failures.length) {
+  console.error("Artist PDF workflow audit failed:\n")
+  for (const failure of failures) console.error(`- ${failure}`)
+  process.exit(1)
+}
+
+console.log("Artist PDF workflow audit passed: direct private PDF upload, Gemini synopsis and relevance, visible evidence results, shared protected extraction, explicit draft approval controls, artist controls, and secret hygiene verified.")

@@ -70,7 +70,7 @@ const sourceFiles = sourceRoots.flatMap(walk)
 const sensitiveKeyPattern = /\b(?:artist_name|display_name|email|phone|address|artwork_title|title|caption|bio|biography|artist_statement|cv|filename|file_name|file_contents|private_url|signed_url|token|oauth_token|raw_response|error_message|stack|query|search_query|document|transcript)\s*:/i
 for (const file of sourceFiles) {
   const content = read(file)
-  for (const metadataMatch of content.matchAll(/metadata\s*:\s*\{([^{}]*)\}/g)) {
+  for (const metadataMatch of content.matchAll(/(?<![A-Za-z0-9_])metadata\s*:\s*\{([^{}]*)\}/g)) {
     const body = metadataMatch[1]
     if (sensitiveKeyPattern.test(body)) {
       failures.push(`Potential sensitive analytics metadata object in ${file}: ${body.trim().slice(0, 120)}`)

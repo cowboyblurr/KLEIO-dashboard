@@ -88,7 +88,7 @@ export function PublicOpportunityCarousel() {
       if (requestError) throw requestError
       const next = (data ?? []) as PublicOpportunityCarouselItem[]
       setItems(next)
-      if (next.length) void trackKleioProductEvent("carousel_viewed", { surface: "landing", metadata: { result_count: next.length, access: "limited_preview" } })
+      if (next.length) void trackKleioProductEvent("carousel_viewed", { surface: "landing", metadata: { result_count: next.length, mode: "limited_preview" } })
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "KLEIO could not load recent opportunities.")
     } finally {
@@ -150,7 +150,7 @@ export function PublicOpportunityCarousel() {
       void trackKleioProductEvent("carousel_card_selected", {
         surface: "landing",
         opportunityId: item.id,
-        metadata: { source: "landing_carousel", access: "limited_preview" },
+        metadata: { source: "landing_carousel", mode: "limited_preview" },
       })
     }
   }

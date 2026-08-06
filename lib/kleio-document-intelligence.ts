@@ -27,6 +27,52 @@ export const ARTIST_DOCUMENT_TYPE_OPTIONS = [
 ] as const
 
 export type ArtistSelectedDocumentType = (typeof ARTIST_DOCUMENT_TYPE_OPTIONS)[number]["value"]
+export type DocumentAnalysisQuality =
+  | "complete_review_ready"
+  | "substantial_review_ready"
+  | "limited_analysis"
+  | "classification_required"
+  | "visual_reading_limited"
+  | "provider_unavailable"
+  | "failed"
+
+export type DocumentRepresentativeClaim = {
+  claim_type: string
+  target_section: string
+  display_value: string
+  page_number: number | null
+  evidence_excerpt: string
+  evidence_mode: string
+  confidence: number
+  relationship_status: string
+  status: string
+}
+
+export type DocumentAnalysisSummary = {
+  provider?: string
+  model?: string
+  prompt_version?: string
+  schema_version?: string
+  analysis_quality?: DocumentAnalysisQuality
+  analysis_score?: number
+  coverage_explanation?: string
+  document_assessment?: Record<string, unknown>
+  sections?: Array<Record<string, unknown>>
+  analysis_summary?: Record<string, unknown>
+  unresolved_content?: Array<Record<string, unknown>>
+  claim_count?: number
+  section_count?: number
+  conflict_count?: number
+  duplicate_count?: number
+  unresolved_count?: number
+  grouped_counts?: Record<string, number>
+  representative_claims?: DocumentRepresentativeClaim[]
+  limitations?: string[]
+  original_source_preserved?: boolean
+  artist_confirmation_required?: boolean
+  gemini_visual_document_understanding?: boolean
+  [key: string]: unknown
+}
 
 export type ArtistDocumentSource = {
   id: string
@@ -55,7 +101,7 @@ export type ArtistDocumentSource = {
   keep_without_analysis: boolean
   original_filename: string | null
   source_metadata: Record<string, unknown>
-  review_summary: Record<string, unknown>
+  review_summary: DocumentAnalysisSummary
   created_at: string
   updated_at: string
   deleted_at: string | null
@@ -95,6 +141,9 @@ export type DocumentUploadResult = {
     classificationConfidence: number
     documentVersion: number
     warnings: string[]
+    analysisSummary?: DocumentAnalysisSummary
+    representativeClaims?: DocumentRepresentativeClaim[]
+    cached?: boolean
   } | null
 }
 
@@ -111,8 +160,7 @@ export type DocumentUploadStage =
 const MAX_DOCUMENT_BYTES = 15 * 1024 * 1024
 
 function selectedTypeOption(value: ArtistSelectedDocumentType) {
-  return ARTIST_DOCUMENT_TYPE_OPTIONS.find((option) => option.value === value)
-    ?? ARTIST_DOCUMENT_TYPE_OPTIONS.at(-1)!
+  return ARTIST_DOCUMENT_TYPE_OPTIONS.find((option) => option.value === value) ?? ARTIST_DOCUMENT_TYPE_OPTIONS.at(-1)!
 }
 
 export function canonicalClassificationFor(value: ArtistSelectedDocumentType): SourceClassification {
@@ -146,9 +194,7 @@ export async function validateArtistPdf(file: File) {
 
 async function validateStoredArtistDocument(sourceId: string) {
   const supabase = getSupabaseBrowserClient()
-  const { data, error } = await supabase.functions.invoke("validate-artist-document", {
-    body: { sourceId },
-  })
+  const { data, error } = await supabase.functions.invoke("validate-artist-document", { body: { sourceId } })
   if (error) throw new Error("KLEIO could not complete the server-side document safety check.")
   if (data?.error) {
     const code = String(data.error)
@@ -169,11 +215,15 @@ async function validateStoredArtistDocument(sourceId: string) {
   }
 }
 
+function normalizeSummary(value: unknown): DocumentAnalysisSummary {
+  return value && typeof value === "object" && !Array.isArray(value) ? value as DocumentAnalysisSummary : {}
+}
+
 function normalizeSource(row: Record<string, unknown>) {
   return {
     ...row,
     source_metadata: row.source_metadata && typeof row.source_metadata === "object" && !Array.isArray(row.source_metadata) ? row.source_metadata : {},
-    review_summary: row.review_summary && typeof row.review_summary === "object" && !Array.isArray(row.review_summary) ? row.review_summary : {},
+    review_summary: normalizeSummary(row.review_summary),
   } as ArtistDocumentSource
 }
 
@@ -187,9 +237,7 @@ export async function uploadArtistDocument(input: {
   await validateArtistPdf(input.file)
   input.onStage?.("checking_availability")
   const [account, availability] = await Promise.all([requireArtist(), loadBetaImportAvailability()])
-  if (!availability.device_document || !availability.pdf) {
-    throw new Error("Direct PDF analysis is not enabled for this beta workspace.")
-  }
+  if (!availability.device_document || !availability.pdf) throw new Error("Direct PDF analysis is not enabled for this beta workspace.")
 
   const supabase = getSupabaseBrowserClient()
   input.onStage?.("checking_duplicate")
@@ -212,6 +260,8 @@ export async function uploadArtistDocument(input: {
         analysis_consent_at: input.analyze === false ? null : new Date().toISOString(),
         keep_without_analysis: input.analyze === false,
         classification: canonical,
+        extraction_status: input.analyze === false ? existing.extraction_status : "queued",
+        analysis_stage: input.analyze === false ? "stored_without_analysis" : "checking_file",
         updated_at: new Date().toISOString(),
       })
       .eq("id", existing.id)
@@ -219,7 +269,6 @@ export async function uploadArtistDocument(input: {
       .select("*")
       .single()
     if (updateError) throw updateError
-
     if (input.analyze !== false) {
       input.onStage?.("server_validation")
       await validateStoredArtistDocument(String(existing.id))
@@ -227,7 +276,8 @@ export async function uploadArtistDocument(input: {
     }
     const extraction = input.analyze === false ? null : await requestSourceExtraction(String(existing.id), canonical)
     input.onStage?.("review_ready")
-    return { source: normalizeSource(updated as Record<string, unknown>), duplicate: true, extraction }
+    const { data: refreshed } = await supabase.from("artist_import_sources").select("*").eq("id", existing.id).eq("artist_user_id", account.user.id).single()
+    return { source: normalizeSource((refreshed ?? updated) as Record<string, unknown>), duplicate: true, extraction }
   }
 
   input.onStage?.("uploading")
@@ -243,41 +293,38 @@ export async function uploadArtistDocument(input: {
   const now = new Date().toISOString()
   const selected = selectedTypeOption(input.selectedType)
   const sensitivity = selected.sensitive ? "sensitive" : "standard"
-  const { data: inserted, error: insertError } = await supabase
-    .from("artist_import_sources")
-    .insert({
-      artist_user_id: account.user.id,
-      source_type: "device_document",
-      label: input.file.name,
-      storage_path: storagePath,
-      mime_type: "application/pdf",
-      byte_size: input.file.size,
-      checksum: fileChecksum,
-      extraction_status: input.analyze === false ? "pending" : "queued",
-      extraction_method: "direct_pdf_beta_v1",
-      original_filename: input.file.name,
-      source_metadata: {
-        storage_bucket: "artist-documents",
-        import_context: "creative_passport",
-        destination_type: "creative_passport",
-        artist_selected_document_type: input.selectedType,
-        upload_signature_checked: true,
-        server_revalidation_required: true,
-      },
-      media_kind: "document",
-      library_status: "available",
-      classification: canonical,
-      classification_confidence: 1,
-      classification_reason: "Artist selected this document category before analysis.",
-      privacy_level: selected.sensitive ? "restricted" : "private",
-      sensitivity,
+  const { data: inserted, error: insertError } = await supabase.from("artist_import_sources").insert({
+    artist_user_id: account.user.id,
+    source_type: "device_document",
+    label: input.file.name,
+    storage_path: storagePath,
+    mime_type: "application/pdf",
+    byte_size: input.file.size,
+    checksum: fileChecksum,
+    extraction_status: input.analyze === false ? "pending" : "queued",
+    extraction_method: "gemini_native_pdf_pending",
+    original_filename: input.file.name,
+    source_metadata: {
+      storage_bucket: "artist-documents",
+      import_context: "creative_passport",
+      destination_type: "creative_passport",
       artist_selected_document_type: input.selectedType,
-      analysis_stage: input.analyze === false ? "stopped" : "checking_file",
-      analysis_consent_at: input.analyze === false ? null : now,
-      keep_without_analysis: input.analyze === false,
-    })
-    .select("*")
-    .single()
+      upload_signature_checked: true,
+      server_revalidation_required: true,
+      provider_processing_server_side: true,
+    },
+    media_kind: "document",
+    library_status: "available",
+    classification: canonical,
+    classification_confidence: 1,
+    classification_reason: "Artist selected this document category before analysis.",
+    privacy_level: selected.sensitive ? "restricted" : "private",
+    sensitivity,
+    artist_selected_document_type: input.selectedType,
+    analysis_stage: input.analyze === false ? "stored_without_analysis" : "checking_file",
+    analysis_consent_at: input.analyze === false ? null : now,
+    keep_without_analysis: input.analyze === false,
+  }).select("*").single()
 
   if (insertError || !inserted) {
     await supabase.storage.from("artist-documents").remove([storagePath])
@@ -292,17 +339,8 @@ export async function uploadArtistDocument(input: {
     }
     const extraction = input.analyze === false ? null : await requestSourceExtraction(String(inserted.id), canonical)
     input.onStage?.("review_ready")
-    const { data: refreshed } = await supabase
-      .from("artist_import_sources")
-      .select("*")
-      .eq("id", inserted.id)
-      .eq("artist_user_id", account.user.id)
-      .single()
-    return {
-      source: normalizeSource((refreshed ?? inserted) as Record<string, unknown>),
-      duplicate: false,
-      extraction,
-    }
+    const { data: refreshed } = await supabase.from("artist_import_sources").select("*").eq("id", inserted.id).eq("artist_user_id", account.user.id).single()
+    return { source: normalizeSource((refreshed ?? inserted) as Record<string, unknown>), duplicate: false, extraction }
   } catch (reason) {
     const message = reason instanceof Error ? reason.message : "KLEIO could not analyze this document."
     throw new Error(`${message} The original PDF remains private in your KLEIO Library.`)
@@ -312,13 +350,8 @@ export async function uploadArtistDocument(input: {
 export async function loadArtistDocuments(): Promise<ArtistDocumentSource[]> {
   const account = await requireArtist()
   const supabase = getSupabaseBrowserClient()
-  const { data, error } = await supabase
-    .from("artist_import_sources")
-    .select("*")
-    .eq("artist_user_id", account.user.id)
-    .eq("media_kind", "document")
-    .is("deleted_at", null)
-    .order("updated_at", { ascending: false })
+  const { data, error } = await supabase.from("artist_import_sources").select("*")
+    .eq("artist_user_id", account.user.id).eq("media_kind", "document").is("deleted_at", null).order("updated_at", { ascending: false })
   if (error) throw error
   return (data ?? []).map((row) => normalizeSource(row as Record<string, unknown>))
 }
@@ -326,9 +359,7 @@ export async function loadArtistDocuments(): Promise<ArtistDocumentSource[]> {
 export async function createArtistDocumentPreview(source: ArtistDocumentSource) {
   const account = await requireArtist()
   if (source.artist_user_id !== account.user.id) throw new Error("This document does not belong to the active artist.")
-  const bucket = source.source_metadata.storage_bucket === "artist-documents" || source.source_type === "device_document"
-    ? "artist-documents"
-    : "artist-assets"
+  const bucket = source.source_metadata.storage_bucket === "artist-documents" || source.source_type === "device_document" ? "artist-documents" : "artist-assets"
   const supabase = getSupabaseBrowserClient()
   const { data, error } = await supabase.storage.from(bucket).createSignedUrl(source.storage_path, 600)
   if (error || !data?.signedUrl) throw new Error("A private preview could not be created.")
@@ -340,20 +371,19 @@ export async function correctArtistDocumentType(sourceId: string, selectedType: 
   const supabase = getSupabaseBrowserClient()
   const canonical = canonicalClassificationFor(selectedType)
   const option = selectedTypeOption(selectedType)
-  const { error } = await supabase
-    .from("artist_import_sources")
-    .update({
-      artist_selected_document_type: selectedType,
-      sensitivity: option.sensitive ? "sensitive" : "standard",
-      privacy_level: option.sensitive ? "restricted" : "private",
-      keep_without_analysis: false,
-      analysis_consent_at: new Date().toISOString(),
-      analysis_deleted_at: null,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", sourceId)
-    .eq("artist_user_id", account.user.id)
+  const { error } = await supabase.from("artist_import_sources").update({
+    artist_selected_document_type: selectedType,
+    sensitivity: option.sensitive ? "sensitive" : "standard",
+    privacy_level: option.sensitive ? "restricted" : "private",
+    keep_without_analysis: false,
+    analysis_consent_at: new Date().toISOString(),
+    analysis_deleted_at: null,
+    extraction_status: "queued",
+    analysis_stage: "checking_file",
+    updated_at: new Date().toISOString(),
+  }).eq("id", sourceId).eq("artist_user_id", account.user.id)
   if (error) throw error
+  await validateStoredArtistDocument(sourceId)
   return updateSourceClassification(sourceId, canonical)
 }
 
@@ -361,19 +391,15 @@ export async function reanalyzeArtistDocument(sourceId: string, selectedType: Ar
   const account = await requireArtist()
   const supabase = getSupabaseBrowserClient()
   const canonical = canonicalClassificationFor(selectedType)
-  const { error } = await supabase
-    .from("artist_import_sources")
-    .update({
-      artist_selected_document_type: selectedType,
-      keep_without_analysis: false,
-      analysis_consent_at: new Date().toISOString(),
-      analysis_deleted_at: null,
-      extraction_status: "queued",
-      analysis_stage: "checking_file",
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", sourceId)
-    .eq("artist_user_id", account.user.id)
+  const { error } = await supabase.from("artist_import_sources").update({
+    artist_selected_document_type: selectedType,
+    keep_without_analysis: false,
+    analysis_consent_at: new Date().toISOString(),
+    analysis_deleted_at: null,
+    extraction_status: "queued",
+    analysis_stage: "checking_file",
+    updated_at: new Date().toISOString(),
+  }).eq("id", sourceId).eq("artist_user_id", account.user.id)
   if (error) throw error
   await validateStoredArtistDocument(sourceId)
   return requestSourceExtraction(sourceId, canonical)
@@ -384,35 +410,21 @@ export async function keepDocumentWithoutAnalysis(sourceId: string) {
   const supabase = getSupabaseBrowserClient()
   const now = new Date().toISOString()
   const [{ error: proposalError }, { error: jobError }] = await Promise.all([
-    supabase
-      .from("artist_import_proposals")
-      .delete()
-      .eq("source_id", sourceId)
-      .eq("artist_user_id", account.user.id)
+    supabase.from("artist_import_proposals").delete().eq("source_id", sourceId).eq("artist_user_id", account.user.id)
       .in("status", ["proposed", "needs_clarification", "conflicting", "deferred", "source_unavailable", "extraction_failed"]),
-    supabase
-      .from("artist_extraction_jobs")
-      .update({ status: "dismissed", updated_at: now })
-      .eq("source_id", sourceId)
-      .eq("artist_user_id", account.user.id)
+    supabase.from("artist_extraction_jobs").update({ status: "dismissed", updated_at: now })
+      .eq("source_id", sourceId).eq("artist_user_id", account.user.id)
       .in("status", ["queued", "processing", "ready_for_review", "partially_extracted", "failed", "needs_artist_classification"]),
   ])
   if (proposalError) throw proposalError
   if (jobError) throw jobError
-  const { error } = await supabase
-    .from("artist_import_sources")
-    .update({
-      keep_without_analysis: true,
-      analysis_stage: "stopped",
-      analysis_deleted_at: now,
-      review_summary: {
-        analysis_removed_by_artist: true,
-        original_source_preserved: true,
-      },
-      updated_at: now,
-    })
-    .eq("id", sourceId)
-    .eq("artist_user_id", account.user.id)
+  const { error } = await supabase.from("artist_import_sources").update({
+    keep_without_analysis: true,
+    analysis_stage: "stored_without_analysis",
+    analysis_deleted_at: now,
+    review_summary: { analysis_quality: "stored_without_analysis", analysis_removed_by_artist: true, original_source_preserved: true },
+    updated_at: now,
+  }).eq("id", sourceId).eq("artist_user_id", account.user.id)
   if (error) throw error
 }
 
@@ -420,60 +432,28 @@ export async function inspectArtistDocumentDependencies(sourceId: string) {
   const account = await requireArtist()
   const supabase = getSupabaseBrowserClient()
   const [records, attachments, usages] = await Promise.all([
-    supabase
-      .from("artist_passport_records")
-      .select("id", { count: "exact", head: true })
-      .eq("artist_user_id", account.user.id)
-      .eq("source_id", sourceId)
-      .neq("status", "removed"),
-    supabase
-      .from("application_requirement_attachments")
-      .select("id", { count: "exact", head: true })
-      .eq("artist_user_id", account.user.id)
-      .eq("source_id", sourceId),
-    supabase
-      .from("artist_media_usages")
-      .select("id", { count: "exact", head: true })
-      .eq("artist_user_id", account.user.id)
-      .eq("source_id", sourceId),
+    supabase.from("artist_passport_records").select("id", { count: "exact", head: true }).eq("artist_user_id", account.user.id).eq("source_id", sourceId).neq("status", "removed"),
+    supabase.from("application_requirement_attachments").select("id", { count: "exact", head: true }).eq("artist_user_id", account.user.id).eq("source_id", sourceId),
+    supabase.from("artist_media_usages").select("id", { count: "exact", head: true }).eq("artist_user_id", account.user.id).eq("source_id", sourceId),
   ])
   if (records.error) throw records.error
   if (attachments.error) throw attachments.error
   if (usages.error) throw usages.error
-  return {
-    confirmedPassportRecords: records.count ?? 0,
-    applicationAttachments: attachments.count ?? 0,
-    recordedUsages: usages.count ?? 0,
-  }
+  return { confirmedPassportRecords: records.count ?? 0, applicationAttachments: attachments.count ?? 0, recordedUsages: usages.count ?? 0 }
 }
 
 export async function deleteArtistDocumentSource(source: ArtistDocumentSource) {
   const account = await requireArtist()
   const dependencies = await inspectArtistDocumentDependencies(source.id)
-  if (dependencies.applicationAttachments > 0) {
-    throw new Error("This document is preserved in an application record and cannot be deleted. Remove it from the application workflow first.")
-  }
-  if (dependencies.confirmedPassportRecords > 0) {
-    throw new Error("Confirmed Passport records still reference this document. Remove or replace those records before deleting the source.")
-  }
-
+  if (dependencies.applicationAttachments > 0) throw new Error("This document is preserved in an application record and cannot be deleted. Remove it from the application workflow first.")
+  if (dependencies.confirmedPassportRecords > 0) throw new Error("Confirmed Passport records still reference this document. Remove or replace those records before deleting the source.")
   const supabase = getSupabaseBrowserClient()
-  const bucket = source.source_metadata.storage_bucket === "artist-documents" || source.source_type === "device_document"
-    ? "artist-documents"
-    : "artist-assets"
+  const bucket = source.source_metadata.storage_bucket === "artist-documents" || source.source_type === "device_document" ? "artist-documents" : "artist-assets"
   const { error: removeError } = await supabase.storage.from(bucket).remove([source.storage_path])
   if (removeError) throw new Error("The private file could not be deleted.")
-
-  const { error } = await supabase
-    .from("artist_import_sources")
-    .update({
-      deleted_at: new Date().toISOString(),
-      library_status: "archived",
-      analysis_stage: "stopped",
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", source.id)
-    .eq("artist_user_id", account.user.id)
+  const { error } = await supabase.from("artist_import_sources").update({
+    deleted_at: new Date().toISOString(), library_status: "archived", analysis_stage: "stored_without_analysis", updated_at: new Date().toISOString(),
+  }).eq("id", source.id).eq("artist_user_id", account.user.id)
   if (error) throw error
 }
 
@@ -494,11 +474,7 @@ export async function refreshArtistDocumentCorrelations() {
 export async function loadArtistDocumentCorrelations(): Promise<ArtistDocumentCorrelation[]> {
   const account = await requireArtist()
   const supabase = getSupabaseBrowserClient()
-  const { data, error } = await supabase
-    .from("artist_document_correlations")
-    .select("*")
-    .eq("artist_user_id", account.user.id)
-    .order("updated_at", { ascending: false })
+  const { data, error } = await supabase.from("artist_document_correlations").select("*").eq("artist_user_id", account.user.id).order("updated_at", { ascending: false })
   if (error) throw error
   return (data ?? []) as ArtistDocumentCorrelation[]
 }
@@ -511,31 +487,29 @@ export async function decideArtistDocumentCorrelation(input: {
 }) {
   const account = await requireArtist()
   const supabase = getSupabaseBrowserClient()
-  const { error } = await supabase
-    .from("artist_document_correlations")
-    .update({
-      status: input.status,
-      artist_edited_text: input.editedText?.trim() || "",
-      artist_feedback: input.feedback?.trim() || "",
-      decided_at: input.status === "deferred" ? null : new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", input.id)
-    .eq("artist_user_id", account.user.id)
+  const { error } = await supabase.from("artist_document_correlations").update({
+    status: input.status,
+    artist_edited_text: input.editedText?.trim() || "",
+    artist_feedback: input.feedback?.trim() || "",
+    decided_at: input.status === "deferred" ? null : new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  }).eq("id", input.id).eq("artist_user_id", account.user.id)
   if (error) throw error
 }
 
 export function documentStageLabel(source: ArtistDocumentSource) {
-  if (source.keep_without_analysis) return "Stored privately without analysis"
-  if (source.ocr_status === "not_configured" || source.text_layer_status === "unavailable") return "OCR required"
-  if (source.analysis_stage === "checking_file") return "Checking the file"
-  if (source.analysis_stage === "reading_structure") return "Reading the document structure"
-  if (source.analysis_stage === "identifying_information") return "Identifying career and practice information"
-  if (source.analysis_stage === "comparing_passport") return "Comparing findings with your Creative Passport"
-  if (source.analysis_stage === "preparing_review") return "Preparing updates for your review"
-  if (source.analysis_stage === "review_ready") return "Updates ready for review"
+  if (source.keep_without_analysis || source.analysis_stage === "stored_without_analysis") return "Stored privately without analysis"
+  if (source.analysis_stage === "checking_file") return "Checking the private PDF"
+  if (source.analysis_stage === "processing") return "Gemini is understanding the document"
+  if (source.analysis_stage === "complete_review_ready") return "Complete analysis ready for review"
+  if (source.analysis_stage === "substantial_review_ready") return "Substantial analysis ready for review"
+  if (source.analysis_stage === "limited_analysis") return "Limited analysis — review the limitations"
+  if (source.analysis_stage === "visual_reading_limited") return "Visual reading was limited"
+  if (source.analysis_stage === "classification_required") return "Document type needs your confirmation"
+  if (source.analysis_stage === "provider_unavailable") return "Gemini is temporarily unavailable"
   if (source.analysis_stage === "review_completed") return "Artist review completed"
   if (source.analysis_stage === "failed") return "Analysis needs attention"
+  if (["ready_for_review", "review_ready"].includes(source.extraction_status)) return "Analysis ready for review"
   return "Private document stored"
 }
 
