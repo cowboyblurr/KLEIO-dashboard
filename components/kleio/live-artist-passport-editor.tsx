@@ -5,7 +5,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
 import Link from "next/link"
 import {
-  AlertTriangle,
   Check,
   ChevronDown,
   ChevronLeft,
@@ -186,7 +185,7 @@ function ProposalField({
     )
   }
 
-  const draft = drafts[claim.id] ?? claim.artist_edited_value || claim.proposed_value
+  const draft = drafts[claim.id] ?? (claim.artist_edited_value || claim.proposed_value)
   const busy = activeId === claim.id
   const replacing = claim.relationship_status === "conflict" && Boolean(claim.existing_record_id)
 
@@ -255,7 +254,7 @@ function TermProposalQueue({
       <p className="text-xs font-semibold text-[#5B4B8A]"><Sparkles className="mr-1 inline size-3.5" />{label}</p>
       <div className="mt-2 divide-y divide-[#E7E1F7]">
         {claims.map((claim) => {
-          const draft = drafts[claim.id] ?? claim.artist_edited_value || claim.proposed_value
+          const draft = drafts[claim.id] ?? (claim.artist_edited_value || claim.proposed_value)
           const busy = activeId === claim.id
           return (
             <div key={claim.id} className="py-2 first:pt-0 last:pb-0">
@@ -321,7 +320,7 @@ export function LiveArtistPassportEditor() {
   }, [])
 
   const proposalGroups = useMemo(() => {
-    const grouped = {} as Record<ReviewField, PassportClaim[]>
+    const grouped = {} as Partial<Record<ReviewField, PassportClaim[]>>
     for (const claim of claims) {
       const field = fieldForClaim(claim)
       if (!field) continue
@@ -451,7 +450,12 @@ export function LiveArtistPassportEditor() {
   }
 
   const eligibleFeaturedWorks = works.filter((work) => work.image_url)
-  const fieldProps = { drafts: proposalDrafts, onDraftChange: (claimId: string, value: string) => setProposalDrafts((current) => ({ ...current, [claimId]: value })), onReview: reviewClaim, activeId: activeClaimId }
+  const fieldProps = {
+    drafts: proposalDrafts,
+    onDraftChange: (claimId: string, value: string) => setProposalDrafts((current) => ({ ...current, [claimId]: value })),
+    onReview: reviewClaim,
+    activeId: activeClaimId,
+  }
 
   return (
     <main className="h-full overflow-y-auto bg-white px-4 pb-8 pt-4 sm:px-6">
