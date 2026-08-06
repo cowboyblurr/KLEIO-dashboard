@@ -15,9 +15,11 @@ const forbidPattern = (content, pattern, message) => {
   if (pattern.test(content)) failures.push(message)
 }
 
+const ownerElementPattern = /<main\s+data-passport-scroll-owner="creative-passport"\s+className="h-full overflow-y-auto bg-white">/g
+
 requirePattern(
   workspace,
-  /<main data-passport-scroll-owner="creative-passport" className="h-full overflow-y-auto bg-white">/,
+  ownerElementPattern,
   "Creative Passport edit mode must expose exactly one page-level vertical scroll owner.",
 )
 requirePattern(
@@ -56,8 +58,8 @@ requirePattern(editor, /Gemini suggestions appear in the field where they belong
 requirePattern(editor, /Approve replacement|Approve/, "Artist approval controls must remain inside the matching field workflow.")
 requirePattern(editor, /Reject/, "Artist rejection controls must remain inside the matching field workflow.")
 
-const ownerCount = (workspace.match(/data-passport-scroll-owner="creative-passport"/g) || []).length
-if (ownerCount !== 1) failures.push(`Expected exactly one Creative Passport scroll owner; found ${ownerCount}.`)
+const ownerCount = (workspace.match(ownerElementPattern) || []).length
+if (ownerCount !== 1) failures.push(`Expected exactly one rendered Creative Passport scroll owner; found ${ownerCount}.`)
 
 if (failures.length) {
   console.error("KLEIO Creative Passport scroll-flow audit failed:\n")
