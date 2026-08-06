@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo } from "react"
+import { useEffect, useMemo, useRef } from "react"
 import { usePathname, useRouter } from "next/navigation"
 import { Eye, MessageSquareText, MousePointerClick, Search } from "lucide-react"
 import { KleioAssistObjectVisual } from "@/components/kleio/kleio-assist-object"
@@ -31,6 +31,9 @@ type KleioDemoGuideProps = {
 
 type ScenarioSpanishCopy = Pick<DemoGuideScenario, "title" | "summary" | "roleLabel" | "completionMessage">
 type StepSpanishCopy = Partial<Pick<DemoGuideStep, "title" | "body" | "screenLabel" | "screenCue" | "viewerAction" | "nextPreview" | "primaryActionLabel">>
+
+const ATTENTION_ROUTE_PREFIXES = ["/artist-dashboard/passport", "/artist-dashboard/applications/prepare", "/artist-dashboard/portfolio", "/programs/new", "/signup", "/onboarding", "/application-review"]
+function routeNeedsUnobstructedFocus(pathname: string) { return ATTENTION_ROUTE_PREFIXES.some((prefix) => pathname.startsWith(prefix)) }
 
 const scenarioEs: Partial<Record<DemoGuideScenarioId, ScenarioSpanishCopy>> = {
   "artist-passport-setup": {
@@ -299,6 +302,14 @@ export function KleioDemoGuide({ variant = "workspace" }: KleioDemoGuideProps) {
   const pathname = usePathname()
   const { locale } = useKleioLocale()
   const { state, openGuide, minimizeGuide, startScenario, goToNextStep, goToPreviousStep, restartScenario, dismissGuide, returnToPlaylist } = useDemoGuide()
+  const focusRouteSeenRef = useRef<string | null>(null)
+
+  useEffect(() => {
+    if (!routeNeedsUnobstructedFocus(pathname)) { focusRouteSeenRef.current = null; return }
+    if (focusRouteSeenRef.current === pathname || !state.isOpen) return
+    focusRouteSeenRef.current = pathname
+    if (!state.activeScenarioId) minimizeGuide()
+  }, [minimizeGuide, pathname, state.activeScenarioId, state.isOpen])
 
   const activeStep = getGuideStep(state.activeStepId)
   const activeStepCopy = activeStep ? stepCopy(activeStep, locale) : undefined
@@ -384,7 +395,7 @@ export function KleioDemoGuide({ variant = "workspace" }: KleioDemoGuideProps) {
   }
 
   return (
-    <div className="kleio-demo-guide-anchor fixed bottom-4 right-4 z-40 w-[min(100vw-1.5rem,24rem)] max-md:bottom-3 max-md:right-3" role="complementary" aria-label={locale === "es" ? "Demo guiado de KLEIO" : "KLEIO guided demo"}>
+    <div className="kleio-demo-guide-anchor fixed bottom-4 right-4 z-40 w-[min(100vw-1.5rem,21rem)] max-md:bottom-3 max-md:right-3" role="complementary" aria-label={locale === "es" ? "Demo guiado de KLEIO" : "KLEIO guided demo"}>
       <style>{`
         @keyframes kleioGuideMessageIn {
           from { opacity: 0; transform: translate3d(10px, 10px, 0) scale(0.985); filter: blur(2px); }
@@ -394,7 +405,7 @@ export function KleioDemoGuide({ variant = "workspace" }: KleioDemoGuideProps) {
         @media (prefers-reduced-motion: reduce) { .kleio-guide-message { opacity: 1; animation: none; } }
       `}</style>
 
-      <div className="kleio-demo-guide-panel max-h-[calc(100dvh-1.5rem)] overflow-hidden rounded-2xl border border-[#E7E1F7] bg-[#F7F4FF]/95 shadow-[0_12px_40px_rgba(82,64,130,0.12)] backdrop-blur-sm">
+      <div className="kleio-demo-guide-panel max-h-[min(72dvh,38rem)] overflow-hidden rounded-2xl border border-[#E7E1F7] bg-[#F7F4FF]/95 shadow-[0_12px_40px_rgba(82,64,130,0.12)] backdrop-blur-sm">
         <div className="flex items-start gap-3 border-b border-[#E7E1F7] px-3.5 py-3">
           <KleioAssistObjectVisual size="sm" mode={completedScenario ? "complete" : "reviewing"} />
           <div className="min-w-0 flex-1">
@@ -408,7 +419,7 @@ export function KleioDemoGuide({ variant = "workspace" }: KleioDemoGuideProps) {
           </button>
         </div>
 
-        <div className="max-h-[min(64dvh,34rem)] overflow-y-auto px-3.5 py-3">
+        <div className="max-h-[min(54dvh,29rem)] overflow-y-auto px-3.5 py-3">
           {!state.activeScenarioId ? (
             <div className="space-y-3">
               {currentPageGuide && (

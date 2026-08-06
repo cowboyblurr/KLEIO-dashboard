@@ -28,6 +28,7 @@ import {
 const surface = "rounded-2xl border border-[#E7E1F7] bg-white p-5 shadow-[0_18px_48px_rgba(82,64,130,0.05)]"
 const primary = "inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#5B4B8A] px-4 py-2 text-sm font-semibold text-white"
 const secondary = "inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-[#D8D0F2] bg-white px-4 py-2 text-sm font-semibold text-[#5B4B8A]"
+const compact = "inline-flex min-h-9 items-center justify-center gap-2 rounded-lg border border-[#D8D0F2] bg-white px-3 py-1.5 text-xs font-semibold text-[#5B4B8A] transition hover:bg-[#FAF8FE] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#A997E8]/15"
 
 type Mode = "overview" | "edit"
 
@@ -70,18 +71,18 @@ export function CreativePassportWorkspace() {
   if (mode === "edit") {
     return (
       <div className="flex h-full min-h-0 flex-col bg-white">
-        <div className="shrink-0 border-b border-[#EEEAF6] px-4 py-3 sm:px-6">
-          <div className="mx-auto flex max-w-[1180px] flex-wrap items-center justify-between gap-3">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.15em] text-[#7F6EB4]">Creative Passport · Edit mode</p>
-              <p className="mt-1 text-sm text-[#746E80]">Edit reusable source information. Opportunity-specific changes remain inside their application unless you intentionally update the Passport.</p>
+        <div className="shrink-0 border-b border-[#EEEAF6] bg-white px-4 py-2 sm:px-6">
+          <div className="mx-auto flex max-w-[1180px] items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-[0.68rem] font-semibold uppercase tracking-[0.15em] text-[#7F6EB4]">Creative Passport</p>
+              <p className="truncate text-xs text-[#746E80]">Editing your reusable artist record</p>
             </div>
-            <div className="flex flex-wrap gap-2">
-              <button type="button" className={secondary} onClick={() => setGuidanceOpen((value) => !value)} aria-expanded={guidanceOpen}><ChevronDown className={`size-4 transition-transform ${guidanceOpen ? "rotate-180" : ""}`} />How this helps</button>
-              <button type="button" className={primary} onClick={() => { setRevision((value) => value + 1); setMode("overview") }}><LayoutDashboard className="size-4" />Return to overview</button>
+            <div className="flex shrink-0 items-center gap-2">
+              <button type="button" className={compact} onClick={() => setGuidanceOpen((value) => !value)} aria-expanded={guidanceOpen}><ChevronDown className={`size-3.5 transition-transform ${guidanceOpen ? "rotate-180" : ""}`} />Why it matters</button>
+              <button type="button" className={compact} onClick={() => { setRevision((value) => value + 1); setMode("overview") }}><LayoutDashboard className="size-3.5" />Overview</button>
             </div>
           </div>
-          {guidanceOpen && <div className="mx-auto mt-3 max-w-[1180px] rounded-xl border border-[#E7E1F7] bg-[#FAF9FD] p-4 text-sm leading-6 text-[#5F5968]">The Creative Passport is your artist-approved source record. KLEIO can reuse it to assess readiness and prepare application drafts, but suggestions remain editable and never become approved facts without your review.</div>}
+          {guidanceOpen && <div className="mx-auto mt-2 max-w-[1180px] rounded-xl border border-[#E7E1F7] bg-[#FAF9FD] px-4 py-3 text-xs leading-5 text-[#5F5968]">The Creative Passport is your artist-approved source record. KLEIO can reuse it for readiness and drafts, but nothing becomes approved without your review.</div>}
         </div>
         <div className="min-h-0 flex-1"><AdaptiveArtistPassportExperience /></div>
       </div>
