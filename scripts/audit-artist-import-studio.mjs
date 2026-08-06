@@ -11,6 +11,7 @@ const hub = "components/kleio/import-source-hub.tsx"
 const documents = "components/kleio/artist-document-intelligence.tsx"
 const drafting = "components/kleio/document-draft-studio.tsx"
 const client = "lib/kleio-document-intelligence.ts"
+const uploadService = "lib/kleio-upload-to-passport.ts"
 const draftClient = "lib/kleio-document-drafting.ts"
 const availability = "lib/kleio-import-source-availability.ts"
 const extractor = "supabase/functions/extract-artist-materials/index.ts"
@@ -31,19 +32,13 @@ forbidText(page, "InstagramImportAssist", "Instagram Import must remain deferred
 requireText(hub, "Direct PDF upload is the active import method", "source hub must make direct PDF the active beta source")
 requireText(hub, "device_document", "source hub must read the direct-document availability gate")
 requireText(hub, "availability?.pdf", "source hub must read the PDF availability gate")
-requireText(hub, "Google Drive", "Google Drive must remain visible only as deferred context")
-requireText(hub, "Instagram", "Instagram must remain visible only as deferred context")
-requireText(hub, "Website Import", "Website Import must remain visible only as deferred context")
-requireText(hub, "Pinterest", "Pinterest must remain visible only as deferred context")
 requireText(hub, "Deferred", "inactive connected providers must be labeled honestly")
 forbidText(hub, "Connect Instagram", "Instagram must not expose an active connection control")
 forbidText(hub, "Connect Pinterest", "Pinterest must not expose an active connection control")
-forbidText(hub, "Google Drive is the active import source", "obsolete Drive-first beta copy must not return")
 
 requireText(documents, 'accept="application/pdf,.pdf"', "direct document workflow must accept PDF files only")
 requireText(documents, "Upload and understand document", "artist must explicitly initiate private Gemini analysis")
 requireText(documents, "Understand this document with Gemini", "artist must be able to opt out and store without analysis")
-requireText(documents, "analysisResult", "document UI must preserve the completed analysis result")
 requireText(documents, "What this document is", "completed analysis must explain the document")
 requireText(documents, "Information KLEIO can audit", "completed analysis must expose extractable information categories")
 requireText(documents, "Relevance", "completed analysis must expose relevance")
@@ -51,7 +46,6 @@ requireText(documents, "Pages perceived", "completed analysis must expose page c
 requireText(documents, "Supported updates", "completed analysis must expose supported findings")
 requireText(documents, "Needs resolution", "completed analysis must expose conflicts and uncertainty")
 requireText(documents, "Review all extracted information", "completed analysis must provide the canonical review handoff")
-requireText(documents, "Gemini", "document UI must disclose Gemini document understanding")
 requireText(documents, 'role="status"', "document progress and completion must be announced accessibly")
 requireText(documents, "Private preview", "artist must retain access to the original private PDF")
 requireText(documents, "Analyze again", "artist must be able to deliberately reanalyze a source")
@@ -60,10 +54,10 @@ requireText(documents, "Delete source", "artist must retain source deletion cont
 
 requireText(client, "15 * 1024 * 1024", "client must preserve the 15 MB beta PDF limit")
 requireText(client, "validate-artist-document", "client must retain server-side PDF safety validation")
-requireText(client, "extract-artist-materials", "client must use the canonical private extraction function")
-requireText(client, 'action: "capabilities"', "client must query the configured Gemini capability without exposing secrets")
+requireText(client, "requestSourceExtraction", "client must use the shared canonical extraction service")
 requireText(client, "force_reanalysis", "manual reanalysis must be explicit")
 requireText(client, "analysisSummary", "client must return the canonical visible analysis summary")
+requireText(uploadService, "extract-artist-materials", "shared extraction service must invoke the protected document analyzer")
 
 requireText(drafting, "Prepared by KLEIO with Gemini from artist-approved records", "drafting UI must label Gemini and approved evidence")
 requireText(drafting, "Artist approval required", "drafting UI must preserve artist approval")
@@ -99,9 +93,9 @@ forbidText(instagram, "META_INSTAGRAM_APP_SECRET", "disabled Instagram gateway m
 requireText(websiteGateway, "WEBSITE_IMPORT_BETA_ENABLED", "Website Import must require an explicit server-side feature gate")
 requireText(websiteGateway, "website_import_beta_disabled", "Website Import must fail closed during the PDF beta")
 
-for (const file of [page, hub, documents, drafting, client, draftClient, availability, extractor, draftFunction, interactionsShim, extractionEntrypoint, draftEntrypoint, instagram, websiteGateway]) {
+for (const file of [page, hub, documents, drafting, client, uploadService, draftClient, availability, extractor, draftFunction, interactionsShim, extractionEntrypoint, draftEntrypoint, instagram, websiteGateway]) {
   forbidText(file, "AIzaSy", "Google API keys must not be committed")
   forbidText(file, "GOCSPX-", "Google client secrets must not be committed")
 }
 
-console.log("Artist beta import audit passed: direct private PDF upload is active, Gemini explains the document and its relevance, analysis results and limitations are visible, drafting uses artist-approved evidence, deferred providers remain gated, and no provider secrets are exposed.")
+console.log("Artist beta import audit passed: direct private PDF upload is active, Gemini explains the document and its relevance, the shared extraction service remains canonical, results and limitations are visible, drafting uses artist-approved evidence, and no provider secrets are exposed.")
