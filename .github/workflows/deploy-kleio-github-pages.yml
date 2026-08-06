@@ -5,6 +5,8 @@ on:
     branches:
       - main
   workflow_dispatch:
+  schedule:
+    - cron: "*/5 * * * *"
 
 permissions:
   contents: read
@@ -12,12 +14,15 @@ permissions:
   id-token: write
 
 concurrency:
-  group: kleio-github-pages
+  group: kleio-github-pages-live-release
   cancel-in-progress: true
+
+env:
+  KLEIO_SITE_URL: https://www.kleioarthouse.com
 
 jobs:
   build:
-    name: Validate and build
+    name: Validate current main and build custom-domain export
     runs-on: ubuntu-latest
     steps:
       - name: Check out current main
@@ -27,38 +32,48 @@ jobs:
         uses: pnpm/action-setup@v4
         with:
           version: 10
+          run_install: false
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
 
-      - name: Install locked dependencies
-        run: pnpm install --frozen-lockfile
+      - name: Install dependencies
+        run: pnpm install --no-frozen-lockfile
 
-      - name: Type-check application
-        run: pnpm run typecheck
+      - name: Validate artist workspace fixes
+        run: |
+          pnpm run typecheck
+          pnpm run audit:artist-import
+          pnpm run audit:universal-media
+          pnpm run audit:upload-to-passport
+          pnpm run audit:document-intelligence
 
-      - name: Audit artist import workflow
-        run: pnpm run audit:artist-import
-
-      - name: Audit universal media workflow
-        run: pnpm run audit:universal-media
-
-      - name: Audit upload-to-Passport workflow
-        run: pnpm run audit:upload-to-passport
-
-      - name: Audit document intelligence workflow
-        run: pnpm run audit:document-intelligence
-
-      - name: Build static GitHub Pages export
+      - name: Build custom-domain static export
         env:
-          NEXT_PUBLIC_BASE_PATH: /KLEIO-dashboard
+          GITHUB_ACTIONS: "true"
+          NEXT_PUBLIC_BASE_PATH: ""
+          NEXT_PUBLIC_SITE_URL: ${{ env.KLEIO_SITE_URL }}
+          NEXT_PUBLIC_SUPABASE_URL: https://trekynurdgxgtaaqqtyq.supabase.co
+          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_XdYXvd0fQm3IJKxNrFXgUQ_M4RgDj1M
         run: pnpm run build
+
+      - name: Verify release artifact
+        run: |
+          test -f out/index.html
+          test -f out/CNAME
+          grep -Fq "www.kleioarthouse.com" out/CNAME
+          test -f out/artist-dashboard/profile/index.html
+          test -f out/artist-dashboard/import-studio/index.html
+          touch out/.nojekyll
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
+        with:
+          enablement: true
 
       - name: Upload static export
         uses: actions/upload-pages-artifact@v3
@@ -66,7 +81,7 @@ jobs:
           path: ./out
 
   deploy:
-    name: Publish live site
+    name: Publish and verify live site
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -76,3 +91,21 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+      - name: Verify Iker review routes on custom domain
+        shell: bash
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 30); do
+            homepage="$(curl --silent --show-error --location --max-time 30 "${KLEIO_SITE_URL}/?iker_release=${GITHUB_SHA}" || true)"
+            profile_status="$(curl --silent --show-error --location --output /dev/null --write-out '%{http_code}' --max-time 30 "${KLEIO_SITE_URL}/artist-dashboard/profile/?iker_release=${GITHUB_SHA}" || true)"
+            import_status="$(curl --silent --show-error --location --output /dev/null --write-out '%{http_code}' --max-time 30 "${KLEIO_SITE_URL}/artist-dashboard/import-studio/?iker_release=${GITHUB_SHA}" || true)"
+            if printf '%s' "$homepage" | grep -Fq "Enter your KLEIO workspace" && [ "$profile_status" = "200" ] && [ "$import_status" = "200" ]; then
+              echo "Verified current KLEIO build on the custom domain."
+              exit 0
+            fi
+            echo "Waiting for Pages propagation: attempt ${attempt}/30; profile=${profile_status}; import=${import_status}"
+            sleep 10
+          done
+          echo "The custom domain did not confirm the deployed release."
+          exit 1
