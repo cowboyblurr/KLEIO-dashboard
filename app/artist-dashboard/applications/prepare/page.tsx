@@ -16,39 +16,44 @@ export const metadata: Metadata = {
 }
 
 function PreparationFallback() {
-  return <main className="h-full overflow-y-auto px-4 py-6 sm:px-6"><div className="mx-auto max-w-[1120px] rounded-2xl border border-[#E7E1F7] bg-white p-5 text-sm text-muted-foreground">Preparing the application workspace…</div></main>
+  return <div role="status" className="rounded-2xl border border-[#E7E1F7] bg-white p-5 text-sm text-muted-foreground">Preparing the application workspace…</div>
 }
 
 export default function Page() {
   return (
     <ArtistShell>
-      <div className="flex h-full min-h-0 flex-col">
+      <div className="flex h-full min-h-0 flex-col bg-[#FCFBFE]">
         <ApplicationArtistIdentityBar />
-        <Suspense fallback={null}>
-          <ApplicationSubmissionCover />
-        </Suspense>
-        <Suspense fallback={null}>
-          <ApplicationMediaImportBar />
-        </Suspense>
         <div className="min-h-0 flex-1 overflow-y-auto">
           <div className="mx-auto max-w-[1120px] space-y-5 px-4 py-5 sm:px-6">
-            <Suspense fallback={null}>
-              <PracticeSubmissionResetControl />
+            <Suspense fallback={<PreparationFallback />}>
+              <div className="[&>main]:!h-auto [&>main]:!overflow-visible [&>main]:!px-0 [&>main]:!py-0 [&>main>div]:!max-w-none">
+                <ApplicationPreparationWorkspace />
+              </div>
             </Suspense>
+
             <Suspense fallback={null}>
               <ApplicationRequirementMedia />
             </Suspense>
-            <Suspense fallback={<PreparationFallback />}>
-              <ApplicationPreparationWorkspace />
+            <Suspense fallback={null}>
+              <ApplicationMediaImportBar />
+            </Suspense>
+            <Suspense fallback={null}>
+              <ApplicationSubmissionCover />
             </Suspense>
             <Suspense fallback={null}>
               <ArtistRecipientConversation />
             </Suspense>
+            <Suspense fallback={null}>
+              <div className="[&>button]:!static [&>button]:!z-auto [&>button]:!min-h-11 [&>button]:!w-full [&>button]:!justify-center [&>button]:!rounded-2xl [&>button]:!shadow-[0_12px_34px_rgba(51,42,77,0.16)]">
+                <ApplicationRecipientLoopPanel />
+              </div>
+            </Suspense>
+            <Suspense fallback={null}>
+              <PracticeSubmissionResetControl />
+            </Suspense>
           </div>
         </div>
-        <Suspense fallback={null}>
-          <ApplicationRecipientLoopPanel />
-        </Suspense>
       </div>
     </ArtistShell>
   )

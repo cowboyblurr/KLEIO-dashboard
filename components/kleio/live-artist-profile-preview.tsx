@@ -70,7 +70,7 @@ export function LiveArtistProfilePreview() {
           <div className="flex flex-wrap gap-2"><Link href="/artist-dashboard/passport/" className={secondary}><Pencil className="size-3.5" />Edit information</Link><Link href="/artist-dashboard/portfolio/" className={primary}>Manage works</Link></div>
         </div>
 
-        {loading && <div className="flex items-center gap-2 border border-[#E7E1F7] bg-white p-5 text-sm text-muted-foreground"><Loader2 className="size-4 animate-spin" />Loading your profile preview…</div>}
+        {loading && <div role="status" className="flex items-center gap-2 border border-[#E7E1F7] bg-white p-5 text-sm text-muted-foreground"><Loader2 className="size-4 animate-spin" />Loading your profile preview…</div>}
         {error && <div role="alert" className="border border-red-200 bg-white p-5 text-sm text-red-700">{error}</div>}
         {!loading && !error && !passport && <section className="border border-[#E7E1F7] bg-white p-7 text-center"><UserRound className="mx-auto size-7 text-[#5B4B8A]" /><h2 className="mt-3 font-serif text-xl font-semibold">Create your Creative Passport first</h2><p className="mx-auto mt-2 max-w-xl text-sm leading-relaxed text-muted-foreground">KLEIO generates the artist profile only from information and works saved to this authenticated account.</p><Link href="/artist-dashboard/passport/" className={`${primary} mt-5`}>Create Creative Passport</Link></section>}
 
@@ -98,7 +98,6 @@ export function LiveArtistProfilePreview() {
                 instagram: passport.instagram_url,
                 passportLabel: "Creative Passport",
               }}
-              actions={<><Link href="/artist-dashboard/passport/" className={secondary}>Edit profile</Link><Link href="/artist-dashboard/portfolio/" className={secondary}>Manage portfolio</Link></>}
             />
           </div>
         )}

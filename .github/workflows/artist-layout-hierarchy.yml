@@ -1,0 +1,63 @@
+name: Artist layout hierarchy
+
+on:
+  pull_request:
+    paths:
+      - "app/artist-dashboard/**"
+      - "components/kleio/**"
+      - "scripts/audit-artist-layout-hierarchy.mjs"
+      - "docs/artist-experience-layout-audit-2026-08-06.md"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - ".github/workflows/artist-layout-hierarchy.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  verify-artist-layout:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run artist layout regression audit
+        run: pnpm audit:artist-layout
+
+      - name: Type-check application
+        run: pnpm typecheck
+
+      - name: Lint changed artist layout sources
+        run: >-
+          pnpm exec eslint
+          app/artist-dashboard/applications/page.tsx
+          app/artist-dashboard/applications/prepare/page.tsx
+          app/artist-dashboard/media/page.tsx
+          app/artist-dashboard/messages/page.tsx
+          app/artist-dashboard/portfolio/page.tsx
+          components/kleio/application-media-import-bar.tsx
+          components/kleio/application-submission-cover.tsx
+          components/kleio/artist-dashboard-view.tsx
+          components/kleio/creative-passport-media-panel.tsx
+          components/kleio/focused-artist-applications.tsx
+          components/kleio/focused-artist-media-library.tsx
+          components/kleio/focused-visual-artist-portfolio-studio.tsx
+          components/kleio/import-source-hub.tsx
+          components/kleio/live-artist-profile-preview.tsx
+          components/kleio/opportunity-filter-visibility-guard.tsx
+          components/kleio/supporting-task-disclosure.tsx

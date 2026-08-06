@@ -8,21 +8,8 @@ import { getArtistAnalytics } from "@/lib/kleio-artist-analytics"
 import { loadLiveArtistWorkspace, type LiveArtistWorkspace } from "@/lib/kleio-live-artist"
 import { getArtistProfileByUsername } from "@/lib/kleio-profile-data"
 import { ArtistDashboardOverview } from "@/components/kleio/artist-dashboard/artist-dashboard-overview"
-import { ArtistReadinessNextSteps } from "@/components/kleio/artist-dashboard/artist-readiness-next-steps"
 import { ArtistProfileContextBar } from "@/components/kleio/artist-profile-context-bar"
 import { useKleioMode } from "@/components/kleio/use-kleio-mode"
-
-function ReadinessWidget({
-  workspace,
-}: {
-  workspace: Pick<LiveArtistWorkspace, "profile" | "analytics">
-}) {
-  return (
-    <div className="mx-auto -mt-3 w-full max-w-[1500px] px-4 pb-7 sm:px-5 lg:px-5">
-      <ArtistReadinessNextSteps profile={workspace.profile} analytics={workspace.analytics} />
-    </div>
-  )
-}
 
 function LiveArtistDashboard() {
   const [workspace, setWorkspace] = useState<LiveArtistWorkspace | null>(null)
@@ -88,7 +75,6 @@ function LiveArtistDashboard() {
         profile={workspace.profile}
         analytics={workspace.analytics}
       />
-      <ReadinessWidget workspace={workspace} />
     </main>
   )
 }
@@ -113,11 +99,6 @@ export function ArtistDashboardView() {
     )
   }
 
-  const demoWorkspace = {
-    profile: artistDashboardProfile,
-    analytics,
-  }
-
   return (
     <main className="kleio-artist-dashboard-main h-full overflow-y-auto bg-white text-[#292631]">
       <div className="px-4 pt-3 sm:px-5">
@@ -129,7 +110,6 @@ export function ArtistDashboardView() {
         assetProfile={assetProfile}
         analytics={analytics}
       />
-      <ReadinessWidget workspace={demoWorkspace} />
     </main>
   )
 }

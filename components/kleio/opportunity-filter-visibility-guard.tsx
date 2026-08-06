@@ -170,29 +170,18 @@ export function OpportunityFilterVisibilityGuard() {
   return (
     <div className="flex h-full min-h-0 flex-col bg-[#FCFBFE]" onInputCapture={scheduleFilterSync} onChangeCapture={scheduleFilterSync} onClickCapture={scheduleFilterSync}>
       {hydrated && activeFilters.length > 0 && (
-        <section className="shrink-0 border-b border-[#E7E1F7] bg-white px-4 py-3 sm:px-6" aria-label="Active opportunity filters">
-          <div className="mx-auto flex max-w-[1180px] flex-wrap items-center gap-3">
-            <div className="flex min-w-0 items-center gap-2 text-[#5B4B8A]">
-              <span className="grid size-8 shrink-0 place-items-center rounded-full bg-[#F7F4FF]">
-                <SlidersHorizontal className="size-4" aria-hidden="true" />
-              </span>
-              <div>
-                <p className="text-sm font-semibold text-[#292631]">Filtered opportunity view</p>
-                <p className="text-xs text-[#625C70]">These filters are reducing the directory results.</p>
-              </div>
-            </div>
-
-            <div className="flex min-w-0 flex-1 flex-wrap gap-2" aria-live="polite">
+        <section className="shrink-0 border-b border-[#E7E1F7] bg-white px-4 py-2 sm:px-6" aria-label="Active opportunity filters">
+          <div className="mx-auto flex max-w-[1180px] items-center gap-2.5">
+            <SlidersHorizontal className="size-4 shrink-0 text-[#5B4B8A]" aria-hidden="true" />
+            <p className="shrink-0 text-xs font-semibold text-[#292631]">{activeFilters.length} active filter{activeFilters.length === 1 ? "" : "s"}</p>
+            <div className="hidden min-w-0 flex-1 gap-1.5 overflow-x-auto sm:flex" aria-live="polite">
               {activeFilters.map((label) => (
-                <span key={label} className="max-w-full truncate rounded-full border border-[#D8D0F2] bg-[#F7F4FF] px-3 py-1 text-xs font-semibold text-[#5B4B8A]" title={label}>
-                  {label}
-                </span>
+                <span key={label} className="max-w-56 shrink-0 truncate rounded-full bg-[#F7F4FF] px-2.5 py-1 text-[0.68rem] font-semibold text-[#5B4B8A]" title={label}>{label}</span>
               ))}
             </div>
-
-            <button type="button" onClick={clearAllFilters} className="inline-flex h-9 shrink-0 items-center justify-center gap-2 rounded-xl border border-[#D8D0F2] bg-white px-3 text-sm font-semibold text-[#5B4B8A] transition-colors hover:bg-[#F7F4FF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A997E8] focus-visible:ring-offset-2">
-              <RotateCcw className="size-4" aria-hidden="true" />
-              Clear all
+            <button type="button" onClick={clearAllFilters} className="ml-auto inline-flex h-8 shrink-0 items-center justify-center gap-1.5 rounded-lg px-2.5 text-xs font-semibold text-[#5B4B8A] transition-colors hover:bg-[#F7F4FF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A997E8] focus-visible:ring-offset-2">
+              <RotateCcw className="size-3.5" aria-hidden="true" />
+              Clear
             </button>
           </div>
         </section>
