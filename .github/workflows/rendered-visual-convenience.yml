@@ -1,0 +1,73 @@
+name: Rendered Visual Convenience
+
+on:
+  pull_request:
+    paths:
+      - "app/**"
+      - "components/**"
+      - "scripts/audit_rendered_visual_convenience.mjs"
+      - ".github/workflows/rendered-visual-convenience.yml"
+      - "package.json"
+      - "pnpm-lock.yaml"
+  push:
+    branches: [main]
+    paths:
+      - "app/**"
+      - "components/**"
+      - "scripts/audit_rendered_visual_convenience.mjs"
+      - ".github/workflows/rendered-visual-convenience.yml"
+      - "package.json"
+      - "pnpm-lock.yaml"
+
+permissions:
+  contents: read
+
+jobs:
+  render-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Build complete static export
+        env:
+          NEXT_PUBLIC_BASE_PATH: ""
+          NEXT_PUBLIC_SUPABASE_URL: https://trekynurdgxgtaaqqtyq.supabase.co
+          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_XdYXvd0fQm3IJKxNrFXgUQ_M4RgDj1M
+        run: pnpm build
+      - name: Install isolated Chromium runtime
+        run: pnpm dlx playwright@1.55.0 install chromium
+      - name: Start static site
+        run: |
+          python3 -m http.server 4173 --directory out > /tmp/kleio-static-server.log 2>&1 &
+          echo $! > /tmp/kleio-static-server.pid
+          for attempt in $(seq 1 40); do
+            curl --fail --silent http://127.0.0.1:4173/ >/dev/null && exit 0
+            sleep 0.25
+          done
+          cat /tmp/kleio-static-server.log
+          exit 1
+      - name: Render every route at desktop and mobile widths
+        env:
+          KLEIO_AUDIT_BASE_URL: http://127.0.0.1:4173
+        run: |
+          CHROMIUM_PATH="$(find "$HOME/.cache/ms-playwright" -type f \( -path '*/chrome-linux/chrome' -o -path '*/chrome-linux64/chrome' \) | head -n 1)"
+          test -n "$CHROMIUM_PATH"
+          CHROMIUM_PATH="$CHROMIUM_PATH" node scripts/audit_rendered_visual_convenience.mjs
+      - name: Upload rendered audit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rendered-visual-convenience-report
+          path: |
+            docs/rendered-visual-convenience-audit.json
+            docs/rendered-visual-convenience-audit.md
+            /tmp/kleio-static-server.log
+          if-no-files-found: warn
