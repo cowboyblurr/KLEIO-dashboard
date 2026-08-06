@@ -6,6 +6,7 @@ import { FileCheck2, FileText, Images, ShieldCheck, Sparkles } from "lucide-reac
 import { QuickMediaImport } from "@/components/kleio/media-import/quick-media-import"
 import { SupportingTaskDisclosure } from "@/components/kleio/supporting-task-disclosure"
 import { attachMediaToCreativePassportCv } from "@/lib/kleio-universal-media"
+import { requestMediaExtraction } from "@/lib/kleio-upload-to-passport"
 
 const primary = "inline-flex min-h-10 items-center justify-center gap-2 rounded-xl bg-[#5B4B8A] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#4F407B] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#A997E8]/25"
 const secondary = "inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-[#D8D0F2] bg-white px-4 py-2 text-sm font-semibold text-[#5B4B8A] transition hover:border-[#B9A9DE] hover:bg-[#FBFAFE] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#A997E8]/20"
@@ -38,10 +39,11 @@ export function CreativePassportMediaPanel() {
             label="Choose CV"
             className="!min-h-10"
             onConfirm={async ({ items }) => {
-              const selected = items[0]
-              if (!selected) return
-              await attachMediaToCreativePassportCv(selected)
-              setStatus(`${selected.title} is now the CV connected to your Creative Passport.`)
+              const item = items[0]
+              if (!item) return
+              await attachMediaToCreativePassportCv(item)
+              const extraction = await requestMediaExtraction(item, "artist_cv")
+              setStatus(`${item.title} is connected to your Creative Passport. ${extraction.proposalCount} reviewable update${extraction.proposalCount === 1 ? " is" : "s are"} ready.`)
             }}
           />
           <Link href="/artist-dashboard/passport/review/" className={secondary}><FileCheck2 className="size-4" />Review updates</Link>
