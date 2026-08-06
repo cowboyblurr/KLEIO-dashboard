@@ -5,6 +5,7 @@
 import { useEffect, useState } from "react"
 import { useSearchParams } from "next/navigation"
 import { ImageIcon, Loader2 } from "lucide-react"
+import { SupportingTaskDisclosure } from "@/components/kleio/supporting-task-disclosure"
 import { getOpportunityImagePublicUrl } from "@/lib/kleio-opportunity-images"
 import { getSupabaseBrowserClient } from "@/lib/kleio-supabase"
 
@@ -51,22 +52,27 @@ export function ApplicationSubmissionCover() {
   }, [opportunityId])
 
   if (!opportunityId || (!loading && !record)) return null
-  if (loading) return <div className="shrink-0 border-b border-[#E7E1F7] bg-white px-4 py-2 sm:px-6"><div className="mx-auto flex max-w-[1120px] items-center gap-2 text-xs text-muted-foreground"><Loader2 className="size-3.5 animate-spin" />Loading application cover…</div></div>
+  if (loading) return <div role="status" className="flex items-center gap-2 rounded-2xl border border-[#E7E1F7] bg-white px-4 py-3 text-xs text-muted-foreground"><Loader2 className="size-3.5 animate-spin" />Loading application introduction…</div>
   if (!record) return null
 
   const imageUrl = getOpportunityImagePublicUrl(record.submission_cover_path)
   return (
-    <section className="shrink-0 border-b border-[#E7E1F7] bg-[#FCFBFD] px-4 py-4 sm:px-6">
-      <div className="mx-auto grid max-w-[1120px] overflow-hidden rounded-2xl border border-[#E7E1F7] bg-white sm:grid-cols-[240px_minmax(0,1fr)]">
-        <div className="relative min-h-40 overflow-hidden bg-[#F3EFF8]">
+    <SupportingTaskDisclosure
+      icon={ImageIcon}
+      label="Opportunity context"
+      title={record.title}
+      description={`${record.provider_name} selected this cover for the application introduction.`}
+      className="shadow-none"
+    >
+      <div className="grid gap-4 sm:grid-cols-[160px_minmax(0,1fr)] sm:items-center">
+        <div className="relative aspect-[4/3] overflow-hidden rounded-xl bg-[#F3EFF8]">
           {imageUrl ? <img src={imageUrl} alt={record.submission_cover_alt_text || `${record.title} application cover`} className="absolute inset-0 size-full object-cover" style={{ objectPosition: `${record.submission_cover_position_x}% ${record.submission_cover_position_y}%` }} /> : <div className="grid size-full place-items-center"><ImageIcon className="size-6 text-[#7867AA]" /></div>}
         </div>
-        <div className="p-5">
+        <div>
           <p className="text-[0.65rem] font-semibold uppercase tracking-[0.15em] text-[#6A5896]">Application introduction · {record.provider_name}</p>
-          <h2 className="mt-2 font-serif text-2xl tracking-[-0.03em] text-[#292631]">{record.title}</h2>
-          <p className="mt-2 text-xs leading-5 text-[#7F7890]">This institution-selected cover introduces the application. It does not change eligibility, requirements, readiness, or submission status.</p>
+          <p className="mt-2 text-sm leading-6 text-[#746E80]">This cover provides visual context only. It does not change eligibility, source requirements, readiness, or submission status.</p>
         </div>
       </div>
-    </section>
+    </SupportingTaskDisclosure>
   )
 }
