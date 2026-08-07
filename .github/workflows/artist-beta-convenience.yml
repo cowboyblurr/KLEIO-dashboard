@@ -9,6 +9,7 @@ on:
       - "components/kleio/unified-artist-applications.tsx"
       - "components/kleio/production-artist-opportunity-directory.tsx"
       - "lib/kleio-application-composer.ts"
+      - "supabase/migrations/*required_application_file*"
       - "scripts/audit-artist-beta-convenience.mjs"
       - "scripts/audit-artist-requirement-channel-separation.mjs"
       - "package.json"
