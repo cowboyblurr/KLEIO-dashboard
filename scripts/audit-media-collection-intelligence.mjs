@@ -5,6 +5,7 @@ const root = process.cwd()
 const failures = []
 const read = (file) => fs.readFileSync(path.join(root, file), "utf8")
 const requireText = (file, text, message) => { if (!read(file).includes(text)) failures.push(`${file}: ${message}`) }
+const requirePattern = (file, pattern, message) => { if (!pattern.test(read(file))) failures.push(`${file}: ${message}`) }
 const forbidText = (file, text, message) => { if (read(file).includes(text)) failures.push(`${file}: ${message}`) }
 
 const sheet = "components/kleio/media-intelligence-sheet.tsx"
@@ -14,7 +15,9 @@ const client = "lib/kleio-media-collection-intelligence.ts"
 const fn = "supabase/functions/analyze-artist-media-collection/index.ts"
 const migration = "supabase/migrations/20260807224500_artist_media_collection_intelligence.sql"
 
-for (const text of ["What KLEIO is reviewing", "Reviewing composition, visible details", "Reading document structure", "Separating direct observation from interpretive reading", "No artificial completion percentage"]) requireText(sheet, text, "individual analysis must explain its real review categories without a fake percentage")
+for (const text of ["What KLEIO is reviewing", "Reviewing composition, visible details", "Separating direct observation from interpretive reading"]) requireText(sheet, text, "individual analysis must explain its real review categories without a fake percentage")
+requirePattern(sheet, /Reading document structure|Understanding the document and its visual structure/, "document analysis must visibly explain source-understanding work")
+requirePattern(sheet, /No artificial completion percentage|instead of presenting a synthetic completion percentage/, "individual analysis must explicitly avoid fake completion percentages")
 
 for (const text of ["Analyze selected together", "Select for group analysis", "Body-of-work intelligence", "analyzableIds.length > 1"]) requireText(library, text, "Media Library must support convenient artist-controlled batch analysis")
 requireText(library, "setSelectedIds(analyzableIds.slice(0, 12))", "new multi-file uploads should be preselected for convenient group analysis")

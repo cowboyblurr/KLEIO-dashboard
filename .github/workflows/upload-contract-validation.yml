@@ -6,6 +6,7 @@ on:
       - "app/**"
       - "components/kleio/**"
       - "lib/kleio-device-media-upload.ts"
+      - "lib/kleio-document-profile-synthesis.ts"
       - "lib/kleio-import-source-availability.ts"
       - "lib/kleio-media-control.ts"
       - "lib/kleio-media-collection-intelligence.ts"
@@ -15,10 +16,14 @@ on:
       - "lib/kleio-requirement-file-upload.ts"
       - "scripts/audit-artist-media-control.mjs"
       - "scripts/audit-media-collection-intelligence.mjs"
+      - "scripts/audit-passport-synthesis-orchestration.mjs"
       - "scripts/audit-upload-surface-consistency.mjs"
       - "scripts/audit-public-roadmap-copy.mjs"
+      - "tests/passport-synthesis-orchestration.test.mjs"
+      - "supabase/functions/_shared/passport-synthesis-qa.mjs"
       - "supabase/functions/analyze-artist-media/**"
       - "supabase/functions/analyze-artist-media-collection/**"
+      - "supabase/functions/synthesize-artist-source-profile-v2/**"
       - "supabase/migrations/*media*"
       - "package.json"
   push:
@@ -49,6 +54,8 @@ jobs:
       - run: pnpm audit:universal-media
       - run: pnpm audit:artist-requirement-file-types
       - run: pnpm audit:document-intelligence
+      - run: pnpm audit:passport-synthesis-orchestration
+      - run: pnpm test:passport-synthesis-orchestration
       - run: pnpm typecheck
       - run: pnpm build
       - run: node scripts/audit-public-roadmap-copy.mjs

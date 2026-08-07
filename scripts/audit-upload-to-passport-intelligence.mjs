@@ -74,7 +74,7 @@ requireText(passportPanel, /passport\/review/, "Creative Passport must link to i
 requireText(mediaLibrary, /MediaIntelligenceSheet/, "Media Library must surface source intelligence in place.")
 requireText(mediaIntelligence, /requestMediaExtraction/, "Shared media intelligence must retain the structured PDF extraction engine.")
 requireText(mediaIntelligence, /loadMediaIntelligence/, "Completed source intelligence must be reloaded from the canonical private source.")
-requireText(mediaSheet, /does not rewrite your Passport without your approval/, "In-place intelligence must make artist control explicit.")
+requireText(mediaSheet, /does not rewrite your Passport without your approval|Nothing changes your approved Passport until you confirm it/i, "In-place intelligence must make artist control explicit.")
 requireText(mediaSheet, /not verification/, "AI confidence must not be presented as verification.")
 
 requireText(legacyImport, /uploadMediaToLibrary/, "The legacy PDF importer must still use the canonical private source layer.")

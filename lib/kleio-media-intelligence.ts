@@ -1,6 +1,6 @@
 import { getSupabaseBrowserClient, loadKleioAccount } from "@/lib/kleio-supabase"
 import { requestMediaExtraction } from "@/lib/kleio-upload-to-passport"
-import { parseDocumentProfileSynthesis, synthesizeDocumentProfile } from "@/lib/kleio-document-profile-synthesis"
+import { parseDocumentProfileSynthesis, retryDocumentProfileSynthesis, synthesizeDocumentProfile } from "@/lib/kleio-document-profile-synthesis"
 import type { ArtistMediaLibraryItem, MediaKind } from "@/lib/kleio-universal-media"
 
 export const KLEIO_ANALYZABLE_MEDIA_MIME_TYPES = [
@@ -39,6 +39,12 @@ export type MediaIntelligence = {
   analysisQuality: string
   isDocumentAnalysis: boolean
   profileSynthesisReady: boolean
+  pipelineStatus: "READY_FOR_REVIEW" | "PARTIALLY_READY" | "SOURCE_ONLY" | "REVIEW_READY"
+  pipelineMessage: string
+  draftedFieldCount: number
+  needsInputCount: number
+  repairedFieldCount: number
+  retryFieldsRemaining: string[]
 }
 
 export type MediaIntelligenceStatus = "ready" | "available" | "failed" | "unsupported" | "legacy"
@@ -86,6 +92,12 @@ function fromMedia(sourceId: string, mimeType: string, raw: Record<string, unkno
     analysisQuality: "review_ready",
     isDocumentAnalysis: false,
     profileSynthesisReady: false,
+    pipelineStatus: "REVIEW_READY",
+    pipelineMessage: "",
+    draftedFieldCount: 0,
+    needsInputCount: 0,
+    repairedFieldCount: 0,
+    retryFieldsRemaining: [],
   }
 }
 
@@ -108,6 +120,7 @@ function fromDocument(sourceId: string, mimeType: string, raw: Record<string, un
     ...values(synthesis?.artworks),
   ])
   const keywords = unique([
+    ...values(synthesis?.application_keywords),
     ...values(synthesis?.disciplines),
     ...values(synthesis?.mediums),
     ...values(synthesis?.themes),
@@ -118,6 +131,13 @@ function fromDocument(sourceId: string, mimeType: string, raw: Record<string, un
   const bioDraft = synthesis?.bio.text || ""
   const artistStatementDraft = synthesis?.artist_statement.text || ""
   const practiceDescriptionDraft = synthesis?.practice_description.text || ""
+  const qa = synthesis?.qa
+  const pipelineStatus = synthesis ? (qa?.status === "PARTIALLY_READY" ? "PARTIALLY_READY" : "READY_FOR_REVIEW") : "SOURCE_ONLY"
+  const pipelineMessage = pipelineStatus === "PARTIALLY_READY"
+    ? "KLEIO built usable Passport suggestions, but some evidence-supported fields still need a targeted retry or your input."
+    : pipelineStatus === "SOURCE_ONLY"
+      ? "The source was understood, but the Passport synthesis did not complete. Your source analysis is preserved."
+      : ""
   return {
     sourceId,
     mediaKind: kind(mimeType),
@@ -133,20 +153,26 @@ function fromDocument(sourceId: string, mimeType: string, raw: Record<string, un
     mediumsMaterials: values(synthesis?.mediums),
     disciplines: values(synthesis?.disciplines),
     themesConcepts: values(synthesis?.themes),
-    formalQualities: [],
+    formalQualities: values(synthesis?.visual_language),
     technicalObservations: unique([...values(synthesis?.skills), ...career, ...strings(summary.what_was_found)]),
     presentationNotes: unique([...values(synthesis?.education), ...values(synthesis?.exhibitions), ...values(synthesis?.awards), ...values(synthesis?.residencies), ...strings(summary.recommended_use)]),
     accessibilityDescription: "",
     applicationKeywords: keywords,
     factualObservations: career.length ? career : claims.map((claim) => text(claim.display_value)).filter(Boolean),
-    interpretiveObservations: artistStatementDraft ? [artistStatementDraft] : [],
-    uncertainties: unique([...(synthesis?.missing_context ?? []), ...needsReview]),
-    limitations: unique([...strings(assessment.analysis_limitations), ...needsReview]),
+    interpretiveObservations: unique([artistStatementDraft, ...values(synthesis?.themes), ...values(synthesis?.visual_language)]),
+    uncertainties: unique([...(synthesis?.missing_context ?? []), ...(qa?.needs_input_fields ?? []).map((field) => `${field.replaceAll("_", " ")}: needs your input`), ...needsReview]),
+    limitations: unique([...strings(assessment.analysis_limitations), ...(qa?.retry_fields_remaining ?? []).map((field) => `${field.replaceAll("_", " ")}: evidence found but synthesis still incomplete`), ...needsReview]),
     confidence: Number.isFinite(Number(raw.analysis_score)) ? Number(raw.analysis_score) : null,
     proposalCount: Number(raw.claim_count || 0),
     analysisQuality: text(raw.analysis_quality),
     isDocumentAnalysis: true,
     profileSynthesisReady: Boolean(synthesis),
+    pipelineStatus,
+    pipelineMessage,
+    draftedFieldCount: qa?.drafted_fields.length ?? 0,
+    needsInputCount: qa?.needs_input_fields.length ?? 0,
+    repairedFieldCount: qa?.repaired_fields.length ?? 0,
+    retryFieldsRemaining: qa?.retry_fields_remaining ?? [],
   }
 }
 
@@ -157,7 +183,7 @@ export function canAnalyzeMediaItem(item: ArtistMediaLibraryItem) {
 export function mediaIntelligenceSupportText(item: ArtistMediaLibraryItem) {
   if (!item.sourceId) return "This older portfolio item needs to be re-added to the private Media Library before KLEIO can analyze it."
   if (canAnalyzeMediaItem(item)) return item.mimeType === "application/pdf"
-    ? "KLEIO can privately read this PDF and turn supported material into reviewable Creative Passport suggestions, including draft profile language when the source supports it."
+    ? "KLEIO can privately read this PDF, build evidence-grounded Creative Passport drafts, check for missing evidence-supported fields, and send the results into your review queue without changing your approved Passport."
     : "KLEIO can privately analyze this source and keep the result available in both Media Library and Creative Passport."
   if (item.mediaKind === "document") return "This file can stay in KLEIO, but analysis is unavailable for this document format."
   return "This media can stay in KLEIO, but analysis is unavailable for this format."
@@ -223,6 +249,15 @@ export async function loadMediaIntelligenceStatuses(items: ArtistMediaLibraryIte
   return statuses
 }
 
+export async function retryDocumentPassportSynthesis(item: ArtistMediaLibraryItem) {
+  if (!item.sourceId || item.mimeType !== "application/pdf") throw new Error("A private PDF source is required for Passport synthesis.")
+  await consent(item.sourceId)
+  await retryDocumentProfileSynthesis(item.sourceId)
+  const refreshed = await loadMediaIntelligence(item.sourceId)
+  if (!refreshed) throw new Error("KLEIO could not reload the repaired Passport synthesis.")
+  return refreshed
+}
+
 export async function analyzeMediaWithKleio(item: ArtistMediaLibraryItem, options: { force?: boolean } = {}) {
   if (!item.sourceId) throw new Error("This older media item needs to be re-added to the private Media Library before analysis.")
   if (!canAnalyzeMediaItem(item)) throw new Error(mediaIntelligenceSupportText(item))
@@ -230,13 +265,15 @@ export async function analyzeMediaWithKleio(item: ArtistMediaLibraryItem, option
 
   if (item.mimeType === "application/pdf") {
     await requestMediaExtraction(item)
+    let synthesisError = ""
     try {
       await synthesizeDocumentProfile(item.sourceId, { force: options.force === true })
-    } catch {
-      // The structured document analysis remains usable even if the secondary Passport synthesis needs a retry.
+    } catch (reason) {
+      synthesisError = reason instanceof Error ? reason.message : "KLEIO could not finish the Passport synthesis."
     }
     const refreshed = await loadMediaIntelligence(item.sourceId)
     if (!refreshed) throw new Error("KLEIO completed the document pass but did not produce a readable analysis yet. Try again before using it.")
+    if (synthesisError) return { ...refreshed, pipelineStatus: "SOURCE_ONLY" as const, pipelineMessage: synthesisError }
     return refreshed
   }
 

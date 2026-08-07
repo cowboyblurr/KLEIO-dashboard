@@ -39,9 +39,9 @@ requirePattern(controls, /createSignedUrl/, "Preview/Open must work for private 
 requirePattern(intelligence, /"failed"/, "Media intelligence status must distinguish failed analysis.")
 requirePattern(intelligence, /claim_my_media_analysis/, "Analysis must claim an owner-scoped job before invoking AI.")
 requirePattern(intelligence, /finally[\s\S]*releaseMediaAnalysis/, "Analysis leases must be released after success or failure.")
-requirePattern(sheet, /Re-analyze/, "Completed analysis must expose explicit re-analysis.")
-requirePattern(sheet, /previous successful analysis is still available below/, "Failed re-analysis must leave the previous successful result visible.")
-requirePattern(sheet, /review aid, not verification/, "AI confidence must be framed as review assistance rather than verification.")
+requirePattern(sheet, /Re-analyze|Rebuild source \+ Passport/, "Completed analysis must expose explicit re-analysis.")
+requirePattern(sheet, /previous successful (?:analysis|source intelligence) is still available below/i, "Failed re-analysis must leave the previous successful result visible.")
+requirePattern(sheet, /review aid, not verification|reviewable suggestion, not verification/i, "AI output must be framed as review assistance rather than verification.")
 
 requirePattern(lease, /for update/, "Concurrent analysis claims must use a database row lock.")
 requirePattern(lease, /artist_user_id = \(select auth\.uid\(\)\)/, "Analysis claims must verify source ownership.")
