@@ -12,6 +12,7 @@
     "test:gemini-document-intelligence": "node --test tests/gemini-document-intelligence.test.mjs",
     "audit:artist-beta-readiness": "node scripts/audit-artist-beta-readiness.mjs",
     "audit:artist-recipient-loop": "node scripts/audit-artist-recipient-loop.mjs",
+    "audit:application-composer": "node scripts/audit-application-composer-lock.mjs",
     "audit:navigation": "node scripts/audit-navigation.mjs",
     "audit:user-copy": "node scripts/audit-user-facing-copy.mjs",
     "audit:auth-redirect": "node scripts/audit-auth-redirect.mjs",
