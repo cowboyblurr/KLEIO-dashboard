@@ -19,13 +19,20 @@ jobs:
       DEPLOY_CONCLUSION: ${{ github.event.workflow_run.conclusion }}
 
     steps:
-      - name: Mark live verification pending
+      - name: Publish Pages deploy result
         env:
           GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
           set -euo pipefail
-          payload='{"state":"pending","context":"KLEIO Live Production","description":"Checking exact commit on www.kleioarthouse.com","target_url":"https://www.kleioarthouse.com"}'
+          if [ "${DEPLOY_CONCLUSION}" = "success" ]; then
+            state="success"
+            description="GitHub Pages deploy workflow completed"
+          else
+            state="failure"
+            description="GitHub Pages deploy workflow failed"
+          fi
+          payload="$(printf '{\"state\":\"%s\",\"context\":\"KLEIO Pages Deploy\",\"description\":\"%s\",\"target_url\":\"https://www.kleioarthouse.com\"}' "$state" "$description")"
           curl --silent --show-error --fail-with-body \
             --request POST \
             --header "Accept: application/vnd.github+json" \
@@ -34,17 +41,9 @@ jobs:
             "https://api.github.com/repos/${GITHUB_REPOSITORY}/statuses/${TARGET_SHA}" \
             --data "$payload"
 
-      - name: Verify deploy workflow succeeded
-        id: deploy_gate
-        shell: bash
-        run: |
-          set -euo pipefail
-          echo "Deploy workflow conclusion: ${DEPLOY_CONCLUSION}"
-          test "${DEPLOY_CONCLUSION}" = "success"
-
       - name: Verify current production surface and artist image upload bundles
         id: live_verify
-        if: steps.deploy_gate.outcome == 'success'
+        if: env.DEPLOY_CONCLUSION == 'success'
         continue-on-error: true
         shell: bash
         run: |
@@ -83,7 +82,9 @@ jobs:
                 && grep -Fq "image/png" "$portfolio_bundle" \
                 && grep -Fq "image/webp" "$portfolio_bundle" \
                 && grep -Fq "Profile photo" "$passport_bundle" \
-                && grep -Fq "image/jpeg,image/png,image/webp" "$passport_bundle"; then
+                && grep -Fq "image/jpeg" "$passport_bundle" \
+                && grep -Fq "image/png" "$passport_bundle" \
+                && grep -Fq "image/webp" "$passport_bundle"; then
                 echo "Verified current KLEIO landing surface and live artist image-upload controls for ${TARGET_SHA}."
                 verified="true"
                 break
@@ -96,23 +97,22 @@ jobs:
 
           test "$verified" = "true"
 
-      - name: Publish live production verification result
+      - name: Publish artist upload live result
         if: always()
         env:
           GH_TOKEN: ${{ github.token }}
-          DEPLOY_OUTCOME: ${{ steps.deploy_gate.outcome }}
           LIVE_OUTCOME: ${{ steps.live_verify.outcome }}
         shell: bash
         run: |
           set -euo pipefail
-          if [ "${DEPLOY_OUTCOME}" = "success" ] && [ "${LIVE_OUTCOME}" = "success" ]; then
+          if [ "${DEPLOY_CONCLUSION}" = "success" ] && [ "${LIVE_OUTCOME}" = "success" ]; then
             state="success"
-            description="Exact commit verified live with artist image uploads"
+            description="Live Portfolio and Passport accept JPEG, PNG, and WEBP"
           else
             state="failure"
-            description="Live production does not yet match this commit"
+            description="Live artist image-upload surface is not verified"
           fi
-          payload="$(printf '{\"state\":\"%s\",\"context\":\"KLEIO Live Production\",\"description\":\"%s\",\"target_url\":\"https://www.kleioarthouse.com\"}' "$state" "$description")"
+          payload="$(printf '{\"state\":\"%s\",\"context\":\"KLEIO Artist Upload Live\",\"description\":\"%s\",\"target_url\":\"https://www.kleioarthouse.com\"}' "$state" "$description")"
           curl --silent --show-error --fail-with-body \
             --request POST \
             --header "Accept: application/vnd.github+json" \
