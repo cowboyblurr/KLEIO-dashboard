@@ -65,7 +65,7 @@ requireText(availability, "google_drive_document: false", "unreleased Drive impo
 requireText(availability, "instagram_image: false", "unreleased Instagram import must stay disabled internally")
 requireText(availability, "website: false", "unreleased Website Import must stay disabled internally")
 
-requireText(mediaAnalyzer, "artistConfirmationRequired", "media analyzer must preserve artist control")
+requireText(mediaAnalyzer, "artist_confirmation_required", "media analyzer must preserve artist control")
 requireText(mediaAnalyzer, "Do not identify people", "media analyzer must not attempt person identification")
 requireText(mediaAnalyzer, "factual_observations", "media analyzer must separate supportable observations")
 requireText(mediaAnalyzer, "interpretive_observations", "media analyzer must separate interpretive readings")
