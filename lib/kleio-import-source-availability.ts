@@ -3,9 +3,13 @@ import { getSupabaseBrowserClient } from "@/lib/kleio-supabase"
 export type KleioBetaImportSource =
   | "google_drive_image"
   | "google_drive_document"
+  | "google_drive_video"
+  | "google_drive_audio"
   | "existing_kleio_media"
   | "device_image"
   | "device_document"
+  | "device_video"
+  | "device_audio"
   | "instagram_image"
   | "website"
   | "pdf"
@@ -17,9 +21,13 @@ export type KleioBetaImportAvailability = Record<KleioBetaImportSource, boolean>
 export const DEFAULT_BETA_IMPORT_AVAILABILITY: KleioBetaImportAvailability = {
   google_drive_image: false,
   google_drive_document: false,
+  google_drive_video: false,
+  google_drive_audio: false,
   existing_kleio_media: true,
   device_image: true,
   device_document: true,
+  device_video: true,
+  device_audio: true,
   instagram_image: false,
   website: false,
   pdf: true,
