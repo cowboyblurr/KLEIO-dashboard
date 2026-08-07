@@ -48,7 +48,7 @@ export function MediaCollectionIntelligenceSheet({ items, open, initialInsight =
   const [saving, setSaving] = useState(false)
 
   const selectionKey = useMemo(() => items.flatMap((item) => item.sourceId ? [item.sourceId] : []).sort().join(":"), [items])
-  const sourceNames = useMemo(() => new Map(items.flatMap((item) => item.sourceId ? [[`source_${item.sourceId}`, item.title] as const] : [])), [items])
+  const sourceNames = useMemo(() => new Map<string, string>(items.flatMap((item): Array<[string, string]> => item.sourceId ? [[`source_${item.sourceId}`, item.title]] : [])), [items])
   const sourceLabel = (ref: string) => sourceNames.get(ref) || "selected source"
 
   useEffect(() => {
