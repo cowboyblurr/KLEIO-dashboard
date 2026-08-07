@@ -9,6 +9,7 @@ on:
       - "components/kleio/unified-artist-applications.tsx"
       - "components/kleio/production-artist-opportunity-directory.tsx"
       - "scripts/audit-artist-beta-convenience.mjs"
+      - "scripts/audit-artist-requirement-channel-separation.mjs"
       - "package.json"
       - "pnpm-lock.yaml"
   workflow_dispatch:
@@ -31,6 +32,7 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm audit:artist-beta-convenience
+      - run: node scripts/audit-artist-requirement-channel-separation.mjs
       - run: pnpm audit:artist-beta-readiness
       - run: pnpm audit:application-composer
       - run: pnpm audit:artist-recipient-loop
