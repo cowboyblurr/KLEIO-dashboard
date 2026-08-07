@@ -3,7 +3,7 @@
 /* eslint-disable @next/next/no-img-element -- private media uses short-lived signed URLs */
 
 import { useEffect, useMemo, useRef, useState } from "react"
-import { AudioLines, Check, FileText, FolderOpen, ImageIcon, Library, Loader2, Search, ShieldCheck, UploadCloud, Video, X } from "lucide-react"
+import { AudioLines, Check, FileText, FolderOpen, ImageIcon, Library, Loader2, RefreshCcw, Search, ShieldCheck, UploadCloud, Video, X } from "lucide-react"
 import {
   loadArtistMediaLibrary,
   mediaImportConfig,
@@ -33,6 +33,8 @@ type QuickMediaImportProps = {
   onConfirm: (result: MediaSelectionResult) => Promise<void> | void
   onOpenChange?: (open: boolean) => void
 }
+
+type FailedUpload = { file: File; message: string }
 
 function resolveConfig(context: MediaImportContext, overrides?: Partial<MediaImportConfig>) {
   const base = mediaImportConfig(context, overrides)
@@ -68,9 +70,12 @@ export function QuickMediaImport({ context, config: configOverrides, label, clas
   const [selected, setSelected] = useState<ArtistMediaLibraryItem[]>([])
   const [search, setSearch] = useState("")
   const [loading, setLoading] = useState(false)
+  const [uploading, setUploading] = useState(false)
+  const [failedUploads, setFailedUploads] = useState<FailedUpload[]>([])
   const [error, setError] = useState("")
   const [status, setStatus] = useState("")
 
+  const busy = loading || uploading
   const libraryEnabled = availability?.existing_kleio_media !== false && config.availableSources.includes("kleio_library")
   const deviceEnabledForMimeType = (mimeType: string) => {
     if (!config.availableSources.includes("device")) return false
@@ -89,6 +94,7 @@ export function QuickMediaImport({ context, config: configOverrides, label, clas
   useEffect(() => { void loadBetaImportAvailability().then(setAvailability).catch(() => setAvailability(null)) }, [])
 
   function close() {
+    if (uploading) return
     dialogRef.current?.close()
     onOpenChange?.(false)
   }
@@ -109,7 +115,7 @@ export function QuickMediaImport({ context, config: configOverrides, label, clas
   }
 
   async function open() {
-    setSelected([]); setSearch(""); setError(""); setStatus("")
+    setSelected([]); setSearch(""); setError(""); setStatus(""); setFailedUploads([])
     dialogRef.current?.showModal(); onOpenChange?.(true)
     window.setTimeout(() => headingRef.current?.focus(), 0)
     void trackKleioProductEvent("import_started", { surface: "universal_media_quick_import", metadata: { mode: deviceEnabled ? "device_or_private_library" : "reuse_private_library", source: deviceEnabled ? "device" : "kleio_library" } })
@@ -121,6 +127,7 @@ export function QuickMediaImport({ context, config: configOverrides, label, clas
   }
 
   function toggle(item: ArtistMediaLibraryItem) {
+    if (uploading) return
     setSelected((current) => {
       if (current.some((candidate) => candidate.id === item.id)) return current.filter((candidate) => candidate.id !== item.id)
       if (!config.allowMultiple) return [item]
@@ -129,10 +136,46 @@ export function QuickMediaImport({ context, config: configOverrides, label, clas
     })
   }
 
+  async function uploadFiles(files: File[], retry = false) {
+    if (!files.length || uploading) return
+    setError("")
+    setStatus("")
+    setUploading(true)
+    if (!retry) setFailedUploads([])
+    void trackKleioProductEvent("upload_started", { surface: "universal_media_quick_import", metadata: { source: "device", count: files.length, mode: context, retry } })
+
+    const uploaded: ArtistMediaLibraryItem[] = []
+    const failures: FailedUpload[] = []
+    for (let index = 0; index < files.length; index += 1) {
+      const file = files[index]
+      setStatus(`Uploading ${index + 1} of ${files.length} · ${file.name}`)
+      try {
+        uploaded.push((await uploadDeviceMediaToLibrary(file, config)).item)
+      } catch (reason) {
+        failures.push({ file, message: reason instanceof Error ? reason.message : `${file.name} could not be uploaded.` })
+      }
+    }
+
+    try { await refreshLibrary() } catch { /* the successful source records still exist and will appear on the next refresh */ }
+    if (uploaded.length) {
+      setSelected((current) => {
+        const merged = new Map([...current, ...uploaded].map((item) => [item.id, item]))
+        return Array.from(merged.values()).slice(0, config.maxSelectionCount)
+      })
+    }
+    setFailedUploads(failures)
+    if (failures.length) {
+      setError(`${failures.length} file${failures.length === 1 ? "" : "s"} could not be uploaded. Retry or remove ${failures.length === 1 ? "it" : "them"} below without reloading this page.`)
+    } else {
+      setStatus(`${uploaded.length} file${uploaded.length === 1 ? " was" : "s were"} added privately and selected. Review ${uploaded.length === 1 ? "it" : "them"} below, then confirm.`)
+    }
+    if (inputRef.current) inputRef.current.value = ""
+    setUploading(false)
+  }
+
   async function uploadFromDevice(fileList: FileList | null) {
     const files = Array.from(fileList ?? [])
-    if (!files.length || loading) return
-    setError(""); setStatus("")
+    if (!files.length || busy) return
     const accepted = files.slice(0, config.maxSelectionCount)
     const unavailable = accepted.find((file) => !deviceEnabledForMimeType(file.type) || !config.allowedMimeTypes.includes(file.type.toLowerCase()))
     if (unavailable) {
@@ -140,20 +183,11 @@ export function QuickMediaImport({ context, config: configOverrides, label, clas
       if (inputRef.current) inputRef.current.value = ""
       return
     }
-    void trackKleioProductEvent("upload_started", { surface: "universal_media_quick_import", metadata: { source: "device", count: accepted.length, mode: context } })
-    setLoading(true)
-    try {
-      const uploaded: ArtistMediaLibraryItem[] = []
-      for (const file of accepted) uploaded.push((await uploadDeviceMediaToLibrary(file, config)).item)
-      await refreshLibrary()
-      setSelected(uploaded.slice(0, config.maxSelectionCount))
-      setStatus(`${uploaded.length} file${uploaded.length === 1 ? " was" : "s were"} added privately and selected. Review ${uploaded.length === 1 ? "it" : "them"} below, then confirm.`)
-    } catch (reason) { setError(reason instanceof Error ? reason.message : "KLEIO could not upload the selected media.") }
-    finally { if (inputRef.current) inputRef.current.value = ""; setLoading(false) }
+    await uploadFiles(accepted)
   }
 
   async function confirm() {
-    if (!selected.length || loading) return
+    if (!selected.length || busy) return
     setLoading(true); setError("")
     try {
       await onConfirm({ items: selected, source: "kleio_library" })
@@ -166,22 +200,25 @@ export function QuickMediaImport({ context, config: configOverrides, label, clas
   return (
     <>
       <button type="button" onClick={() => void open()} className={`${secondary} ${className}`}><FolderOpen className="size-4" />{label || config.title}</button>
-      <dialog ref={dialogRef} aria-labelledby={`quick-media-${context}-title`} aria-describedby={`quick-media-${context}-description`} className="fixed inset-0 m-0 h-dvh max-h-none w-screen max-w-none overflow-hidden border-0 bg-white p-0 text-[#292631] shadow-2xl backdrop:bg-[#20182D]/45 backdrop:backdrop-blur-sm sm:inset-auto sm:m-auto sm:h-auto sm:max-h-[min(820px,calc(100dvh-32px))] sm:w-[min(920px,calc(100vw-32px))] sm:rounded-[28px] sm:border sm:border-[#DCD4EF]">
+      <dialog ref={dialogRef} onCancel={(event) => { if (uploading) event.preventDefault() }} aria-labelledby={`quick-media-${context}-title`} aria-describedby={`quick-media-${context}-description`} className="fixed inset-0 m-0 h-dvh max-h-none w-screen max-w-none overflow-hidden border-0 bg-white p-0 text-[#292631] shadow-2xl backdrop:bg-[#20182D]/45 backdrop:backdrop-blur-sm sm:inset-auto sm:m-auto sm:h-auto sm:max-h-[min(820px,calc(100dvh-32px))] sm:w-[min(920px,calc(100vw-32px))] sm:rounded-[28px] sm:border sm:border-[#DCD4EF]">
         <div className="flex max-h-full min-h-full flex-col bg-[#FCFBFE] sm:min-h-[620px]">
           <header className="flex shrink-0 items-start justify-between gap-4 border-b border-[#E7E1F7] bg-white px-4 py-4 sm:px-6">
             <div><p className="text-[0.66rem] font-semibold uppercase tracking-[0.16em] text-[#75639E]">Add private material</p><h2 id={`quick-media-${context}-title`} ref={headingRef} tabIndex={-1} className="mt-1 font-serif text-2xl font-semibold outline-none">{config.title}</h2><p id={`quick-media-${context}-description`} className="mt-1 max-w-2xl text-xs leading-5 text-[#746E80]">{deviceEnabled ? `Upload ${readableAcceptedMedia(config.allowedMimeTypes)} from this device or reuse compatible material already stored in your private KLEIO Library. Nothing is attached until you confirm.` : "Reuse compatible material already stored in your private KLEIO Library. Nothing is attached until you confirm."}</p></div>
-            <button type="button" onClick={close} className="grid size-11 place-items-center rounded-xl border border-[#E2DCF1] bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#A997E8]/20" aria-label="Close media picker"><X className="size-5" /></button>
+            <button type="button" onClick={close} disabled={uploading} className="grid size-11 place-items-center rounded-xl border border-[#E2DCF1] bg-white disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#A997E8]/20" aria-label="Close media picker"><X className="size-5" /></button>
           </header>
           {(error || status) && <div className={`shrink-0 border-b px-4 py-3 text-sm sm:px-6 ${error ? "border-red-200 bg-red-50 text-red-700" : "border-[#E7E1F7] bg-[#F9F7FC] text-[#625C70]"}`} role={error ? "alert" : "status"} aria-live="polite">{error || status}</div>}
           <main className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-6">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <label className="relative block flex-1"><span className="sr-only">Search private media library</span><Search className="pointer-events-none absolute left-3 top-3 size-4 text-[#8A8296]" /><input type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search private media and files" className="h-11 w-full rounded-xl border border-[#DED7EF] bg-white pl-9 pr-3 text-sm outline-none focus:border-[#A997E8] focus:ring-4 focus:ring-[#A997E8]/12" /></label>
-              <div className="flex flex-wrap items-center gap-2">{deviceEnabled && <><button type="button" className={secondary} onClick={() => inputRef.current?.click()} disabled={loading}><UploadCloud className="size-4" />Upload from device</button><input ref={inputRef} className="sr-only" type="file" accept={config.allowedMimeTypes.join(",")} multiple={config.allowMultiple} onChange={(event) => void uploadFromDevice(event.target.files)} /></>}<span className="text-xs font-semibold text-[#746E80]">{selected.length} of {config.maxSelectionCount} selected</span></div>
+              <label className="relative block flex-1"><span className="sr-only">Search private media library</span><Search className="pointer-events-none absolute left-3 top-3 size-4 text-[#8A8296]" /><input type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search private media and files" disabled={uploading} className="h-11 w-full rounded-xl border border-[#DED7EF] bg-white pl-9 pr-3 text-sm outline-none disabled:opacity-50 focus:border-[#A997E8] focus:ring-4 focus:ring-[#A997E8]/12" /></label>
+              <div className="flex flex-wrap items-center gap-2">{deviceEnabled && <><button type="button" className={secondary} onClick={() => inputRef.current?.click()} disabled={busy}><UploadCloud className="size-4" />Upload from device</button><input ref={inputRef} className="sr-only" type="file" accept={config.allowedMimeTypes.join(",")} multiple={config.allowMultiple} onChange={(event) => void uploadFromDevice(event.target.files)} /></>}<span className="text-xs font-semibold text-[#746E80]">{selected.length} of {config.maxSelectionCount} selected</span></div>
             </div>
-            {loading ? <p className="mt-8 flex items-center justify-center gap-2 text-sm text-[#746E80]"><Loader2 className="size-4 animate-spin" />Working with your private media…</p> : visibleLibrary.length ? <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{visibleLibrary.map((item) => { const active = selected.some((candidate) => candidate.id === item.id); return <button key={item.id} type="button" aria-pressed={active} onClick={() => toggle(item)} className={`overflow-hidden rounded-2xl border bg-white text-left transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#A997E8]/20 ${active ? "border-[#8C78BF] ring-2 ring-[#A997E8]/20" : "border-[#E7E1F7]"}`}><div className="relative grid aspect-[4/3] place-items-center overflow-hidden bg-[#F4F1F8]"><MediaPreview item={item} />{active && <span className="absolute right-2 top-2 grid size-7 place-items-center rounded-full bg-[#5B4B8A] text-white"><Check className="size-4" /></span>}<span className="absolute bottom-2 left-2 rounded-full bg-white/95 px-2 py-0.5 text-[0.62rem] font-semibold capitalize text-[#625C70]">{item.mediaKind}</span></div><div className="p-3"><p className="truncate text-sm font-semibold">{item.title}</p><p className="mt-1 truncate text-xs text-[#746E80]">{item.originalFilename}</p></div></button>})}</div> : <div className="mt-8 grid place-items-center rounded-2xl border border-dashed border-[#D8D0F2] bg-white p-8 text-center"><Library className="size-8 text-[#75639E]" /><p className="mt-3 text-sm font-semibold">No matching private material yet</p><p className="mt-1 max-w-sm text-xs leading-5 text-[#746E80]">{deviceEnabled ? "Upload from this device to begin, or change your search." : "Add material through the appropriate KLEIO upload workspace, then return here to reuse it."}</p></div>}
+
+            {failedUploads.length > 0 && <section className="mt-4 rounded-xl border border-red-200 bg-white p-3" aria-label="Failed uploads"><p className="text-xs font-semibold text-red-800">Failed uploads</p><ul className="mt-2 space-y-1 text-xs leading-5 text-[#746E80]">{failedUploads.map(({ file, message }) => <li key={`${file.name}-${file.size}-${file.lastModified}`}><strong className="font-semibold text-[#5B5465]">{file.name}</strong> · {message}</li>)}</ul><div className="mt-3 flex flex-wrap gap-2"><button type="button" className={secondary} disabled={busy} onClick={() => void uploadFiles(failedUploads.map(({ file }) => file), true)}><RefreshCcw className="size-4" />Retry</button><button type="button" className={secondary} disabled={busy} onClick={() => { setFailedUploads([]); setError("") }}><X className="size-4" />Remove</button></div></section>}
+
+            {uploading ? <div className="mt-8 grid place-items-center rounded-2xl border border-[#E7E1F7] bg-white p-8 text-center" role="status" aria-live="polite"><Loader2 className="size-5 animate-spin text-[#75639E]" /><p className="mt-3 text-sm font-semibold text-[#4F485A]">Upload in progress</p><p className="mt-1 max-w-md text-xs leading-5 text-[#746E80]">{status || "KLEIO is securely adding your selected media."}</p><p className="mt-2 text-[0.68rem] leading-5 text-[#8A8296]">This transfer cannot be safely interrupted at the current storage stage, so KLEIO does not show a fake cancel action.</p></div> : loading ? <p className="mt-8 flex items-center justify-center gap-2 text-sm text-[#746E80]"><Loader2 className="size-4 animate-spin" />Working with your private media…</p> : visibleLibrary.length ? <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{visibleLibrary.map((item) => { const active = selected.some((candidate) => candidate.id === item.id); return <button key={item.id} type="button" aria-pressed={active} onClick={() => toggle(item)} className={`overflow-hidden rounded-2xl border bg-white text-left transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#A997E8]/20 ${active ? "border-[#8C78BF] ring-2 ring-[#A997E8]/20" : "border-[#E7E1F7]"}`}><div className="relative grid aspect-[4/3] place-items-center overflow-hidden bg-[#F4F1F8]"><MediaPreview item={item} />{active && <span className="absolute right-2 top-2 grid size-7 place-items-center rounded-full bg-[#5B4B8A] text-white"><Check className="size-4" /></span>}<span className="absolute bottom-2 left-2 rounded-full bg-white/95 px-2 py-0.5 text-[0.62rem] font-semibold capitalize text-[#625C70]">{item.mediaKind}</span></div><div className="p-3"><p className="truncate text-sm font-semibold">{item.title}</p><p className="mt-1 truncate text-xs text-[#746E80]">{item.originalFilename}</p></div></button>})}</div> : <div className="mt-8 grid place-items-center rounded-2xl border border-dashed border-[#D8D0F2] bg-white p-8 text-center"><Library className="size-8 text-[#75639E]" /><p className="mt-3 text-sm font-semibold">No matching private material yet</p><p className="mt-1 max-w-sm text-xs leading-5 text-[#746E80]">{deviceEnabled ? "Upload from this device to begin, or change your search." : "Add material through the appropriate KLEIO upload workspace, then return here to reuse it."}</p></div>}
             <div className="mt-5 rounded-2xl border border-[#E7E1F7] bg-white p-4 text-xs leading-5 text-[#746E80]"><ShieldCheck className="mr-2 inline size-4 text-[#5B4B8A]" />Uploaded material stays private. Selecting a file does not publish, replace, or attach it until you confirm the destination action.</div>
           </main>
-          <footer className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-t border-[#E7E1F7] bg-white px-4 py-4 sm:px-6"><button type="button" className={secondary} onClick={close}>Cancel</button><button type="button" className={primary} disabled={!selected.length || loading} onClick={() => void confirm()}>{loading ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />}Confirm selected material</button></footer>
+          <footer className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-t border-[#E7E1F7] bg-white px-4 py-4 sm:px-6"><button type="button" className={secondary} onClick={close} disabled={uploading}>Cancel</button><button type="button" className={primary} disabled={!selected.length || busy} onClick={() => void confirm()}>{loading ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />}Confirm selected material</button></footer>
         </div>
       </dialog>
     </>
