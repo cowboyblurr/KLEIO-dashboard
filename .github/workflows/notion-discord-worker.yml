@@ -2,12 +2,6 @@ name: Deploy Notion Discord Worker
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - main
-    paths:
-      - "integrations/notion-discord-worker/**"
-      - ".github/workflows/notion-discord-worker.yml"
 
 permissions:
   contents: read
