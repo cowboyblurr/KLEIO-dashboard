@@ -3,18 +3,20 @@ name: Application composer lock
 on:
   pull_request:
     paths:
-      - "app/artist-dashboard/applications/prepare/**"
+      - "app/artist-dashboard/applications/**"
       - "components/kleio/application-composer-workspace.tsx"
       - "components/kleio/application-timeline-panel.tsx"
+      - "components/kleio/unified-artist-applications.tsx"
       - "lib/kleio-application-composer.ts"
       - "lib/kleio-application-answer-assist.ts"
       - "lib/kleio-application-preparation.ts"
       - "lib/kleio-opportunity-presentation.ts"
       - "supabase/functions/generate-application-answer/**"
-      - "supabase/migrations/*application_composer_lock*"
+      - "supabase/migrations/**"
       - "scripts/audit-application-composer-lock.mjs"
       - "package.json"
       - "pnpm-lock.yaml"
+      - ".github/workflows/application-composer-lock.yml"
   workflow_dispatch:
 
 permissions:
