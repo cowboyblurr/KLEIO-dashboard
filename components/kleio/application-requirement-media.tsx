@@ -108,6 +108,7 @@ export function ApplicationRequirementMedia() {
           <p className="text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-[#75639E]">Requirement material</p>
           <h2 id="application-requirement-media-title" className="mt-1 font-serif text-xl font-semibold tracking-[-0.02em] text-[#292631]">Attach files once, to the exact requirement</h2>
           <p className="mt-1 max-w-3xl text-xs leading-5 text-[#746E80]">Written responses stay in the composer; source-declared file or media inputs live here; portfolio works stay in the visual selector. KLEIO accepts the source-specified format when supported and does not pretend every uploaded file is a PDF or CV.</p>
+          <p className="mt-1 max-w-3xl text-[0.7rem] font-medium leading-5 text-[#665A85]">Required files must be included before KLEIO will preserve a final submission version.</p>
         </div>
         <div className="flex shrink-0 flex-wrap gap-2 text-xs font-semibold">
           <span className="rounded-full bg-emerald-50 px-3 py-1.5 text-emerald-800">{includedCount} included</span>
