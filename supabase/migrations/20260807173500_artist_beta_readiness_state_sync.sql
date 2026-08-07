@@ -1,6 +1,7 @@
 -- Artist beta-readiness state repair.
 -- 1) Direct device image upload is a baseline artist capability.
 -- 2) An uploaded/reclassified Artist CV must update the canonical artist profile immediately.
+-- The trigger stays SECURITY INVOKER so the existing owner-scoped RLS policies remain authoritative.
 
 update public.kleio_import_source_availability
 set artist_beta_enabled = true
@@ -9,7 +10,7 @@ where source_type = 'device_image';
 create or replace function public.sync_artist_cv_file_path_from_import_source()
 returns trigger
 language plpgsql
-security definer
+security invoker
 set search_path = public
 as $$
 declare
