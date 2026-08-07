@@ -1,14 +1,8 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts"
 import { createClient } from "npm:@supabase/supabase-js@2.110.5"
-import {
-  DEFAULT_DRAFT_MODEL,
-  GEMINI_PROVIDER,
-  cleanText,
-  runGeminiStructured,
-  safeModel,
-  type JsonObject,
-} from "../_shared/gemini-document-intelligence.ts"
 
+const GEMINI_PROVIDER = "gemini"
+const DEFAULT_DRAFT_MODEL = "gemini-3.6-flash"
 const PROMPT_VERSION = "kleio_media_collection_intelligence_v1"
 const MIN_SOURCES = 2
 const MAX_SOURCES = 12
@@ -19,10 +13,26 @@ const ALLOWED_ORIGINS = [
   /^http:\/\/127\.0\.0\.1(?::\d+)?$/i,
 ]
 
+type JsonObject = Record<string, unknown>
 type Pattern = { text: string; source_refs: string[]; confidence: number }
+type ProviderResult<T> = {
+  output: T
+  model: string
+  provider: "gemini"
+  requestId: string
+  latencyMs: number
+  usage: { input_tokens: number; output_tokens: number; total_tokens: number }
+}
 
 function object(value: unknown): JsonObject {
   return value && typeof value === "object" && !Array.isArray(value) ? value as JsonObject : {}
+}
+function cleanText(value: unknown, max = 20_000) {
+  return typeof value === "string" ? value.replace(/[\u0000-\u001F\u007F]/g, " ").replace(/\s+/g, " ").trim().slice(0, max) : ""
+}
+function safeModel(value: unknown, fallback: string) {
+  const model = cleanText(value, 100)
+  return /^[a-z0-9][a-z0-9._-]{2,99}$/i.test(model) ? model : fallback
 }
 function strings(value: unknown, max = 30, length = 300) {
   return Array.isArray(value)
@@ -45,6 +55,92 @@ function corsHeaders(request: Request) {
 }
 function json(request: Request, body: unknown, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: { ...corsHeaders(request), "Content-Type": "application/json", "Cache-Control": "no-store" } })
+}
+function supportedJsonSchema(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(supportedJsonSchema)
+  if (!value || typeof value !== "object") return value
+  const supported = new Set(["type", "format", "title", "description", "enum", "items", "properties", "required", "propertyOrdering"])
+  const next: JsonObject = {}
+  for (const [key, item] of Object.entries(value as JsonObject)) {
+    if (!supported.has(key)) continue
+    if (key === "type" && Array.isArray(item)) {
+      next.type = item.find((candidate) => candidate !== "null") || "string"
+      continue
+    }
+    next[key] = supportedJsonSchema(item)
+  }
+  return next
+}
+function parseProviderText(payload: JsonObject) {
+  const candidates = Array.isArray(payload.candidates) ? payload.candidates.map(object) : []
+  const first = candidates[0] ?? {}
+  const content = object(first.content)
+  const parts = Array.isArray(content.parts) ? content.parts.map(object) : []
+  return parts.map((part) => cleanText(part.text, 2_000_000)).filter(Boolean).join("")
+}
+function providerError(status: number, payload: JsonObject) {
+  const error = object(payload.error)
+  const message = cleanText(error.message, 500).toLowerCase()
+  if (status === 401 || status === 403) return "gemini_authentication_failed"
+  if (status === 429) return "gemini_rate_limited"
+  if (status >= 500) return "gemini_provider_unavailable"
+  if (message.includes("schema")) return "gemini_schema_rejected"
+  if (message.includes("model")) return "gemini_model_unavailable"
+  return "gemini_request_failed"
+}
+async function runGeminiStructured<T>(input: {
+  apiKey: string
+  model: string
+  systemInstruction: string
+  prompt: string
+  responseSchema: JsonObject
+  timeoutMs?: number
+  maxOutputTokens?: number
+}): Promise<ProviderResult<T>> {
+  if (!input.apiKey) throw new Error("gemini_not_configured")
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), input.timeoutMs ?? 88_000)
+  const started = Date.now()
+  try {
+    const schema = supportedJsonSchema(input.responseSchema)
+    const generationConfig = input.model.startsWith("gemini-3")
+      ? { responseFormat: { text: { mimeType: "application/json", schema } }, maxOutputTokens: input.maxOutputTokens ?? 12_000 }
+      : { responseMimeType: "application/json", responseJsonSchema: schema, maxOutputTokens: input.maxOutputTokens ?? 12_000 }
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(input.model)}:generateContent`, {
+      method: "POST",
+      signal: controller.signal,
+      headers: { "Content-Type": "application/json", "x-goog-api-key": input.apiKey },
+      body: JSON.stringify({
+        systemInstruction: { parts: [{ text: input.systemInstruction }] },
+        contents: [{ role: "user", parts: [{ text: input.prompt }] }],
+        generationConfig,
+      }),
+    })
+    const payload = await response.json().catch(() => ({})) as JsonObject
+    if (!response.ok) throw new Error(providerError(response.status, payload))
+    const text = parseProviderText(payload)
+    if (!text) throw new Error("gemini_returned_no_output")
+    let output: T
+    try { output = JSON.parse(text) as T } catch { throw new Error("gemini_invalid_structured_output") }
+    const usage = object(payload.usageMetadata)
+    return {
+      output,
+      provider: GEMINI_PROVIDER,
+      model: input.model,
+      requestId: response.headers.get("x-request-id") || response.headers.get("x-goog-request-id") || "",
+      latencyMs: Date.now() - started,
+      usage: {
+        input_tokens: Number(usage.promptTokenCount || 0),
+        output_tokens: Number(usage.candidatesTokenCount || 0),
+        total_tokens: Number(usage.totalTokenCount || 0),
+      },
+    }
+  } catch (reason) {
+    if (reason instanceof DOMException && reason.name === "AbortError") throw new Error("gemini_timeout")
+    throw reason
+  } finally {
+    clearTimeout(timer)
+  }
 }
 
 function responseSchema(): JsonObject {
@@ -161,6 +257,7 @@ function sourceEvidence(row: Record<string, unknown>, work: Record<string, unkno
     }
   }
   if (row.mime_type === "application/pdf" && (Object.keys(documentSummary).length || Object.keys(documentAssessment).length)) {
+    const profile = object(review.profile_synthesis)
     return {
       ref: sourceRef,
       source_id: row.id,
@@ -168,12 +265,14 @@ function sourceEvidence(row: Record<string, unknown>, work: Record<string, unkno
       kind: "document",
       artist_metadata: {},
       analysis: {
-        summary: cleanText(documentSummary.document_synopsis, 2_500),
+        summary: cleanText(object(profile.bio).text, 2_500) || cleanText(documentSummary.document_synopsis, 2_500),
+        practice_description: cleanText(object(profile.practice_description).text, 2_500),
+        artist_statement: cleanText(object(profile.artist_statement).text, 2_500),
         factual_observations: strings(documentSummary.what_was_found, 30, 360),
-        uncertainties: strings(documentSummary.what_needs_review, 20, 360),
+        uncertainties: strings(profile.missing_context, 20, 360).concat(strings(documentSummary.what_needs_review, 20, 360)),
         limitations: strings(documentAssessment.analysis_limitations, 20, 360),
         recommended_use: strings(documentSummary.recommended_use, 20, 360),
-        analyzed_at: cleanText(row.updated_at, 100),
+        analyzed_at: cleanText(profile.generated_at || row.updated_at, 100),
       },
     }
   }
@@ -261,7 +360,8 @@ Deno.serve(async (request: Request) => {
   const fingerprintInput = ordered.map((source) => {
     const review = object(source.review_summary)
     const media = object(review.media_analysis)
-    const analyzedAt = cleanText(media.analyzed_at || source.updated_at, 100)
+    const profile = object(review.profile_synthesis)
+    const analyzedAt = cleanText(media.analyzed_at || profile.generated_at || source.updated_at, 100)
     return `${source.id}:${source.checksum || ""}:${analyzedAt}`
   }).join("|")
   const sourceFingerprint = await fingerprint(fingerprintInput)
