@@ -13,7 +13,7 @@ import {
   type RequirementRecord,
 } from "@/lib/kleio-upload-to-passport"
 
-const surface = "rounded-2xl border border-[#E7E1F7] bg-white p-5 shadow-[0_14px_42px_rgba(82,64,130,0.05)]"
+const surface = "rounded-2xl border border-[#E7E1F7] bg-white p-4 sm:p-5 shadow-[0_14px_42px_rgba(82,64,130,0.045)]"
 const DEFAULT_MIME_TYPES = ["application/pdf", "image/jpeg", "image/png", "image/webp"]
 
 function acceptedMimeTypes(values: string[]) {
@@ -43,17 +43,17 @@ function requirementLimit(requirement: RequirementRecord) {
 }
 
 function readableBytes(value: number | null) {
-  if (!value) return "No published file-size limit"
-  if (value < 1024 * 1024) return `${Math.round(value / 1024)} KB maximum`
-  return `${Math.round(value / 1024 / 1024)} MB maximum`
+  if (!value) return "size not stated"
+  if (value < 1024 * 1024) return `${Math.round(value / 1024)} KB max`
+  return `${Math.round(value / 1024 / 1024)} MB max`
 }
 
 function statusCopy(attachment: RequirementAttachment | undefined) {
-  if (!attachment) return { label: "Missing", detail: "No private source is attached to this requirement.", tone: "border-red-200 bg-red-50 text-red-800", icon: AlertTriangle }
-  if (attachment.validation_status === "satisfied") return { label: "Requirement satisfied", detail: "The source passed the available deterministic checks and you confirmed its inclusion.", tone: "border-emerald-200 bg-emerald-50 text-emerald-800", icon: CheckCircle2 }
-  if (attachment.validation_status === "likely_satisfied") return { label: "Likely satisfied", detail: "Available checks pass, but the published or external requirement still needs confirmation.", tone: "border-blue-200 bg-blue-50 text-blue-800", icon: FileCheck2 }
-  if (attachment.validation_status === "invalid") return { label: "Does not satisfy current checks", detail: "At least one published file rule failed.", tone: "border-red-200 bg-red-50 text-red-800", icon: AlertTriangle }
-  return { label: "Artist review required", detail: "The source remains private until you confirm its use for this exact requirement.", tone: "border-amber-200 bg-amber-50 text-amber-800", icon: AlertTriangle }
+  if (!attachment) return { label: "Missing", detail: "Add a private source for this requirement.", tone: "border-red-200 bg-red-50 text-red-800", icon: AlertTriangle, ready: false }
+  if (attachment.validation_status === "satisfied") return { label: "Ready", detail: "Validated and confirmed for this application.", tone: "border-emerald-200 bg-emerald-50 text-emerald-800", icon: CheckCircle2, ready: true }
+  if (attachment.validation_status === "likely_satisfied") return { label: "Confirm", detail: "Available checks pass; final source confirmation remains.", tone: "border-blue-200 bg-blue-50 text-blue-800", icon: FileCheck2, ready: false }
+  if (attachment.validation_status === "invalid") return { label: "Fix needed", detail: "At least one published file rule failed.", tone: "border-red-200 bg-red-50 text-red-800", icon: AlertTriangle, ready: false }
+  return { label: "Review", detail: "Confirm this private source for the exact requirement.", tone: "border-amber-200 bg-amber-50 text-amber-800", icon: AlertTriangle, ready: false }
 }
 
 export function ApplicationRequirementMedia() {
@@ -96,74 +96,96 @@ export function ApplicationRequirementMedia() {
     return map
   }, [attachments])
 
+  const requirementRows = useMemo(() => documentRequirements.map((requirement) => {
+    const requirementAttachments = byRequirement.get(requirement.id) ?? []
+    const current = requirementAttachments.find((attachment) => attachment.included_in_package) ?? requirementAttachments[0]
+    return { requirement, current, presentation: statusCopy(current) }
+  }), [byRequirement, documentRequirements])
+
+  const readyCount = requirementRows.filter((row) => row.presentation.ready).length
+  const attentionCount = requirementRows.length - readyCount
+
   if (!opportunityId) return null
-  if (loading && !requirements.length) return <section className={`${surface} flex items-center justify-center text-sm text-[#746E80]`}><Loader2 className="mr-2 size-4 animate-spin" />Loading requirement-specific materials…</section>
+  if (loading && !requirements.length) return <section className={`${surface} flex items-center gap-2 text-sm text-[#746E80]`}><Loader2 className="size-4 animate-spin" />Checking requirement files…</section>
   if (!documentRequirements.length && !error) return null
 
   return (
-    <section className={surface} aria-labelledby="application-requirement-media-title">
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-        <div className="max-w-3xl"><p className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-[#75639E]">Exact requirement attachments</p><h2 id="application-requirement-media-title" className="mt-1 font-serif text-2xl font-semibold tracking-[-0.03em]">Attach the right source to the right requirement</h2><p className="mt-2 text-sm leading-6 text-[#746E80]">A file does not count merely because it was uploaded. KLEIO links it to one named requirement, validates the published rules it can verify, preserves the selected version, and waits for your confirmation before package inclusion.</p></div>
-        <span className="inline-flex w-fit items-center gap-2 rounded-full border border-[#D8D0F2] bg-[#F8F5FF] px-3 py-1.5 text-xs font-semibold text-[#5B4B8A]"><ShieldCheck className="size-3.5" />Private application workspace</span>
+    <section className={surface} id="application-requirement-files" aria-labelledby="application-requirement-media-title">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-[#75639E]">Requirement files</p>
+          <h2 id="application-requirement-media-title" className="mt-1 font-serif text-xl font-semibold tracking-[-0.02em] text-[#292631]">Attach files once, to the exact requirement</h2>
+          <p className="mt-1 max-w-3xl text-xs leading-5 text-[#746E80]">KLEIO keeps these files private and links each one to the requirement it satisfies. No generic duplicate upload step.</p>
+        </div>
+        <div className="flex shrink-0 flex-wrap gap-2 text-xs font-semibold">
+          <span className="rounded-full bg-emerald-50 px-3 py-1.5 text-emerald-800">{readyCount} ready</span>
+          {attentionCount > 0 && <span className="rounded-full bg-amber-50 px-3 py-1.5 text-amber-800">{attentionCount} need attention</span>}
+        </div>
       </div>
 
-      {(error || message) && <div role={error ? "alert" : "status"} className={`mt-4 rounded-xl border px-4 py-3 text-sm ${error ? "border-red-200 bg-red-50 text-red-800" : "border-emerald-200 bg-emerald-50 text-emerald-800"}`}>{error || message}</div>}
+      {(error || message) && <div role={error ? "alert" : "status"} className={`mt-3 rounded-xl border px-3 py-2.5 text-sm ${error ? "border-red-200 bg-red-50 text-red-800" : "border-emerald-200 bg-emerald-50 text-emerald-800"}`}>{error || message}</div>}
 
-      <div className="mt-5 grid gap-4 lg:grid-cols-2">
-        {documentRequirements.map((requirement) => {
-          const requirementAttachments = byRequirement.get(requirement.id) ?? []
-          const current = requirementAttachments.find((attachment) => attachment.included_in_package) ?? requirementAttachments[0]
-          const presentation = statusCopy(current)
+      <div className="mt-4 divide-y divide-[#EEEAF6] rounded-xl border border-[#E7E1F7] bg-[#FCFBFE]">
+        {requirementRows.map(({ requirement, current, presentation }) => {
           const StatusIcon = presentation.icon
           const mimeTypes = acceptedMimeTypes(requirement.accepted_file_types)
           const count = requirementLimit(requirement)
+          const typeSummary = mimeTypes.map((type) => type.split("/").at(-1)?.toUpperCase()).join(", ")
           return (
-            <article key={requirement.id} className="rounded-2xl border border-[#E7E1F7] bg-[#FCFBFE] p-4">
-              <div className="flex items-start justify-between gap-3"><div><p className="text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-[#75639E]">{requirement.required ? "Required material" : "Optional material"}</p><h3 className="mt-1 font-serif text-xl font-semibold text-[#292631]">{requirement.label}</h3></div><FileText className="mt-1 size-5 shrink-0 text-[#75639E]" /></div>
-              {requirement.description && <p className="mt-2 text-xs leading-5 text-[#746E80]">{requirement.description}</p>}
-              <div className="mt-3 flex flex-wrap gap-2 text-[0.68rem] font-semibold text-[#746E80]"><span className="rounded-full border border-[#E2DCF1] bg-white px-2.5 py-1">{mimeTypes.map((type) => type.split("/").at(-1)?.toUpperCase()).join(", ")}</span><span className="rounded-full border border-[#E2DCF1] bg-white px-2.5 py-1">{count === 1 ? "One file" : `Up to ${count} files`}</span><span className="rounded-full border border-[#E2DCF1] bg-white px-2.5 py-1">{readableBytes(requirement.maximum_file_size_bytes)}</span></div>
+            <article key={requirement.id} className="p-3 sm:p-4">
+              <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <FileText className="size-4 shrink-0 text-[#75639E]" aria-hidden="true" />
+                    <h3 className="min-w-0 truncate text-sm font-semibold text-[#292631]">{requirement.label}</h3>
+                    <span className="rounded-full border border-[#E2DCF1] bg-white px-2 py-0.5 text-[0.66rem] font-semibold text-[#746E80]">{requirement.required ? "Required" : "Optional"}</span>
+                    <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[0.66rem] font-semibold ${presentation.tone}`}><StatusIcon className="size-3" />{presentation.label}</span>
+                  </div>
+                  <p className="mt-1.5 text-xs leading-5 text-[#746E80]">{current?.source ? <><strong className="font-semibold text-[#5B5465]">{current.source.original_filename || current.source.label}</strong> · v{current.source.document_version}</> : presentation.detail}</p>
+                  <p className="mt-1 text-[0.68rem] text-[#8A8296]">{typeSummary} · {count === 1 ? "1 file" : `up to ${count} files`} · {readableBytes(requirement.maximum_file_size_bytes)}</p>
+                </div>
 
-              <div className={`mt-4 rounded-xl border p-3 ${presentation.tone}`}><p className="flex items-center gap-2 text-sm font-semibold"><StatusIcon className="size-4" />{presentation.label}</p><p className="mt-1 text-xs leading-5">{presentation.detail}</p>{current?.source && <p className="mt-2 truncate text-xs font-semibold">{current.source.original_filename || current.source.label} · Version {current.source.document_version}</p>}</div>
-
-              {current?.validation_results?.length ? <details className="mt-3 rounded-xl border border-[#E7E1F7] bg-white px-3 py-2"><summary className="cursor-pointer text-xs font-semibold text-[#5B4B8A]">View validation checks</summary><ul className="mt-2 space-y-2">{current.validation_results.map((check, index) => <li key={`${check.rule}-${index}`} className="flex items-start gap-2 text-xs leading-5 text-[#746E80]">{check.passed === true ? <CheckCircle2 className="mt-0.5 size-3.5 shrink-0 text-emerald-700" /> : check.passed === false ? <AlertTriangle className="mt-0.5 size-3.5 shrink-0 text-red-700" /> : <AlertTriangle className="mt-0.5 size-3.5 shrink-0 text-amber-700" />}<span><strong className="font-semibold text-[#625C70]">{check.rule.replaceAll("_", " ")}:</strong> {check.explanation}</span></li>)}</ul></details> : null}
-
-              <div className="mt-4">
-                <QuickMediaImport
-                  context="opportunity_requirement"
-                  label={current ? "Replace or add source" : `Add ${requirement.label}`}
-                  config={{
-                    title: requirement.label,
-                    description: requirement.description || "Choose a private source for this exact opportunity requirement.",
-                    completionAction: "Validate and include",
-                    allowedMimeTypes: mimeTypes,
-                    maxFileSizeBytes: requirement.maximum_file_size_bytes ?? 20 * 1024 * 1024,
-                    maxSelectionCount: count,
-                    allowMultiple: count > 1,
-                    destinationType: "opportunity_requirement",
-                    destinationId: requirement.id,
-                  }}
-                  onConfirm={async ({ items }) => {
-                    setError("")
-                    setMessage("")
-                    try {
-                      for (const item of items) {
-                        await attachMediaToRequirement({ item, requirement, artistConfirmed: true })
-                        if (item.mediaKind === "document" && item.sourceId) await requestMediaExtraction(item, "application_requirement_file")
+                <div className="md:justify-self-end">
+                  <QuickMediaImport
+                    context="opportunity_requirement"
+                    label={current ? "Replace" : "Add file"}
+                    config={{
+                      title: requirement.label,
+                      description: requirement.description || "Choose a private source for this exact opportunity requirement.",
+                      completionAction: "Validate and include",
+                      allowedMimeTypes: mimeTypes,
+                      maxFileSizeBytes: requirement.maximum_file_size_bytes ?? 20 * 1024 * 1024,
+                      maxSelectionCount: count,
+                      allowMultiple: count > 1,
+                      destinationType: "opportunity_requirement",
+                      destinationId: requirement.id,
+                    }}
+                    onConfirm={async ({ items }) => {
+                      setError("")
+                      setMessage("")
+                      try {
+                        for (const item of items) {
+                          await attachMediaToRequirement({ item, requirement, artistConfirmed: true })
+                          if (item.mediaKind === "document" && item.sourceId) await requestMediaExtraction(item, "application_requirement_file")
+                        }
+                        setMessage(`${requirement.label} updated. You can continue the application without leaving this page.`)
+                        await refresh()
+                      } catch (reason) {
+                        setError(reason instanceof Error ? reason.message : "KLEIO could not attach this source to the requirement.")
+                        throw reason
                       }
-                      setMessage(`${items.length} private source${items.length === 1 ? "" : "s"} validated and associated with ${requirement.label}.`)
-                      await refresh()
-                    } catch (reason) {
-                      setError(reason instanceof Error ? reason.message : "KLEIO could not attach this source to the requirement.")
-                      throw reason
-                    }
-                  }}
-                />
+                    }}
+                  />
+                </div>
               </div>
+
+              {current?.validation_results?.length ? <details className="mt-2"><summary className="cursor-pointer text-xs font-semibold text-[#5B4B8A]">Validation details</summary><ul className="mt-2 space-y-1.5 pl-1">{current.validation_results.map((check, index) => <li key={`${check.rule}-${index}`} className="flex items-start gap-2 text-xs leading-5 text-[#746E80]">{check.passed === true ? <CheckCircle2 className="mt-0.5 size-3.5 shrink-0 text-emerald-700" /> : <AlertTriangle className={`mt-0.5 size-3.5 shrink-0 ${check.passed === false ? "text-red-700" : "text-amber-700"}`} />}<span><strong className="font-semibold text-[#625C70]">{check.rule.replaceAll("_", " ")}:</strong> {check.explanation}</span></li>)}</ul></details> : null}
             </article>
           )
         })}
       </div>
-      <p className="mt-4 text-xs leading-5 text-[#8A8296]"><ShieldCheck className="mr-1.5 inline size-3.5" />For external opportunities, these checks are validated against the instructions currently stored in KLEIO. The external portal remains the final authority.</p>
+
+      <p className="mt-3 text-[0.68rem] leading-5 text-[#8A8296]"><ShieldCheck className="mr-1 inline size-3.5" />The official opportunity source remains the final authority for external submissions.</p>
     </section>
   )
 }
