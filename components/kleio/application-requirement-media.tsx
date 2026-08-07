@@ -35,9 +35,9 @@ function acceptedMimeTypes(values: string[]) {
 }
 
 function fileCapable(requirement: RequirementRecord) {
-  if (requirement.accepted_file_types.length > 0) return true
-  if (EXPLICIT_FILE_INPUTS.includes(requirement.input_type)) return true
   if (EXPLICIT_WRITTEN_INPUTS.includes(requirement.input_type)) return false
+  if (EXPLICIT_FILE_INPUTS.includes(requirement.input_type)) return true
+  if (requirement.accepted_file_types.length > 0) return true
   return requirement.category === "supporting_document"
 }
 
@@ -105,8 +105,9 @@ export function ApplicationRequirementMedia() {
     return { requirement, current, presentation: statusCopy(current) }
   }), [byRequirement, documentRequirements])
 
-  const readyCount = requirementRows.filter((row) => row.presentation.ready).length
-  const attentionCount = requirementRows.length - readyCount
+  const includedCount = requirementRows.filter((row) => row.current?.included_in_package).length
+  const requiredMissingCount = requirementRows.filter((row) => row.requirement.required && !row.current?.included_in_package).length
+  const reviewCount = requirementRows.filter((row) => row.current?.included_in_package && !row.presentation.ready).length
 
   if (!opportunityId) return null
   if (loading && !requirements.length) return <section className={`${surface} flex items-center gap-2 text-sm text-[#746E80]`}><Loader2 className="size-4 animate-spin" />Checking requirement files…</section>
@@ -118,11 +119,12 @@ export function ApplicationRequirementMedia() {
         <div className="min-w-0">
           <p className="text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-[#75639E]">Requirement files</p>
           <h2 id="application-requirement-media-title" className="mt-1 font-serif text-xl font-semibold tracking-[-0.02em] text-[#292631]">Attach files once, to the exact requirement</h2>
-          <p className="mt-1 max-w-3xl text-xs leading-5 text-[#746E80]">Only requirements that explicitly call for a file or document appear here. Written responses stay in the composer and portfolio works stay in the visual selector, so the same requirement is not presented as two different tasks.</p>
+          <p className="mt-1 max-w-3xl text-xs leading-5 text-[#746E80]">Explicit written responses stay in the composer; explicit document/file inputs live here; portfolio works stay in the visual selector. Required files must be included before KLEIO will preserve a final submission version.</p>
         </div>
         <div className="flex shrink-0 flex-wrap gap-2 text-xs font-semibold">
-          <span className="rounded-full bg-emerald-50 px-3 py-1.5 text-emerald-800">{readyCount} ready</span>
-          {attentionCount > 0 && <span className="rounded-full bg-amber-50 px-3 py-1.5 text-amber-800">{attentionCount} need attention</span>}
+          <span className="rounded-full bg-emerald-50 px-3 py-1.5 text-emerald-800">{includedCount} included</span>
+          {requiredMissingCount > 0 && <span className="rounded-full bg-red-50 px-3 py-1.5 text-red-800">{requiredMissingCount} required missing</span>}
+          {reviewCount > 0 && <span className="rounded-full bg-amber-50 px-3 py-1.5 text-amber-800">{reviewCount} need source review</span>}
         </div>
       </div>
 
@@ -135,7 +137,7 @@ export function ApplicationRequirementMedia() {
           const count = requirementLimit(requirement)
           const typeSummary = mimeTypes.map((type) => type.split("/").at(-1)?.toUpperCase()).join(", ")
           return (
-            <article key={requirement.id} className="p-3 sm:p-4">
+            <article id={`file-requirement-${requirement.id}`} key={requirement.id} className="p-3 sm:p-4">
               <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
