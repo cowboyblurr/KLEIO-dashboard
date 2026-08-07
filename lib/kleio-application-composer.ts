@@ -99,6 +99,9 @@ const answerKeys = new Set([
   "additional_information",
 ])
 
+const explicitWrittenInputTypes = new Set(["textarea", "long_text", "written_response", "essay", "text", "short_text"])
+const explicitFileInputTypes = new Set(["document", "documents", "file", "upload", "url_or_document"])
+
 function normalizedKey(value: string) {
   return value.toLowerCase().trim().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "")
 }
@@ -116,9 +119,12 @@ export function requirementNeedsComposerAnswer(requirement: ComposerRequirement)
   const key = normalizedKey(requirement.material_key)
   const category = normalizedKey(requirement.category || "")
   const inputType = normalizedKey(requirement.input_type || "")
+  if (explicitWrittenInputTypes.has(inputType)) return true
+  if (explicitFileInputTypes.has(inputType)) return false
+  if ((requirement.accepted_file_types?.length ?? 0) > 0 && inputType !== "mixed") return false
   if (answerKeys.has(key)) return true
   if (["application_question", "written_response", "narrative", "essay", "proposal"].includes(category)) return true
-  if (["textarea", "long_text", "written_response", "essay"].includes(inputType)) return true
+  if (inputType === "mixed") return true
   return false
 }
 
