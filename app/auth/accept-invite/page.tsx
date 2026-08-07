@@ -10,7 +10,7 @@ export default function Page() {
           <span className="grid size-12 place-items-center rounded-2xl bg-[#F0EAFB] text-[#5B4B8A]"><ShieldAlert className="size-5" /></span>
           <p className="mt-5 text-xs font-semibold uppercase tracking-[0.16em] text-[#75639E]">Institution access</p>
           <h1 className="mt-2 font-serif text-2xl font-semibold">Team invitation acceptance is unavailable from this link.</h1>
-          <p className="mt-3 text-sm leading-6 text-muted-foreground">KLEIO has not changed your membership. Return to the institution workspace or contact the organization that invited you if you need access.</p>
+          <p className="mt-3 text-sm leading-6 text-muted-foreground">No membership change was made from this link. Invitation acceptance is paused, so your current KLEIO access remains unchanged. Return to the institution workspace or contact the organization that invited you if you need access.</p>
           <Link href="/" className="mt-6 inline-flex min-h-11 items-center justify-center rounded-xl bg-primary px-5 text-sm font-semibold text-primary-foreground">Return to KLEIO</Link>
         </section>
       </main>
