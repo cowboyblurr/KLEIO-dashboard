@@ -14,6 +14,7 @@ const library = "components/kleio/artist-media-library.tsx"
 const client = "lib/kleio-media-collection-intelligence.ts"
 const fn = "supabase/functions/analyze-artist-media-collection/index.ts"
 const migration = "supabase/migrations/20260807224500_artist_media_collection_intelligence.sql"
+const claimMigration = "supabase/migrations/20260807234200_artist_media_collection_analysis_claim.sql"
 
 for (const text of ["What KLEIO is reviewing", "Reviewing composition, visible details", "Separating direct observation from interpretive reading"]) requireText(sheet, text, "individual analysis must explain its real review categories without a fake percentage")
 requirePattern(sheet, /Reading document structure|Understanding the document and its visual structure/, "document analysis must visibly explain source-understanding work")
@@ -52,13 +53,18 @@ requireText(fn, "Generated summaries are suggestions only", "group synthesis mus
 requireText(fn, "Cross-work pattern categories must cite at least two distinct selected sources", "the provider prompt must state the deterministic cross-source grounding rule")
 
 for (const text of ["const DAILY_COLLECTION_LIMIT = 20", "enforceDailyCollectionLimit", "await enforceDailyCollectionLimit(admin, userData.user.id)", "collection_ai_daily_limit_reached"]) requireText(fn, text, "new group synthesis calls must be cost-bounded before invoking the provider")
-requireText(fn, '.gte("analyzed_at", start.toISOString())', "daily collection limit must count the authenticated artist's actual generated collection analyses for the UTC day")
+for (const text of ["artist_ai_usage_events", '.eq("action", "analyze_media")', '.contains("metadata", { analysis_kind: "collection" })', '.in("status", ["succeeded", "failed"])']) requireText(fn, text, "collection daily limits must be based on real provider-attempt telemetry rather than the number of retained insight rows")
+for (const text of ["recordCollectionUsage", 'analysis_kind: "collection"', '"succeeded"', '"failed"', '"cached"']) requireText(fn, text, "collection synthesis must record succeeded, failed, and cached usage without storing raw artist content")
 requireText(fn, "const UUID_RE", "source identifiers must be validated before owner-scoped UUID queries")
 requireText(fn, "invalid_source_id", "malformed source identifiers must fail as a truthful client error rather than a database/server failure")
+for (const text of ['auth.rpc("claim_my_media_collection_analysis"', "collection_analysis_in_progress", 'auth.rpc("release_my_media_collection_analysis"', "finally"]) requireText(fn, text, "group synthesis must use and always release an owner-scoped concurrency lease")
 
 for (const text of ["enable row level security", "artist_media_collection_insights_select_own", "confirm_my_media_collection_insight", "dismiss_my_media_collection_insight", "security invoker", "body_of_work_context", "provenance_status", "'confirmed'", "visibility", "'private'"]) requireText(migration, text, "collection persistence and Passport promotion must remain private, owner-scoped, and artist-confirmed")
 requireText(migration, "normalized_key = 'media_collection:'", "confirmed collection context must update one canonical Passport record rather than multiplying duplicates")
 requireText(migration, "status = 'removed'", "dismissing a previously confirmed collection insight must remove its promoted Passport evidence")
+
+for (const text of ["artist_media_collection_analysis_claims", "artist_user_id uuid primary key", "enable row level security", "claim_my_media_collection_analysis", "release_my_media_collection_analysis", "security invoker", "interval '4 minutes'", "unique_violation", "source_fingerprint = normalized_fingerprint"]) requireText(claimMigration, text, "collection analysis leases must be owner-scoped, atomic, stale-recoverable, and fingerprint-safe on release")
+requireText(claimMigration, "One collection analysis may run per artist at a time", "the lease should serialize group synthesis per artist to prevent cost-limit races and duplicate provider calls")
 
 if (failures.length) {
   console.error("KLEIO body-of-work intelligence audit failed:\n")
@@ -66,4 +72,4 @@ if (failures.length) {
   process.exit(1)
 }
 
-console.log("KLEIO body-of-work intelligence audit passed: visible analysis dialogue is truthful, batch comparison is artist-controlled and cost-bounded, source IDs are validated, cache identity tracks the exact synthesis evidence, cross-work patterns require multiple sources, raw media is not reuploaded, and only artist-reviewed collection notes remain reusable Passport evidence.")
+console.log("KLEIO body-of-work intelligence audit passed: visible analysis dialogue is truthful, batch comparison is artist-controlled, cost-bounded and concurrency-guarded, source IDs are validated, cache identity tracks the exact synthesis evidence, cross-work patterns require multiple sources, raw media is not reuploaded, provider attempts are auditable, and only artist-reviewed collection notes remain reusable Passport evidence.")
