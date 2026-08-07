@@ -4,6 +4,7 @@ import { ArtistShell } from "@/components/kleio/artist-shell"
 import { ApplicationComposerWorkspace } from "@/components/kleio/application-composer-workspace"
 import { ApplicationMediaImportBar } from "@/components/kleio/application-media-import-bar"
 import { ApplicationRequirementMedia } from "@/components/kleio/application-requirement-media"
+import { ApplicationRecipientLoopPanel } from "@/components/kleio/application-recipient-loop-panel"
 import { ApplicationTimelinePanel } from "@/components/kleio/application-timeline-panel"
 import { ArtistRecipientConversation } from "@/components/kleio/artist-recipient-conversation"
 import { PracticeSubmissionResetControl } from "@/components/kleio/practice-submission-reset-control"
@@ -37,6 +38,17 @@ export default function Page() {
           <Suspense fallback={<PreparationFallback />}>
             <ApplicationComposerWorkspace />
           </Suspense>
+
+          <section className="rounded-2xl border border-[#E7E1F7] bg-white p-4 sm:p-5 [&>button]:!static [&>button]:!min-h-10 [&>button]:!shadow-none">
+            <div className="mb-3">
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#8874C1]">After final review</p>
+              <h2 className="mt-1 text-base font-semibold text-[#292631]">Recipient access and replies</h2>
+              <p className="mt-1 text-xs leading-5 text-muted-foreground">Use this only when you want to create or revoke KLEIO recipient access, inspect recipient activity, or continue the application conversation. It no longer floats over the preparation workspace.</p>
+            </div>
+            <Suspense fallback={null}>
+              <ApplicationRecipientLoopPanel />
+            </Suspense>
+          </section>
 
           <Suspense fallback={null}>
             <ApplicationTimelinePanel />
