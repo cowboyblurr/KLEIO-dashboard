@@ -1,0 +1,39 @@
+name: Generate Notion cost brief artifacts
+
+on:
+  push:
+    branches:
+      - agent/notion-doc-attachment-refresh
+    paths:
+      - "docs/notion-attachments/KLEIO_Technical_Cost_Market_Intelligence_Brief_2026-08-07_CURRENT.md"
+      - "scripts/generate-notion-cost-brief.py"
+      - ".github/workflows/generate-notion-cost-brief.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  generate:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/notion-doc-attachment-refresh
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install --disable-pip-version-check python-docx reportlab
+      - run: python scripts/generate-notion-cost-brief.py
+      - name: Commit generated artifacts
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/notion-attachments/KLEIO_Technical_Cost_Market_Intelligence_Brief_2026-08-07_CURRENT.docx
+          git add docs/notion-attachments/KLEIO_Technical_Cost_Market_Intelligence_Brief_2026-08-07_CURRENT.pdf
+          if git diff --cached --quiet; then
+            echo "Artifacts already current"
+          else
+            git commit -m "Refresh current Notion cost brief attachments"
+            git push origin HEAD:agent/notion-doc-attachment-refresh
+          fi
