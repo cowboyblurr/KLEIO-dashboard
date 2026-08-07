@@ -7,10 +7,12 @@ on:
       - "components/kleio/**"
       - "lib/kleio-device-media-upload.ts"
       - "lib/kleio-import-source-availability.ts"
+      - "lib/kleio-media-control.ts"
       - "lib/kleio-media-file-types.ts"
       - "lib/kleio-media-intelligence.ts"
       - "lib/kleio-requirement-file-types.ts"
       - "lib/kleio-requirement-file-upload.ts"
+      - "scripts/audit-artist-media-control.mjs"
       - "scripts/audit-upload-surface-consistency.mjs"
       - "scripts/audit-public-roadmap-copy.mjs"
       - "supabase/functions/analyze-artist-media/**"
@@ -38,8 +40,11 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - run: pnpm audit:artist-media-control
       - run: pnpm audit:upload-surfaces
+      - run: pnpm audit:universal-media
       - run: pnpm audit:artist-requirement-file-types
+      - run: pnpm audit:document-intelligence
+      - run: node scripts/audit-public-roadmap-copy.mjs
       - run: pnpm typecheck
       - run: pnpm build
-      - run: node scripts/audit-public-roadmap-copy.mjs
