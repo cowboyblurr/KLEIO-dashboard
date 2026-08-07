@@ -40,11 +40,11 @@ function readableBytes(value: number | null) {
 }
 
 function statusCopy(attachment: RequirementAttachment | undefined) {
-  if (!attachment) return { label: "Missing", detail: "Add a private source for this requirement.", tone: "border-red-200 bg-red-50 text-red-800", icon: AlertTriangle, ready: false }
+  if (!attachment) return { label: "Missing", detail: "Add private material for this requirement.", tone: "border-red-200 bg-red-50 text-red-800", icon: AlertTriangle, ready: false }
   if (attachment.validation_status === "satisfied") return { label: "Ready", detail: "Validated and confirmed for this application.", tone: "border-emerald-200 bg-emerald-50 text-emerald-800", icon: CheckCircle2, ready: true }
   if (attachment.validation_status === "likely_satisfied") return { label: "Confirm", detail: "Available checks pass; final source confirmation remains.", tone: "border-blue-200 bg-blue-50 text-blue-800", icon: FileCheck2, ready: false }
   if (attachment.validation_status === "invalid") return { label: "Fix needed", detail: "At least one published file rule failed.", tone: "border-red-200 bg-red-50 text-red-800", icon: AlertTriangle, ready: false }
-  return { label: "Review", detail: "Confirm this private source for the exact requirement.", tone: "border-amber-200 bg-amber-50 text-amber-800", icon: AlertTriangle, ready: false }
+  return { label: "Review", detail: "Confirm this private material for the exact requirement.", tone: "border-amber-200 bg-amber-50 text-amber-800", icon: AlertTriangle, ready: false }
 }
 
 export function ApplicationRequirementMedia() {
@@ -76,7 +76,7 @@ export function ApplicationRequirementMedia() {
 
   useEffect(() => { void refresh() }, [refresh])
 
-  const documentRequirements = useMemo(() => requirements.filter(fileCapable), [requirements])
+  const fileRequirements = useMemo(() => requirements.filter(fileCapable), [requirements])
   const byRequirement = useMemo(() => {
     const map = new Map<string, RequirementAttachment[]>()
     for (const attachment of attachments) {
@@ -87,27 +87,27 @@ export function ApplicationRequirementMedia() {
     return map
   }, [attachments])
 
-  const requirementRows = useMemo(() => documentRequirements.map((requirement) => {
+  const requirementRows = useMemo(() => fileRequirements.map((requirement) => {
     const requirementAttachments = byRequirement.get(requirement.id) ?? []
     const current = requirementAttachments.find((attachment) => attachment.included_in_package) ?? requirementAttachments[0]
     return { requirement, current, presentation: statusCopy(current) }
-  }), [byRequirement, documentRequirements])
+  }), [byRequirement, fileRequirements])
 
   const includedCount = requirementRows.filter((row) => row.current?.included_in_package).length
   const requiredMissingCount = requirementRows.filter((row) => row.requirement.required && !row.current?.included_in_package).length
   const reviewCount = requirementRows.filter((row) => row.current?.included_in_package && !row.presentation.ready).length
 
   if (!opportunityId) return null
-  if (loading && !requirements.length) return <section className={`${surface} flex items-center gap-2 text-sm text-[#746E80]`}><Loader2 className="size-4 animate-spin" />Checking requirement files…</section>
-  if (!documentRequirements.length && !error) return null
+  if (loading && !requirements.length) return <section className={`${surface} flex items-center gap-2 text-sm text-[#746E80]`}><Loader2 className="size-4 animate-spin" />Checking requirement material…</section>
+  if (!fileRequirements.length && !error) return null
 
   return (
     <section className={surface} id="application-requirement-files" aria-labelledby="application-requirement-media-title">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-[#75639E]">Requirement files</p>
-          <h2 id="application-requirement-media-title" className="mt-1 font-serif text-xl font-semibold tracking-[-0.02em] text-[#292631]">Attach files once, to the exact requirement</h2>
-          <p className="mt-1 max-w-3xl text-xs leading-5 text-[#746E80]">Explicit written responses stay in the composer; explicit document/file inputs live here; portfolio works stay in the visual selector. Required files must be included before KLEIO will preserve a final submission version.</p>
+          <p className="text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-[#75639E]">Requirement material</p>
+          <h2 id="application-requirement-media-title" className="mt-1 font-serif text-xl font-semibold tracking-[-0.02em] text-[#292631]">Attach files or media once, to the exact requirement</h2>
+          <p className="mt-1 max-w-3xl text-xs leading-5 text-[#746E80]">Written responses stay in the composer; source-declared file or media inputs live here; portfolio works stay in the visual selector. KLEIO accepts the source-specified format when supported and does not pretend every uploaded file is a PDF or CV.</p>
         </div>
         <div className="flex shrink-0 flex-wrap gap-2 text-xs font-semibold">
           <span className="rounded-full bg-emerald-50 px-3 py-1.5 text-emerald-800">{includedCount} included</span>
@@ -137,18 +137,18 @@ export function ApplicationRequirementMedia() {
                     <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[0.66rem] font-semibold ${presentation.tone}`}><StatusIcon className="size-3" />{presentation.label}</span>
                   </div>
                   <p className="mt-1.5 text-xs leading-5 text-[#746E80]">{current?.source ? <><strong className="font-semibold text-[#5B5465]">{current.source.original_filename || current.source.label}</strong> · v{current.source.document_version}</> : presentation.detail}</p>
-                  <p className="mt-1 text-[0.68rem] text-[#8A8296]">{typeSummary} · {count === 1 ? "1 file" : `up to ${count} files`} · {readableBytes(requirement.maximum_file_size_bytes)}</p>
-                  {!sourceMimeTypes.length && <p className="mt-1 text-[0.68rem] leading-5 text-amber-800">The source does not specify a file format. KLEIO will let you choose a supported private file, but the official source remains authoritative.</p>}
+                  <p className="mt-1 text-[0.68rem] text-[#8A8296]">{typeSummary} · {count === 1 ? "1 item" : `up to ${count} items`} · {readableBytes(requirement.maximum_file_size_bytes)}</p>
+                  {!sourceMimeTypes.length && <p className="mt-1 text-[0.68rem] leading-5 text-amber-800">The source does not specify a file format. KLEIO will let you choose a supported private file or media item, but the official source remains authoritative.</p>}
                 </div>
 
                 <div className="md:justify-self-end">
                   <ApplicationRequirementFilePicker
-                    label={current ? "Replace" : "Add file"}
+                    label={current ? "Replace" : "Add material"}
                     requirementLabel={requirement.label}
-                    description={requirement.description || "Choose a private source for this exact opportunity requirement. Nothing is submitted until your final external or KLEIO submission action."}
+                    description={requirement.description || "Choose private material for this exact opportunity requirement. Nothing is submitted until your final external or KLEIO submission action."}
                     allowedMimeTypes={pickerMimeTypes}
                     sourceAcceptedTypes={requirement.accepted_file_types}
-                    maximumFileSizeBytes={requirement.maximum_file_size_bytes ?? 20 * 1024 * 1024}
+                    maximumFileSizeBytes={requirement.maximum_file_size_bytes ?? 50 * 1024 * 1024}
                     maximumSelectionCount={count}
                     allowMultiple={count > 1}
                     onConfirm={async (items) => {
@@ -157,12 +157,12 @@ export function ApplicationRequirementMedia() {
                       try {
                         for (const item of items) {
                           await attachMediaToRequirement({ item, requirement: normalizedRequirement, artistConfirmed: true })
-                          if (item.mediaKind === "document" && item.sourceId) await requestMediaExtraction(item, "application_requirement_file")
+                          if (item.mimeType === "application/pdf" && item.sourceId) await requestMediaExtraction(item, "application_requirement_file")
                         }
                         setMessage(`${requirement.label} updated. You can continue the application without leaving this page.`)
                         await refresh()
                       } catch (reason) {
-                        setError(reason instanceof Error ? reason.message : "KLEIO could not attach this source to the requirement.")
+                        setError(reason instanceof Error ? reason.message : "KLEIO could not attach this material to the requirement.")
                         throw reason
                       }
                     }}
