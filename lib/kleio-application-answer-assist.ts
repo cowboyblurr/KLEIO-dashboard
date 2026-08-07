@@ -30,6 +30,45 @@ export type ApplicationAnswerAssistResult = {
   artistConfirmationRequired: boolean
 }
 
+function object(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value)
+}
+
+async function functionErrorPayload(error: unknown) {
+  const context = object(error) ? error.context : null
+  if (!context || typeof (context as { clone?: unknown }).clone !== "function") return null
+  try {
+    const response = (context as Response).clone()
+    const payload = await response.json()
+    return object(payload) ? payload : null
+  } catch {
+    return null
+  }
+}
+
+function messageForCode(code: string, fallback = "") {
+  switch (code) {
+    case "confirmed_facts_required":
+    case "artist_context_required":
+      return "KLEIO needs artist-authored Creative Passport material or confirmed source-backed facts before it can prepare a trustworthy draft."
+    case "requirement_confirmation_required":
+      return "This application question needs to be confirmed against the opportunity source before KLEIO can draft against it."
+    case "requirement_not_found":
+      return "KLEIO could not match this application question to the verified opportunity requirements. Refresh the opportunity before drafting."
+    case "gemini_not_configured":
+      return "KLEIO Assist drafting is not configured in this environment."
+    case "gemini_rate_limited":
+      return "KLEIO Assist is temporarily busy. Your application was not changed; try this draft again shortly."
+    case "gemini_timeout":
+    case "gemini_provider_unavailable":
+      return "KLEIO Assist could not finish this draft right now. Your application was not changed; try again."
+    case "unsupported_claim_detected":
+      return "KLEIO rejected the draft because it introduced unsupported factual information. Nothing was inserted into your application."
+    default:
+      return fallback || "KLEIO Assist could not prepare this application answer."
+  }
+}
+
 async function requireArtist() {
   const account = await loadKleioAccount()
   if (!account) throw new Error("Please sign in before using KLEIO Assist.")
@@ -58,10 +97,13 @@ export async function requestApplicationAnswer(input: {
     },
   })
 
-  if (error) throw new Error("KLEIO Assist could not prepare this application answer.")
-  if (data?.error === "confirmed_facts_required") throw new Error("Confirm source-backed Creative Passport facts before requesting an application draft.")
-  if (data?.error === "gemini_not_configured") throw new Error("KLEIO Assist drafting is not configured in this environment.")
-  if (data?.error === "unsupported_claim_detected") throw new Error("KLEIO rejected the draft because it introduced unsupported factual information.")
-  if (data?.error) throw new Error(data?.message || "KLEIO Assist could not prepare this application answer.")
+  if (error) {
+    const payload = await functionErrorPayload(error)
+    const code = String(payload?.error || "")
+    const serverMessage = typeof payload?.message === "string" ? payload.message : ""
+    throw new Error(messageForCode(code, serverMessage || (error instanceof Error ? error.message : "")))
+  }
+  if (data?.error) throw new Error(messageForCode(String(data.error), String(data.message || "")))
+  if (!data?.draft || !data?.options) throw new Error("KLEIO finished without a reviewable draft. Your application was not changed; try again.")
   return data as ApplicationAnswerAssistResult
 }
