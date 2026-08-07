@@ -9,45 +9,45 @@ const card = "flex min-h-48 flex-col rounded-[24px] border bg-white p-5 text-lef
 
 const COPY = {
   en: {
-    eyebrow: "Private material import",
-    title: "Bring your files into KLEIO from one place",
-    intro: "Upload images, video, audio, and common supporting documents from your device. KLEIO stores each source privately and waits for your approval before anything is reused. PDF documents can additionally enter Gemini document analysis when you choose that workflow.",
+    eyebrow: "Artist document beta",
+    title: "Direct PDF upload is the active import method",
+    intro: "Upload an existing CV or artist document from your device. KLEIO stores the source privately, checks the PDF on the server, prepares evidence-backed Passport suggestions, and waits for your review.",
     private: "Nothing publishes automatically",
-    limits: "Media + supporting documents",
+    limits: "PDF only during the initial beta",
     active: "Active for beta",
     available: "Available",
     unavailable: "Unavailable",
-    uploadTitle: "Upload media or supporting files",
-    uploadBody: "Choose the files that belong to your practice or application. Common image, video, audio, PDF, Office, text, spreadsheet, presentation, ZIP, and caption formats are supported within KLEIO's file-size limits.",
-    uploadFoot: "Use the private Upload media control above.",
-    reuseTitle: "Reuse private KLEIO media",
-    reuseBody: "Existing owner-scoped images, video, audio, and documents can be selected again without creating duplicate files. PDFs that need document intelligence can still be previewed, classified, or analyzed separately.",
-    reuseFoot: "Manage everything together in your Media Library.",
+    uploadTitle: "Upload CV or artist document",
+    uploadBody: "Drag and drop or choose a PDF from this device. Maximum 15 MB and 100 pages. Native text is analyzed; scanned files are honestly marked OCR required.",
+    uploadFoot: "Use the private upload workspace below.",
+    reuseTitle: "Reuse a private KLEIO document",
+    reuseBody: "Existing owner-scoped document sources can be previewed, reclassified, analyzed again, or kept without analysis. KLEIO does not create a duplicate file.",
+    reuseFoot: "Manage stored documents in the workspace below.",
     deferredEyebrow: "Deferred connected sources",
     deferredTitle: "Preserved for a later release decision",
-    deferredBody: "Connected providers remain preserved but disabled until their reliability and permission flows are ready. Direct device upload and your private KLEIO Library remain the dependable beta paths for all supported media and documents.",
+    deferredBody: "These foundations remain in the codebase but are disabled in both the interface and database beta gate. They will not compete with direct PDF upload until demand, reliability, review completion, and operational readiness support activation.",
     deferred: "Deferred",
     deferredAria: "Deferred import sources",
     websiteImport: "Website Import",
   },
   es: {
-    eyebrow: "Importación privada de materiales",
-    title: "Lleva tus archivos a KLEIO desde un solo lugar",
-    intro: "Sube imágenes, video, audio y documentos de apoyo comunes desde tu dispositivo. KLEIO guarda cada fuente de forma privada y espera tu aprobación antes de reutilizarla. Los documentos PDF también pueden entrar al análisis documental de Gemini cuando elijas ese flujo.",
+    eyebrow: "Beta de documentos para artistas",
+    title: "La carga directa de PDF es el método activo",
+    intro: "Sube un CV o documento artístico desde tu dispositivo. KLEIO guarda la fuente de forma privada, comprueba el PDF, prepara sugerencias respaldadas por evidencia y espera tu revisión.",
     private: "Nada se publica automáticamente",
-    limits: "Medios + documentos de apoyo",
+    limits: "Solo PDF durante la beta inicial",
     active: "Activo en la beta",
     available: "Disponible",
     unavailable: "No disponible",
-    uploadTitle: "Subir medios o archivos de apoyo",
-    uploadBody: "Elige los archivos que pertenecen a tu práctica o solicitud. KLEIO admite formatos comunes de imagen, video, audio, PDF, Office, texto, hojas de cálculo, presentaciones, ZIP y subtítulos dentro de los límites de tamaño.",
-    uploadFoot: "Usa el control privado Subir medios que aparece arriba.",
-    reuseTitle: "Reutilizar medios privados de KLEIO",
-    reuseBody: "Puedes volver a elegir imágenes, video, audio y documentos privados sin crear copias duplicadas. Los PDF que necesiten inteligencia documental se pueden previsualizar, clasificar o analizar por separado.",
-    reuseFoot: "Gestiona todo junto en tu Biblioteca de medios.",
+    uploadTitle: "Subir CV o documento artístico",
+    uploadBody: "Arrastra o selecciona un PDF desde este dispositivo. Máximo 15 MB y 100 páginas. KLEIO analiza el texto disponible e identifica los documentos escaneados que requieren OCR.",
+    uploadFoot: "Utiliza el espacio privado de carga que aparece abajo.",
+    reuseTitle: "Reutilizar un documento privado de KLEIO",
+    reuseBody: "Puedes previsualizar, volver a clasificar o analizar una fuente privada sin crear otra copia del archivo.",
+    reuseFoot: "Gestiona tus documentos guardados en el espacio que aparece abajo.",
     deferredEyebrow: "Fuentes conectadas pospuestas",
     deferredTitle: "Conservadas para una fase posterior",
-    deferredBody: "Los proveedores conectados permanecen conservados pero desactivados hasta que sus flujos de permisos y fiabilidad estén listos. La carga directa desde el dispositivo y la Biblioteca privada de KLEIO son las rutas estables de la beta para todos los medios y documentos compatibles.",
+    deferredBody: "Estas conexiones permanecen desactivadas para que no compitan con el flujo activo de PDF hasta que su fiabilidad y preparación operativa permitan activarlas.",
     deferred: "Pospuesto",
     deferredAria: "Fuentes de importación pospuestas",
     websiteImport: "Importación web",
@@ -60,10 +60,7 @@ export function ImportSourceHub() {
   const [availability, setAvailability] = useState<KleioBetaImportAvailability | null>(null)
   useEffect(() => { void loadBetaImportAvailability().then(setAvailability).catch(() => setAvailability(null)) }, [])
 
-  const directAvailable = availability?.device_document === true
-    && availability?.device_image === true
-    && availability?.device_video === true
-    && availability?.device_audio === true
+  const directAvailable = availability?.device_document === true && availability?.pdf === true
   const libraryAvailable = availability?.existing_kleio_media === true
 
   return (
@@ -82,7 +79,7 @@ export function ImportSourceHub() {
 
       <div className="mt-6 grid gap-4 md:grid-cols-2">
         <div className={`${card} ${directAvailable ? "border-[#D8D0F2]" : "border-amber-200"}`} aria-label={copy.uploadTitle}>
-          <div className="flex items-start justify-between gap-3"><span className="grid size-11 place-items-center rounded-2xl bg-[#F0EAFB] text-[#5B4B8A]"><Images className="size-5" /></span><span className={`rounded-full border px-2.5 py-1 text-[0.65rem] font-semibold ${directAvailable ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "border-amber-200 bg-amber-50 text-amber-800"}`}>{directAvailable ? copy.active : copy.unavailable}</span></div>
+          <div className="flex items-start justify-between gap-3"><span className="grid size-11 place-items-center rounded-2xl bg-[#F0EAFB] text-[#5B4B8A]"><FileText className="size-5" /></span><span className={`rounded-full border px-2.5 py-1 text-[0.65rem] font-semibold ${directAvailable ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "border-amber-200 bg-amber-50 text-amber-800"}`}>{directAvailable ? copy.active : copy.unavailable}</span></div>
           <h3 className="mt-5 font-serif text-xl font-semibold">{copy.uploadTitle}</h3>
           <p className="mt-2 flex-1 text-sm leading-6 text-[#746E80]">{copy.uploadBody}</p>
           <p className="mt-4 text-xs font-semibold text-[#5B4B8A]">{copy.uploadFoot}</p>
