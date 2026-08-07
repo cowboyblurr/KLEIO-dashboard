@@ -1,3 +1,4 @@
 KLEIO production release
-source_commit=5aba77171544788a01235d1e906e9fa4bd8a4999
+required_fix_commit=5aba77171544788a01235d1e906e9fa4bd8a4999
 release_marker=artist-beta-readiness-2026-08-07
+verification_protocol=KLEIO Live Production status required
