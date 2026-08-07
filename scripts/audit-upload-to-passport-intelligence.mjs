@@ -53,12 +53,14 @@ requireText(intelligence, /validateSourceAgainstRequirement/, "Missing determini
 requireText(intelligence, /attachMediaToRequirement/, "Missing exact requirement-to-source attachment behavior.")
 requireText(intelligence, /visibility:\s*options\.visibility \?\? "private"/, "Confirmed Passport records must default to private.")
 
-requireText(inbox, /Passport Updates for Review/, "The artist review inbox is missing.")
-requireText(inbox, /View source evidence/, "Claims must expose source evidence.")
-requireText(inbox, /Confirm privately/, "The artist must explicitly confirm extracted information.")
-requireText(inbox, /Replace existing/, "Conflict resolution must remain an artist decision.")
-requireText(inbox, /Keep existing/, "Duplicate resolution must preserve existing records when the artist chooses.")
-requireText(inbox, /Restricted source/, "Sensitive records need a non-color restricted-state label.")
+requireText(inbox, /Review information by field/, "The artist review inbox is missing its compact field-level review surface.")
+requireText(inbox, />Evidence</, "Claims must expose their source evidence on demand.")
+requireText(inbox, /visibility:\s*"private"/, "Approving a suggestion must write it to the private Passport by default.")
+requireText(inbox, /Approve replacement/, "Conflict replacement must remain an artist decision.")
+requireText(inbox, /Keep current/, "Duplicate resolution must let the artist keep the current record.")
+requireText(inbox, /claim\.sensitivity === "standard"/, "Sensitive claims must be excluded from bulk safe-fact approval.")
+requireText(inbox, /Approve safe facts/, "Only explicitly safe factual suggestions may be bulk approved.")
+requireText(inbox, /Reject/, "The artist must be able to reject a suggestion without changing the Passport.")
 
 requireText(requirementSlots, /exact requirement/i, "Requirement-specific application slots must remain explicit.")
 requireText(requirementSlots, /Required files must be included before KLEIO will preserve a final submission version/i, "Required-file preflight language is missing.")
@@ -83,4 +85,4 @@ for (const content of [extractor, intelligence, mediaIntelligence, inbox, requir
   forbidText(content, /automatically public|silent public|public bucket/i, "Upload-to-Passport code contains unsafe public-exposure language.")
 }
 
-console.log("KLEIO Upload-to-Passport audit passed: canonical sources, persisted PDF/media intelligence, structured claims, artist review, provenance/versioning, exact requirement attachments, package evidence, and in-place artist control verified.")
+console.log("KLEIO Upload-to-Passport audit passed: canonical sources, persisted PDF/media intelligence, compact artist review, provenance/versioning, exact requirement attachments, package evidence, and in-place artist control verified.")
