@@ -17,6 +17,7 @@ jobs:
       SITE_URL: https://www.kleioarthouse.com
       TARGET_SHA: ${{ github.event.workflow_run.head_sha }}
       DEPLOY_CONCLUSION: ${{ github.event.workflow_run.conclusion }}
+      DEPLOY_RUN_URL: ${{ github.event.workflow_run.html_url }}
 
     steps:
       - name: Publish Pages deploy result
@@ -32,7 +33,7 @@ jobs:
             state="failure"
             description="GitHub Pages deploy workflow failed"
           fi
-          payload="$(printf '{\"state\":\"%s\",\"context\":\"KLEIO Pages Deploy\",\"description\":\"%s\",\"target_url\":\"https://www.kleioarthouse.com\"}' "$state" "$description")"
+          payload="$(printf '{\"state\":\"%s\",\"context\":\"KLEIO Pages Deploy\",\"description\":\"%s\",\"target_url\":\"%s\"}' "$state" "$description" "$DEPLOY_RUN_URL")"
           curl --silent --show-error --fail-with-body \
             --request POST \
             --header "Accept: application/vnd.github+json" \
