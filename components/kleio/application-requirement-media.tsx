@@ -5,6 +5,11 @@ import { useCallback, useEffect, useMemo, useState } from "react"
 import { AlertTriangle, CheckCircle2, FileCheck2, FileText, Loader2, ShieldCheck } from "lucide-react"
 import { QuickMediaImport } from "@/components/kleio/media-import/quick-media-import"
 import {
+  normalizeRequirementFileTypes,
+  requirementFileTypeLabel,
+  SUPPORTED_REQUIREMENT_MIME_TYPES,
+} from "@/lib/kleio-requirement-file-types"
+import {
   attachMediaToRequirement,
   loadOpportunityRequirements,
   loadRequirementAttachments,
@@ -14,25 +19,8 @@ import {
 } from "@/lib/kleio-upload-to-passport"
 
 const surface = "rounded-2xl border border-[#E7E1F7] bg-white p-4 sm:p-5 shadow-[0_14px_42px_rgba(82,64,130,0.045)]"
-const DEFAULT_MIME_TYPES = ["application/pdf", "image/jpeg", "image/png", "image/webp"]
 const EXPLICIT_FILE_INPUTS = ["document", "documents", "file", "upload", "mixed", "url_or_document"]
 const EXPLICIT_WRITTEN_INPUTS = ["textarea", "long_text", "written_response", "essay", "text", "short_text"]
-
-function acceptedMimeTypes(values: string[]) {
-  const aliases: Record<string, string> = {
-    pdf: "application/pdf",
-    jpg: "image/jpeg",
-    jpeg: "image/jpeg",
-    png: "image/png",
-    webp: "image/webp",
-    "application/pdf": "application/pdf",
-    "image/jpeg": "image/jpeg",
-    "image/png": "image/png",
-    "image/webp": "image/webp",
-  }
-  const normalized = values.map((value) => aliases[value.toLowerCase().replace(/^\./, "")]).filter(Boolean)
-  return Array.from(new Set(normalized.length ? normalized : DEFAULT_MIME_TYPES))
-}
 
 function fileCapable(requirement: RequirementRecord) {
   if (EXPLICIT_WRITTEN_INPUTS.includes(requirement.input_type)) return false
@@ -133,9 +121,10 @@ export function ApplicationRequirementMedia() {
       <div className="mt-4 divide-y divide-[#EEEAF6] rounded-xl border border-[#E7E1F7] bg-[#FCFBFE]">
         {requirementRows.map(({ requirement, current, presentation }) => {
           const StatusIcon = presentation.icon
-          const mimeTypes = acceptedMimeTypes(requirement.accepted_file_types)
+          const sourceMimeTypes = normalizeRequirementFileTypes(requirement.accepted_file_types)
+          const pickerMimeTypes = sourceMimeTypes.length ? sourceMimeTypes : SUPPORTED_REQUIREMENT_MIME_TYPES
           const count = requirementLimit(requirement)
-          const typeSummary = mimeTypes.map((type) => type.split("/").at(-1)?.toUpperCase()).join(", ")
+          const typeSummary = requirementFileTypeLabel(requirement.accepted_file_types)
           return (
             <article id={`file-requirement-${requirement.id}`} key={requirement.id} className="p-3 sm:p-4">
               <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
@@ -148,6 +137,7 @@ export function ApplicationRequirementMedia() {
                   </div>
                   <p className="mt-1.5 text-xs leading-5 text-[#746E80]">{current?.source ? <><strong className="font-semibold text-[#5B5465]">{current.source.original_filename || current.source.label}</strong> · v{current.source.document_version}</> : presentation.detail}</p>
                   <p className="mt-1 text-[0.68rem] text-[#8A8296]">{typeSummary} · {count === 1 ? "1 file" : `up to ${count} files`} · {readableBytes(requirement.maximum_file_size_bytes)}</p>
+                  {!sourceMimeTypes.length && <p className="mt-1 text-[0.68rem] leading-5 text-amber-800">The source does not specify a file format. KLEIO will let you choose a supported private file, but the official source remains authoritative.</p>}
                 </div>
 
                 <div className="md:justify-self-end">
@@ -158,7 +148,7 @@ export function ApplicationRequirementMedia() {
                       title: requirement.label,
                       description: requirement.description || "Choose a private source for this exact opportunity requirement.",
                       completionAction: "Validate and include",
-                      allowedMimeTypes: mimeTypes,
+                      allowedMimeTypes: pickerMimeTypes,
                       maxFileSizeBytes: requirement.maximum_file_size_bytes ?? 20 * 1024 * 1024,
                       maxSelectionCount: count,
                       allowMultiple: count > 1,
