@@ -1,18 +1,16 @@
 import type { Metadata } from "next"
 import { ArtistShell } from "@/components/kleio/artist-shell"
-import { ArtistApplicationsPageView } from "@/components/kleio/artist-workspace/artist-applications-page-view"
-import { LiveModeView } from "@/components/kleio/live-mode-view"
-import { LiveArtistApplications } from "@/components/kleio/live-artist-workspace"
+import { UnifiedArtistApplications } from "@/components/kleio/unified-artist-applications"
 
 export const metadata: Metadata = {
   title: "KLEIO — Applications",
-  description: "Track drafts, submitted applications, missing materials, and deadlines.",
+  description: "Track KLEIO-hosted and external applications, preserved versions, next actions, and outcomes in one place.",
 }
 
 export default function Page() {
   return (
     <ArtistShell>
-      <LiveModeView live={<LiveArtistApplications />} preview={<ArtistApplicationsPageView />} />
+      <UnifiedArtistApplications />
     </ArtistShell>
   )
 }
