@@ -1,5 +1,6 @@
 import { getSupabaseBrowserClient, loadKleioAccount } from "@/lib/kleio-supabase"
 import { requestMediaExtraction } from "@/lib/kleio-upload-to-passport"
+import { parseDocumentProfileSynthesis, synthesizeDocumentProfile } from "@/lib/kleio-document-profile-synthesis"
 import type { ArtistMediaLibraryItem, MediaKind } from "@/lib/kleio-universal-media"
 
 export const KLEIO_ANALYZABLE_MEDIA_MIME_TYPES = [
@@ -18,6 +19,9 @@ export type MediaIntelligence = {
   summary: string
   suggestedTitle: string
   suggestedDescription: string
+  bioDraft: string
+  artistStatementDraft: string
+  practiceDescriptionDraft: string
   mediumsMaterials: string[]
   disciplines: string[]
   themesConcepts: string[]
@@ -34,6 +38,7 @@ export type MediaIntelligence = {
   proposalCount: number
   analysisQuality: string
   isDocumentAnalysis: boolean
+  profileSynthesisReady: boolean
 }
 
 export type MediaIntelligenceStatus = "ready" | "available" | "failed" | "unsupported" | "legacy"
@@ -43,6 +48,7 @@ function object(value: unknown): Record<string, unknown> {
 }
 function text(value: unknown) { return typeof value === "string" ? value.trim() : "" }
 function strings(value: unknown) { return Array.isArray(value) ? value.filter((entry): entry is string => typeof entry === "string" && Boolean(entry.trim())).map((entry) => entry.trim()) : [] }
+function unique(values: string[]) { return Array.from(new Set(values.map((value) => value.trim()).filter(Boolean))) }
 function kind(mimeType: string): MediaKind {
   if (mimeType.startsWith("image/")) return "image"
   if (mimeType.startsWith("video/") || mimeType === "application/vnd.ms-asf") return "video"
@@ -60,6 +66,9 @@ function fromMedia(sourceId: string, mimeType: string, raw: Record<string, unkno
     summary: text(raw.summary),
     suggestedTitle: text(raw.suggested_title),
     suggestedDescription: text(raw.suggested_description),
+    bioDraft: "",
+    artistStatementDraft: "",
+    practiceDescriptionDraft: "",
     mediumsMaterials: strings(raw.mediums_materials),
     disciplines: strings(raw.disciplines),
     themesConcepts: strings(raw.themes_concepts),
@@ -76,6 +85,7 @@ function fromMedia(sourceId: string, mimeType: string, raw: Record<string, unkno
     proposalCount: 0,
     analysisQuality: "review_ready",
     isDocumentAnalysis: false,
+    profileSynthesisReady: false,
   }
 }
 
@@ -85,31 +95,58 @@ function fromDocument(sourceId: string, mimeType: string, raw: Record<string, un
   const grouped = object(raw.grouped_counts)
   const claims = Array.isArray(raw.representative_claims) ? raw.representative_claims.map(object) : []
   const needsReview = strings(summary.what_needs_review)
+  const synthesis = parseDocumentProfileSynthesis(raw.profile_synthesis)
+  const values = (items: { value: string }[] | undefined) => (items ?? []).map((item) => item.value)
+  const career = unique([
+    ...values(synthesis?.career_highlights),
+    ...values(synthesis?.education),
+    ...values(synthesis?.exhibitions),
+    ...values(synthesis?.awards),
+    ...values(synthesis?.residencies),
+    ...values(synthesis?.representation),
+    ...values(synthesis?.portfolio_projects),
+    ...values(synthesis?.artworks),
+  ])
+  const keywords = unique([
+    ...values(synthesis?.disciplines),
+    ...values(synthesis?.mediums),
+    ...values(synthesis?.themes),
+    ...values(synthesis?.skills),
+    ...Object.keys(grouped).map((value) => value.replaceAll("_", " ")),
+  ])
+  const synopsis = text(summary.document_synopsis) || text(raw.coverage_explanation) || strings(summary.what_was_found).join(" ")
+  const bioDraft = synthesis?.bio.text || ""
+  const artistStatementDraft = synthesis?.artist_statement.text || ""
+  const practiceDescriptionDraft = synthesis?.practice_description.text || ""
   return {
     sourceId,
     mediaKind: kind(mimeType),
-    provider: text(raw.provider),
-    model: text(raw.model),
-    analyzedAt: text(raw.updated_at),
-    summary: text(summary.document_synopsis) || text(raw.coverage_explanation) || strings(summary.what_was_found).join(" "),
-    suggestedTitle: "",
-    suggestedDescription: text(summary.document_synopsis),
-    mediumsMaterials: [],
-    disciplines: [],
-    themesConcepts: [],
+    provider: synthesis?.provider || text(raw.provider),
+    model: synthesis?.model || text(raw.model),
+    analyzedAt: synthesis?.generated_at || text(raw.updated_at),
+    summary: bioDraft || synopsis,
+    suggestedTitle: synthesis?.professional_name?.value || "",
+    suggestedDescription: practiceDescriptionDraft || synopsis,
+    bioDraft,
+    artistStatementDraft,
+    practiceDescriptionDraft,
+    mediumsMaterials: values(synthesis?.mediums),
+    disciplines: values(synthesis?.disciplines),
+    themesConcepts: values(synthesis?.themes),
     formalQualities: [],
-    technicalObservations: strings(summary.what_was_found),
-    presentationNotes: strings(summary.recommended_use),
+    technicalObservations: unique([...values(synthesis?.skills), ...career, ...strings(summary.what_was_found)]),
+    presentationNotes: unique([...values(synthesis?.education), ...values(synthesis?.exhibitions), ...values(synthesis?.awards), ...values(synthesis?.residencies), ...strings(summary.recommended_use)]),
     accessibilityDescription: "",
-    applicationKeywords: Object.keys(grouped).map((value) => value.replaceAll("_", " ")),
-    factualObservations: claims.map((claim) => text(claim.display_value)).filter(Boolean),
-    interpretiveObservations: [],
-    uncertainties: needsReview,
-    limitations: [...strings(assessment.analysis_limitations), ...needsReview],
+    applicationKeywords: keywords,
+    factualObservations: career.length ? career : claims.map((claim) => text(claim.display_value)).filter(Boolean),
+    interpretiveObservations: artistStatementDraft ? [artistStatementDraft] : [],
+    uncertainties: unique([...(synthesis?.missing_context ?? []), ...needsReview]),
+    limitations: unique([...strings(assessment.analysis_limitations), ...needsReview]),
     confidence: Number.isFinite(Number(raw.analysis_score)) ? Number(raw.analysis_score) : null,
     proposalCount: Number(raw.claim_count || 0),
     analysisQuality: text(raw.analysis_quality),
     isDocumentAnalysis: true,
+    profileSynthesisReady: Boolean(synthesis),
   }
 }
 
@@ -119,7 +156,9 @@ export function canAnalyzeMediaItem(item: ArtistMediaLibraryItem) {
 
 export function mediaIntelligenceSupportText(item: ArtistMediaLibraryItem) {
   if (!item.sourceId) return "This older portfolio item needs to be re-added to the private Media Library before KLEIO can analyze it."
-  if (canAnalyzeMediaItem(item)) return "KLEIO can privately analyze this source and keep the result available in both Media Library and Creative Passport."
+  if (canAnalyzeMediaItem(item)) return item.mimeType === "application/pdf"
+    ? "KLEIO can privately read this PDF and turn supported material into reviewable Creative Passport suggestions, including draft profile language when the source supports it."
+    : "KLEIO can privately analyze this source and keep the result available in both Media Library and Creative Passport."
   if (item.mediaKind === "document") return "This file can stay in KLEIO, but analysis is unavailable for this document format."
   return "This media can stay in KLEIO, but analysis is unavailable for this format."
 }
@@ -191,6 +230,11 @@ export async function analyzeMediaWithKleio(item: ArtistMediaLibraryItem, option
 
   if (item.mimeType === "application/pdf") {
     await requestMediaExtraction(item)
+    try {
+      await synthesizeDocumentProfile(item.sourceId, { force: options.force === true })
+    } catch {
+      // The structured document analysis remains usable even if the secondary Passport synthesis needs a retry.
+    }
     const refreshed = await loadMediaIntelligence(item.sourceId)
     if (!refreshed) throw new Error("KLEIO completed the document pass but did not produce a readable analysis yet. Try again before using it.")
     return refreshed
