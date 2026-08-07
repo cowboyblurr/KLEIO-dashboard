@@ -25,7 +25,7 @@ export function CreativePassportMediaPanel() {
           <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-[#F0EBFA] text-[#5B4B8A]"><Sparkles className="size-4" /></span>
           <div className="min-w-0">
             <h2 id="passport-document-tools-title" className="text-sm font-semibold text-[#292631]">Build from your materials</h2>
-            <p className="truncate text-xs text-[#746E80]">Add reusable media or supporting files. PDFs can also produce Gemini suggestions for your approval.</p>
+            <p className="truncate text-xs text-[#746E80]">Add reusable media or supporting files. When you analyze a PDF, Gemini places findings in the matching Passport fields for your approval.</p>
           </div>
         </div>
         <div className="flex flex-wrap gap-1.5">
