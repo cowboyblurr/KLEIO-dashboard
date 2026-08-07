@@ -114,6 +114,13 @@ Deno.serve(async (request: Request) => {
   ])
 
   if (!opportunity) return json(request, { error: "opportunity_not_found" }, 404)
+  if (requirementId && !requirement) return json(request, { error: "requirement_not_found", message: "KLEIO could not verify this application question against the opportunity source." }, 404)
+  if (requirement && requirement.verification_status !== "confirmed") {
+    return json(request, {
+      error: "requirement_confirmation_required",
+      message: "This application question is not source-confirmed yet. Verify or correct the opportunity requirement before asking KLEIO to draft against it.",
+    }, 409)
+  }
   if (recordError) return json(request, { error: "confirmed_records_unavailable" }, 500)
   if (!records?.length) return json(request, { error: "confirmed_facts_required" }, 422)
 
@@ -146,7 +153,7 @@ Deno.serve(async (request: Request) => {
     : Number.isInteger(requirementMaximum) && requirementMaximum > 0
       ? Math.min(requirementMaximum, 1_000)
       : 450
-  const minimumWords = 25
+  const minimumWords = Math.min(25, maximumWords)
   const evidenceCorpus = [
     evidence.map((item) => item.value).join("\n"),
     question,
@@ -245,7 +252,7 @@ Deno.serve(async (request: Request) => {
     return json(request, {
       draft,
       options: output,
-      label: "Suggested draft · prepared from artist-confirmed Creative Passport records and the exact opportunity question.",
+      label: "Suggested draft · prepared from artist-confirmed Creative Passport records and the exact source-confirmed opportunity question.",
       confirmedFactsOnly: true,
       artistConfirmationRequired: true,
     })
