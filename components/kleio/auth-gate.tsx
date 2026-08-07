@@ -117,7 +117,7 @@ function AuthWall({ requiredRole, auth, onRefresh }: { requiredRole?: WorkspaceR
 
 export function AuthGate({ requiredRole, children }: AuthGateProps) {
   const [auth, setAuth] = useState<ResolvedAuth | null>(null)
-  const { t } = useKleioLocale()
+  const { locale } = useKleioLocale()
   const router = useRouter()
 
   const refreshAuth = useCallback(async () => {
@@ -149,7 +149,7 @@ export function AuthGate({ requiredRole, children }: AuthGateProps) {
     if (onboarding) router.replace(onboarding)
   }, [onboarding, router])
 
-  if (!auth || onboarding) return <div className="flex min-h-screen items-center justify-center bg-[oklch(0.985_0.005_287)] px-6"><div className="max-w-sm"><KleioAssistObject mode="reviewing" title={t("assist.object.complete.title")} description={t("assist.object.complete.description")} size="sm" compact /></div></div>
+  if (!auth || onboarding) return <div className="flex min-h-screen items-center justify-center bg-[oklch(0.985_0.005_287)] px-6"><div className="max-w-sm"><KleioAssistObject mode="reviewing" title={locale === "es" ? "Cargando…" : "Loading…"} size="sm" compact /></div></div>
 
   const role = accountRole(auth.account) ?? auth.demoSession?.role ?? null
   if (!role || (requiredRole && role !== requiredRole)) return <AuthWall requiredRole={requiredRole} auth={auth} onRefresh={refreshAuth} />
