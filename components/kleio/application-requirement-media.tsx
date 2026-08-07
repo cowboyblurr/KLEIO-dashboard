@@ -106,7 +106,7 @@ export function ApplicationRequirementMedia() {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-[#75639E]">Requirement material</p>
-          <h2 id="application-requirement-media-title" className="mt-1 font-serif text-xl font-semibold tracking-[-0.02em] text-[#292631]">Attach files or media once, to the exact requirement</h2>
+          <h2 id="application-requirement-media-title" className="mt-1 font-serif text-xl font-semibold tracking-[-0.02em] text-[#292631]">Attach files once, to the exact requirement</h2>
           <p className="mt-1 max-w-3xl text-xs leading-5 text-[#746E80]">Written responses stay in the composer; source-declared file or media inputs live here; portfolio works stay in the visual selector. KLEIO accepts the source-specified format when supported and does not pretend every uploaded file is a PDF or CV.</p>
         </div>
         <div className="flex shrink-0 flex-wrap gap-2 text-xs font-semibold">
@@ -143,7 +143,7 @@ export function ApplicationRequirementMedia() {
 
                 <div className="md:justify-self-end">
                   <ApplicationRequirementFilePicker
-                    label={current ? "Replace" : "Add material"}
+                    label={current ? "Replace" : "Add file"}
                     requirementLabel={requirement.label}
                     description={requirement.description || "Choose private material for this exact opportunity requirement. Nothing is submitted until your final external or KLEIO submission action."}
                     allowedMimeTypes={pickerMimeTypes}
