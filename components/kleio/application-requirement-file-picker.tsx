@@ -1,5 +1,7 @@
 "use client"
 
+/* eslint-disable @next/next/no-img-element -- private signed Supabase previews are short-lived */
+
 import { useMemo, useRef, useState } from "react"
 import { Check, FileText, FolderOpen, ImageIcon, Loader2, Search, ShieldCheck, UploadCloud, X } from "lucide-react"
 import {
@@ -22,6 +24,17 @@ type Props = {
 
 const primary = "inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#5B4B8A] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#4F407B] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#A997E8]/25 disabled:cursor-not-allowed disabled:opacity-50"
 const secondary = "inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-[#D8D0F2] bg-white px-4 py-2 text-sm font-semibold text-[#5B4B8A] transition hover:border-[#B9A9DE] hover:bg-[#FBFAFE] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#A997E8]/20 disabled:cursor-not-allowed disabled:opacity-50"
+
+function sourceExtensionAccepts(filename: string, accepted: string[]) {
+  const extension = filename.toLowerCase().split(".").pop()?.replace(/[^a-z0-9]+/g, "") || ""
+  const statedExtensions = accepted
+    .map((value) => value.trim().toLowerCase().replace(/^\./, ""))
+    .filter((value) => value && !value.includes("/"))
+  if (!statedExtensions.length) return true
+  if (statedExtensions.includes(extension)) return true
+  if (["jpg", "jpeg"].includes(extension) && statedExtensions.some((value) => ["jpg", "jpeg"].includes(value))) return true
+  return false
+}
 
 export function ApplicationRequirementFilePicker(props: Props) {
   const dialogRef = useRef<HTMLDialogElement>(null)
@@ -65,6 +78,11 @@ export function ApplicationRequirementFilePicker(props: Props) {
   }
 
   function toggle(item: ArtistMediaLibraryItem) {
+    if (!sourceExtensionAccepts(item.originalFilename, props.sourceAcceptedTypes)) {
+      setError(`${item.originalFilename} does not use one of the file extensions stated by this opportunity.`)
+      return
+    }
+    setError("")
     setSelected((current) => {
       if (current.some((candidate) => candidate.id === item.id)) return current.filter((candidate) => candidate.id !== item.id)
       if (!props.allowMultiple) return [item]
@@ -76,6 +94,12 @@ export function ApplicationRequirementFilePicker(props: Props) {
   async function upload(files: FileList | null) {
     const chosen = Array.from(files ?? []).slice(0, props.maximumSelectionCount)
     if (!chosen.length || loading) return
+    const invalidExtension = chosen.find((file) => !sourceExtensionAccepts(file.name, props.sourceAcceptedTypes))
+    if (invalidExtension) {
+      setError(`${invalidExtension.name} does not use one of the file extensions stated by this opportunity.`)
+      if (fileInputRef.current) fileInputRef.current.value = ""
+      return
+    }
     setLoading(true)
     setError("")
     setStatus("")
