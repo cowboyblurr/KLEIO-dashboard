@@ -18,6 +18,16 @@ test("explicit medium and discipline evidence cannot silently become empty Passp
   assert.equal(result.status, "REPAIR_REQUIRED")
 })
 
+test("artwork metadata is canonicalized for the same exact field selector used by targeted repair", () => {
+  const tags = ["artwork_metadata"]
+  const evidence = [{ target_field: "artwork_metadata", claim_type: "artwork", tags }]
+  const result = evaluatePassportCoverage({ evidence, synthesis: { mediums: [], disciplines: [] } })
+  assert.ok(result.retry_fields.includes("mediums"), "artwork metadata must trigger medium repair rather than being stranded in source analysis")
+  assert.ok(result.retry_fields.includes("disciplines"), "artwork metadata must trigger discipline repair when synthesis misses it")
+  assert.ok(tags.includes("mediums"), "semantic medium evidence must receive the canonical field tag consumed by targeted repair")
+  assert.ok(tags.includes("disciplines"), "semantic discipline evidence must receive the canonical field tag consumed by targeted repair")
+})
+
 test("supported medium and discipline output passes deterministic coverage QA", () => {
   const synthesis = {
     mediums: [{ value: "Photography", evidence_refs: ["ev-1"] }, { value: "Film", evidence_refs: ["ev-2"] }, { value: "Video", evidence_refs: ["ev-3"] }],
