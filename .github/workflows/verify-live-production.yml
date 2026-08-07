@@ -11,14 +11,41 @@ permissions:
 
 jobs:
   verify-live:
-    if: ${{ github.event.workflow_run.event == 'push' && github.event.workflow_run.conclusion == 'success' }}
+    if: ${{ github.event.workflow_run.event == 'push' }}
     runs-on: ubuntu-latest
     env:
       SITE_URL: https://www.kleioarthouse.com
       TARGET_SHA: ${{ github.event.workflow_run.head_sha }}
+      DEPLOY_CONCLUSION: ${{ github.event.workflow_run.conclusion }}
 
     steps:
+      - name: Mark live verification pending
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          payload='{"state":"pending","context":"KLEIO Live Production","description":"Checking exact commit on www.kleioarthouse.com","target_url":"https://www.kleioarthouse.com"}'
+          curl --silent --show-error --fail-with-body \
+            --request POST \
+            --header "Accept: application/vnd.github+json" \
+            --header "Authorization: Bearer ${GH_TOKEN}" \
+            --header "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/statuses/${TARGET_SHA}" \
+            --data "$payload"
+
+      - name: Verify deploy workflow succeeded
+        id: deploy_gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "Deploy workflow conclusion: ${DEPLOY_CONCLUSION}"
+          test "${DEPLOY_CONCLUSION}" = "success"
+
       - name: Verify current production surface and artist image upload bundles
+        id: live_verify
+        if: steps.deploy_gate.outcome == 'success'
+        continue-on-error: true
         shell: bash
         run: |
           set -euo pipefail
@@ -69,13 +96,23 @@ jobs:
 
           test "$verified" = "true"
 
-      - name: Mark exact commit verified on live production
+      - name: Publish live production verification result
+        if: always()
         env:
           GH_TOKEN: ${{ github.token }}
+          DEPLOY_OUTCOME: ${{ steps.deploy_gate.outcome }}
+          LIVE_OUTCOME: ${{ steps.live_verify.outcome }}
         shell: bash
         run: |
           set -euo pipefail
-          payload="$(printf '{\"state\":\"success\",\"context\":\"KLEIO Live Production\",\"description\":\"Exact commit verified on www.kleioarthouse.com\",\"target_url\":\"https://www.kleioarthouse.com\"}')"
+          if [ "${DEPLOY_OUTCOME}" = "success" ] && [ "${LIVE_OUTCOME}" = "success" ]; then
+            state="success"
+            description="Exact commit verified live with artist image uploads"
+          else
+            state="failure"
+            description="Live production does not yet match this commit"
+          fi
+          payload="$(printf '{\"state\":\"%s\",\"context\":\"KLEIO Live Production\",\"description\":\"%s\",\"target_url\":\"https://www.kleioarthouse.com\"}' "$state" "$description")"
           curl --silent --show-error --fail-with-body \
             --request POST \
             --header "Accept: application/vnd.github+json" \
@@ -83,3 +120,5 @@ jobs:
             --header "X-GitHub-Api-Version: 2022-11-28" \
             "https://api.github.com/repos/${GITHUB_REPOSITORY}/statuses/${TARGET_SHA}" \
             --data "$payload"
+
+          test "$state" = "success"
