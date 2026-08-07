@@ -15,6 +15,8 @@ import {
 
 const surface = "rounded-2xl border border-[#E7E1F7] bg-white p-4 sm:p-5 shadow-[0_14px_42px_rgba(82,64,130,0.045)]"
 const DEFAULT_MIME_TYPES = ["application/pdf", "image/jpeg", "image/png", "image/webp"]
+const EXPLICIT_FILE_INPUTS = ["document", "documents", "file", "upload", "mixed", "url_or_document"]
+const EXPLICIT_WRITTEN_INPUTS = ["textarea", "long_text", "written_response", "essay", "text", "short_text"]
 
 function acceptedMimeTypes(values: string[]) {
   const aliases: Record<string, string> = {
@@ -34,7 +36,8 @@ function acceptedMimeTypes(values: string[]) {
 
 function fileCapable(requirement: RequirementRecord) {
   if (requirement.accepted_file_types.length > 0) return true
-  if (["document", "documents", "file", "upload", "mixed", "url_or_document"].includes(requirement.input_type)) return true
+  if (EXPLICIT_FILE_INPUTS.includes(requirement.input_type)) return true
+  if (EXPLICIT_WRITTEN_INPUTS.includes(requirement.input_type)) return false
   return requirement.category === "supporting_document"
 }
 
