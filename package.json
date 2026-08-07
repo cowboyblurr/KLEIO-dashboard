@@ -15,6 +15,7 @@
     "audit:artist-requirement-channels": "node scripts/audit-artist-requirement-channel-separation.mjs",
     "audit:artist-requirement-file-types": "node scripts/audit-artist-requirement-file-types.mjs",
     "audit:upload-surfaces": "node scripts/audit-upload-surface-consistency.mjs",
+    "audit:artist-media-control": "node scripts/audit-artist-media-control.mjs",
     "audit:artist-recipient-loop": "node scripts/audit-artist-recipient-loop.mjs",
     "audit:application-composer": "node scripts/audit-application-composer-lock.mjs",
     "audit:navigation": "node scripts/audit-navigation.mjs",

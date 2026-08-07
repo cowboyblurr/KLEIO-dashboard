@@ -7,8 +7,9 @@ import { useCallback, useEffect, useState } from "react"
 import { AudioLines, BrainCircuit, FileCheck2, FileText, Images, Loader2, Sparkles, Video } from "lucide-react"
 import { QuickMediaImport } from "@/components/kleio/media-import/quick-media-import"
 import { MediaIntelligenceSheet } from "@/components/kleio/media-intelligence-sheet"
+import { MediaManagementMenu } from "@/components/kleio/media-management-menu"
 import { loadPassportReviewCount } from "@/lib/kleio-upload-to-passport"
-import { loadArtistMediaLibrary, type ArtistMediaLibraryItem } from "@/lib/kleio-universal-media"
+import { loadArtistMediaLibrary, recordMediaUsage, type ArtistMediaLibraryItem } from "@/lib/kleio-universal-media"
 import { signPrivateMediaPreview } from "@/lib/kleio-device-media-upload"
 import { canAnalyzeMediaItem, loadMediaIntelligenceStatuses, type MediaIntelligenceStatus } from "@/lib/kleio-media-intelligence"
 
@@ -25,6 +26,7 @@ function Preview({ item }: { item: ArtistMediaLibraryItem }) {
 
 function statusLabel(status: MediaIntelligenceStatus | undefined) {
   if (status === "ready") return "View analysis"
+  if (status === "failed") return "Try analysis again"
   if (status === "available") return "Analyze"
   return ""
 }
@@ -53,6 +55,11 @@ export function CreativePassportMediaPanel() {
     return () => { active = false }
   }, [refresh])
 
+  async function attachToPassport(result: { items: ArtistMediaLibraryItem[] }) {
+    await Promise.all(result.items.map((item) => recordMediaUsage({ item, context: "creative_passport", role: "supporting_document" })))
+    await refresh()
+  }
+
   return <>
     <section className="rounded-2xl border border-[#E7E1F7] bg-[linear-gradient(135deg,#FCFBFE,#FFFFFF)] px-3 py-3 shadow-[0_12px_32px_rgba(82,64,130,0.04)]" aria-labelledby="passport-media-intelligence-title">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
@@ -64,7 +71,7 @@ export function CreativePassportMediaPanel() {
           </div>
         </div>
         <div className="flex flex-wrap gap-1.5">
-          <QuickMediaImport context="creative_passport" label="Add media" onConfirm={async () => { await refresh() }} />
+          <QuickMediaImport context="creative_passport" label="Add media" onConfirm={attachToPassport} />
           <Link href="/artist-dashboard/passport/review/" className={action}><FileCheck2 className="size-3.5" />{count === null ? <Loader2 className="size-3 animate-spin" /> : count ? `${count} to review` : "Review updates"}</Link>
           <Link href="/artist-dashboard/media/" className={action}><Images className="size-3.5" />Full library</Link>
         </div>
@@ -75,9 +82,10 @@ export function CreativePassportMediaPanel() {
           {items.slice(0, 6).map((item) => {
             const status = statuses.get(item.id)
             const label = statusLabel(status)
-            return <article key={item.id} className="flex min-w-[220px] max-w-[260px] items-center gap-2.5 rounded-xl border border-[#E7E1F7] bg-white p-2.5">
+            return <article key={item.id} className="flex min-w-[238px] max-w-[278px] items-center gap-2.5 rounded-xl border border-[#E7E1F7] bg-white p-2.5">
               <div className="grid size-12 shrink-0 place-items-center overflow-hidden rounded-lg bg-[#F3F0F8]"><Preview item={item} /></div>
-              <div className="min-w-0 flex-1"><p className="truncate text-xs font-semibold text-[#292631]">{item.title}</p><p className="mt-0.5 truncate text-[0.66rem] capitalize text-[#8A8296]">{item.mediaKind}{status === "ready" ? " · analysis ready" : ""}</p>{canAnalyzeMediaItem(item) && <button type="button" onClick={() => setSelectedItem(item)} className="mt-1 inline-flex items-center gap-1 text-[0.68rem] font-semibold text-[#5B4B8A] hover:underline"><BrainCircuit className="size-3" />{label || "Analyze"}</button>}</div>
+              <div className="min-w-0 flex-1"><p className="truncate text-xs font-semibold text-[#292631]">{item.title}</p><p className="mt-0.5 truncate text-[0.66rem] capitalize text-[#8A8296]">{item.mediaKind}{status === "ready" ? " · analysis ready" : status === "failed" ? " · analysis needs retry" : ""}</p>{canAnalyzeMediaItem(item) && <button type="button" onClick={() => setSelectedItem(item)} className="mt-1 inline-flex items-center gap-1 text-[0.68rem] font-semibold text-[#5B4B8A] hover:underline"><BrainCircuit className="size-3" />{label || "Analyze"}</button>}</div>
+              <MediaManagementMenu item={item} currentContext="creative_passport" onChanged={async () => { if (selectedItem?.id === item.id) setSelectedItem(null); await refresh() }} />
             </article>
           })}
         </div> : <p className="py-2 text-xs leading-5 text-[#746E80]">No private material yet. Add media here and KLEIO will keep it available across your Passport, portfolio, and applications.</p>}
