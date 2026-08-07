@@ -16,12 +16,25 @@ function walk(directory) {
 function rel(file) { return path.relative(root, file).replaceAll(path.sep, "/") }
 function fail(file, message, excerpt = "") { findings.push({ file: rel(file), message, excerpt: excerpt.replace(/\s+/g, " ").trim().slice(0, 180) }) }
 
-// These surfaces are deliberately PDF-specific because they perform PDF document analysis,
-// not generic media upload. A profile/avatar/logo control may likewise remain image-specific.
+// Narrow upload controls are correct when the destination itself is narrow:
+// PDF analysis/re-analysis, CV-document fields, profile imagery, call covers, logos, etc.
 const pdfAnalysisSurfaces = new Set([
   "components/kleio/artist-document-intelligence.tsx",
   "components/kleio/artist-document-intelligence-spanish.tsx",
+  "components/kleio/artist-import-review.tsx",
   "components/kleio/document-draft-studio.tsx",
+])
+const specializedPdfInputs = new Set([
+  ...pdfAnalysisSurfaces,
+  "components/kleio/live-artist-passport-editor.tsx",
+  "components/kleio/live-artist-workspace.tsx",
+])
+const specializedImageInputs = new Set([
+  "components/kleio/live-artist-identity-settings.tsx",
+  "components/kleio/live-artist-passport-editor.tsx",
+  "components/kleio/live-artist-workspace.tsx",
+  "components/kleio/live-institution-calls-with-images.tsx",
+  "components/kleio/live-institution-opportunity-workspace.tsx",
 ])
 const specializedImagePath = /(profile|avatar|cover|logo|brand|instagram)/i
 
@@ -50,8 +63,8 @@ for (const file of sourceRoots.flatMap((directory) => walk(path.join(root, direc
     const values = accept.split(",").map((value) => value.trim().toLowerCase()).filter(Boolean)
     const onlyPdf = values.length > 0 && values.every((value) => ["application/pdf", ".pdf"].includes(value))
     const onlyImage = values.length > 0 && values.every((value) => value.startsWith("image/") || [".jpg", ".jpeg", ".png", ".webp", ".gif", ".heic", ".heif"].includes(value))
-    if (onlyPdf && !pdfAnalysisSurfaces.has(relative) && !/live-artist-workspace\.tsx$/.test(relative)) fail(file, "Generic file input is restricted to PDF instead of using the shared media/material picker.", tag)
-    if (onlyImage && !specializedImagePath.test(relative) && !/live-artist-workspace\.tsx$/.test(relative)) fail(file, "Non-specialized upload input is image-only instead of using the shared artwork/media picker.", tag)
+    if (onlyPdf && !specializedPdfInputs.has(relative)) fail(file, "Generic file input is restricted to PDF instead of using the shared media/material picker.", tag)
+    if (onlyImage && !specializedImageInputs.has(relative) && !specializedImagePath.test(relative)) fail(file, "Non-specialized upload input is image-only instead of using the shared artwork/media picker.", tag)
   }
 }
 
@@ -68,6 +81,16 @@ for (const source of ["device_image", "device_document", "device_video", "device
 const picker = fs.readFileSync(path.join(root, "components/kleio/media-import/quick-media-import.tsx"), "utf8")
 for (const expected of ["KLEIO_GENERAL_UPLOAD_MIME_TYPES", "KLEIO_ARTWORK_MEDIA_MIME_TYPES", "uploadDeviceMediaToLibrary", "device_video", "device_audio"]) {
   if (!picker.includes(expected)) fail(path.join(root, "components/kleio/media-import/quick-media-import.tsx"), `Shared picker must include ${expected}.`)
+}
+
+const mediaLibrary = fs.readFileSync(path.join(root, "components/kleio/artist-media-library.tsx"), "utf8")
+for (const expected of ["Upload media", '"video"', '"audio"', "QuickMediaImport"]) {
+  if (!mediaLibrary.includes(expected)) fail(path.join(root, "components/kleio/artist-media-library.tsx"), `Media Library must expose ${expected}.`)
+}
+
+const portfolio = fs.readFileSync(path.join(root, "components/kleio/visual-artist-portfolio-studio.tsx"), "utf8")
+for (const expected of ["AudioLines", "Video", "image, video, or audio", "signPrivateMediaPreview"]) {
+  if (!portfolio.includes(expected)) fail(path.join(root, "components/kleio/visual-artist-portfolio-studio.tsx"), `Portfolio must be media-aware: missing ${expected}.`)
 }
 
 const requirementPicker = fs.readFileSync(path.join(root, "components/kleio/application-requirement-file-picker.tsx"), "utf8")
