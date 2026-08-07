@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit",
     "test:artist-workflow-services": "node --test tests/artist-workflow-services.test.mjs",
     "test:gemini-document-intelligence": "node --test tests/gemini-document-intelligence.test.mjs",
+    "audit:artist-beta-readiness": "node scripts/audit-artist-beta-readiness.mjs",
     "audit:artist-recipient-loop": "node scripts/audit-artist-recipient-loop.mjs",
     "audit:navigation": "node scripts/audit-navigation.mjs",
     "audit:user-copy": "node scripts/audit-user-facing-copy.mjs",

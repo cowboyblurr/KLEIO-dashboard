@@ -18,7 +18,7 @@ export const DEFAULT_BETA_IMPORT_AVAILABILITY: KleioBetaImportAvailability = {
   google_drive_image: false,
   google_drive_document: false,
   existing_kleio_media: true,
-  device_image: false,
+  device_image: true,
   device_document: true,
   instagram_image: false,
   website: false,

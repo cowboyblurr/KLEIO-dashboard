@@ -174,8 +174,11 @@ export function calculatePassportCompletion(
     }),
   ]
 
-  const totalWeight = categories.reduce((sum, item) => sum + item.weight, 0)
-  const rawPercentage = Math.round((categories.reduce((sum, item) => sum + item.earned, 0) / totalWeight) * 100)
+  // Optional enrichment should improve the Passport without preventing a truthful
+  // 100% readiness state. Only critical + important categories form the percentage.
+  const scoredCategories = categories.filter((item) => item.tier !== "optional")
+  const totalWeight = scoredCategories.reduce((sum, item) => sum + item.weight, 0)
+  const rawPercentage = Math.round((scoredCategories.reduce((sum, item) => sum + item.earned, 0) / totalWeight) * 100)
   const criticalMissing = categories.filter((item) => item.tier === "critical" && !item.complete)
   const criticalComplete = criticalMissing.length === 0
   const percentage = criticalComplete ? rawPercentage : Math.min(rawPercentage, 99)

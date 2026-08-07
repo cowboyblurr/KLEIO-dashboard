@@ -4,6 +4,7 @@ import type {
   ArtistDashboardApplicationStatus,
   ArtistDashboardProfile,
 } from "@/lib/kleio-data"
+import { calculatePassportCompletion } from "@/lib/kleio-passport-completion"
 import { getSupabaseBrowserClient, isKleioEmailConfirmed } from "@/lib/kleio-supabase"
 
 type ArtistProfileRow = {
@@ -16,8 +17,14 @@ type ArtistProfileRow = {
   instagram_url: string | null
   disciplines: string[] | null
   mediums: string[] | null
+  education: string | null
+  exhibition_history: string | null
+  awards: string | null
   cv_file_path: string | null
-  profile_completion: number | null
+}
+
+type CvSourceRow = {
+  storage_path: string | null
 }
 
 type ApplicationRow = {
@@ -80,27 +87,56 @@ export async function loadLiveArtistWorkspace(): Promise<LiveArtistWorkspace> {
   const user = userData.user
   if (!user || !isKleioEmailConfirmed(user)) throw new Error("Email not confirmed.")
 
-  const [{ data: profileData, error: profileError }, { data: artistData, error: artistError }, { data: worksData, error: worksError }, { data: applicationData, error: applicationsError }] = await Promise.all([
+  const [
+    { data: profileData, error: profileError },
+    { data: artistData, error: artistError },
+    { data: worksData, error: worksError },
+    { data: applicationData, error: applicationsError },
+    { data: cvSourceData, error: cvSourceError },
+  ] = await Promise.all([
     supabase.from("profiles").select("display_name, email, onboarding_completed").eq("id", user.id).single(),
-    supabase.from("artist_profiles").select("professional_name, location, bio, artist_statement, practice_description, website_url, instagram_url, disciplines, mediums, cv_file_path, profile_completion").eq("user_id", user.id).maybeSingle(),
+    supabase.from("artist_profiles").select("professional_name, location, bio, artist_statement, practice_description, website_url, instagram_url, disciplines, mediums, education, exhibition_history, awards, cv_file_path").eq("user_id", user.id).maybeSingle(),
     supabase.from("portfolio_works").select("id, title, year, medium, dimensions, image_path").eq("artist_user_id", user.id).order("sort_order", { ascending: true }),
     supabase.from("applications").select("status, submitted_at, updated_at, open_calls(title, deadline_at, notification_date)").eq("artist_user_id", user.id).order("updated_at", { ascending: false }),
+    supabase.from("artist_import_sources")
+      .select("storage_path")
+      .eq("artist_user_id", user.id)
+      .eq("media_kind", "document")
+      .is("deleted_at", null)
+      .or("artist_selected_document_type.eq.artist_cv,classification.eq.artist_cv")
+      .order("updated_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
   ])
 
   if (profileError) throw profileError
   if (artistError) throw artistError
   if (worksError) throw worksError
   if (applicationsError) throw applicationsError
+  if (cvSourceError) throw cvSourceError
   if (!profileData) throw new Error("This account does not have a KLEIO profile yet.")
   if (!artistData) throw new Error("Your Creative Passport is not complete yet.")
 
   const artistRow = artistData as ArtistProfileRow
+  const cvSource = cvSourceData as CvSourceRow | null
   const rows = (applicationData ?? []) as ApplicationRow[]
   const works = (worksData ?? []) as Array<{ id: string; title: string; year: string | number | null; medium: string | null; dimensions: string | null; image_path: string | null }>
+  const effectiveCvPath = artistRow.cv_file_path?.trim() || cvSource?.storage_path?.trim() || ""
   const displayName = artistRow.professional_name?.trim() || profileData.display_name?.trim() || user.email?.split("@")[0] || "KLEIO Artist"
   const disciplines = artistRow.disciplines ?? []
   const mediums = artistRow.mediums ?? []
-  const completeness = Math.max(0, Math.min(100, artistRow.profile_completion ?? 0))
+  const completionWorks = works.map((work) => ({
+    title: work.title,
+    year: work.year == null ? "" : String(work.year),
+    medium: work.medium,
+    dimensions: work.dimensions,
+    image_path: work.image_path,
+  }))
+  const completion = calculatePassportCompletion({
+    ...artistRow,
+    cv_file_path: effectiveCvPath,
+  }, completionWorks)
+  const completeness = completion.percentage
   const mappedApplications = rows.map((row) => {
     const call = callFor(row)
     return {
@@ -127,13 +163,13 @@ export async function loadLiveArtistWorkspace(): Promise<LiveArtistWorkspace> {
     const days = Math.ceil((new Date(`${deadline}T23:59:59Z`).getTime() - Date.now()) / 86_400_000)
     return days >= 0 && days <= 14
   }).length
-  const materials = [
-    { label: "Profile details", progress: artistRow.professional_name && artistRow.location ? 100 : 50, status: artistRow.professional_name && artistRow.location ? "complete" as const : "attention" as const },
-    { label: "Biography", progress: artistRow.bio ? 100 : 0, status: artistRow.bio ? "complete" as const : "attention" as const },
-    { label: "Artist statement", progress: artistRow.artist_statement ? 100 : 0, status: artistRow.artist_statement ? "complete" as const : "attention" as const },
-    { label: "Portfolio", progress: works.length ? 100 : 0, status: works.length ? "complete" as const : "attention" as const },
-    { label: "CV", progress: artistRow.cv_file_path ? 100 : 0, status: artistRow.cv_file_path ? "complete" as const : "attention" as const },
-  ]
+  const materials = completion.categories
+    .filter((item) => item.tier !== "optional")
+    .map((item) => ({
+      label: item.label,
+      progress: item.weight ? Math.round((item.earned / item.weight) * 100) : 0,
+      status: item.complete ? "complete" as const : "attention" as const,
+    }))
   const readyCount = materials.filter((item) => item.status === "complete").length
 
   const artist: Artist = {
@@ -146,7 +182,7 @@ export async function loadLiveArtistWorkspace(): Promise<LiveArtistWorkspace> {
     statement: artistRow.artist_statement ?? "",
     tags: [...disciplines, ...mediums],
     portfolioImage: works.find((work) => work.image_path)?.image_path ?? "",
-    cvStatus: artistRow.cv_file_path ? "Complete" : "Incomplete",
+    cvStatus: effectiveCvPath ? "Complete" : "Incomplete",
     documentStatus: artistRow.bio && artistRow.artist_statement ? "Complete" : "Incomplete",
     referencesStatus: "Pending",
     passportCompleteness: completeness,
@@ -202,8 +238,9 @@ export async function loadLiveArtistWorkspace(): Promise<LiveArtistWorkspace> {
         : [{ program: "Opportunities", task: "Review open calls when you are ready", due: "Next", tone: "soon" }],
     passportCompleteness: materials,
     quietInsights: [
-      `${readyCount} of ${materials.length} core passport materials are ready.`,
+      `${readyCount} of ${materials.length} readiness items are complete.`,
       works.length ? `${works.length} portfolio ${works.length === 1 ? "work is" : "works are"} connected to this account.` : "Add portfolio works to strengthen application readiness.",
+      completion.optionalImprovements.length ? `${completion.optionalImprovements.length} optional enhancement${completion.optionalImprovements.length === 1 ? " is" : "s are"} available without blocking readiness.` : "Optional Passport enhancements are complete.",
     ],
     fundingReadiness: { estimatedFit: 0, completeness, timelineConfidence: nextDeadline ? 100 : 0 },
   }
