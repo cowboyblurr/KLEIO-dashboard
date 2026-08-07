@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react"
 import { ExternalLink, MoreHorizontal, Trash2, Unlink, X } from "lucide-react"
+import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
 import type { ArtistMediaLibraryItem, MediaImportContext } from "@/lib/kleio-universal-media"
 import {
   createMediaOpenUrl,
@@ -49,15 +50,14 @@ function referenceSummary(assessment: MediaDeletionAssessment | null) {
 
 export function MediaManagementMenu({ item, currentContext, onChanged }: Props) {
   const rootRef = useRef<HTMLDivElement>(null)
+  const { locale } = useKleioLocale()
   const [open, setOpen] = useState(false)
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [assessment, setAssessment] = useState<MediaDeletionAssessment | null>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState("")
   const [message, setMessage] = useState("")
-  const [language, setLanguage] = useState<"en" | "es">("en")
 
-  useEffect(() => { setLanguage(document.documentElement.lang.toLowerCase().startsWith("es") ? "es" : "en") }, [])
   useEffect(() => {
     if (!open) return
     const onPointer = (event: PointerEvent) => { if (!rootRef.current?.contains(event.target as Node)) setOpen(false) }
@@ -67,7 +67,7 @@ export function MediaManagementMenu({ item, currentContext, onChanged }: Props) 
     return () => { window.removeEventListener("pointerdown", onPointer); window.removeEventListener("keydown", onKey) }
   }, [open])
 
-  const t = copy[language]
+  const t = copy[locale]
   const references = referenceSummary(assessment)
   const blocked = Boolean(assessment?.blockingReferences.length || assessment?.finalizedReferences.length)
   const hasEditable = Boolean(assessment?.editableReferences.length)
