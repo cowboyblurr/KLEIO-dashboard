@@ -1,0 +1,43 @@
+name: Application composer lock
+
+on:
+  pull_request:
+    paths:
+      - "app/artist-dashboard/applications/**"
+      - "components/kleio/application-composer-workspace.tsx"
+      - "components/kleio/application-timeline-panel.tsx"
+      - "components/kleio/unified-artist-applications.tsx"
+      - "lib/kleio-application-composer.ts"
+      - "lib/kleio-application-answer-assist.ts"
+      - "lib/kleio-application-preparation.ts"
+      - "lib/kleio-opportunity-presentation.ts"
+      - "supabase/functions/generate-application-answer/**"
+      - "supabase/migrations/**"
+      - "scripts/audit-application-composer-lock.mjs"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - ".github/workflows/application-composer-lock.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm audit:application-composer
+      - run: pnpm audit:artist-recipient-loop
+      - run: pnpm test:artist-workflow-services
+      - run: pnpm typecheck
+      - run: pnpm build

@@ -1,22 +1,23 @@
 import type { Metadata } from "next"
 import { Suspense } from "react"
 import { ArtistShell } from "@/components/kleio/artist-shell"
-import { ApplicationPreparationWorkspace } from "@/components/kleio/application-preparation-workspace"
+import { ApplicationComposerWorkspace } from "@/components/kleio/application-composer-workspace"
 import { ApplicationArtistIdentityBar } from "@/components/kleio/application-artist-identity-bar"
 import { ApplicationSubmissionCover } from "@/components/kleio/application-submission-cover"
 import { ApplicationMediaImportBar } from "@/components/kleio/application-media-import-bar"
 import { ApplicationRequirementMedia } from "@/components/kleio/application-requirement-media"
 import { ApplicationRecipientLoopPanel } from "@/components/kleio/application-recipient-loop-panel"
+import { ApplicationTimelinePanel } from "@/components/kleio/application-timeline-panel"
 import { ArtistRecipientConversation } from "@/components/kleio/artist-recipient-conversation"
 import { PracticeSubmissionResetControl } from "@/components/kleio/practice-submission-reset-control"
 
 export const metadata: Metadata = {
   title: "KLEIO — Prepare application",
-  description: "Review source requirements, assemble reusable artist media, approve an artist-controlled application package, and prepare a truthful recipient handoff.",
+  description: "Turn approved Creative Passport material into an opportunity-specific, editable, preflight-checked and historically preserved application.",
 }
 
 function PreparationFallback() {
-  return <main className="h-full overflow-y-auto px-4 py-6 sm:px-6"><div className="mx-auto max-w-[1120px] rounded-2xl border border-[#E7E1F7] bg-white p-5 text-sm text-muted-foreground">Preparing the application workspace…</div></main>
+  return <main className="px-0 py-2"><div className="rounded-2xl border border-[#E7E1F7] bg-white p-5 text-sm text-muted-foreground">Preparing the application composer…</div></main>
 }
 
 export default function Page() {
@@ -39,7 +40,10 @@ export default function Page() {
               <ApplicationRequirementMedia />
             </Suspense>
             <Suspense fallback={<PreparationFallback />}>
-              <ApplicationPreparationWorkspace />
+              <ApplicationComposerWorkspace />
+            </Suspense>
+            <Suspense fallback={null}>
+              <ApplicationTimelinePanel />
             </Suspense>
             <Suspense fallback={null}>
               <ArtistRecipientConversation />
