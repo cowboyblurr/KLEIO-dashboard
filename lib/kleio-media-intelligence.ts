@@ -36,7 +36,7 @@ export type MediaIntelligence = {
   isDocumentAnalysis: boolean
 }
 
-export type MediaIntelligenceStatus = "ready" | "available" | "unsupported" | "legacy"
+export type MediaIntelligenceStatus = "ready" | "available" | "failed" | "unsupported" | "legacy"
 
 function object(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {}
@@ -120,8 +120,8 @@ export function canAnalyzeMediaItem(item: ArtistMediaLibraryItem) {
 export function mediaIntelligenceSupportText(item: ArtistMediaLibraryItem) {
   if (!item.sourceId) return "This older portfolio item needs to be re-added to the private Media Library before KLEIO can analyze it."
   if (canAnalyzeMediaItem(item)) return "KLEIO can privately analyze this source and keep the result available in both Media Library and Creative Passport."
-  if (item.mediaKind === "document") return "This file can stay in KLEIO, but this document format is not yet supported by the analysis layer."
-  return "This media format can stay in KLEIO, but it is not yet supported by the analysis layer."
+  if (item.mediaKind === "document") return "This file can stay in KLEIO, but analysis is unavailable for this document format."
+  return "This media can stay in KLEIO, but analysis is unavailable for this format."
 }
 
 async function requireArtist() {
@@ -159,11 +159,15 @@ export async function loadMediaIntelligenceStatuses(items: ArtistMediaLibraryIte
   if (!ids.length) return statuses
   const account = await requireArtist()
   const supabase = getSupabaseBrowserClient()
-  const { data, error } = await supabase.from("artist_import_sources").select("id,mime_type,review_summary").eq("artist_user_id", account.user.id).in("id", ids).is("deleted_at", null)
+  const { data, error } = await supabase.from("artist_import_sources").select("id,mime_type,review_summary,last_error_category").eq("artist_user_id", account.user.id).in("id", ids).is("deleted_at", null)
   if (error) throw error
   for (const row of data ?? []) {
     const summary = object(row.review_summary)
-    if (Object.keys(object(summary.media_analysis)).length || (String(row.mime_type) === "application/pdf" && Boolean(summary.analysis_summary || summary.document_assessment))) statuses.set(String(row.id), "ready")
+    if (Object.keys(object(summary.media_analysis)).length || (String(row.mime_type) === "application/pdf" && Boolean(summary.analysis_summary || summary.document_assessment))) {
+      statuses.set(String(row.id), "ready")
+    } else if (text(row.last_error_category)) {
+      statuses.set(String(row.id), "failed")
+    }
   }
   return statuses
 }
@@ -183,7 +187,10 @@ export async function analyzeMediaWithKleio(item: ArtistMediaLibraryItem, option
   const supabase = getSupabaseBrowserClient()
   const { data, error } = await supabase.functions.invoke("analyze-artist-media", { body: { sourceId: item.sourceId, force: options.force === true } })
   if (error) throw new Error(error.message || "KLEIO could not analyze this private media source.")
-  if (data?.error) throw new Error(String(data.message || data.error))
+  if (data?.error) {
+    if (String(data.error) === "media_analysis_in_progress") throw new Error("This media is already being analyzed. Reopen it in a moment instead of starting a duplicate analysis.")
+    throw new Error(String(data.message || data.error))
+  }
   const raw = object(data?.analysis)
   if (!Object.keys(raw).length) throw new Error("KLEIO finished without a readable media analysis. Try again before using the result.")
   return fromMedia(item.sourceId, item.mimeType, raw)
