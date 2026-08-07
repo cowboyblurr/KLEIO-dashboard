@@ -14,6 +14,7 @@
     "audit:artist-beta-convenience": "node scripts/audit-artist-beta-convenience.mjs",
     "audit:artist-requirement-channels": "node scripts/audit-artist-requirement-channel-separation.mjs",
     "audit:artist-requirement-file-types": "node scripts/audit-artist-requirement-file-types.mjs",
+    "audit:upload-surfaces": "node scripts/audit-upload-surface-consistency.mjs",
     "audit:artist-recipient-loop": "node scripts/audit-artist-recipient-loop.mjs",
     "audit:application-composer": "node scripts/audit-application-composer-lock.mjs",
     "audit:navigation": "node scripts/audit-navigation.mjs",
