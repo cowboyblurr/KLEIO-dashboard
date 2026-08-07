@@ -83,6 +83,12 @@ export type ApplicationTimelineItem = {
   createdAt: string
 }
 
+export type RequirementChannelShape = {
+  input_type?: string | null
+  accepted_file_types?: string[] | null
+  category?: string | null
+}
+
 const answerKeys = new Set([
   "project_proposal",
   "project_description",
@@ -113,6 +119,15 @@ function words(value: string) {
 
 export function requirementAnswerKey(requirement: ComposerRequirement) {
   return requirement.id || normalizedKey(requirement.material_key || requirement.label)
+}
+
+export function requirementNeedsFileAttachment(requirement: RequirementChannelShape) {
+  const inputType = normalizedKey(requirement.input_type || "")
+  const category = normalizedKey(requirement.category || "")
+  if (explicitWrittenInputTypes.has(inputType)) return false
+  if (explicitFileInputTypes.has(inputType) || inputType === "mixed") return true
+  if ((requirement.accepted_file_types?.length ?? 0) > 0) return true
+  return category === "supporting_document"
 }
 
 export function requirementNeedsComposerAnswer(requirement: ComposerRequirement) {
@@ -347,10 +362,54 @@ export async function autosaveComposerWrittenContent(packageId: string, writtenC
   return now
 }
 
+async function assertRequiredApplicationFilesReady(packageId: string, artistUserId: string) {
+  const supabase = getSupabaseBrowserClient()
+  const { data: packageRow, error: packageError } = await supabase
+    .from("application_packages")
+    .select("opportunity_id")
+    .eq("id", packageId)
+    .eq("artist_user_id", artistUserId)
+    .single()
+  if (packageError || !packageRow?.opportunity_id) throw new Error("KLEIO could not verify this application package before finalization.")
+
+  const { data: requirementRows, error: requirementError } = await supabase
+    .from("opportunity_requirements")
+    .select("id,label,required,category,input_type,accepted_file_types")
+    .eq("opportunity_id", packageRow.opportunity_id)
+    .eq("required", true)
+  if (requirementError) throw requirementError
+
+  const fileRequirements = (requirementRows ?? []).filter((requirement) => requirementNeedsFileAttachment({
+    input_type: requirement.input_type,
+    accepted_file_types: Array.isArray(requirement.accepted_file_types) ? requirement.accepted_file_types.filter((value): value is string => typeof value === "string") : [],
+    category: requirement.category,
+  }))
+  if (!fileRequirements.length) return
+
+  const { data: attachmentRows, error: attachmentError } = await supabase
+    .from("application_requirement_attachments")
+    .select("requirement_id,included_in_package,validation_status,artist_confirmed_at")
+    .eq("artist_user_id", artistUserId)
+    .eq("opportunity_id", packageRow.opportunity_id)
+    .in("requirement_id", fileRequirements.map((requirement) => requirement.id))
+  if (attachmentError) throw attachmentError
+
+  const readyRequirementIds = new Set((attachmentRows ?? [])
+    .filter((attachment) => attachment.included_in_package && attachment.artist_confirmed_at && attachment.validation_status !== "invalid")
+    .map((attachment) => String(attachment.requirement_id)))
+  const missing = fileRequirements.filter((requirement) => !readyRequirementIds.has(String(requirement.id)))
+  if (missing.length) {
+    const labels = missing.map((requirement) => String(requirement.label || "Required application file")).slice(0, 5)
+    const more = missing.length > labels.length ? ` and ${missing.length - labels.length} more` : ""
+    throw new Error(`Attach every required application file before finalizing: ${labels.join(", ")}${more}.`)
+  }
+}
+
 export async function finalizeApplicationSubmissionVersion(packageId: string, preflight: ApplicationPreflight) {
   const account = await loadKleioAccount()
   if (!account) throw new Error("Please sign in before finalizing an application.")
   if (!preflight.ready) throw new Error("Resolve every blocking preflight issue before finalizing this application.")
+  await assertRequiredApplicationFilesReady(packageId, account.user.id)
   const supabase = getSupabaseBrowserClient()
   const { data, error } = await supabase.rpc("finalize_my_application_submission_version", {
     target_package_id: packageId,
@@ -366,7 +425,10 @@ export async function finalizeApplicationSubmissionVersion(packageId: string, pr
       checked_at: preflight.checkedAt,
     },
   })
-  if (error) throw error
+  if (error) {
+    if (error.message.includes("required_application_file_missing")) throw new Error("Attach every required application file before finalizing this application.")
+    throw error
+  }
   const row = Array.isArray(data) ? data[0] : data
   if (!row?.submission_version_id) throw new Error("KLEIO could not preserve the finalized application version.")
   return {
