@@ -4,6 +4,7 @@ import path from "node:path"
 const root = process.cwd()
 const types = fs.readFileSync(path.join(root, "lib/kleio-requirement-file-types.ts"), "utf8")
 const upload = fs.readFileSync(path.join(root, "lib/kleio-requirement-file-upload.ts"), "utf8")
+const signatures = fs.readFileSync(path.join(root, "lib/kleio-media-file-types.ts"), "utf8")
 const surface = fs.readFileSync(path.join(root, "components/kleio/application-requirement-media.tsx"), "utf8")
 const picker = fs.readFileSync(path.join(root, "components/kleio/application-requirement-file-picker.tsx"), "utf8")
 const failures = []
@@ -39,12 +40,15 @@ requirePattern(surface, /Format not stated by source|source does not specify a f
 requirePattern(surface, /accepted_file_types: sourceMimeTypes/, "Requirement attachment validation must receive normalized MIME values instead of raw extensions.")
 requirePattern(surface, /ApplicationRequirementFilePicker/, "Application requirements must use the dedicated broad beta file picker.")
 
-requirePattern(upload, /isZip\(/, "Modern Office and ZIP files need signature validation.")
-requirePattern(upload, /isOle\(/, "Legacy DOC/XLS/PPT files need compound-file signature validation.")
-requirePattern(upload, /String\.fromCharCode\(\.\.\.bytes\.slice\(4, 8\)\) === "ftyp"/, "MP4/MOV files need container signature validation.")
-requirePattern(upload, /audio\/mpeg/, "MP3 files need signature validation.")
-requirePattern(upload, /video\/x-ms-wmv/, "WMV files need signature validation.")
-requirePattern(upload, /looksLikeText/, "CSV/TXT/VTT/SRT files need safe text sniffing rather than extension trust alone.")
+// Signature/sniffing is intentionally centralized in kleio-media-file-types so every upload
+// surface validates the same bytes rather than duplicating weaker checks in requirement upload.
+requirePattern(upload, /fileSignatureMatchesKnownMime/, "Requirement uploads must delegate to the shared file-signature validator.")
+requirePattern(signatures, /function isZip\(/, "Modern Office and ZIP files need signature validation.")
+requirePattern(signatures, /function isOle\(/, "Legacy DOC/XLS/PPT files need compound-file signature validation.")
+requirePattern(signatures, /ascii\(bytes, 4, 8\) === "ftyp"/, "MP4/MOV files need container signature validation.")
+requirePattern(signatures, /audio\/mpeg/, "MP3 files need signature validation.")
+requirePattern(signatures, /video\/x-ms-wmv/, "WMV files need signature validation.")
+requirePattern(signatures, /textLooksSafe/, "CSV/TXT/VTT/SRT files need safe text sniffing rather than extension trust alone.")
 requirePattern(upload, /requirementFileTypeMatches\(mimeType, input\.sourceAcceptedTypes\)/, "Uploaded files must be rechecked against normalized opportunity source rules.")
 requirePattern(upload, /checksum/, "Requirement file uploads must preserve duplicate detection.")
 requirePattern(upload, /artist_import_sources/, "Requirement files must enter the existing private source/library model rather than a parallel storage silo.")
@@ -58,4 +62,4 @@ if (failures.length) {
   process.exit(1)
 }
 
-console.log("KLEIO requirement file compatibility passed: extension-style source rules normalize to browser MIME types, the live-corpus Office/archive/text/audio/video formats have safe beta upload handling, unspecified formats are disclosed rather than invented, existing private files can be reused, and requirement uploads remain separate from institution submission.")
+console.log("KLEIO requirement file compatibility passed: extension-style source rules normalize to browser MIME types, shared byte-signature validation protects Office/archive/text/audio/video uploads, unspecified formats are disclosed rather than invented, existing private files can be reused, and requirement uploads remain separate from institution submission.")
