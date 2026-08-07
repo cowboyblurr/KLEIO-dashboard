@@ -33,9 +33,9 @@ function acceptedMimeTypes(values: string[]) {
 }
 
 function fileCapable(requirement: RequirementRecord) {
-  return requirement.accepted_file_types.length > 0
-    || ["document", "documents", "file", "upload", "mixed", "url_or_document"].includes(requirement.input_type)
-    || ["supporting_document", "biography", "project_proposal", "budget", "portfolio"].includes(requirement.category)
+  if (requirement.accepted_file_types.length > 0) return true
+  if (["document", "documents", "file", "upload", "mixed", "url_or_document"].includes(requirement.input_type)) return true
+  return requirement.category === "supporting_document"
 }
 
 function requirementLimit(requirement: RequirementRecord) {
@@ -115,7 +115,7 @@ export function ApplicationRequirementMedia() {
         <div className="min-w-0">
           <p className="text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-[#75639E]">Requirement files</p>
           <h2 id="application-requirement-media-title" className="mt-1 font-serif text-xl font-semibold tracking-[-0.02em] text-[#292631]">Attach files once, to the exact requirement</h2>
-          <p className="mt-1 max-w-3xl text-xs leading-5 text-[#746E80]">KLEIO keeps these files private and links each one to the requirement it satisfies. No generic duplicate upload step.</p>
+          <p className="mt-1 max-w-3xl text-xs leading-5 text-[#746E80]">Only requirements that explicitly call for a file or document appear here. Written responses stay in the composer and portfolio works stay in the visual selector, so the same requirement is not presented as two different tasks.</p>
         </div>
         <div className="flex shrink-0 flex-wrap gap-2 text-xs font-semibold">
           <span className="rounded-full bg-emerald-50 px-3 py-1.5 text-emerald-800">{readyCount} ready</span>
