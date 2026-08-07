@@ -13,6 +13,37 @@ const secondary = "inline-flex min-h-10 items-center justify-center gap-2 rounde
 type Props = { item: ArtistMediaLibraryItem | null; open: boolean; onClose: () => void; onAnalyzed?: (analysis: MediaIntelligence) => void }
 type Tab = "overview" | "passport" | "evidence"
 
+function analysisStages(item: ArtistMediaLibraryItem) {
+  if (item.mediaKind === "document") return [
+    "Reading document structure and accessible text…",
+    "Reviewing names, dates, sections, and source-backed facts…",
+    "Separating extracted information from interpretation…",
+    "Checking what may update or support your Creative Passport…",
+    "Preparing reviewable Passport language without overwriting your profile…",
+  ]
+  if (item.mediaKind === "video") return [
+    "Preparing the private video source…",
+    "Reviewing visible motion, pacing, framing, and presentation…",
+    "Looking for recurring formal and conceptual signals…",
+    "Separating direct observation from interpretive reading…",
+    "Preparing useful Passport and application language for review…",
+  ]
+  if (item.mediaKind === "audio") return [
+    "Preparing the private audio source…",
+    "Reviewing structure, texture, voice/non-voice qualities, and production…",
+    "Looking for recurring sonic and conceptual signals…",
+    "Separating direct observation from interpretive reading…",
+    "Preparing useful Passport and application language for review…",
+  ]
+  return [
+    "Preparing the private image source…",
+    "Reviewing composition, visible details, and formal qualities…",
+    "Looking for materials, processes, themes, and conceptual relationships…",
+    "Separating direct observation from interpretive reading…",
+    "Preparing useful Passport and application language for review…",
+  ]
+}
+
 function Preview({ item }: { item: ArtistMediaLibraryItem }) {
   if (item.mediaKind === "image" && item.previewUrl) return <img src={item.previewUrl} alt="" className="size-full object-contain" />
   if (item.mediaKind === "video" && item.previewUrl) return <video src={item.previewUrl} controls preload="metadata" className="size-full object-contain" aria-label={`${item.title} video`} />
@@ -34,13 +65,19 @@ function List({ title, values, caution = false }: { title: string; values: strin
 
 function DraftCard({ title, text, copyLabel, copied, onCopy }: { title: string; text: string; copyLabel: string; copied: string; onCopy: (value: string, label: string) => Promise<void> }) {
   if (!text) return null
-  return <section className="rounded-2xl border border-[#DCD4EE] bg-[linear-gradient(145deg,#FFFFFF,#FBF9FF)] p-4"><div className="flex items-center justify-between gap-2"><div><p className="text-[0.64rem] font-semibold uppercase tracking-[0.14em] text-[#8A79B2]">Source-grounded draft</p><h3 className="mt-1 font-serif text-lg font-semibold text-[#3E354D]">{title}</h3></div><button type="button" className={secondary} onClick={() => void onCopy(text, copyLabel)}><Clipboard className="size-3.5" />{copied === copyLabel ? "Copied" : "Copy"}</button></div><p className="mt-3 whitespace-pre-wrap text-sm leading-7 text-[#4E4954]">{text}</p><p className="mt-3 text-[0.68rem] leading-5 text-[#8A8296]">Prepared from this private PDF for artist review. It is not added to the Creative Passport until you approve or edit it.</p></section>
+  return <section className="rounded-2xl border border-[#DCD4EE] bg-[linear-gradient(145deg,#FFFFFF,#FBF9FF)] p-4"><div className="flex items-center justify-between gap-2"><div><p className="text-[0.64rem] font-semibold uppercase tracking-[0.14em] text-[#8A79B2]">Source-grounded draft</p><h3 className="mt-1 font-serif text-lg font-semibold text-[#3E354D]">{title}</h3></div><button type="button" className={secondary} onClick={() => void onCopy(text, copyLabel)}><Clipboard className="size-3.5" />{copied === copyLabel ? "Copied" : "Copy"}</button></div><p className="mt-3 whitespace-pre-wrap text-sm leading-7 text-[#4E4954]">{text}</p><p className="mt-3 text-[0.68rem] leading-5 text-[#8A8296]">Prepared from this private source for artist review. It is not added to the Creative Passport until you approve or edit it.</p></section>
+}
+
+function AnalysisProgress({ item, stage }: { item: ArtistMediaLibraryItem; stage: number }) {
+  const stages = analysisStages(item)
+  return <div className="mt-4 rounded-2xl border border-[#E7E1F7] bg-[#FAF8FE] p-4" aria-live="polite"><p className="text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-[#75639E]">What KLEIO is reviewing</p><div className="mt-3 space-y-2">{stages.map((label, index) => <div key={label} className={`flex items-center gap-2 text-sm ${index === stage ? "font-semibold text-[#4F407B]" : index < stage ? "text-[#746E80]" : "text-[#A39CAB]"}`}>{index < stage ? <Check className="size-3.5" /> : index === stage ? <Loader2 className="size-3.5 animate-spin" /> : <span className="size-3.5" />}{label}</div>)}</div><p className="mt-3 text-xs leading-5 text-[#8A8296]">These labels describe the review categories KLEIO is working through. No artificial completion percentage is shown.</p></div>
 }
 
 export function MediaIntelligenceSheet({ item, open, onClose, onAnalyzed }: Props) {
   const [analysis, setAnalysis] = useState<MediaIntelligence | null>(null)
   const [loading, setLoading] = useState(false)
   const [analyzing, setAnalyzing] = useState(false)
+  const [analysisStage, setAnalysisStage] = useState(0)
   const [error, setError] = useState("")
   const [tab, setTab] = useState<Tab>("overview")
   const [copied, setCopied] = useState("")
@@ -60,13 +97,21 @@ export function MediaIntelligenceSheet({ item, open, onClose, onAnalyzed }: Prop
     return () => window.removeEventListener("keydown", closeOnEscape)
   }, [onClose, open])
 
+  useEffect(() => {
+    if (!analyzing || !item) return
+    const stages = analysisStages(item)
+    setAnalysisStage(0)
+    const timer = window.setInterval(() => setAnalysisStage((current) => Math.min(current + 1, stages.length - 1)), 1900)
+    return () => window.clearInterval(timer)
+  }, [analyzing, item])
+
   const confidence = analysis?.confidence == null ? null : Math.round(analysis.confidence * 100)
   if (!open || !item) return null
   const activeItem = item
 
   async function analyze(force = false) {
     if (analyzing) return
-    setAnalyzing(true); setError("")
+    setAnalyzing(true); setAnalysisStage(0); setError("")
     try {
       const next = await analyzeMediaWithKleio(activeItem, { force })
       setAnalysis(next)
@@ -92,8 +137,9 @@ export function MediaIntelligenceSheet({ item, open, onClose, onAnalyzed }: Prop
         <div className="grid min-h-[220px] place-items-center border-b border-[#E7E1F7] bg-[#F3F0F8]"><Preview item={activeItem} /></div>
         <div className="p-5">
           {error && <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700" role="alert">{error}{analysis && <p className="mt-1 text-xs leading-5 text-red-700/80">Your previous successful analysis is still available below.</p>}</div>}
-          {loading ? <div className="grid place-items-center py-12 text-sm text-[#746E80]"><Loader2 className="mb-2 size-5 animate-spin" />Loading private analysis…</div> : !analysis ? <section className="rounded-[22px] border border-[#E2DCF1] bg-white p-5"><div className="flex items-start gap-3"><span className="grid size-10 place-items-center rounded-xl bg-[#F0EAFB] text-[#5B4B8A]"><BrainCircuit className="size-5" /></span><div><h3 className="font-serif text-xl font-semibold">Understand this source here</h3><p className="mt-2 text-sm leading-6 text-[#625C70]">{mediaIntelligenceSupportText(activeItem)}</p></div></div><div className="mt-4 rounded-xl border border-[#E7E1F7] bg-[#FAF8FE] px-3 py-3 text-xs leading-5 text-[#746E80]"><ShieldCheck className="mr-1.5 inline size-3.5 text-[#5B4B8A]" />Analysis stays private. KLEIO separates source evidence from AI language and does not rewrite your Passport without your approval.</div>{canAnalyzeMediaItem(activeItem) && <button type="button" aria-label="Analyze with KLEIO" className={`${primary} mt-4 w-full`} onClick={() => void analyze()} disabled={analyzing}>{analyzing ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}{analyzing ? "Analyzing…" : activeItem.mimeType === "application/pdf" ? "Analyze and build Passport suggestions" : "Analyze"}</button>}</section> : <>
+          {loading ? <div className="grid place-items-center py-12 text-sm text-[#746E80]"><Loader2 className="mb-2 size-5 animate-spin" />Loading private analysis…</div> : !analysis ? <section className="rounded-[22px] border border-[#E2DCF1] bg-white p-5"><div className="flex items-start gap-3"><span className="grid size-10 place-items-center rounded-xl bg-[#F0EAFB] text-[#5B4B8A]"><BrainCircuit className="size-5" /></span><div><h3 className="font-serif text-xl font-semibold">Understand this source here</h3><p className="mt-2 text-sm leading-6 text-[#625C70]">{mediaIntelligenceSupportText(activeItem)}</p></div></div><div className="mt-4 rounded-xl border border-[#E7E1F7] bg-[#FAF8FE] px-3 py-3 text-xs leading-5 text-[#746E80]"><ShieldCheck className="mr-1.5 inline size-3.5 text-[#5B4B8A]" />Analysis stays private. KLEIO separates source evidence from AI language and does not rewrite your Passport without your approval.</div>{analyzing && <AnalysisProgress item={activeItem} stage={analysisStage} />}{canAnalyzeMediaItem(activeItem) && <button type="button" aria-label="Analyze with KLEIO" className={`${primary} mt-4 w-full`} onClick={() => void analyze()} disabled={analyzing}>{analyzing ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}{analyzing ? "Understanding this source…" : activeItem.mimeType === "application/pdf" ? "Analyze and build Passport suggestions" : "Analyze"}</button>}</section> : <>
             <div className="flex flex-wrap items-center justify-between gap-3"><div className="flex flex-wrap gap-2"><span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-800"><Check className="size-3.5" />Analysis ready</span>{analysis.isDocumentAnalysis && analysis.profileSynthesisReady && <span className="rounded-full border border-[#CFC3EE] bg-[#F4F0FC] px-2.5 py-1 text-xs font-semibold text-[#5B4B8A]">Passport synthesis ready</span>}{confidence !== null && <span className="rounded-full border border-[#E1DAF0] bg-white px-2.5 py-1 text-xs font-semibold text-[#625C70]">AI confidence {confidence}%</span>}{analysis.proposalCount > 0 && <span className="rounded-full border border-[#E1DAF0] bg-white px-2.5 py-1 text-xs font-semibold text-[#625C70]">{analysis.proposalCount} extracted suggestion{analysis.proposalCount === 1 ? "" : "s"}</span>}</div><button type="button" className={secondary} onClick={() => void analyze(true)} disabled={analyzing}>{analyzing ? <Loader2 className="size-3.5 animate-spin" /> : <RefreshCcw className="size-3.5" />}{analyzing ? "Re-analyzing…" : analysis.isDocumentAnalysis ? "Rebuild from PDF" : "Re-analyze"}</button></div>
+            {analyzing && <AnalysisProgress item={activeItem} stage={analysisStage} />}
             <p className="mt-2 text-[0.68rem] leading-5 text-[#8A8296]">Re-analysis keeps the previous successful result until a new result succeeds. AI confidence is a review aid, not verification.</p>
             {analysis.isDocumentAnalysis && !analysis.profileSynthesisReady && <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900"><strong>The PDF was understood, but the full Passport synthesis is not available yet.</strong> Rebuild from PDF to create bio, artist-statement, practice, discipline, medium, theme, and career suggestions from the original source.</div>}
             <div className="mt-4 flex gap-1 rounded-xl bg-[#F1EEF6] p-1">{(["overview","passport","evidence"] as Tab[]).map((value) => <button key={value} type="button" onClick={() => setTab(value)} className={`min-h-9 flex-1 rounded-lg px-3 text-xs font-semibold capitalize ${tab === value ? "bg-white text-[#4F407B] shadow-sm" : "text-[#746E80]"}`}>{value === "passport" ? "Passport suggestions" : value}</button>)}</div>
