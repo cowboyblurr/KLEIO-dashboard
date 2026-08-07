@@ -3,15 +3,22 @@ name: Upload Contract Validation
 on:
   pull_request:
     paths:
+      - "app/**"
       - "components/kleio/**"
       - "lib/kleio-device-media-upload.ts"
       - "lib/kleio-import-source-availability.ts"
       - "lib/kleio-media-file-types.ts"
+      - "lib/kleio-media-intelligence.ts"
       - "lib/kleio-requirement-file-types.ts"
       - "lib/kleio-requirement-file-upload.ts"
       - "scripts/audit-upload-surface-consistency.mjs"
-      - "supabase/migrations/*media_upload*"
+      - "scripts/audit-public-roadmap-copy.mjs"
+      - "supabase/functions/analyze-artist-media/**"
+      - "supabase/migrations/*media*"
       - "package.json"
+  push:
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:
@@ -20,7 +27,7 @@ permissions:
 jobs:
   verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 18
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -35,3 +42,4 @@ jobs:
       - run: pnpm audit:artist-requirement-file-types
       - run: pnpm typecheck
       - run: pnpm build
+      - run: node scripts/audit-public-roadmap-copy.mjs
