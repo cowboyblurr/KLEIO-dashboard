@@ -116,7 +116,7 @@ export function MediaManagementMenu({ item, currentContext, onChanged }: Props) 
 
   return <>
     <div ref={rootRef} className="relative">
-      <button type="button" aria-haspopup="menu" aria-expanded={open} aria-label={`${t.more}: ${item.title}`} onClick={() => setOpen((value) => !value)} className="grid size-9 place-items-center rounded-lg text-[#746E80] transition hover:bg-[#F6F3FA] hover:text-[#4F407B] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#A997E8]/20"><MoreHorizontal className="size-4" /></button>
+      <button type="button" aria-haspopup="menu" aria-expanded={open} aria-label={`${t.more}: ${item.title}`} title={t.more} onClick={() => setOpen((value) => !value)} className="grid size-9 place-items-center rounded-lg border border-[#E7E1F7] bg-white text-[#746E80] shadow-[0_3px_10px_rgba(82,64,130,0.04)] transition hover:border-[#CFC4E8] hover:bg-[#F6F3FA] hover:text-[#4F407B] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#A997E8]/20"><MoreHorizontal className="size-4" /></button>
       {open && <div role="menu" className="absolute right-0 top-10 z-40 w-56 rounded-xl border border-[#E1DAF0] bg-white p-1.5 shadow-[0_18px_48px_rgba(54,42,82,0.16)]">
         <button type="button" role="menuitem" className={menuItem} onClick={() => void preview()} disabled={busy}><ExternalLink className="size-4" />{t.preview}</button>
         {currentContext && <button type="button" role="menuitem" className={menuItem} onClick={() => void detach()} disabled={busy}><Unlink className="size-4" />{t.remove}</button>}
