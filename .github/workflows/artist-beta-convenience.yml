@@ -1,0 +1,41 @@
+name: Artist Beta Convenience
+
+on:
+  pull_request:
+    paths:
+      - "app/artist-dashboard/applications/**"
+      - "components/kleio/application-**"
+      - "components/kleio/artist-sidebar.tsx"
+      - "components/kleio/unified-artist-applications.tsx"
+      - "components/kleio/production-artist-opportunity-directory.tsx"
+      - "scripts/audit-artist-beta-convenience.mjs"
+      - "package.json"
+      - "pnpm-lock.yaml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  simulate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm audit:artist-beta-convenience
+      - run: pnpm audit:artist-beta-readiness
+      - run: pnpm audit:application-composer
+      - run: pnpm audit:artist-recipient-loop
+      - run: pnpm audit:navigation
+      - run: pnpm audit:visual-convenience
+      - run: pnpm test:artist-workflow-services
+      - run: pnpm typecheck
+      - run: pnpm build
