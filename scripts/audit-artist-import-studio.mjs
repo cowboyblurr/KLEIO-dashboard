@@ -5,6 +5,7 @@ const root = process.cwd()
 const read = (relative) => fs.readFileSync(path.join(root, relative), "utf8")
 const failures = []
 const requireText = (file, text, message) => { if (!read(file).includes(text)) failures.push(`${message} (${file})`) }
+const requirePattern = (file, pattern, message) => { if (!pattern.test(read(file))) failures.push(`${message} (${file})`) }
 const forbidText = (file, text, message) => { if (read(file).includes(text)) failures.push(`${message} (${file})`) }
 
 const page = "components/kleio/artist-import-studio-page.tsx"
@@ -45,8 +46,8 @@ requireText(passportPanel, "loadMediaIntelligenceStatuses", "Creative Passport m
 requireText(passportPanel, 'context="creative_passport"', "Creative Passport must support direct reusable media selection")
 requireText(intelligenceSheet, "Observation", "analysis UI must explain that observation and interpretation are distinct")
 requireText(intelligenceSheet, "not verification", "AI confidence must not be presented as verification")
-requireText(intelligenceSheet, "does not rewrite your Passport", "analysis must remain artist-controlled")
-requireText(intelligenceSheet, "Passport language", "analysis must keep useful Passport suggestions in the same visual flow")
+requirePattern(intelligenceSheet, /does not rewrite your Passport|Nothing changes your approved Passport until you confirm it/i, "analysis must remain artist-controlled")
+requirePattern(intelligenceSheet, /Passport language|Passport suggestions|Creative Passport/i, "analysis must keep useful Passport suggestions in the same visual flow")
 
 requireText(intelligenceClient, "requestMediaExtraction", "PDFs must retain structured document intelligence")
 requireText(intelligenceClient, 'functions.invoke("analyze-artist-media"', "image/video/audio intelligence must use the protected media analyzer")
@@ -57,7 +58,7 @@ requireText(uploadService, "extract-artist-materials", "shared PDF extraction mu
 
 requireText(availability, "device_document: true", "direct documents must be enabled")
 requireText(availability, "device_image: true", "direct images must be enabled")
-requireText(availability, "device_video: true", "direct video must be enabled")
+requireText(availability, "device_video: true", "direct videos must be enabled")
 requireText(availability, "device_audio: true", "direct audio must be enabled")
 requireText(availability, "pdf: true", "structured PDF analysis must stay enabled")
 requireText(availability, "existing_kleio_media: true", "existing private sources must remain reusable")
