@@ -2,7 +2,7 @@
 
 /* eslint-disable @next/next/no-img-element -- private profile images use short-lived signed URLs */
 
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
@@ -12,6 +12,7 @@ import {
   FolderOpen,
   LayoutDashboard,
   Library,
+  Menu,
   MessageSquare,
   Settings,
   Sparkles,
@@ -79,6 +80,13 @@ const navSections: NavSection[] = [
   },
 ]
 
+const mobilePrimaryHrefs = new Set([
+  "/artist-dashboard/",
+  "/artist-dashboard/opportunities/",
+  "/artist-dashboard/applications/",
+  "/artist-dashboard/passport/",
+])
+
 function openPageGuide() {
   persistDemoGuideState({
     isOpen: true,
@@ -107,6 +115,7 @@ export function ArtistSidebar() {
   const { isLive } = useKleioMode()
   const demoArtist = getArtistById(DEMO_ARTIST_ID)
   const [liveArtist, setLiveArtist] = useState<LiveArtistIdentity | null>(null)
+  const [mobileMoreOpen, setMobileMoreOpen] = useState(false)
   const { t, locale } = useKleioLocale()
 
   useEffect(() => {
@@ -142,6 +151,10 @@ export function ArtistSidebar() {
     }
   }, [isLive, locale])
 
+  useEffect(() => {
+    setMobileMoreOpen(false)
+  }, [pathname])
+
   const artist = isLive
     ? liveArtist
     : demoArtist
@@ -154,16 +167,26 @@ export function ArtistSidebar() {
         }
       : null
 
-  const mobileItems = navSections
+  const mobileItems = useMemo(() => navSections
     .flatMap((section) => section.items)
-    .filter((item) => !item.comingSoon)
+    .filter((item) => !item.comingSoon), [])
+  const mobilePrimaryItems = mobileItems.filter((item) => mobilePrimaryHrefs.has(item.href))
+  const mobileMoreItems = mobileItems.filter((item) => !mobilePrimaryHrefs.has(item.href))
+  const moreActive = mobileMoreItems.some((item) => isNavItemActive(pathname, item))
+
+  function labelFor(item: NavItem) {
+    if (item.href === "/artist-dashboard/collaborators/") return locale === "es" ? "Coincidencias de artistas" : "Artist Matches"
+    if (item.href === "/artist-dashboard/profile/") return locale === "es" ? "Perfil de artista" : "Artist Profile"
+    if (item.href === "/artist-dashboard/media/") return locale === "es" ? "Biblioteca de medios" : "Media Library"
+    return t(artistNavLabelKeys[item.href] ?? item.label)
+  }
 
   return (
     <>
-      <div className="fixed inset-x-0 top-0 z-40 flex h-14 items-center gap-3 border-b border-[#E7E1F7] bg-white px-3 md:hidden">
+      <div className="fixed inset-x-0 top-0 z-40 flex h-14 items-center gap-2 border-b border-[#E7E1F7] bg-white px-2 md:hidden">
         <KleioWordmarkLink href="/" className="shrink-0 rounded-md bg-white px-2 py-1 shadow-sm ring-1 ring-border" />
-        <nav aria-label="Artist workspace" className="flex min-w-0 flex-1 gap-1 overflow-x-auto">
-          {mobileItems.map((item) => {
+        <nav aria-label="Primary artist workspace" className="ml-auto flex items-center gap-1">
+          {mobilePrimaryItems.map((item) => {
             const active = isNavItemActive(pathname, item)
             const Icon = item.icon
             return (
@@ -171,9 +194,9 @@ export function ArtistSidebar() {
                 key={item.href}
                 href={item.href}
                 aria-current={active ? "page" : undefined}
-                aria-label={item.label}
+                aria-label={labelFor(item)}
                 className={cn(
-                  "grid size-10 shrink-0 place-items-center rounded-lg",
+                  "grid size-9 shrink-0 place-items-center rounded-lg",
                   active
                     ? "bg-primary/10 text-primary"
                     : "text-muted-foreground hover:bg-accent/60",
@@ -183,9 +206,54 @@ export function ArtistSidebar() {
               </Link>
             )
           })}
+          <button
+            type="button"
+            aria-label={locale === "es" ? "Más navegación del artista" : "More artist navigation"}
+            aria-expanded={mobileMoreOpen}
+            aria-controls="artist-mobile-more-menu"
+            onClick={() => setMobileMoreOpen((current) => !current)}
+            className={cn(
+              "grid size-9 shrink-0 place-items-center rounded-lg",
+              mobileMoreOpen || moreActive ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-accent/60",
+            )}
+          >
+            <Menu className="size-4" />
+          </button>
         </nav>
-        <AccountSignOutButton compact className="border-[#E7E1F7] bg-white shadow-sm" />
       </div>
+
+      {mobileMoreOpen && (
+        <div id="artist-mobile-more-menu" className="fixed inset-x-3 top-[3.75rem] z-50 rounded-2xl border border-[#E7E1F7] bg-white p-3 shadow-[0_24px_70px_rgba(51,42,77,0.18)] md:hidden">
+          <div className="mb-2 flex items-center justify-between px-1">
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">{locale === "es" ? "Más" : "More"}</p>
+            {artist ? <p className="max-w-[55%] truncate text-xs font-medium text-[#5B4B8A]">{artist.name}</p> : null}
+          </div>
+          <div className="grid gap-1 sm:grid-cols-2">
+            {mobileMoreItems.map((item) => {
+              const active = isNavItemActive(pathname, item)
+              const Icon = item.icon
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={isLive ? undefined : openPageGuide}
+                  aria-current={active ? "page" : undefined}
+                  className={cn(
+                    "flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm font-medium",
+                    active ? "bg-primary/10 text-primary" : "text-foreground/75 hover:bg-accent/60",
+                  )}
+                >
+                  <Icon className="size-4 shrink-0" />
+                  <span>{labelFor(item)}</span>
+                </Link>
+              )
+            })}
+          </div>
+          <div className="mt-2 border-t border-[#EEEAF6] pt-2">
+            <AccountSignOutButton className="w-full justify-start border-transparent bg-transparent px-3 hover:border-[#E7E1F7]" />
+          </div>
+        </div>
+      )}
 
       <aside className="hidden h-full w-[208px] shrink-0 flex-col border-r border-[#E7E1F7] bg-white md:flex">
         <div className="flex items-center justify-between px-5 pb-4 pt-5">
@@ -202,19 +270,7 @@ export function ArtistSidebar() {
                 {section.items.map((item) => {
                   const active = isNavItemActive(pathname, item)
                   const Icon = item.icon
-                  const label = item.href === "/artist-dashboard/collaborators/"
-                    ? locale === "es"
-                      ? "Coincidencias de artistas"
-                      : "Artist Matches"
-                    : item.href === "/artist-dashboard/profile/"
-                      ? locale === "es"
-                        ? "Perfil de artista"
-                        : "Artist Profile"
-                      : item.href === "/artist-dashboard/media/"
-                        ? locale === "es"
-                          ? "Biblioteca de medios"
-                          : "Media Library"
-                        : t(artistNavLabelKeys[item.href] ?? item.label)
+                  const label = labelFor(item)
 
                   if (item.comingSoon) {
                     return (

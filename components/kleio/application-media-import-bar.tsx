@@ -1,36 +1,34 @@
 "use client"
 
-import { useSearchParams } from "next/navigation"
+import { useEffect, useState } from "react"
 import { ShieldCheck } from "lucide-react"
 import { ArtistImportStudio } from "@/components/kleio/artist-import-studio"
-import { QuickMediaImport } from "@/components/kleio/media-import/quick-media-import"
-import { recordMediaUsage } from "@/lib/kleio-universal-media"
+import { loadPortfolioWorks } from "@/lib/kleio-live-data"
 
 export function ApplicationMediaImportBar() {
-  const searchParams = useSearchParams()
-  const opportunityId = searchParams.get("opportunity") || "application-draft"
+  const [portfolioCount, setPortfolioCount] = useState<number | null>(null)
+
+  useEffect(() => {
+    let active = true
+    void loadPortfolioWorks()
+      .then((works) => { if (active) setPortfolioCount(works.length) })
+      .catch(() => { if (active) setPortfolioCount(null) })
+    return () => { active = false }
+  }, [])
+
+  const hasPortfolio = Boolean(portfolioCount && portfolioCount > 0)
 
   return (
-    <section className="shrink-0 border-b border-[#E7E1F7] bg-[#FCFBFE] px-4 py-3 sm:px-6" aria-label="Application media actions">
-      <div className="mx-auto flex max-w-[1120px] flex-wrap items-center justify-between gap-3">
-        <div className="min-w-0"><p className="text-xs font-semibold text-[#5B4B8A]">Missing something?</p><p className="mt-0.5 text-xs leading-5 text-[#746E80]">Add artwork or a requirement file without leaving this application. Existing portfolio works remain the first choice.</p></div>
-        <div className="flex flex-wrap gap-2">
-          <ArtistImportStudio compact onPortfolioChanged={() => window.location.reload()} />
-          <QuickMediaImport
-            context="application_material"
-            label="Add requirement file"
-            onConfirm={async ({ items }) => {
-              await Promise.all(items.map((item) => recordMediaUsage({
-                item,
-                context: "application_material",
-                destinationId: opportunityId,
-                role: "application_attachment",
-              })))
-              window.dispatchEvent(new CustomEvent("kleio:application-media-changed", { detail: { opportunityId } }))
-            }}
-          />
+    <section className="rounded-2xl border border-[#E7E1F7] bg-white px-4 py-3 sm:px-5" aria-label="Application artwork actions">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
+          <p className="text-sm font-semibold text-[#292631]">{hasPortfolio ? `${portfolioCount} portfolio work${portfolioCount === 1 ? "" : "s"} ready to choose from` : "Add your first artwork without leaving this application"}</p>
+          <p className="mt-1 text-xs leading-5 text-[#746E80]">{hasPortfolio ? "Only add another work if this opportunity needs something that is not already in your portfolio." : "KLEIO will return you to this application after the artwork is added. Requirement files are handled separately by their exact requirement."}</p>
         </div>
-        <p className="basis-full text-[0.68rem] leading-5 text-[#8A8296]"><ShieldCheck className="mr-1.5 inline size-3.5" />Adding a file keeps it in the private application workspace. It is not submitted until the final artist review.</p>
+        <div className="shrink-0">
+          <ArtistImportStudio compact onPortfolioChanged={() => window.location.reload()} />
+        </div>
+        {!hasPortfolio && <p className="basis-full text-[0.68rem] leading-5 text-[#8A8296] sm:hidden"><ShieldCheck className="mr-1.5 inline size-3.5" />New artwork stays private until you include it in the application.</p>}
       </div>
     </section>
   )

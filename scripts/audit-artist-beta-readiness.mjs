@@ -21,7 +21,10 @@ const importPage = read("components/kleio/artist-import-studio-page.tsx")
 const migration = read("supabase/migrations/20260807173500_artist_beta_readiness_state_sync.sql")
 
 requireText(availability, /device_image:\s*true/, "Direct device image upload must remain enabled for the founding artist beta.")
-requireText(mediaPicker, /uploadMediaToLibrary/, "The private media picker must use the canonical upload service.")
+requireText(availability, /device_document:\s*true/, "Direct device document upload must remain enabled for the founding artist beta.")
+requireText(availability, /device_video:\s*true/, "Direct device video upload must remain enabled for the founding artist beta.")
+requireText(availability, /device_audio:\s*true/, "Direct device audio upload must remain enabled for the founding artist beta.")
+requireText(mediaPicker, /uploadDeviceMediaToLibrary/, "The private media picker must use the canonical broad device-upload service.")
 requireText(mediaPicker, /Upload from device/, "The private media picker must expose an obvious device-upload action.")
 requireText(mediaPicker, /accept=\{config\.allowedMimeTypes\.join\(","\)\}/, "Device upload must derive accepted types from the active media context.")
 requireText(mediaPicker, /multiple=\{config\.allowMultiple\}/, "Device upload must respect the context's multi-file rule.")
@@ -34,7 +37,7 @@ requireText(liveArtist, /effectiveCvPath/, "Live dashboard must derive one effec
 forbidText(liveArtist, /artistRow\.profile_completion/, "Live dashboard must not trust the legacy stored profile_completion percentage.")
 
 requireText(completion, /scoredCategories = categories\.filter\(\(item\) => item\.tier !== "optional"\)/, "Optional Passport enhancements must not block a truthful 100% readiness state.")
-requireText(documentIntelligence, /accept="application\/pdf,\.pdf"/, "The CV/document workspace must remain explicitly PDF-only.")
+requireText(documentIntelligence, /accept="application\/pdf,\.pdf"/, "The PDF analysis workspace must remain explicitly PDF-only even though generic upload is broader.")
 requireText(importPage, /href="\/artist-dashboard\/"/, "Document import must provide an obvious route back to Overview.")
 requireText(importPage, /href="\/artist-dashboard\/passport\/"/, "Document import must preserve an obvious route back to the Creative Passport.")
 
@@ -45,4 +48,4 @@ forbidText(migration, /security definer/, "Artist CV state synchronization must 
 requireText(migration, /after insert or update of artist_selected_document_type, classification, storage_path, deleted_at/, "CV synchronization must react to upload, reclassification, replacement and deletion.")
 requireText(migration, /with latest_cv as/, "Existing uploaded CVs must be backfilled into canonical profile state.")
 
-console.log("KLEIO artist beta-readiness audit passed: direct artwork upload, truthful CV/completion state, PDF-specific document UX, RLS-safe state sync, and clear return navigation are protected.")
+console.log("KLEIO artist beta-readiness audit passed: broad direct media upload, truthful CV/completion state, PDF-specific analysis UX, RLS-safe state sync, and clear return navigation are protected.")
