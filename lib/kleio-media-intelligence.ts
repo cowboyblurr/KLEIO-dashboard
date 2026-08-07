@@ -138,6 +138,18 @@ async function consent(sourceId: string) {
   if (error) throw error
 }
 
+async function claimMediaAnalysis(sourceId: string) {
+  const supabase = getSupabaseBrowserClient()
+  const { data, error } = await supabase.rpc("claim_my_media_analysis", { target_source_id: sourceId })
+  if (error) throw error
+  if (data !== true) throw new Error("This media is already being analyzed. Reopen it in a moment instead of starting a duplicate analysis.")
+}
+
+async function releaseMediaAnalysis(sourceId: string) {
+  const supabase = getSupabaseBrowserClient()
+  await supabase.rpc("release_my_media_analysis", { target_source_id: sourceId })
+}
+
 export async function loadMediaIntelligence(sourceId: string): Promise<MediaIntelligence | null> {
   if (!sourceId) return null
   const account = await requireArtist()
@@ -184,14 +196,16 @@ export async function analyzeMediaWithKleio(item: ArtistMediaLibraryItem, option
     return refreshed
   }
 
-  const supabase = getSupabaseBrowserClient()
-  const { data, error } = await supabase.functions.invoke("analyze-artist-media", { body: { sourceId: item.sourceId, force: options.force === true } })
-  if (error) throw new Error(error.message || "KLEIO could not analyze this private media source.")
-  if (data?.error) {
-    if (String(data.error) === "media_analysis_in_progress") throw new Error("This media is already being analyzed. Reopen it in a moment instead of starting a duplicate analysis.")
-    throw new Error(String(data.message || data.error))
+  await claimMediaAnalysis(item.sourceId)
+  try {
+    const supabase = getSupabaseBrowserClient()
+    const { data, error } = await supabase.functions.invoke("analyze-artist-media", { body: { sourceId: item.sourceId, force: options.force === true } })
+    if (error) throw new Error(error.message || "KLEIO could not analyze this private media source.")
+    if (data?.error) throw new Error(String(data.message || data.error))
+    const raw = object(data?.analysis)
+    if (!Object.keys(raw).length) throw new Error("KLEIO finished without a readable media analysis. Try again before using the result.")
+    return fromMedia(item.sourceId, item.mimeType, raw)
+  } finally {
+    await releaseMediaAnalysis(item.sourceId)
   }
-  const raw = object(data?.analysis)
-  if (!Object.keys(raw).length) throw new Error("KLEIO finished without a readable media analysis. Try again before using the result.")
-  return fromMedia(item.sourceId, item.mimeType, raw)
 }
