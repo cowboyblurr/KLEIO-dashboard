@@ -125,10 +125,17 @@ export async function loadLiveArtistWorkspace(): Promise<LiveArtistWorkspace> {
   const displayName = artistRow.professional_name?.trim() || profileData.display_name?.trim() || user.email?.split("@")[0] || "KLEIO Artist"
   const disciplines = artistRow.disciplines ?? []
   const mediums = artistRow.mediums ?? []
+  const completionWorks = works.map((work) => ({
+    title: work.title,
+    year: work.year == null ? "" : String(work.year),
+    medium: work.medium,
+    dimensions: work.dimensions,
+    image_path: work.image_path,
+  }))
   const completion = calculatePassportCompletion({
     ...artistRow,
     cv_file_path: effectiveCvPath,
-  }, works)
+  }, completionWorks)
   const completeness = completion.percentage
   const mappedApplications = rows.map((row) => {
     const call = callFor(row)
