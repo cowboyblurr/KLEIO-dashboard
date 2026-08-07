@@ -3,7 +3,7 @@ import { createClient } from "npm:@supabase/supabase-js@2.110.5"
 
 const GEMINI_PROVIDER = "gemini"
 const DEFAULT_DRAFT_MODEL = "gemini-3.6-flash"
-const PROMPT_VERSION = "kleio_media_collection_intelligence_v1"
+const PROMPT_VERSION = "kleio_media_collection_intelligence_v2"
 const MIN_SOURCES = 2
 const MAX_SOURCES = 12
 const ALLOWED_ORIGINS = [
@@ -188,12 +188,12 @@ function responseSchema(): JsonObject {
   }
 }
 
-function patternArray(value: unknown, allowedRefs: Set<string>): Pattern[] {
+function patternArray(value: unknown, allowedRefs: Set<string>, minRefs = 1): Pattern[] {
   if (!Array.isArray(value)) return []
   return value.map(object).flatMap((entry) => {
     const text = cleanText(entry.text, 700)
-    const refs = strings(entry.source_refs, 12, 120).filter((ref) => allowedRefs.has(ref))
-    if (!text || !refs.length) return []
+    const refs = Array.from(new Set(strings(entry.source_refs, 12, 120).filter((ref) => allowedRefs.has(ref))))
+    if (!text || refs.length < minRefs) return []
     return [{ text, source_refs: refs, confidence: number01(entry.confidence) }]
   }).slice(0, 18)
 }
@@ -205,10 +205,10 @@ function normalizeOutput(raw: unknown, allowedRefs: Set<string>) {
     summary: cleanText(value.summary, 2_400),
     short_summary: cleanText(value.short_summary, 900),
     body_of_work_summary: cleanText(value.body_of_work_summary, 4_500),
-    recurring_themes: patternArray(value.recurring_themes, allowedRefs),
-    formal_relationships: patternArray(value.formal_relationships, allowedRefs),
-    material_process_patterns: patternArray(value.material_process_patterns, allowedRefs),
-    work_dialogues: patternArray(value.work_dialogues, allowedRefs),
+    recurring_themes: patternArray(value.recurring_themes, allowedRefs, 2),
+    formal_relationships: patternArray(value.formal_relationships, allowedRefs, 2),
+    material_process_patterns: patternArray(value.material_process_patterns, allowedRefs, 2),
+    work_dialogues: patternArray(value.work_dialogues, allowedRefs, 2),
     series_possibilities: strings(value.series_possibilities, 12, 500),
     application_keywords: strings(value.application_keywords, 30, 120),
     questions_for_artist: strings(value.questions_for_artist, 16, 500),
@@ -290,6 +290,7 @@ function systemInstruction() {
 TRUST RULES
 - Never invent artist intent, biography, provenance, dates, materials, identities, cultural meaning, project history, exhibition history, or institutional validation.
 - Directly support every recurring theme, formal relationship, material/process pattern, or work-to-work dialogue with source_refs from the supplied sources.
+- Cross-work pattern categories must cite at least two distinct selected sources. If a relationship is supported by only one source, omit it from those cross-work arrays instead of calling it recurring or relational.
 - A pattern may be plausible without being the artist's intention. Phrase interpretation cautiously and place unresolved intent in questions_for_artist.
 - Do not identify people shown or heard.
 - Generated summaries are suggestions only. They are not artist-approved context until the artist explicitly confirms or edits them in KLEIO.
@@ -356,15 +357,8 @@ Deno.serve(async (request: Request) => {
 
   const readyEvidence = evidencePairs.flatMap((pair) => pair.evidence ? [pair.evidence] : []) as JsonObject[]
   const allowedRefs = new Set(readyEvidence.map((entry) => String(entry.ref)))
-  const ordered = [...(sources ?? [])].sort((a, b) => String(a.id).localeCompare(String(b.id)))
-  const fingerprintInput = ordered.map((source) => {
-    const review = object(source.review_summary)
-    const media = object(review.media_analysis)
-    const profile = object(review.profile_synthesis)
-    const analyzedAt = cleanText(media.analyzed_at || profile.generated_at || source.updated_at, 100)
-    return `${source.id}:${source.checksum || ""}:${analyzedAt}`
-  }).join("|")
-  const sourceFingerprint = await fingerprint(fingerprintInput)
+  const orderedEvidence = [...readyEvidence].sort((a, b) => String(a.source_id).localeCompare(String(b.source_id)))
+  const sourceFingerprint = await fingerprint(JSON.stringify(orderedEvidence))
 
   const { data: existing, error: existingError } = await admin.from("artist_media_collection_insights")
     .select("id,title,source_ids,status,generated_insight,artist_summary,analyzed_at,confirmed_at")
@@ -393,14 +387,14 @@ Deno.serve(async (request: Request) => {
       prompt: `Compare this artist-selected group of private source analyses.
 
 SELECTED SOURCES:
-${JSON.stringify(readyEvidence)}
+${JSON.stringify(orderedEvidence)}
 
 COMPOSITION RULES:
 - Use source_refs such as source_<uuid> for every generated pattern.
-- recurring_themes: repeated or contrasting conceptual readings supported across at least two sources when possible.
-- formal_relationships: composition, color, scale, rhythm, spatial, temporal, sonic, or presentation relationships.
-- material_process_patterns: only materials/processes actually supported by the source analysis or artist-authored work metadata.
-- work_dialogues: describe how specific works echo, resist, extend, or complicate each other without inventing chronology or intent.
+- recurring_themes: repeated or contrasting conceptual readings supported across at least two distinct sources.
+- formal_relationships: composition, color, scale, rhythm, spatial, temporal, sonic, or presentation relationships supported across at least two distinct sources.
+- material_process_patterns: only recurring materials/processes actually supported across at least two distinct source analyses or artist-authored work metadata records.
+- work_dialogues: describe how at least two specific works echo, resist, extend, or complicate each other without inventing chronology or intent.
 - series_possibilities: cautious ways the artist might frame the group; these are suggestions, not facts.
 - body_of_work_summary: polished application-ready language, but never claim intention unless the artist-authored metadata establishes it.
 - questions_for_artist: ask for the smallest missing pieces that would turn a plausible reading into artist-confirmed context.

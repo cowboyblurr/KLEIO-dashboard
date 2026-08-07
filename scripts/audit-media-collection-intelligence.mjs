@@ -28,12 +28,25 @@ requireText(client, 'rpc("dismiss_my_media_collection_insight"', "dismissal must
 
 for (const text of ["artist_user_id", ".eq(\"artist_user_id\", userData.user.id)", "individual_analysis_required", "source_refs", "questions_for_artist", "body_of_work_summary"]) requireText(fn, text, "collection synthesis must remain owner-scoped, evidence-backed, and artist-question aware")
 requireText(fn, "evidencePairs", "missing individual analyses must remain paired to their actual source IDs rather than query order")
-requireText(fn, '.eq("source_fingerprint", sourceFingerprint)', "identical reviewed source sets must use a stable collection fingerprint")
+requireText(fn, "const orderedEvidence = [...readyEvidence].sort", "collection cache input must be canonicalized independent of database row order")
+requireText(fn, "fingerprint(JSON.stringify(orderedEvidence))", "collection cache must fingerprint the exact synthesis evidence, including current artist-authored work metadata and analysis content")
+requireText(fn, "kleio_media_collection_intelligence_v2", "material cache/evidence behavior changes must carry a new prompt version")
+requireText(fn, "patternArray(value: unknown, allowedRefs: Set<string>, minRefs = 1)", "pattern normalization must support deterministic minimum-source grounding")
+requireText(fn, "refs.length < minRefs", "cross-work patterns with insufficient distinct source evidence must be discarded")
+for (const text of [
+  "patternArray(value.recurring_themes, allowedRefs, 2)",
+  "patternArray(value.formal_relationships, allowedRefs, 2)",
+  "patternArray(value.material_process_patterns, allowedRefs, 2)",
+  "patternArray(value.work_dialogues, allowedRefs, 2)",
+]) requireText(fn, text, "every cross-work pattern category must require at least two distinct selected sources")
+requireText(fn, '.eq("source_fingerprint", sourceFingerprint)', "identical reviewed synthesis evidence must use a stable collection fingerprint")
 requireText(fn, 'existing.status !== "dismissed"', "existing review-ready or artist-confirmed collection analysis must be reused rather than regenerated")
 requireText(fn, "cached: true", "cached group results must be reported explicitly")
 forbidText(fn, '.storage.from(', "group synthesis must reuse existing private analyses instead of uploading raw media again")
 forbidText(fn, ".download(", "group synthesis must not redownload raw private files")
+forbidText(fn, "const analyzedAt = cleanText(media.analyzed_at || profile.generated_at || source.updated_at", "cache identity must not ignore artist-authored portfolio metadata changes")
 requireText(fn, "Generated summaries are suggestions only", "group synthesis must preserve the artist-confirmation boundary")
+requireText(fn, "Cross-work pattern categories must cite at least two distinct selected sources", "the provider prompt must state the deterministic cross-source grounding rule")
 
 for (const text of ["enable row level security", "artist_media_collection_insights_select_own", "confirm_my_media_collection_insight", "dismiss_my_media_collection_insight", "security invoker", "body_of_work_context", "provenance_status", "'confirmed'", "visibility", "'private'"]) requireText(migration, text, "collection persistence and Passport promotion must remain private, owner-scoped, and artist-confirmed")
 requireText(migration, "normalized_key = 'media_collection:'", "confirmed collection context must update one canonical Passport record rather than multiplying duplicates")
@@ -45,4 +58,4 @@ if (failures.length) {
   process.exit(1)
 }
 
-console.log("KLEIO body-of-work intelligence audit passed: visible analysis dialogue is truthful, batch comparison is artist-controlled, repeated synthesis is cached, raw media is not reuploaded, and only artist-reviewed collection notes remain reusable Passport evidence.")
+console.log("KLEIO body-of-work intelligence audit passed: visible analysis dialogue is truthful, batch comparison is artist-controlled, cache identity tracks the exact synthesis evidence, cross-work patterns require multiple sources, raw media is not reuploaded, and only artist-reviewed collection notes remain reusable Passport evidence.")
