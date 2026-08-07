@@ -201,6 +201,7 @@ export async function analyzeMediaWithKleio(item: ArtistMediaLibraryItem, option
     const supabase = getSupabaseBrowserClient()
     const { data, error } = await supabase.functions.invoke("analyze-artist-media", { body: { sourceId: item.sourceId, force: options.force === true } })
     if (error) throw new Error(error.message || "KLEIO could not analyze this private media source.")
+    if (data?.error === "unsupported_media_format") throw new Error(mediaIntelligenceSupportText(item))
     if (data?.error) throw new Error(String(data.message || data.error))
     const raw = object(data?.analysis)
     if (!Object.keys(raw).length) throw new Error("KLEIO finished without a readable media analysis. Try again before using the result.")
