@@ -1,6 +1,6 @@
 import { getSupabaseBrowserClient } from "@/lib/kleio-supabase"
 
-export type KleioBetaImportSource =
+export type KleioImportSource =
   | "google_drive_image"
   | "google_drive_document"
   | "google_drive_video"
@@ -16,9 +16,9 @@ export type KleioBetaImportSource =
   | "pasted_text"
   | "voice_transcript"
 
-export type KleioBetaImportAvailability = Record<KleioBetaImportSource, boolean>
+export type KleioImportAvailability = Record<KleioImportSource, boolean>
 
-export const DEFAULT_BETA_IMPORT_AVAILABILITY: KleioBetaImportAvailability = {
+export const DEFAULT_IMPORT_AVAILABILITY: KleioImportAvailability = {
   google_drive_image: false,
   google_drive_document: false,
   google_drive_video: false,
@@ -35,19 +35,26 @@ export const DEFAULT_BETA_IMPORT_AVAILABILITY: KleioBetaImportAvailability = {
   voice_transcript: false,
 }
 
-export async function loadBetaImportAvailability(): Promise<KleioBetaImportAvailability> {
+export async function loadImportAvailability(): Promise<KleioImportAvailability> {
   const supabase = getSupabaseBrowserClient()
   const { data, error } = await supabase.from("kleio_import_source_availability").select("source_type,artist_beta_enabled")
   if (error) throw error
 
-  const availability = { ...DEFAULT_BETA_IMPORT_AVAILABILITY }
+  const availability = { ...DEFAULT_IMPORT_AVAILABILITY }
   for (const row of data || []) {
-    const source = String(row.source_type) as KleioBetaImportSource
+    const source = String(row.source_type) as KleioImportSource
     if (source in availability) availability[source] = row.artist_beta_enabled === true
   }
   return availability
 }
 
-export function betaSourceEnabled(availability: KleioBetaImportAvailability | null, source: KleioBetaImportSource) {
-  return availability ? availability[source] === true : DEFAULT_BETA_IMPORT_AVAILABILITY[source] === true
+export function importSourceEnabled(availability: KleioImportAvailability | null, source: KleioImportSource) {
+  return availability ? availability[source] === true : DEFAULT_IMPORT_AVAILABILITY[source] === true
 }
+
+// Compatibility aliases for existing non-UI callers and validation scripts.
+export type KleioBetaImportSource = KleioImportSource
+export type KleioBetaImportAvailability = KleioImportAvailability
+export const DEFAULT_BETA_IMPORT_AVAILABILITY = DEFAULT_IMPORT_AVAILABILITY
+export const loadBetaImportAvailability = loadImportAvailability
+export const betaSourceEnabled = importSourceEnabled

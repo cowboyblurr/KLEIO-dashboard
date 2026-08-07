@@ -6,6 +6,8 @@ import {
 } from "@/lib/kleio-media-file-types"
 import type { ArtistMediaLibraryItem, MediaImportConfig } from "@/lib/kleio-universal-media"
 
+const DOCUMENT_ANALYSIS_PDF_LIMIT = 15 * 1024 * 1024
+
 function safeFilename(value: string) {
   const normalized = value.normalize("NFKD").replace(/[^\w.\- ]+/g, "").trim()
   return normalized.replace(/\s+/g, "-").replace(/-+/g, "-").slice(0, 110) || `media-${crypto.randomUUID()}`
@@ -82,6 +84,7 @@ export async function validateDeviceMedia(file: File, config: MediaImportConfig)
   if (!config.allowedMimeTypes.includes(mimeType)) throw new Error(`${file.name} is not accepted here. Choose ${readableAcceptedMedia(config.allowedMimeTypes)} supported by this step.`)
   if (file.size <= 0) throw new Error(`${file.name} is empty or unavailable.`)
   if (file.size > config.maxFileSizeBytes) throw new Error(`${file.name} is larger than ${Math.round(config.maxFileSizeBytes / 1024 / 1024)} MB.`)
+  if (mimeType === "application/pdf" && file.size > DOCUMENT_ANALYSIS_PDF_LIMIT) throw new Error(`${file.name} is larger than the current 15 MB limit for PDF document intelligence. Other supported media can still use the broader upload limit.`)
   if (!(await fileSignatureMatchesKnownMime(file))) throw new Error(`${file.name} does not match its declared file type.`)
 }
 
@@ -102,8 +105,11 @@ export async function uploadDeviceMediaToLibrary(file: File, config: MediaImport
   if (existing?.id && existing.storage_path) return { item: await rowToItem(existing), duplicate: true }
 
   const kind = mediaKindForMimeType(file.type)
-  const storagePath = `${account.user.id}/media/${config.context}/${crypto.randomUUID()}-${safeFilename(file.name)}`
-  const { error: uploadError } = await supabase.storage.from("artist-assets").upload(storagePath, file, {
+  const isPdf = file.type.trim().toLowerCase() === "application/pdf"
+  const storageBucket = isPdf ? "artist-documents" : "artist-assets"
+  const storageFolder = isPdf ? "documents" : `media/${config.context}`
+  const storagePath = `${account.user.id}/${storageFolder}/${crypto.randomUUID()}-${safeFilename(file.name)}`
+  const { error: uploadError } = await supabase.storage.from(storageBucket).upload(storagePath, file, {
     cacheControl: "3600",
     contentType: file.type,
     upsert: false,
@@ -112,7 +118,7 @@ export async function uploadDeviceMediaToLibrary(file: File, config: MediaImport
 
   const { data: row, error: insertError } = await supabase.from("artist_import_sources").insert({
     artist_user_id: account.user.id,
-    source_type: `device_${kind}`,
+    source_type: isPdf ? "pdf" : `device_${kind}`,
     label: file.name,
     storage_path: storagePath,
     mime_type: file.type,
@@ -122,7 +128,7 @@ export async function uploadDeviceMediaToLibrary(file: File, config: MediaImport
     extraction_method: "universal_media_v2",
     extracted_at: new Date().toISOString(),
     original_filename: file.name,
-    source_metadata: { import_context: config.context, destination_type: config.destinationType, direct_media_upload: true },
+    source_metadata: { import_context: config.context, destination_type: config.destinationType, direct_media_upload: true, storage_bucket: storageBucket },
     media_kind: kind,
     library_status: "available",
     width: dimensions.width,
@@ -130,7 +136,7 @@ export async function uploadDeviceMediaToLibrary(file: File, config: MediaImport
   }).select("*").single()
 
   if (insertError) {
-    await supabase.storage.from("artist-assets").remove([storagePath])
+    await supabase.storage.from(storageBucket).remove([storagePath])
     throw insertError
   }
   return { item: await rowToItem(row as Record<string, unknown>), duplicate: false }

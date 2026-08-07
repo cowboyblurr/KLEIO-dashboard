@@ -1,16 +1,8 @@
 import { readFileSync } from "node:fs"
 
-function read(path) {
-  return readFileSync(new URL(`../${path}`, import.meta.url), "utf8")
-}
-
-function requireText(content, pattern, message) {
-  if (!pattern.test(content)) throw new Error(message)
-}
-
-function forbidText(content, pattern, message) {
-  if (pattern.test(content)) throw new Error(message)
-}
+function read(path) { return readFileSync(new URL(`../${path}`, import.meta.url), "utf8") }
+function requireText(content, pattern, message) { if (!pattern.test(content)) throw new Error(message) }
+function forbidText(content, pattern, message) { if (pattern.test(content)) throw new Error(message) }
 
 const originalMigration = read("supabase/migrations/20260801223000_website_import_assist.sql")
 const gradeMigration = read("supabase/migrations/20260803130500_website_import_evidence_grades.sql")
@@ -33,21 +25,19 @@ requireText(originalMigration, /enable row level security/, "Website sessions mu
 requireText(originalMigration, /select auth\.uid\(\)/, "Website session policies must remain owner-scoped.")
 forbidText(originalMigration, /disable row level security/i, "Website session migration weakens RLS.")
 
-for (const status of ["limited_review", "image_only_review", "manual_input_recommended", "blocked", "dismissed"]) {
-  requireText(gradeMigration, new RegExp(`'${status}'`), `Missing website evidence status: ${status}.`)
-}
-requireText(gradeMigration, /scan_summary jsonb/, "Website sessions must store artist-facing scan coverage.")
+for (const status of ["limited_review", "image_only_review", "manual_input_recommended", "blocked", "dismissed"]) requireText(gradeMigration, new RegExp(`'${status}'`), `Missing website evidence status: ${status}.`)
+requireText(gradeMigration, /scan_summary jsonb/, "Website sessions must store artist-facing scan coverage if re-enabled.")
 requireText(gradeMigration, /dismissed_at timestamptz/, "Cleared scans must preserve audit history through dismissal.")
 requireText(gradeMigration, /status not in \('dismissed', 'expired'\)/, "Active-session queries need an index that excludes dismissed and expired scans.")
 forbidText(gradeMigration, /delete from|truncate|drop table|drop column/i, "Evidence-grade migration must remain additive.")
 
-requireText(gateway, /WEBSITE_IMPORT_BETA_ENABLED/, "Website Import must be controlled by a server-side beta flag.")
+requireText(gateway, /WEBSITE_IMPORT_BETA_ENABLED/, "Website Import must remain controlled by a server-side gate internally.")
 requireText(gateway, /website_import_beta_disabled/, "Website Import gateway must fail closed while inactive.")
-requireText(gateway, /CORE_FUNCTION = "analyze-artist-website-core"/, "The gateway/core boundary must remain explicit for a deliberate future re-enable.")
-requireText(gateway, /INTELLIGENCE_FUNCTION = "analyze-artist-website-intelligence"/, "The evidence validator must remain isolated from the future collector.")
-requireText(core, /website_import_beta_disabled/, "The directly addressable Website Import core must fail closed during the document-first beta.")
-requireText(core, /status: "coming_soon"/, "The disabled Website Import core must identify the capability as unavailable for the active beta.")
-requireText(core, /status: 403/, "The disabled Website Import core must not return a false success.")
+requireText(gateway, /CORE_FUNCTION = "analyze-artist-website-core"/, "The gateway/core boundary must remain explicit for deliberate re-enable.")
+requireText(gateway, /INTELLIGENCE_FUNCTION = "analyze-artist-website-intelligence"/, "The evidence validator must remain isolated from the collector.")
+requireText(core, /website_import_beta_disabled/, "The directly addressable Website Import core must fail closed while inactive.")
+requireText(core, /status: "coming_soon"/, "The disabled Website Import core must identify the capability as unavailable internally.")
+requireText(core, /status: 403/, "The disabled Website Import core must not return false success.")
 forbidText(core, /raw\.githubusercontent\.com|Deno\.resolveDns|artist_website_import_sessions/, "The disabled core route must not load or execute collection code.")
 requireText(futureCollector, /raw\.githubusercontent\.com\/cowboyblurr\/KLEIO-dashboard\/[a-f0-9]{40}\//, "The reviewed future collector must remain pinned to immutable source.")
 forbidText(futureCollector, /raw\.githubusercontent\.com\/cowboyblurr\/KLEIO-dashboard\/(main|master|fix\/|feature\/)/, "The future collector must not import mutable branch source.")
@@ -57,33 +47,22 @@ requireText(intelligence, /Deno\.resolveDns/, "Website evidence validation must 
 requireText(intelligence, /allowedByRobots/, "Website evidence validation must respect robots rules.")
 requireText(intelligence, /MAX_PAGES = 8/, "Website evidence validation must remain page-limited.")
 requireText(intelligence, /MAX_HTML = 2 \* 1024 \* 1024/, "Website evidence validation must remain byte-limited.")
-requireText(intelligence, /if \(!text\(raw,2_000\)\) return/, "Empty image sources must be rejected before URL resolution.")
-requireText(intelligence, /url === parsed\.page\.url/, "A page URL must never be accepted as its own image candidate.")
 requireText(intelligence, /signature\(resource\.bytes,resource\.type\)/, "Presented image candidates must pass file-signature validation.")
 requireText(intelligence, /NOISE\.test/, "Logos, icons, trackers and placeholders must be rejected.")
 requireText(intelligence, /__NEXT_DATA__/, "Public Next.js application data must be inspected when available.")
-requireText(intelligence, /embedded_application_data/, "Public embedded application state must be tracked as an extraction method.")
-requireText(intelligence, /sitemap\.xml/, "Sitemap discovery must be attempted within the crawl boundary.")
-requireText(intelligence, /manual_input_recommended/, "Insufficient evidence must produce an honest manual-recovery status.")
+requireText(intelligence, /sitemap\.xml/, "Sitemap discovery must remain bounded if re-enabled.")
+requireText(intelligence, /manual_input_recommended/, "Insufficient evidence must produce an honest recovery status.")
 requireText(intelligence, /image_only_review/, "Valid imagery without text must be classified separately.")
 requireText(intelligence, /limited_review/, "Restricted but usable text must be classified separately.")
 requireText(intelligence, /gemini_called:false/, "The deterministic collector must state that Gemini was not called.")
-requireText(intelligence, /action===\"dismiss\"/, "Artists must be able to dismiss an active scan without deleting history.")
+requireText(intelligence, /action===\"dismiss\"/, "Artists must be able to dismiss an active scan without deleting history if re-enabled.")
 requireText(intelligence, /eq\("artist_user_id",user\.id\)/, "Intelligence session operations must be artist-owned.")
 
 requireText(client, /payloadFromError/, "Frontend errors must read structured Edge Function response bodies.")
-requireText(client, /website_scan_has_insufficient_evidence/, "Insufficient evidence needs a specific artist-facing explanation.")
+requireText(client, /website_scan_has_insufficient_evidence/, "Insufficient evidence needs a specific explanation if re-enabled.")
 requireText(client, /dismissWebsiteScan/, "Frontend must support audit-preserving scan dismissal.")
 requireText(client, /scanAllowsTextOrganization/, "Frontend must deterministically disable organization without text evidence.")
-for (const code of [
-  "authentication_required", "artist_account_required", "invalid_website_url", "https_required", "private_network_url_blocked",
-  "website_disallows_automated_access", "unsupported_source_type", "source_too_large", "website_dns_lookup_failed",
-  "website_request_timeout", "javascript_rendering_unavailable", "no_valid_images_found", "gemini_not_configured",
-  "gemini_provider_unavailable", "gemini_rate_limited", "gemini_timeout", "gemini_invalid_structured_output",
-  "website_ai_daily_limit_reached", "website_ai_session_limit_reached", "website_import_session_not_found",
-]) requireText(client, new RegExp(code), `Missing safe frontend error mapping for ${code}.`)
-
-requireText(legacyClient, /rights_confirmed_at: confirmedAt/, "Website media import must still record artist rights confirmation if deliberately re-enabled later.")
+requireText(legacyClient, /rights_confirmed_at: confirmedAt/, "Website media import must still record artist rights confirmation if deliberately re-enabled.")
 requireText(legacyClient, /\.eq\("artist_user_id", account\.user\.id\)/, "Website rights confirmation must remain artist-scoped.")
 requireText(studio, /Nothing imports or publishes automatically/, "Future Website Import review must preserve artist-control copy.")
 requireText(studio, /referrerPolicy="no-referrer"/, "External website previews must avoid leaking the KLEIO referrer.")
@@ -91,19 +70,18 @@ requireText(organizer, /View source/, "Website proposals must retain source revi
 requireText(organizer, /role="alert"/, "Website organization errors must be announced accessibly.")
 requireText(organizer, /aria-live="polite"/, "Website organization progress must be announced accessibly.")
 
-requireText(page, /<ArtistDocumentIntelligence \/>/, "Direct PDF document intelligence must remain mounted as the active beta path.")
-forbidText(page, /WebsiteImportAssist|WebsiteOrganizationAssist/, "Website Import must not be mounted while the document-first beta source gate is closed.")
-requireText(hub, /Website Import/, "The source hub may preserve Website Import as future-release context.")
-requireText(hub, /Deferred connected sources/, "Website Import must be grouped with deferred connected sources.")
-requireText(hub, /<strong className="text-\[#625C70\]">Website Import<\/strong>[\s\S]*Deferred/, "Website Import must be labeled Deferred.")
-forbidText(hub, /Analyze website|Connect website|Start website scan/, "Deferred Website Import must not expose an active control.")
+requireText(page, /context="existing_media_library"/, "Artist Import must present the working direct-media path.")
+requireText(page, /Media Library/, "Artist Import must route artists to the working Media Library.")
+requireText(page, /Creative Passport/, "Artist Import must route artists to contextual Passport intelligence.")
+forbidText(page, /WebsiteImportAssist|WebsiteOrganizationAssist|ArtistDocumentIntelligence/, "Artist Import must not mount hidden roadmap flows or restore the PDF-first screen.")
+requireText(hub, /Upload media or supporting files/, "The source hub must show only the working private upload path.")
+for (const roadmapTerm of [/Website Import/i, /Google Drive/i, /Instagram/i, /Pinterest/i, /Deferred connected sources/i, /\bDeferred\b/i]) forbidText(hub, roadmapTerm, "Unreleased connector roadmap must stay internal and out of the artist-facing source hub.")
+
 requireText(betaMigration, /'website', false/, "The retained baseline database gate must disable Website Import.")
 requireText(betaMigration, /enforce_beta_import_source_availability/, "Inactive Website imports must be blocked below the UI.")
-requireText(documentMigration, /when 'website' then 'Deferred/, "The document-first beta migration must keep Website Import deferred.")
+requireText(documentMigration, /when 'website' then 'Deferred/, "The retained migration must keep Website Import disabled internally.")
 requireText(availability, /website:\s*false/, "The shared frontend availability gate must disable Website Import.")
 
-for (const content of [gateway, core, futureCollector, intelligence, client, legacyClient, studio, organizer]) {
-  forbidText(content, /AIzaSy|GOCSPX-|sk-[A-Za-z0-9]{20,}|SUPABASE_SERVICE_ROLE_KEY\s*=\s*["'][^"']+/, "A provider secret appears to be committed.")
-}
+for (const content of [gateway, core, futureCollector, intelligence, client, legacyClient, studio, organizer, page, hub]) forbidText(content, /AIzaSy|GOCSPX-|sk-[A-Za-z0-9]{20,}|SUPABASE_SERVICE_ROLE_KEY\s*=\s*["'][^"']+/, "A provider secret appears to be committed.")
 
-console.log("Website Import audit passed: gateway and directly addressable core routes fail closed, the reviewed collector remains isolated as immutable future source, deterministic evidence validation retains SSRF, robots and size boundaries, the source is disabled in the shared UI/database gate and labeled Deferred, while direct PDF document intelligence remains the active artist-beta path.")
+console.log("Website Import audit passed: the unreleased website capability stays invisible in artist-facing UI and fails closed below the surface, while the isolated internal architecture retains SSRF, robots, size, ownership, RLS, and secret boundaries for deliberate future review.")

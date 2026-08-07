@@ -3,7 +3,7 @@ import { AdminProductAnalyticsDashboard } from "@/components/kleio/admin-product
 
 export const metadata: Metadata = {
   title: "Product Analytics | KLEIO Admin",
-  description: "Private, aggregate KLEIO artist-beta product analytics.",
+  description: "Private, aggregate KLEIO product analytics.",
   robots: {
     index: false,
     follow: false,

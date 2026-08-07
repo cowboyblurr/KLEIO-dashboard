@@ -9,89 +9,86 @@ const forbidText = (file, text, message) => { if (read(file).includes(text)) fai
 
 const page = "components/kleio/artist-import-studio-page.tsx"
 const hub = "components/kleio/import-source-hub.tsx"
-const documents = "components/kleio/artist-document-intelligence.tsx"
-const drafting = "components/kleio/document-draft-studio.tsx"
-const client = "lib/kleio-document-intelligence.ts"
+const library = "components/kleio/artist-media-library.tsx"
+const passportPanel = "components/kleio/creative-passport-media-panel.tsx"
+const intelligenceSheet = "components/kleio/media-intelligence-sheet.tsx"
+const intelligenceClient = "lib/kleio-media-intelligence.ts"
+const deviceUpload = "lib/kleio-device-media-upload.ts"
 const uploadService = "lib/kleio-upload-to-passport.ts"
-const draftClient = "lib/kleio-document-drafting.ts"
 const availability = "lib/kleio-import-source-availability.ts"
 const extractor = "supabase/functions/extract-artist-materials/index.ts"
+const mediaAnalyzer = "supabase/functions/analyze-artist-media/index.ts"
 const draftFunction = "supabase/functions/generate-artist-document-draft/index.ts"
 const interactionsShim = "supabase/functions/_shared/gemini-interactions-fetch-shim.ts"
 const extractionEntrypoint = "supabase/functions/extract-artist-materials/interactions-entrypoint.ts"
-const draftEntrypoint = "supabase/functions/generate-artist-document-draft/interactions-entrypoint.ts"
 
-requireText(page, "<ImportSourceHub />", "artist import page must explain the active source")
-requireText(page, "<ArtistDocumentIntelligence />", "artist import page must mount private PDF analysis")
-requireText(page, "<DocumentDraftStudio />", "artist import page must mount approved-evidence drafting")
-forbidText(page, "<ArtistImportStudio />", "legacy Drive studio must not compete with direct PDF analysis")
+requireText(page, "<ImportSourceHub />", "artist import page must retain a concise explanation of working private sources")
+requireText(page, 'context="existing_media_library"', "artist import page must use the shared generic media picker")
+requireText(page, 'href="/artist-dashboard/media/"', "artist import page must route organization and analysis to Media Library")
+requireText(page, 'href="/artist-dashboard/passport/"', "artist import page must route contextual intelligence to Creative Passport")
+forbidText(page, "ArtistDocumentIntelligence", "artist import page must not force artists into a separate PDF-first analysis screen")
+forbidText(page, "DocumentDraftStudio", "artist import page must not stack an unrelated drafting workspace under upload")
+forbidText(page, "beta", "artist import page must not expose internal release-stage language")
 
-requireText(hub, "Direct PDF upload is the active import method", "direct PDF must be the active beta source")
-requireText(hub, "device_document", "source hub must read the direct-document gate")
-requireText(hub, "availability?.pdf", "source hub must read the PDF gate")
-requireText(hub, "Deferred", "inactive connected providers must be labeled honestly")
+requireText(hub, "device_document", "source hub must verify direct document availability")
+requireText(hub, "device_image", "source hub must verify direct image availability")
+requireText(hub, "device_video", "source hub must verify direct video availability")
+requireText(hub, "device_audio", "source hub must verify direct audio availability")
+requireText(hub, "existing_kleio_media", "source hub must verify reusable private-library availability")
+for (const roadmapCopy of ["Deferred", "deferred", "Beta", "beta", "Google Drive", "Instagram", "Pinterest", "Website Import"]) forbidText(hub, roadmapCopy, "source hub must not expose internal roadmap or connector language")
 
-requireText(documents, 'accept="application/pdf,.pdf"', "document workflow must accept PDF files only")
-requireText(documents, "Upload and understand document", "artist must deliberately initiate Gemini analysis")
-requireText(documents, "Understand this document with Gemini", "artist must be able to opt out")
-requireText(documents, "What this document is", "analysis must display a synopsis")
-requireText(documents, "Information KLEIO can audit", "analysis must display extractable categories")
-requireText(documents, "Relevance", "analysis must display relevance")
-requireText(documents, "Pages perceived", "analysis must display page coverage")
-requireText(documents, "Supported updates", "analysis must display supported findings")
-requireText(documents, "Needs resolution", "analysis must display conflicts and uncertainty")
-requireText(documents, "Review all extracted information", "analysis must link to full evidence review")
-requireText(documents, "Private preview", "artist must retain private source access")
-requireText(documents, "Analyze again", "artist must be able to initiate reanalysis")
-requireText(documents, "Remove analysis", "artist must be able to keep the PDF without analysis")
-requireText(documents, "Delete source", "artist must retain deletion control")
-requireText(documents, 'role="status"', "processing states must be announced accessibly")
+requireText(library, "<MediaIntelligenceSheet", "Media Library must open analysis in place")
+requireText(library, "canAnalyzeMediaItem", "Media Library must show analysis only for supported sources")
+requireText(library, "Analysis ready", "Media Library must make completed intelligence visible at a glance")
+requireText(passportPanel, "<MediaIntelligenceSheet", "Creative Passport must open the same private media analysis in place")
+requireText(passportPanel, "loadMediaIntelligenceStatuses", "Creative Passport must surface existing analysis rather than forcing re-analysis")
+requireText(passportPanel, 'context="creative_passport"', "Creative Passport must support direct reusable media selection")
+requireText(intelligenceSheet, "Observation", "analysis UI must explain that observation and interpretation are distinct")
+requireText(intelligenceSheet, "not verification", "AI confidence must not be presented as verification")
+requireText(intelligenceSheet, "does not rewrite your Passport", "analysis must remain artist-controlled")
+requireText(intelligenceSheet, "Passport language", "analysis must keep useful Passport suggestions in the same visual flow")
 
-requireText(client, "15 * 1024 * 1024", "client must preserve the 15 MB PDF limit")
-requireText(client, "validate-artist-document", "client must retain server-side PDF validation")
-requireText(client, "requestSourceExtraction", "client must use the shared extraction service")
-requireText(client, "reanalyzeArtistDocument", "manual reanalysis must be an explicit client action")
-requireText(client, "analysisSummary", "client must expose the canonical analysis summary")
-requireText(uploadService, "extract-artist-materials", "shared extraction service must invoke the protected analyzer")
-
-requireText(drafting, "Prepared by KLEIO with Gemini from artist-approved records", "draft UI must label its approved evidence source")
-requireText(drafting, "Private until approved", "draft UI must explain its private pre-approval state")
-requireText(drafting, "Approve and save to Passport", "draft UI must require an explicit approval action")
-requireText(drafting, "Save private edit", "draft UI must allow saving without approval")
-requireText(drafting, "Reject", "draft UI must allow rejection")
-requireText(draftClient, "generate-artist-document-draft", "draft client must use the protected function")
+requireText(intelligenceClient, "requestMediaExtraction", "PDFs must retain structured document intelligence")
+requireText(intelligenceClient, 'functions.invoke("analyze-artist-media"', "image/video/audio intelligence must use the protected media analyzer")
+requireText(intelligenceClient, "loadMediaIntelligence", "analysis must persist on the reusable private source")
+requireText(deviceUpload, 'storageBucket = isPdf ? "artist-documents" : "artist-assets"', "generic PDF upload must preserve the document-safe storage path")
+requireText(deviceUpload, 'source_type: isPdf ? "pdf"', "generic PDF upload must remain compatible with the structured PDF analyzer")
+requireText(uploadService, "extract-artist-materials", "shared PDF extraction must invoke the protected analyzer")
 
 requireText(availability, "device_document: true", "direct documents must be enabled")
-requireText(availability, "pdf: true", "PDF analysis must be enabled")
+requireText(availability, "device_image: true", "direct images must be enabled")
+requireText(availability, "device_video: true", "direct video must be enabled")
+requireText(availability, "device_audio: true", "direct audio must be enabled")
+requireText(availability, "pdf: true", "structured PDF analysis must stay enabled")
 requireText(availability, "existing_kleio_media: true", "existing private sources must remain reusable")
-requireText(availability, "google_drive_document: false", "Drive documents must remain deferred")
-requireText(availability, "instagram_image: false", "Instagram must remain deferred")
-requireText(availability, "website: false", "Website Import must remain deferred")
+requireText(availability, "google_drive_document: false", "unreleased Drive imports must stay disabled internally")
+requireText(availability, "instagram_image: false", "unreleased Instagram import must stay disabled internally")
+requireText(availability, "website: false", "unreleased Website Import must stay disabled internally")
 
-requireText(extractor, "gemini_native_pdf_v2", "extractor must record native-PDF Gemini analysis")
-requireText(extractor, "provider_unavailable", "extractor must preserve an honest provider failure state")
-requireText(extractor, "limited_analysis", "extractor must prevent sparse results from appearing complete")
-requireText(extractor, "artist_confirmation_required", "proposals must remain artist-controlled")
-requireText(extractor, "analysis_summary.relevance", "coverage must account for document relevance")
-requireText(draftFunction, "confirmed_facts_required", "drafting must require confirmed evidence")
-requireText(draftFunction, "unsupported_claim_detected", "drafting must reject unsupported claims")
-requireText(draftFunction, "is_sensitive", "sensitive records must be excluded from general drafting")
+requireText(mediaAnalyzer, "artist_confirmation_required", "media analyzer must preserve artist control")
+requireText(mediaAnalyzer, "Do not identify people", "media analyzer must not attempt person identification")
+requireText(mediaAnalyzer, "factual_observations", "media analyzer must separate supportable observations")
+requireText(mediaAnalyzer, "interpretive_observations", "media analyzer must separate interpretive readings")
+requireText(mediaAnalyzer, "private_analysis", "media analysis must be stored as private intelligence")
+requireText(extractor, "gemini_native_pdf_v2", "PDF extractor must retain native-PDF Gemini analysis")
+requireText(extractor, "artist_confirmation_required", "PDF proposals must remain artist-controlled")
+requireText(extractor, "provider_unavailable", "PDF extractor must preserve honest provider failure states")
+requireText(draftFunction, "confirmed_facts_required", "document drafting must still require confirmed evidence")
+requireText(draftFunction, "unsupported_claim_detected", "document drafting must still reject unsupported claims")
 
-requireText(interactionsShim, "v1beta/interactions", "runtime adapter must use Gemini Interactions")
+requireText(interactionsShim, "v1beta/interactions", "PDF runtime adapter must use Gemini Interactions")
 requireText(interactionsShim, "store: false", "Gemini Interactions must remain stateless")
-requireText(interactionsShim, 'type: "document"', "runtime adapter must pass original PDF bytes")
-requireText(extractionEntrypoint, "installGeminiInteractionsFetchShim", "extraction must install the proven transport adapter")
-requireText(draftEntrypoint, "installGeminiInteractionsFetchShim", "drafting must install the proven transport adapter")
+requireText(extractionEntrypoint, "installGeminiInteractionsFetchShim", "PDF extraction must install the proven transport adapter")
 
-for (const file of [page, hub, documents, drafting, client, uploadService, draftClient, availability, extractor, draftFunction, interactionsShim, extractionEntrypoint, draftEntrypoint]) {
+for (const file of [page, hub, library, passportPanel, intelligenceSheet, intelligenceClient, deviceUpload, uploadService, availability, extractor, mediaAnalyzer, draftFunction, interactionsShim, extractionEntrypoint]) {
   forbidText(file, "AIzaSy", "Google API keys must not be committed")
   forbidText(file, "GOCSPX-", "Google client secrets must not be committed")
 }
 
 if (failures.length) {
-  console.error("Artist PDF workflow audit failed:\n")
+  console.error("Artist media intelligence audit failed:\n")
   for (const failure of failures) console.error(`- ${failure}`)
   process.exit(1)
 }
 
-console.log("Artist PDF workflow audit passed: direct private PDF upload, Gemini synopsis and relevance, visible evidence results, shared protected extraction, explicit draft approval controls, artist controls, and secret hygiene verified.")
+console.log("Artist media intelligence audit passed: upload is media-first, analysis opens in Media Library and Creative Passport, PDF intelligence remains compatible, future connectors stay internal, artist approval is preserved, and secret hygiene is clean.")
