@@ -34,8 +34,8 @@ jobs:
       - run: pnpm audit:artist-beta-readiness
       - run: pnpm audit:application-composer
       - run: pnpm audit:artist-recipient-loop
-      - run: pnpm audit:navigation
       - run: pnpm audit:visual-convenience
       - run: pnpm test:artist-workflow-services
       - run: pnpm typecheck
       - run: pnpm build
+      - run: pnpm audit:navigation
