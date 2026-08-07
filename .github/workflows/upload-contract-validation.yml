@@ -45,6 +45,6 @@ jobs:
       - run: pnpm audit:universal-media
       - run: pnpm audit:artist-requirement-file-types
       - run: pnpm audit:document-intelligence
-      - run: node scripts/audit-public-roadmap-copy.mjs
       - run: pnpm typecheck
       - run: pnpm build
+      - run: node scripts/audit-public-roadmap-copy.mjs
