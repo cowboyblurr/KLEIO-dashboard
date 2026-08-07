@@ -2,7 +2,7 @@
 
 /* eslint-disable @next/next/no-img-element -- private media uses short-lived signed URLs */
 
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useState } from "react"
 import { AudioLines, BrainCircuit, Check, Clipboard, FileText, Loader2, RefreshCcw, ShieldCheck, Sparkles, Video, X } from "lucide-react"
 import type { ArtistMediaLibraryItem } from "@/lib/kleio-universal-media"
 import { analyzeMediaWithKleio, canAnalyzeMediaItem, loadMediaIntelligence, mediaIntelligenceSupportText, type MediaIntelligence } from "@/lib/kleio-media-intelligence"
@@ -55,7 +55,7 @@ export function MediaIntelligenceSheet({ item, open, onClose, onAnalyzed }: Prop
     return () => window.removeEventListener("keydown", closeOnEscape)
   }, [onClose, open])
 
-  const confidence = useMemo(() => analysis?.confidence == null ? null : Math.round(analysis.confidence * 100), [analysis?.confidence])
+  const confidence = analysis?.confidence == null ? null : Math.round(analysis.confidence * 100)
   if (!open || !item) return null
   const activeItem = item
 
