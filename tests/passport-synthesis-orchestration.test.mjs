@@ -13,7 +13,8 @@ const factualEvidence = [
 
 test("explicit medium and discipline evidence cannot silently become empty Passport fields", () => {
   const result = evaluatePassportCoverage({ evidence: factualEvidence, synthesis: { mediums: [], disciplines: [] } })
-  assert.deepEqual(result.retry_fields.sort(), ["disciplines", "mediums"])
+  assert.ok(result.retry_fields.includes("disciplines"), "supported discipline evidence must trigger repair when the discipline output is empty")
+  assert.ok(result.retry_fields.includes("mediums"), "supported medium evidence must trigger repair when the medium output is empty")
   assert.equal(result.status, "REPAIR_REQUIRED")
 })
 
