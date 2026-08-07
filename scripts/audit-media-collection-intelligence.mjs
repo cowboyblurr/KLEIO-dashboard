@@ -48,6 +48,11 @@ forbidText(fn, "const analyzedAt = cleanText(media.analyzed_at || profile.genera
 requireText(fn, "Generated summaries are suggestions only", "group synthesis must preserve the artist-confirmation boundary")
 requireText(fn, "Cross-work pattern categories must cite at least two distinct selected sources", "the provider prompt must state the deterministic cross-source grounding rule")
 
+for (const text of ["const DAILY_COLLECTION_LIMIT = 20", "enforceDailyCollectionLimit", "await enforceDailyCollectionLimit(admin, userData.user.id)", "collection_ai_daily_limit_reached"]) requireText(fn, text, "new group synthesis calls must be cost-bounded before invoking the provider")
+requireText(fn, '.gte("analyzed_at", start.toISOString())', "daily collection limit must count the authenticated artist's actual generated collection analyses for the UTC day")
+requireText(fn, "const UUID_RE", "source identifiers must be validated before owner-scoped UUID queries")
+requireText(fn, "invalid_source_id", "malformed source identifiers must fail as a truthful client error rather than a database/server failure")
+
 for (const text of ["enable row level security", "artist_media_collection_insights_select_own", "confirm_my_media_collection_insight", "dismiss_my_media_collection_insight", "security invoker", "body_of_work_context", "provenance_status", "'confirmed'", "visibility", "'private'"]) requireText(migration, text, "collection persistence and Passport promotion must remain private, owner-scoped, and artist-confirmed")
 requireText(migration, "normalized_key = 'media_collection:'", "confirmed collection context must update one canonical Passport record rather than multiplying duplicates")
 requireText(migration, "status = 'removed'", "dismissing a previously confirmed collection insight must remove its promoted Passport evidence")
@@ -58,4 +63,4 @@ if (failures.length) {
   process.exit(1)
 }
 
-console.log("KLEIO body-of-work intelligence audit passed: visible analysis dialogue is truthful, batch comparison is artist-controlled, cache identity tracks the exact synthesis evidence, cross-work patterns require multiple sources, raw media is not reuploaded, and only artist-reviewed collection notes remain reusable Passport evidence.")
+console.log("KLEIO body-of-work intelligence audit passed: visible analysis dialogue is truthful, batch comparison is artist-controlled and cost-bounded, source IDs are validated, cache identity tracks the exact synthesis evidence, cross-work patterns require multiple sources, raw media is not reuploaded, and only artist-reviewed collection notes remain reusable Passport evidence.")
