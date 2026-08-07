@@ -3,7 +3,7 @@
 /* eslint-disable @next/next/no-img-element -- private signed Supabase previews are short-lived */
 
 import { useMemo, useRef, useState } from "react"
-import { Check, FileText, FolderOpen, ImageIcon, Loader2, Search, ShieldCheck, UploadCloud, X } from "lucide-react"
+import { AudioLines, Check, FileText, FolderOpen, ImageIcon, Loader2, Search, ShieldCheck, UploadCloud, Video, X } from "lucide-react"
 import {
   loadRequirementFileLibrary,
   uploadRequirementFile,
@@ -34,6 +34,15 @@ function sourceExtensionAccepts(filename: string, accepted: string[]) {
   if (statedExtensions.includes(extension)) return true
   if (["jpg", "jpeg"].includes(extension) && statedExtensions.some((value) => ["jpg", "jpeg"].includes(value))) return true
   return false
+}
+
+function MediaPreview({ item }: { item: ArtistMediaLibraryItem }) {
+  if (item.mediaKind === "image" && item.previewUrl) return <img src={item.previewUrl} alt="" className="size-full object-cover" />
+  if (item.mediaKind === "video" && item.previewUrl) return <video src={item.previewUrl} muted playsInline preload="metadata" className="size-full object-cover" aria-label={`${item.title} video preview`} />
+  if (item.mediaKind === "video") return <Video className="size-8 text-[#75639E]" />
+  if (item.mediaKind === "audio") return <AudioLines className="size-8 text-[#75639E]" />
+  if (item.mediaKind === "image") return <ImageIcon className="size-8 text-[#75639E]" />
+  return <FileText className="size-8 text-[#75639E]" />
 }
 
 export function ApplicationRequirementFilePicker(props: Props) {
@@ -67,7 +76,7 @@ export function ApplicationRequirementFilePicker(props: Props) {
     try {
       await refreshLibrary()
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "KLEIO could not load your private files.")
+      setError(reason instanceof Error ? reason.message : "KLEIO could not load your private material.")
     } finally {
       setLoading(false)
     }
@@ -79,7 +88,7 @@ export function ApplicationRequirementFilePicker(props: Props) {
 
   function toggle(item: ArtistMediaLibraryItem) {
     if (!sourceExtensionAccepts(item.originalFilename, props.sourceAcceptedTypes)) {
-      setError(`${item.originalFilename} does not use one of the file extensions stated by this opportunity.`)
+      setError(`${item.originalFilename} does not use one of the formats stated by this opportunity.`)
       return
     }
     setError("")
@@ -96,7 +105,7 @@ export function ApplicationRequirementFilePicker(props: Props) {
     if (!chosen.length || loading) return
     const invalidExtension = chosen.find((file) => !sourceExtensionAccepts(file.name, props.sourceAcceptedTypes))
     if (invalidExtension) {
-      setError(`${invalidExtension.name} does not use one of the file extensions stated by this opportunity.`)
+      setError(`${invalidExtension.name} does not use one of the formats stated by this opportunity.`)
       if (fileInputRef.current) fileInputRef.current.value = ""
       return
     }
@@ -116,9 +125,9 @@ export function ApplicationRequirementFilePicker(props: Props) {
       }
       await refreshLibrary()
       setSelected(uploaded.slice(0, props.maximumSelectionCount))
-      setStatus(`${uploaded.length} private file${uploaded.length === 1 ? " is" : "s are"} selected. Confirm below to attach ${uploaded.length === 1 ? "it" : "them"} to this requirement.`)
+      setStatus(`${uploaded.length} private item${uploaded.length === 1 ? " is" : "s are"} selected. Confirm below to attach ${uploaded.length === 1 ? "it" : "them"} to this requirement.`)
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "KLEIO could not upload the selected requirement file.")
+      setError(reason instanceof Error ? reason.message : "KLEIO could not upload the selected requirement material.")
     } finally {
       if (fileInputRef.current) fileInputRef.current.value = ""
       setLoading(false)
@@ -133,7 +142,7 @@ export function ApplicationRequirementFilePicker(props: Props) {
       await props.onConfirm(selected)
       close()
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "KLEIO could not attach the selected file.")
+      setError(reason instanceof Error ? reason.message : "KLEIO could not attach the selected material.")
     } finally {
       setLoading(false)
     }
@@ -146,28 +155,28 @@ export function ApplicationRequirementFilePicker(props: Props) {
         <div className="flex max-h-full min-h-full flex-col bg-[#FCFBFE] sm:min-h-[600px]">
           <header className="flex shrink-0 items-start justify-between gap-4 border-b border-[#E7E1F7] bg-white px-4 py-4 sm:px-6">
             <div>
-              <p className="text-[0.66rem] font-semibold uppercase tracking-[0.16em] text-[#75639E]">Private application file</p>
+              <p className="text-[0.66rem] font-semibold uppercase tracking-[0.16em] text-[#75639E]">Private application material</p>
               <h2 id="application-requirement-file-picker-title" className="mt-1 font-serif text-2xl font-semibold">{props.requirementLabel}</h2>
               <p className="mt-1 max-w-2xl text-xs leading-5 text-[#746E80]">{props.description}</p>
             </div>
-            <button type="button" onClick={close} className="grid size-11 place-items-center rounded-xl border border-[#E2DCF1] bg-white" aria-label="Close requirement file picker"><X className="size-5" /></button>
+            <button type="button" onClick={close} className="grid size-11 place-items-center rounded-xl border border-[#E2DCF1] bg-white" aria-label="Close requirement material picker"><X className="size-5" /></button>
           </header>
 
           {(error || status) && <div role={error ? "alert" : "status"} aria-live="polite" className={`shrink-0 border-b px-4 py-3 text-sm sm:px-6 ${error ? "border-red-200 bg-red-50 text-red-700" : "border-[#E7E1F7] bg-[#F9F7FC] text-[#625C70]"}`}>{error || status}</div>}
 
           <main className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-6">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <label className="relative block flex-1"><span className="sr-only">Search private requirement files</span><Search className="pointer-events-none absolute left-3 top-3 size-4 text-[#8A8296]" /><input type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search private files" className="h-11 w-full rounded-xl border border-[#DED7EF] bg-white pl-9 pr-3 text-sm outline-none focus:border-[#A997E8] focus:ring-4 focus:ring-[#A997E8]/12" /></label>
+              <label className="relative block flex-1"><span className="sr-only">Search private requirement material</span><Search className="pointer-events-none absolute left-3 top-3 size-4 text-[#8A8296]" /><input type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search private media and files" className="h-11 w-full rounded-xl border border-[#DED7EF] bg-white pl-9 pr-3 text-sm outline-none focus:border-[#A997E8] focus:ring-4 focus:ring-[#A997E8]/12" /></label>
               <button type="button" className={secondary} onClick={() => fileInputRef.current?.click()} disabled={loading}><UploadCloud className="size-4" />Upload from device</button>
               <input ref={fileInputRef} type="file" className="sr-only" accept={props.allowedMimeTypes.join(",")} multiple={props.allowMultiple} onChange={(event) => void upload(event.target.files)} />
             </div>
 
-            {loading ? <p className="mt-8 flex items-center justify-center gap-2 text-sm text-[#746E80]"><Loader2 className="size-4 animate-spin" />Working with your private files…</p> : visibleLibrary.length ? <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{visibleLibrary.map((item) => {
+            {loading ? <p className="mt-8 flex items-center justify-center gap-2 text-sm text-[#746E80]"><Loader2 className="size-4 animate-spin" />Working with your private material…</p> : visibleLibrary.length ? <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{visibleLibrary.map((item) => {
               const active = selected.some((candidate) => candidate.id === item.id)
-              return <button key={item.id} type="button" aria-pressed={active} onClick={() => toggle(item)} className={`overflow-hidden rounded-2xl border bg-white text-left transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#A997E8]/20 ${active ? "border-[#8C78BF] ring-2 ring-[#A997E8]/20" : "border-[#E7E1F7]"}`}><div className="relative grid aspect-[4/3] place-items-center bg-[#F4F1F8]">{item.previewUrl ? <img src={item.previewUrl} alt="" className="size-full object-cover" /> : item.mediaKind === "image" ? <ImageIcon className="size-8 text-[#75639E]" /> : <FileText className="size-8 text-[#75639E]" />}{active && <span className="absolute right-2 top-2 grid size-7 place-items-center rounded-full bg-[#5B4B8A] text-white"><Check className="size-4" /></span>}</div><div className="p-3"><p className="truncate text-sm font-semibold">{item.title}</p><p className="mt-1 truncate text-xs text-[#746E80]">{item.originalFilename}</p></div></button>
-            })}</div> : <div className="mt-8 rounded-2xl border border-dashed border-[#D8D0F2] bg-white p-8 text-center"><FileText className="mx-auto size-8 text-[#75639E]" /><p className="mt-3 text-sm font-semibold">No matching private file yet</p><p className="mt-1 text-xs leading-5 text-[#746E80]">Upload the required file from this device. It stays private until you confirm this requirement.</p></div>}
+              return <button key={item.id} type="button" aria-pressed={active} onClick={() => toggle(item)} className={`overflow-hidden rounded-2xl border bg-white text-left transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#A997E8]/20 ${active ? "border-[#8C78BF] ring-2 ring-[#A997E8]/20" : "border-[#E7E1F7]"}`}><div className="relative grid aspect-[4/3] place-items-center bg-[#F4F1F8]"><MediaPreview item={item} />{active && <span className="absolute right-2 top-2 grid size-7 place-items-center rounded-full bg-[#5B4B8A] text-white"><Check className="size-4" /></span>}<span className="absolute bottom-2 left-2 rounded-full bg-white/95 px-2 py-0.5 text-[0.62rem] font-semibold capitalize text-[#625C70]">{item.mediaKind}</span></div><div className="p-3"><p className="truncate text-sm font-semibold">{item.title}</p><p className="mt-1 truncate text-xs text-[#746E80]">{item.originalFilename}</p></div></button>
+            })}</div> : <div className="mt-8 rounded-2xl border border-dashed border-[#D8D0F2] bg-white p-8 text-center"><FileText className="mx-auto size-8 text-[#75639E]" /><p className="mt-3 text-sm font-semibold">No matching private material yet</p><p className="mt-1 text-xs leading-5 text-[#746E80]">Upload the media or file requested by this opportunity. It stays private until you confirm this requirement.</p></div>}
 
-            <div className="mt-5 rounded-2xl border border-[#E7E1F7] bg-white p-4 text-xs leading-5 text-[#746E80]"><ShieldCheck className="mr-2 inline size-4 text-[#5B4B8A]" />Choosing or uploading a file does not submit it to the institution. KLEIO attaches it only after your confirmation.</div>
+            <div className="mt-5 rounded-2xl border border-[#E7E1F7] bg-white p-4 text-xs leading-5 text-[#746E80]"><ShieldCheck className="mr-2 inline size-4 text-[#5B4B8A]" />Choosing or uploading material does not submit it to the institution. KLEIO attaches it only after your confirmation.</div>
           </main>
 
           <footer className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-t border-[#E7E1F7] bg-white px-4 py-4 sm:px-6"><button type="button" className={secondary} onClick={close}>Cancel</button><span className="text-xs font-semibold text-[#746E80]">{selected.length} of {props.maximumSelectionCount} selected</span><button type="button" className={primary} disabled={!selected.length || loading} onClick={() => void confirm()}>{loading ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />}Attach selected</button></footer>
