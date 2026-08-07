@@ -3,7 +3,7 @@
 import { useSearchParams } from "next/navigation"
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { AlertTriangle, CheckCircle2, FileCheck2, FileText, Loader2, ShieldCheck } from "lucide-react"
-import { QuickMediaImport } from "@/components/kleio/media-import/quick-media-import"
+import { ApplicationRequirementFilePicker } from "@/components/kleio/application-requirement-file-picker"
 import {
   normalizeRequirementFileTypes,
   requirementFileTypeLabel,
@@ -125,6 +125,7 @@ export function ApplicationRequirementMedia() {
           const pickerMimeTypes = sourceMimeTypes.length ? sourceMimeTypes : SUPPORTED_REQUIREMENT_MIME_TYPES
           const count = requirementLimit(requirement)
           const typeSummary = requirementFileTypeLabel(requirement.accepted_file_types)
+          const normalizedRequirement = sourceMimeTypes.length ? { ...requirement, accepted_file_types: sourceMimeTypes } : requirement
           return (
             <article id={`file-requirement-${requirement.id}`} key={requirement.id} className="p-3 sm:p-4">
               <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
@@ -141,26 +142,21 @@ export function ApplicationRequirementMedia() {
                 </div>
 
                 <div className="md:justify-self-end">
-                  <QuickMediaImport
-                    context="opportunity_requirement"
+                  <ApplicationRequirementFilePicker
                     label={current ? "Replace" : "Add file"}
-                    config={{
-                      title: requirement.label,
-                      description: requirement.description || "Choose a private source for this exact opportunity requirement.",
-                      completionAction: "Validate and include",
-                      allowedMimeTypes: pickerMimeTypes,
-                      maxFileSizeBytes: requirement.maximum_file_size_bytes ?? 20 * 1024 * 1024,
-                      maxSelectionCount: count,
-                      allowMultiple: count > 1,
-                      destinationType: "opportunity_requirement",
-                      destinationId: requirement.id,
-                    }}
-                    onConfirm={async ({ items }) => {
+                    requirementLabel={requirement.label}
+                    description={requirement.description || "Choose a private source for this exact opportunity requirement. Nothing is submitted until your final external or KLEIO submission action."}
+                    allowedMimeTypes={pickerMimeTypes}
+                    sourceAcceptedTypes={requirement.accepted_file_types}
+                    maximumFileSizeBytes={requirement.maximum_file_size_bytes ?? 20 * 1024 * 1024}
+                    maximumSelectionCount={count}
+                    allowMultiple={count > 1}
+                    onConfirm={async (items) => {
                       setError("")
                       setMessage("")
                       try {
                         for (const item of items) {
-                          await attachMediaToRequirement({ item, requirement, artistConfirmed: true })
+                          await attachMediaToRequirement({ item, requirement: normalizedRequirement, artistConfirmed: true })
                           if (item.mediaKind === "document" && item.sourceId) await requestMediaExtraction(item, "application_requirement_file")
                         }
                         setMessage(`${requirement.label} updated. You can continue the application without leaving this page.`)
