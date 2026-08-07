@@ -3,18 +3,20 @@ name: Artist Beta Convenience
 on:
   pull_request:
     paths:
-      - "app/artist-dashboard/applications/**"
-      - "components/kleio/application-**"
-      - "components/kleio/artist-sidebar.tsx"
-      - "components/kleio/unified-artist-applications.tsx"
-      - "components/kleio/production-artist-opportunity-directory.tsx"
+      - "app/**"
+      - "components/kleio/**"
       - "lib/kleio-application-composer.ts"
+      - "lib/kleio-universal-media.ts"
+      - "lib/kleio-import-source-availability.ts"
+      - "lib/kleio-media-file-types.ts"
       - "lib/kleio-requirement-file-types.ts"
       - "lib/kleio-requirement-file-upload.ts"
       - "supabase/migrations/*required_application_file*"
+      - "supabase/migrations/*media_upload*"
       - "scripts/audit-artist-beta-convenience.mjs"
       - "scripts/audit-artist-requirement-channel-separation.mjs"
       - "scripts/audit-artist-requirement-file-types.mjs"
+      - "scripts/audit-upload-surface-consistency.mjs"
       - "package.json"
       - "pnpm-lock.yaml"
   workflow_dispatch:
@@ -36,6 +38,7 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - run: pnpm audit:upload-surfaces
       - run: pnpm audit:artist-beta-convenience
       - run: pnpm audit:artist-requirement-channels
       - run: pnpm audit:artist-requirement-file-types
