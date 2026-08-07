@@ -1,0 +1,36 @@
+name: Apply universal media contract
+
+on:
+  push:
+    branches:
+      - agent/beta-artist-convenience-simulations
+    paths:
+      - "scripts/apply-universal-media-contract.mjs"
+      - ".github/workflows/apply-universal-media-contract.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/beta-artist-convenience-simulations
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node scripts/apply-universal-media-contract.mjs
+      - name: Commit patch
+        run: |
+          if git diff --quiet; then
+            echo "No patch required."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add lib/kleio-universal-media.ts
+          git commit -m "Expand universal media upload contract"
+          git push origin HEAD:agent/beta-artist-convenience-simulations
