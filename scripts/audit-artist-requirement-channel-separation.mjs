@@ -26,6 +26,7 @@ requirePattern(composer, /explicitWrittenInputTypes/, "Composer must recognize e
 requirePattern(composer, /explicitFileInputTypes/, "Composer must recognize explicit file input types before semantic labels.")
 requirePattern(composer, /if \(explicitWrittenInputTypes\.has\(inputType\)\) return true[\s\S]*if \(explicitFileInputTypes\.has\(inputType\)\) return false/, "A document-only budget or proposal must not become an unnecessary textarea simply because of its material key.")
 requirePattern(composer, /accepted_file_types\?\.length/, "Accepted file types must prevent a file-only requirement from being inferred as written when input type is otherwise ambiguous.")
+requirePattern(composer, /inputType === "mixed"/, "Source-declared mixed requirements must remain intentionally capable of both written and file work.")
 requirePattern(composer, /"project_proposal"/, "Project proposal must remain recognized as a written-answer type when the source does not specify a file-only input.")
 requirePattern(composer, /"budget"/, "Budget must remain recognized as a written-answer type when the source presents it as written input.")
 requirePattern(composer, /\["portfolio", "work_samples", "artwork_images", "images", "image_list"\]/, "Portfolio/work-sample requirements must remain handled by the visual work selector.")
@@ -36,4 +37,4 @@ if (failures.length) {
   process.exit(1)
 }
 
-console.log("KLEIO requirement-channel separation passed: explicit source input type wins over semantic labels; file requirements use the upload surface, written questions stay in the composer, and portfolio stays in the visual selector without duplicate artist tasks.")
+console.log("KLEIO requirement-channel separation passed: explicit source input type wins over semantic labels; file requirements use the upload surface, written questions stay in the composer, portfolio stays in the visual selector, and source-declared mixed/package requirements may intentionally require more than one channel without being mistaken for redundant UI.")
