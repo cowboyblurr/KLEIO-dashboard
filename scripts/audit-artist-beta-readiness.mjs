@@ -40,7 +40,9 @@ requireText(importPage, /href="\/artist-dashboard\/passport\/"/, "Document impor
 
 requireText(migration, /artist_beta_enabled = true[\s\S]*source_type = 'device_image'/, "Database beta gating must enable direct device images.")
 requireText(migration, /sync_artist_cv_file_path_from_import_source/, "CV source state must synchronize to artist_profiles.cv_file_path.")
+requireText(migration, /security invoker/, "CV synchronization must remain under the artist's existing RLS-authorized transaction.")
+forbidText(migration, /security definer/, "Artist CV state synchronization must not bypass owner-scoped RLS.")
 requireText(migration, /after insert or update of artist_selected_document_type, classification, storage_path, deleted_at/, "CV synchronization must react to upload, reclassification, replacement and deletion.")
 requireText(migration, /with latest_cv as/, "Existing uploaded CVs must be backfilled into canonical profile state.")
 
-console.log("KLEIO artist beta-readiness audit passed: direct artwork upload, truthful CV/completion state, PDF-specific document UX, and clear return navigation are protected.")
+console.log("KLEIO artist beta-readiness audit passed: direct artwork upload, truthful CV/completion state, PDF-specific document UX, RLS-safe state sync, and clear return navigation are protected.")
