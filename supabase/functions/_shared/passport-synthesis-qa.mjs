@@ -14,18 +14,18 @@ export const PASSPORT_SYNTHESIS_FIELDS = [
 ]
 
 const FIELD_RULES = {
-  bio: ["bio", "biography", "artist_biography", "professional_name", "career_highlight"],
-  artist_statement: ["artist_statement", "statement", "artist_authored", "practice_description", "theme", "conceptual"],
-  practice_description: ["practice_description", "practice", "discipline", "medium", "material", "process", "artwork", "project"],
-  disciplines: ["discipline", "disciplines", "artform", "art_form", "practice"],
-  mediums: ["medium", "mediums", "material", "materials", "process", "technique", "format"],
-  themes: ["theme", "themes", "concept", "conceptual", "subject", "motif", "visual_observation", "artist_statement"],
-  visual_language: ["visual_language", "formal", "composition", "palette", "texture", "motif", "visual_observation", "artwork"],
-  application_keywords: ["keyword", "discipline", "medium", "material", "theme", "skill", "practice", "artwork"],
+  bio: ["bio", "biography", "artist_biography", "professional_name", "birth_place_and_year", "career_highlight"],
+  artist_statement: ["artist_statement", "statement", "artist_authored", "practice_description", "conceptual_narrative", "theme", "conceptual"],
+  practice_description: ["practice_description", "practice", "discipline", "medium", "material", "process", "artwork", "artwork_metadata", "project", "conceptual_narrative"],
+  disciplines: ["discipline", "disciplines", "artform", "art_form", "practice", "artwork_metadata"],
+  mediums: ["medium", "mediums", "material", "materials", "process", "technique", "format", "artwork_metadata"],
+  themes: ["theme", "themes", "concept", "conceptual", "conceptual_narrative", "subject", "motif", "visual_observation", "artist_statement", "artwork_metadata"],
+  visual_language: ["visual_language", "formal", "composition", "palette", "texture", "motif", "visual_observation", "artwork", "artwork_metadata"],
+  application_keywords: ["keyword", "discipline", "medium", "material", "theme", "skill", "practice", "artwork", "artwork_metadata", "conceptual_narrative"],
   education: ["education", "training", "degree", "school", "university"],
-  exhibitions: ["exhibition", "exhibitions", "show", "venue"],
-  awards: ["award", "awards", "grant", "fellowship", "prize"],
-  residencies: ["residency", "residencies", "resident_artist"],
+  exhibitions: ["exhibition", "exhibitions", "solo_exhibitions", "group_exhibitions", "art_fair_participation", "show", "venue"],
+  awards: ["award", "awards", "awards_and_honors", "grant", "fellowship", "prize"],
+  residencies: ["residency", "residencies", "residency_program", "resident_artist"],
 }
 
 function normalized(value) {
@@ -49,12 +49,22 @@ function evidenceText(item) {
   ].map(normalized).filter(Boolean).join(" ")
 }
 
+function addCanonicalFieldTag(item, field) {
+  if (!item || typeof item !== "object" || !Array.isArray(item.tags)) return
+  if (!item.tags.includes(field)) item.tags.push(field)
+}
+
 export function evidenceSupportsField(evidence, field) {
   const rules = FIELD_RULES[field] ?? [field]
   const normalizedRules = rules.map(normalized)
   return (Array.isArray(evidence) ? evidence : []).some((item) => {
     const haystack = evidenceText(item)
-    return normalizedRules.some((rule) => haystack.includes(rule))
+    const supported = normalizedRules.some((rule) => haystack.includes(rule))
+    // coverageEvidence deliberately reuses each EvidenceItem.supports_fields array as `tags`.
+    // Canonicalizing the matched field here means the later bounded repair pass can select
+    // the same evidence by exact Passport field without repeating semantic matching logic.
+    if (supported) addCanonicalFieldTag(item, field)
+    return supported
   })
 }
 
