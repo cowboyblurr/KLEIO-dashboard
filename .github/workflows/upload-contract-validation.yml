@@ -1,0 +1,37 @@
+name: Upload Contract Validation
+
+on:
+  pull_request:
+    paths:
+      - "components/kleio/**"
+      - "lib/kleio-device-media-upload.ts"
+      - "lib/kleio-import-source-availability.ts"
+      - "lib/kleio-media-file-types.ts"
+      - "lib/kleio-requirement-file-types.ts"
+      - "lib/kleio-requirement-file-upload.ts"
+      - "scripts/audit-upload-surface-consistency.mjs"
+      - "supabase/migrations/*media_upload*"
+      - "package.json"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm audit:upload-surfaces
+      - run: pnpm audit:artist-requirement-file-types
+      - run: pnpm typecheck
+      - run: pnpm build
