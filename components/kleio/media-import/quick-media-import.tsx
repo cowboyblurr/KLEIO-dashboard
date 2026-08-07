@@ -131,6 +131,10 @@ export function QuickMediaImport({ context, config: configOverrides, label, clas
       return
     }
 
+    void trackKleioProductEvent("upload_started", {
+      surface: "universal_media_quick_import",
+      metadata: { source: "device", count: accepted.length, mode: context },
+    })
     setLoading(true)
     try {
       const uploaded: ArtistMediaLibraryItem[] = []
@@ -142,10 +146,6 @@ export function QuickMediaImport({ context, config: configOverrides, label, clas
       await refreshLibrary()
       setSelected(uploaded.slice(0, config.maxSelectionCount))
       setStatus(`${uploaded.length} file${uploaded.length === 1 ? " was" : "s were"} added privately and selected. Review ${uploaded.length === 1 ? "it" : "them"} below, then confirm.`)
-      void trackKleioProductEvent("media_upload_completed", {
-        surface: "universal_media_quick_import",
-        metadata: { source: "device", count: uploaded.length, mode: context },
-      })
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "KLEIO could not upload the selected media.")
     } finally {
