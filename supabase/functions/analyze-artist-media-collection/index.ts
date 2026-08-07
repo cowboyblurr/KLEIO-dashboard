@@ -6,6 +6,8 @@ const DEFAULT_DRAFT_MODEL = "gemini-3.6-flash"
 const PROMPT_VERSION = "kleio_media_collection_intelligence_v2"
 const MIN_SOURCES = 2
 const MAX_SOURCES = 12
+const DAILY_COLLECTION_LIMIT = 20
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 const ALLOWED_ORIGINS = [
   /^https:\/\/([a-z0-9-]+\.)?kleioarthouse\.com$/i,
   /^https:\/\/cowboyblurr\.github\.io$/i,
@@ -14,6 +16,7 @@ const ALLOWED_ORIGINS = [
 ]
 
 type JsonObject = Record<string, unknown>
+type AdminClient = ReturnType<typeof createClient>
 type Pattern = { text: string; source_refs: string[]; confidence: number }
 type ProviderResult<T> = {
   output: T
@@ -284,6 +287,18 @@ async function fingerprint(value: string) {
   return Array.from(new Uint8Array(digest)).map((byte) => byte.toString(16).padStart(2, "0")).join("")
 }
 
+async function enforceDailyCollectionLimit(admin: AdminClient, userId: string) {
+  const start = new Date()
+  start.setUTCHours(0, 0, 0, 0)
+  const { count, error } = await admin
+    .from("artist_media_collection_insights")
+    .select("id", { count: "exact", head: true })
+    .eq("artist_user_id", userId)
+    .gte("analyzed_at", start.toISOString())
+  if (error) throw new Error("collection_limit_check_failed")
+  if ((count ?? 0) >= DAILY_COLLECTION_LIMIT) throw new Error("collection_ai_daily_limit_reached")
+}
+
 function systemInstruction() {
   return `You are KLEIO Body-of-Work Intelligence, a private artist-side synthesis assistant. Compare only the supplied artist-owned source analyses and artist-authored work metadata. Your job is to surface useful relationships across a selected group of works without turning interpretation into fact.
 
@@ -330,6 +345,7 @@ Deno.serve(async (request: Request) => {
   const sourceIds = Array.from(new Set(strings(body.source_ids, MAX_SOURCES + 1, 100)))
   if (sourceIds.length < MIN_SOURCES) return json(request, { error: "collection_requires_two_sources", message: "Select at least two private sources to analyze together." }, 400)
   if (sourceIds.length > MAX_SOURCES) return json(request, { error: "collection_too_large", message: `Choose no more than ${MAX_SOURCES} sources for one body-of-work analysis.` }, 400)
+  if (sourceIds.some((id) => !UUID_RE.test(id))) return json(request, { error: "invalid_source_id", message: "One or more selected sources are invalid." }, 400)
 
   const { data: sources, error: sourceError } = await admin.from("artist_import_sources")
     .select("id,artist_user_id,label,original_filename,mime_type,media_kind,checksum,review_summary,updated_at")
@@ -380,6 +396,7 @@ Deno.serve(async (request: Request) => {
   if (!apiKey) return json(request, { error: "gemini_not_configured" }, 503)
 
   try {
+    await enforceDailyCollectionLimit(admin, userData.user.id)
     const provider = await runGeminiStructured<JsonObject>({
       apiKey,
       model,
@@ -426,7 +443,10 @@ COMPOSITION RULES:
     return json(request, { collection, cached: false, artist_confirmation_required: true, raw_patterns_are_not_application_evidence: true })
   } catch (reason) {
     const code = reason instanceof Error ? cleanText(reason.message, 120).split(":")[0] : "collection_analysis_failed"
-    const status = code === "gemini_rate_limited" ? 429 : code === "gemini_not_configured" || code === "gemini_provider_unavailable" ? 503 : 422
-    return json(request, { error: code, message: "KLEIO could not complete this group analysis. Your individual private analyses remain available and unchanged." }, status)
+    const status = code === "gemini_rate_limited" || code === "collection_ai_daily_limit_reached" ? 429 : code === "gemini_not_configured" || code === "gemini_provider_unavailable" || code === "collection_limit_check_failed" ? 503 : 422
+    const message = code === "collection_ai_daily_limit_reached"
+      ? "You have reached today's private body-of-work analysis limit. Your existing private analyses remain available."
+      : "KLEIO could not complete this group analysis. Your individual private analyses remain available and unchanged."
+    return json(request, { error: code, message }, status)
   }
 })
