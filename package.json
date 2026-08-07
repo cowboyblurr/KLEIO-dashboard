@@ -11,6 +11,7 @@
     "test:artist-workflow-services": "node --test tests/artist-workflow-services.test.mjs",
     "test:gemini-document-intelligence": "node --test tests/gemini-document-intelligence.test.mjs",
     "audit:artist-beta-readiness": "node scripts/audit-artist-beta-readiness.mjs",
+    "audit:artist-beta-convenience": "node scripts/audit-artist-beta-convenience.mjs",
     "audit:artist-recipient-loop": "node scripts/audit-artist-recipient-loop.mjs",
     "audit:application-composer": "node scripts/audit-application-composer-lock.mjs",
     "audit:navigation": "node scripts/audit-navigation.mjs",
