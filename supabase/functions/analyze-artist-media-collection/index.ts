@@ -6,6 +6,8 @@ const DEFAULT_DRAFT_MODEL = "gemini-3.6-flash"
 const PROMPT_VERSION = "kleio_media_collection_intelligence_v2"
 const MIN_SOURCES = 2
 const MAX_SOURCES = 12
+const DAILY_COLLECTION_LIMIT = 20
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 const ALLOWED_ORIGINS = [
   /^https:\/\/([a-z0-9-]+\.)?kleioarthouse\.com$/i,
   /^https:\/\/cowboyblurr\.github\.io$/i,
@@ -14,6 +16,7 @@ const ALLOWED_ORIGINS = [
 ]
 
 type JsonObject = Record<string, unknown>
+type AdminClient = ReturnType<typeof createClient>
 type Pattern = { text: string; source_refs: string[]; confidence: number }
 type ProviderResult<T> = {
   output: T
@@ -284,6 +287,50 @@ async function fingerprint(value: string) {
   return Array.from(new Uint8Array(digest)).map((byte) => byte.toString(16).padStart(2, "0")).join("")
 }
 
+async function enforceDailyCollectionLimit(admin: AdminClient, userId: string) {
+  const start = new Date()
+  start.setUTCHours(0, 0, 0, 0)
+  const { count, error } = await admin
+    .from("artist_ai_usage_events")
+    .select("id", { count: "exact", head: true })
+    .eq("artist_user_id", userId)
+    .eq("action", "analyze_media")
+    .contains("metadata", { analysis_kind: "collection" })
+    .gte("created_at", start.toISOString())
+    .in("status", ["succeeded", "failed"])
+  if (error) throw new Error("collection_limit_check_failed")
+  if ((count ?? 0) >= DAILY_COLLECTION_LIMIT) throw new Error("collection_ai_daily_limit_reached")
+}
+
+async function recordCollectionUsage(admin: AdminClient, userId: string, status: "succeeded" | "failed" | "cached", input: {
+  model: string
+  requestId?: string
+  latencyMs?: number
+  usage?: { input_tokens: number; output_tokens: number; total_tokens: number }
+  errorCode?: string
+  sourceCount: number
+  sourceFingerprint: string
+}) {
+  await admin.from("artist_ai_usage_events").insert({
+    artist_user_id: userId,
+    action: "analyze_media",
+    provider: GEMINI_PROVIDER,
+    model: input.model,
+    status,
+    input_units: input.usage?.input_tokens ?? 0,
+    output_units: input.usage?.output_tokens ?? 0,
+    total_units: input.usage?.total_tokens ?? 0,
+    latency_ms: input.latencyMs ?? null,
+    provider_request_id: input.requestId || "",
+    error_code: input.errorCode || "",
+    metadata: {
+      analysis_kind: "collection",
+      source_count: input.sourceCount,
+      source_fingerprint: input.sourceFingerprint,
+    },
+  })
+}
+
 function systemInstruction() {
   return `You are KLEIO Body-of-Work Intelligence, a private artist-side synthesis assistant. Compare only the supplied artist-owned source analyses and artist-authored work metadata. Your job is to surface useful relationships across a selected group of works without turning interpretation into fact.
 
@@ -330,6 +377,7 @@ Deno.serve(async (request: Request) => {
   const sourceIds = Array.from(new Set(strings(body.source_ids, MAX_SOURCES + 1, 100)))
   if (sourceIds.length < MIN_SOURCES) return json(request, { error: "collection_requires_two_sources", message: "Select at least two private sources to analyze together." }, 400)
   if (sourceIds.length > MAX_SOURCES) return json(request, { error: "collection_too_large", message: `Choose no more than ${MAX_SOURCES} sources for one body-of-work analysis.` }, 400)
+  if (sourceIds.some((id) => !UUID_RE.test(id))) return json(request, { error: "invalid_source_id", message: "One or more selected sources are invalid." }, 400)
 
   const { data: sources, error: sourceError } = await admin.from("artist_import_sources")
     .select("id,artist_user_id,label,original_filename,mime_type,media_kind,checksum,review_summary,updated_at")
@@ -361,12 +409,17 @@ Deno.serve(async (request: Request) => {
   const sourceFingerprint = await fingerprint(JSON.stringify(orderedEvidence))
 
   const { data: existing, error: existingError } = await admin.from("artist_media_collection_insights")
-    .select("id,title,source_ids,status,generated_insight,artist_summary,analyzed_at,confirmed_at")
+    .select("id,title,source_ids,status,generated_insight,artist_summary,model,analyzed_at,confirmed_at")
     .eq("artist_user_id", userData.user.id)
     .eq("source_fingerprint", sourceFingerprint)
     .maybeSingle()
   if (existingError) return json(request, { error: "collection_context_unavailable" }, 500)
   if (existing && existing.status !== "dismissed") {
+    await recordCollectionUsage(admin, userData.user.id, "cached", {
+      model: cleanText(existing.model, 100) || DEFAULT_DRAFT_MODEL,
+      sourceCount: sourceIds.length,
+      sourceFingerprint,
+    })
     return json(request, {
       collection: existing,
       cached: true,
@@ -379,8 +432,18 @@ Deno.serve(async (request: Request) => {
   const model = safeModel(Deno.env.get("GEMINI_MEDIA_MODEL"), DEFAULT_DRAFT_MODEL)
   if (!apiKey) return json(request, { error: "gemini_not_configured" }, 503)
 
+  let claimed = false
+  let providerAttempted = false
+  let providerResult: ProviderResult<JsonObject> | null = null
   try {
-    const provider = await runGeminiStructured<JsonObject>({
+    const { data: claimResult, error: claimError } = await auth.rpc("claim_my_media_collection_analysis", { target_fingerprint: sourceFingerprint })
+    if (claimError) throw new Error("collection_claim_unavailable")
+    if (claimResult !== true) throw new Error("collection_analysis_in_progress")
+    claimed = true
+
+    await enforceDailyCollectionLimit(admin, userData.user.id)
+    providerAttempted = true
+    providerResult = await runGeminiStructured<JsonObject>({
       apiKey,
       model,
       systemInstruction: systemInstruction(),
@@ -404,7 +467,7 @@ COMPOSITION RULES:
       timeoutMs: 72_000,
       maxOutputTokens: 12_000,
     })
-    const insight = normalizeOutput(provider.output, allowedRefs)
+    const insight = normalizeOutput(providerResult.output, allowedRefs)
     if (!insight.body_of_work_summary && !insight.summary) throw new Error("collection_analysis_empty")
     const now = new Date().toISOString()
     const { data: collection, error: saveError } = await admin.from("artist_media_collection_insights").upsert({
@@ -416,17 +479,46 @@ COMPOSITION RULES:
       generated_insight: insight,
       artist_summary: "",
       provider: GEMINI_PROVIDER,
-      model: provider.model,
+      model: providerResult.model,
       prompt_version: PROMPT_VERSION,
       analyzed_at: now,
       confirmed_at: null,
       updated_at: now,
     }, { onConflict: "artist_user_id,source_fingerprint" }).select("id,title,source_ids,status,generated_insight,artist_summary,analyzed_at,confirmed_at").single()
-    if (saveError || !collection) return json(request, { error: "collection_save_failed" }, 500)
+    if (saveError || !collection) throw new Error("collection_save_failed")
+    await recordCollectionUsage(admin, userData.user.id, "succeeded", {
+      model: providerResult.model,
+      requestId: providerResult.requestId,
+      latencyMs: providerResult.latencyMs,
+      usage: providerResult.usage,
+      sourceCount: sourceIds.length,
+      sourceFingerprint,
+    })
     return json(request, { collection, cached: false, artist_confirmation_required: true, raw_patterns_are_not_application_evidence: true })
   } catch (reason) {
     const code = reason instanceof Error ? cleanText(reason.message, 120).split(":")[0] : "collection_analysis_failed"
-    const status = code === "gemini_rate_limited" ? 429 : code === "gemini_not_configured" || code === "gemini_provider_unavailable" ? 503 : 422
-    return json(request, { error: code, message: "KLEIO could not complete this group analysis. Your individual private analyses remain available and unchanged." }, status)
+    if (providerAttempted) {
+      await recordCollectionUsage(admin, userData.user.id, "failed", {
+        model: providerResult?.model || model,
+        requestId: providerResult?.requestId,
+        latencyMs: providerResult?.latencyMs,
+        usage: providerResult?.usage,
+        errorCode: code,
+        sourceCount: sourceIds.length,
+        sourceFingerprint,
+      })
+    }
+    const status = code === "collection_analysis_in_progress" ? 409
+      : code === "gemini_rate_limited" || code === "collection_ai_daily_limit_reached" ? 429
+      : code === "gemini_not_configured" || code === "gemini_provider_unavailable" || code === "collection_limit_check_failed" || code === "collection_claim_unavailable" ? 503
+      : 422
+    const message = code === "collection_analysis_in_progress"
+      ? "A private body-of-work analysis is already running for your account. Let it finish before starting another group analysis."
+      : code === "collection_ai_daily_limit_reached"
+        ? "You have reached today's private body-of-work analysis limit. Your existing private analyses remain available."
+        : "KLEIO could not complete this group analysis. Your individual private analyses remain available and unchanged."
+    return json(request, { error: code, message }, status)
+  } finally {
+    if (claimed) await auth.rpc("release_my_media_collection_analysis", { target_fingerprint: sourceFingerprint })
   }
 })
