@@ -2,6 +2,9 @@ import fs from "node:fs"
 
 const workflow = fs.readFileSync(".github/workflows/recipient-live-smoke.yml", "utf8")
 const browser = fs.readFileSync("scripts/live-recipient-browser-smoke.mjs", "utf8")
+const errorNormalizer = fs.readFileSync("lib/kleio-edge-function-error.ts", "utf8")
+const reviewClient = fs.readFileSync("lib/kleio-recipient-application.ts", "utf8")
+const conversationClient = fs.readFileSync("lib/kleio-recipient-conversation-return.ts", "utf8")
 const failures = []
 
 function requirePattern(content, pattern, message) {
@@ -33,10 +36,18 @@ requirePattern(browser, /scrollWidth[\s\S]*window\.innerWidth/, "Mobile smoke mu
 requirePattern(browser, /Runtime\.exceptionThrown|Log\.entryAdded|Network\.loadingFailed/, "Browser smoke must capture runtime, console, and network failures.")
 requirePattern(browser, /captureScreenshot/, "Live browser smoke must capture screenshot evidence.")
 
+requirePattern(errorNormalizer, /"context" in error/, "Structured Supabase non-2xx errors must inspect FunctionsHttpError.context instead of collapsing to technical copy.")
+requirePattern(errorNormalizer, /response\.clone\(\)\.json\(\)/, "Structured Edge Function JSON must be recovered from the wrapped response.")
+requirePattern(errorNormalizer, /requestError\.name = code/, "Recovered server error codes must become stable Error.name values for recipient UI mapping.")
+requirePattern(reviewClient, /normalizeKleioEdgeFunctionError\(error/, "Secure Review Room calls must preserve structured Edge Function error codes.")
+requirePattern(conversationClient, /normalizeKleioEdgeFunctionError\(error/, "Conversation-return calls must preserve structured Edge Function error codes.")
+forbidPattern(reviewClient, /if \(error\) throw error/, "Secure Review Room must not throw raw FunctionsHttpError before normalizing its safe server code.")
+forbidPattern(conversationClient, /if \(error\) throw error/, "Conversation return must not throw raw FunctionsHttpError before normalizing its safe server code.")
+
 if (failures.length) {
   console.error("KLEIO recipient live-smoke contract audit failed:\n")
   for (const failure of failures) console.error(`- ${failure}`)
   process.exit(1)
 }
 
-console.log("KLEIO recipient live-smoke contract audit passed: post-Pages route/asset/function checks, hydrated browser failure states, compose-first messaging interaction, workspace conversion, mobile overflow protection, runtime diagnostics, and screenshot evidence are permanently covered.")
+console.log("KLEIO recipient live-smoke contract audit passed: post-Pages route/asset/function checks, structured non-2xx error recovery, hydrated browser failure states, compose-first messaging interaction, workspace conversion, mobile overflow protection, runtime diagnostics, and screenshot evidence are permanently covered.")
