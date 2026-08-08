@@ -29,7 +29,7 @@ requirePattern(menu, /createPortal[\s\S]*document\.body/, "Media action menus mu
 requirePattern(menu, /getBoundingClientRect\(\)/, "The floating media action menu must anchor to the three-dot trigger's viewport position.")
 requirePattern(menu, /className="fixed z-\[140\] w-56/, "The media action menu must use viewport-fixed positioning rather than participate in the carousel scroll area.")
 requirePattern(menu, /window\.innerWidth[\s\S]*menuWidth[\s\S]*viewportPadding/, "The floating menu must clamp itself inside narrow viewport edges.")
-requirePattern(menu, /window\.innerHeight[\s\S]*menuHeight/, "The floating menu must flip above the trigger when there is not enough room below.")
+requirePattern(menu, /const above = triggerRect\.top - menuHeight - gap[\s\S]*below \+ menuHeight <= window\.innerHeight[\s\S]*Math\.max\(viewportPadding, above\)/, "The floating menu must flip above the trigger when there is not enough room below.")
 requirePattern(menu, /event\.key !== "Escape"[\s\S]*closeMenu\(true\)/, "Escape must close the floating menu and restore focus to its trigger.")
 requirePattern(menu, /window\.addEventListener\("scroll", onScroll, true\)/, "Scrolling a carousel or ancestor must dismiss the floating menu instead of leaving it detached from its trigger.")
 requirePattern(menu, /aria-haspopup="menu"[\s\S]*aria-expanded=\{open\}/, "The three-dot trigger must expose its menu state to assistive technology.")
