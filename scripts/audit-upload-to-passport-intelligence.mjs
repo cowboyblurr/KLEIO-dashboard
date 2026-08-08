@@ -74,8 +74,10 @@ requireText(passportPanel, /passport\/review/, "Creative Passport must link to i
 requireText(mediaLibrary, /MediaIntelligenceSheet/, "Media Library must surface source intelligence in place.")
 requireText(mediaIntelligence, /requestMediaExtraction/, "Shared media intelligence must retain the structured PDF extraction engine.")
 requireText(mediaIntelligence, /loadMediaIntelligence/, "Completed source intelligence must be reloaded from the canonical private source.")
-requireText(mediaSheet, /does not rewrite your Passport without your approval|Nothing changes your approved Passport until you confirm it/i, "In-place intelligence must make artist control explicit.")
-requireText(mediaSheet, /not verification/, "AI confidence must not be presented as verification.")
+requireText(mediaSheet, /does not rewrite your Passport without your approval|Nothing changes your approved Passport until you confirm it|remains a suggestion until you edit or approve it/i, "In-place intelligence must make artist control explicit.")
+requireText(mediaSheet, /No creative score is created/i, "Media Assist must explicitly avoid creative scoring.")
+forbidText(mediaSheet, /(?:AI|Media Assist|KLEIO)[^\n]{0,80}(?:verified|verification)\s+(?:fact|claim|truth|evidence)/i, "Media Assist must not imply that AI confidence or analysis verifies artist facts.")
+forbidText(mediaSheet, /(?:creative|artistic)\s+(?:confidence|score|ranking|rating)|confidence\s*%|\b\d{1,3}%\s+confidence\b/i, "Creative-facing confidence, ranking, rating, or scoring language must not return to Media Assist.")
 
 requireText(legacyImport, /uploadMediaToLibrary/, "The legacy PDF importer must still use the canonical private source layer.")
 requireText(legacyImport, /confirmPassportClaim/, "The legacy review surface must still use structured Passport confirmation.")
@@ -85,4 +87,4 @@ for (const content of [extractor, intelligence, mediaIntelligence, inbox, requir
   forbidText(content, /automatically public|silent public|public bucket/i, "Upload-to-Passport code contains unsafe public-exposure language.")
 }
 
-console.log("KLEIO Upload-to-Passport audit passed: canonical sources, persisted PDF/media intelligence, compact artist review, provenance/versioning, exact requirement attachments, package evidence, and in-place artist control verified.")
+console.log("KLEIO Upload-to-Passport audit passed: canonical sources, persisted PDF/media intelligence, compact artist review, provenance/versioning, exact requirement attachments, package evidence, no creative scoring, and in-place artist control verified.")
