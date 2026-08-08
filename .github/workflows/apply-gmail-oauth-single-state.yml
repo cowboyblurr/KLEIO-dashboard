@@ -1,0 +1,93 @@
+name: Apply Gmail OAuth Single-State Hardening
+
+on:
+  push:
+    branches:
+      - feature/gmail-send-beta-20260808
+    paths:
+      - ".github/workflows/apply-gmail-oauth-single-state.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/gmail-send-beta-20260808
+          fetch-depth: 0
+      - name: Enforce one active OAuth state per artist
+        shell: python
+        run: |
+          from pathlib import Path
+
+          migration = Path("supabase/migrations/20260808170000_gmail_send_only_beta.sql")
+          s = migration.read_text()
+          anchor = '''create index if not exists gmail_oauth_states_expiry_idx
+  on public.gmail_oauth_states(expires_at) where used_at is null;
+'''
+          replacement = anchor + '''create unique index if not exists gmail_oauth_states_one_active_artist_idx
+  on public.gmail_oauth_states(artist_user_id) where used_at is null;
+'''
+          if anchor not in s:
+              raise SystemExit("OAuth state index anchor missing")
+          s = s.replace(anchor, replacement, 1)
+          migration.write_text(s)
+
+          edge = Path("supabase/functions/gmail-delivery/index.ts")
+          e = edge.read_text()
+          old = '''      const returnPath = text(body.return_path)
+      const safeReturnPath = validReturnPath(returnPath) ? returnPath : "/artist-dashboard/applications/"
+      const now = new Date().toISOString()
+      await admin.from("gmail_oauth_states").delete().eq("artist_user_id", user.id).or(`used_at.not.is.null,expires_at.lt.${now}`)
+      const { count: activeStateCount, error: stateCountError } = await admin
+        .from("gmail_oauth_states")
+        .select("id", { count: "exact", head: true })
+        .eq("artist_user_id", user.id)
+        .is("used_at", null)
+        .gt("expires_at", now)
+      if (stateCountError) throw stateCountError
+      if ((activeStateCount ?? 0) >= 3) return json({ error: "gmail_oauth_too_many_requests", message: "A Gmail connection is already in progress. Finish or wait a few minutes before starting another." }, 429)
+
+      const rawState = randomHex()
+'''
+          new = '''      const returnPath = text(body.return_path)
+      const safeReturnPath = validReturnPath(returnPath) ? returnPath : "/artist-dashboard/applications/"
+      const { error: clearStateError } = await admin
+        .from("gmail_oauth_states")
+        .delete()
+        .eq("artist_user_id", user.id)
+      if (clearStateError) throw clearStateError
+
+      const rawState = randomHex()
+'''
+          if old not in e:
+              raise SystemExit("multi-state OAuth block missing")
+          e = e.replace(old, new, 1)
+          e = e.replace('      authorizationUrl.searchParams.set("include_granted_scopes", "true")\n', '', 1)
+          edge.write_text(e)
+
+          audit = Path("scripts/audit-gmail-send-beta.mjs")
+          a = audit.read_text()
+          old = '''must(edge, /activeStateCount[\\s\\S]*>= 3[\\s\\S]*gmail_oauth_too_many_requests/, "Repeated Gmail Connect clicks must be bounded rather than accumulating unlimited active OAuth states.")
+'''
+          new = '''must(migration, /gmail_oauth_states_one_active_artist_idx[\\s\\S]*artist_user_id[\\s\\S]*used_at is null/, "Only one unused Gmail OAuth state may exist per artist.")
+must(edge, /gmail_oauth_states[\\s\\S]*delete\\(\\)[\\s\\S]*artist_user_id[\\s\\S]*randomHex/, "Starting a new Gmail connection must invalidate the artist's older callback states before minting another.")
+never(edge, /include_granted_scopes/, "Gmail beta must not opt into unrelated scopes previously granted to the same Google OAuth client.")
+'''
+          if old not in a:
+              raise SystemExit("multi-state audit anchor missing")
+          a = a.replace(old, new, 1)
+          audit.write_text(a)
+      - name: Remove temporary workflow and commit hardening
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm .github/workflows/apply-gmail-oauth-single-state.yml
+          git config user.name "KLEIO QA Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add supabase/migrations/20260808170000_gmail_send_only_beta.sql supabase/functions/gmail-delivery/index.ts scripts/audit-gmail-send-beta.mjs .github/workflows/apply-gmail-oauth-single-state.yml
+          git commit -m "Enforce one active Gmail OAuth state per artist"
+          git push origin HEAD:feature/gmail-send-beta-20260808
