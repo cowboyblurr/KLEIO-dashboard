@@ -14,10 +14,14 @@ function mediaFocusGuard(source) {
   return source.includes('role="dialog"') && source.includes('handleMediaAssistDialogKeyDown') && source.includes('previousFocusRef')
 }
 function analyticsPrivacyGuard(source) {
-  return source.includes("forbiddenValuePatterns") && source.includes("metadata")
+  return source.includes("FORBIDDEN_METADATA_KEYS") && source.includes("sensitiveKeyPattern") && source.includes("SAFE_METADATA_KEYS")
 }
 function multiSourceGuard(source) {
-  return source.includes("MIN_COLLECTION_ITEMS = 2") && source.includes("source_refs") && source.includes("refs.length < MIN_COLLECTION_ITEMS")
+  return source.includes("const MIN_SOURCES = 2")
+    && source.includes("patternArray(value.recurring_themes, allowedRefs, 2)")
+    && source.includes("patternArray(value.formal_relationships, allowedRefs, 2)")
+    && source.includes("patternArray(value.material_process_patterns, allowedRefs, 2)")
+    && source.includes("patternArray(value.work_dialogues, allowedRefs, 2)")
 }
 
 test("recipient accessibility guard fails a known-bad focus mutation", () => {
@@ -30,12 +34,12 @@ test("Media Assist accessibility guard fails a known-bad focus mutation", () => 
   assert.equal(mediaFocusGuard(mediaAssist.replaceAll("previousFocusRef", "removedPreviousFocus")), false)
 })
 
-test("analytics privacy guard fails when metadata scanning is deliberately removed", () => {
+test("analytics privacy guard fails when forbidden-key scanning is deliberately removed", () => {
   assert.equal(analyticsPrivacyGuard(analyticsAudit), true)
-  assert.equal(analyticsPrivacyGuard(analyticsAudit.replaceAll("forbiddenValuePatterns", "removedForbiddenPatterns")), false)
+  assert.equal(analyticsPrivacyGuard(analyticsAudit.replaceAll("FORBIDDEN_METADATA_KEYS", "removedForbiddenMetadataKeys")), false)
 })
 
 test("body-of-work grounding guard fails when minimum multi-source requirement is deliberately weakened", () => {
   assert.equal(multiSourceGuard(collection), true)
-  assert.equal(multiSourceGuard(collection.replace("MIN_COLLECTION_ITEMS = 2", "MIN_COLLECTION_ITEMS = 1")), false)
+  assert.equal(multiSourceGuard(collection.replace("const MIN_SOURCES = 2", "const MIN_SOURCES = 1")), false)
 })
