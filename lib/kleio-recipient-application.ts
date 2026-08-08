@@ -10,6 +10,14 @@ export type RecipientReviewArtwork = {
   image_url: string | null
 }
 
+export type RecipientApplicationResponse = {
+  id: string
+  label: string
+  material_key: string
+  category: string
+  answer: string
+}
+
 export type RecipientReviewSnapshot = {
   reference: string
   approved_at: string
@@ -19,6 +27,14 @@ export type RecipientReviewSnapshot = {
     id: string
     title: string
     provider_name: string
+    summary: string
+    disciplines: string[]
+    award_min: number | null
+    award_max: number | null
+    currency: string
+    deadline_at: string
+    required_materials: string[]
+    locations: string[]
     submission_method: string
   }
   artist: {
@@ -26,10 +42,17 @@ export type RecipientReviewSnapshot = {
     location: string
     bio: string
     artist_statement: string
+    practice_description: string
+    disciplines: string[]
+    mediums: string[]
+    education: string
+    exhibition_history: string
+    awards: string
     website_url: string
   }
   introduction: string
   opportunity_response: string
+  application_responses: RecipientApplicationResponse[]
   alignment_map: Array<{
     theme?: string
     opportunitySource?: string
