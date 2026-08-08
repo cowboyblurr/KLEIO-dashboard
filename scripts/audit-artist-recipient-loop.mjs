@@ -61,10 +61,39 @@ requirePattern(recipientPage, /The artist controls whether any additional inform
 requirePattern(recipientPage, /KLEIO records basic application activity/, "The recipient page must disclose activity recording.")
 requirePattern(recipientPage, /do not prove that an email was read/, "The recipient page must reject false read claims.")
 
-// Question verification and conversation continuity.
+// Recipient review room experience and conversion restraint.
+for (const label of ["Secure Submission Review", "Application overview", "Application responses", "Selected works", "Supporting materials", "Artist context", "Communication"])
+  requirePattern(recipientPage, new RegExp(label, "i"), `Recipient review room is missing the required section or context: ${label}`)
+requirePattern(recipientPage, /IntersectionObserver/, "Recipient review navigation must track the active section during scroll.")
+requirePattern(recipientPage, /Download submission/, "The recipient hero must expose a dossier download/save action.")
+requirePattern(recipientPage, /Message applicant/, "The recipient hero must expose a direct applicant communication action.")
+requirePattern(recipientPage, /meaningfulInteraction/, "Institution conversion must be delayed until the reviewer has received meaningful product value.")
+requirePattern(recipientPage, /No account is required to continue reviewing this submission\./, "Institution conversion must explicitly preserve guest review access.")
+requirePattern(recipientPage, /Create an Institution Workspace/, "The review room must provide a clear institution-workspace continuation after value is demonstrated.")
+requirePattern(recipientPage, /role="dialog"[\s\S]*aria-modal="true"/, "Artwork focus view must be exposed as an accessible modal dialog.")
+requirePattern(recipientPage, /This artwork is temporarily unavailable\. The remaining submission materials are still accessible\./, "Artwork failure states must preserve access to the rest of the submission.")
+forbidPattern(recipientPage, /item\.confidence/, "Internal AI confidence values must not appear in the recipient review experience.")
+
+// Exact application content and non-invented project context.
+requirePattern(edge, /approvedApplicationResponses/, "The recipient snapshot must map exact approved application answers back to their opportunity questions.")
+requirePattern(edge, /requirement_snapshot/, "Exact application response labels must come from the preserved requirement snapshot.")
+requirePattern(edge, /application_responses: applicationResponses/, "The artist-approved review snapshot must preserve exact application responses.")
+requirePattern(recipientPage, /snapshot\?\.application_responses/, "The review room must prefer exact approved application responses over generic legacy labels.")
+requirePattern(recipientPage, /Budget \/ project structure/, "Budget and timeline answers must receive a calm project-structure section when they actually exist.")
+requirePattern(recipientPage, /Opportunity support/, "Opportunity funding context must be labelled as opportunity support rather than invented requested funding.")
+forbidPattern(recipientPage, /Requested support/, "The review room must not fabricate an artist-requested amount from an opportunity award range.")
+requirePattern(edge, /exhibition_history/, "Approved professional context should preserve exhibition history when present in the Passport snapshot.")
+requirePattern(edge, /disciplines: stringList\(passport\.disciplines\)/, "Approved artist disciplines should travel with the review snapshot.")
+
+// Question verification, recipient identity, and conversation continuity.
 requirePattern(edge, /application_recipient_message_drafts/, "Guest questions must be preserved before verification.")
 requirePattern(recipientClient, /emailRedirectTo: redirect\.toString\(\)/, "Magic-link verification must return to the exact review URL.")
 requirePattern(recipientClient, /draftToken/, "The preserved guest draft token must survive the verification round trip.")
+requirePattern(recipientClient, /display_name: identity\.displayName/, "Recipient name must be passed into the verified messaging handoff.")
+requirePattern(recipientClient, /organization_name: identity\.organizationName/, "Recipient organization must be passed into the verified messaging handoff.")
+requirePattern(edge, /display_name: displayName/, "Recipient display name must be preserved server-side before verification.")
+requirePattern(edge, /organization_name: organizationName/, "Recipient organization must be preserved server-side before verification.")
+requirePattern(edge, /preparedIdentity/, "Email verification must update the prepared identity rather than overwrite its name and organization context.")
 requirePattern(edge, /verified_email_mismatch/, "Verified recipient email must match the question draft email.")
 requirePattern(edge, /conversation_started/, "Verified first questions must create an application conversation event.")
 requirePattern(artistConversation, /Reply sent and preserved with this application conversation/, "Artists must be able to reply inside the application-specific conversation.")
@@ -102,4 +131,4 @@ if (failures.length) {
   process.exit(1)
 }
 
-console.log("KLEIO artist-recipient workflow audit passed: synthetic isolation, weighted completion, compact next-action hierarchy, requirement normalization, approval gates, secure guest review, truthful mailto handoff, verified recipient conversation, artist reply, access revocation, and safe reset boundaries verified.")
+console.log("KLEIO artist-recipient workflow audit passed: synthetic isolation, weighted completion, compact next-action hierarchy, requirement normalization, approval gates, secure guest review, exact approved application responses, editorial recipient review room, truthful project context, delayed institution conversion, truthful mailto handoff, recipient identity continuity, verified conversation, artist reply, access revocation, and safe reset boundaries verified.")
