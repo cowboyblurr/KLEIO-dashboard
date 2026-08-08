@@ -4,9 +4,20 @@ import { getKleioAbsoluteUrl, getKleioAuthCallbackUrl } from "@/lib/kleio-url"
 
 export { getKleioAbsoluteUrl }
 
-export function getKleioAuthErrorMessage(error: unknown, locale: "en" | "es" = "en") {
+function authErrorDetails(error: unknown) {
   const message = error instanceof Error ? error.message.toLowerCase() : ""
   const status = typeof error === "object" && error && "status" in error ? Number((error as AuthError).status) : 0
+  const code = typeof error === "object" && error && "code" in error ? String((error as AuthError & { code?: string }).code || "").toLowerCase() : ""
+  return { message, status, code }
+}
+
+function isEmailRateLimitError(error: unknown) {
+  const { message, status, code } = authErrorDetails(error)
+  return code === "over_email_send_rate_limit" || message.includes("email rate limit") || message.includes("over_email_send_rate_limit") || (status === 429 && message.includes("email"))
+}
+
+export function getKleioAuthErrorMessage(error: unknown, locale: "en" | "es" = "en") {
+  const { message, status } = authErrorDetails(error)
   const es = locale === "es"
 
   if (message.includes("invalid login credentials")) {
@@ -36,7 +47,7 @@ export function getKleioAuthErrorMessage(error: unknown, locale: "en" | "es" = "
       ? "Usa al menos 12 caracteres e incluye mayúscula, minúscula, número y símbolo."
       : "Use at least 12 characters and include uppercase, lowercase, a number, and a symbol."
   }
-  if (message.includes("email rate limit") || message.includes("over_email_send_rate_limit")) {
+  if (isEmailRateLimitError(error)) {
     return es
       ? "KLEIO no puede enviar otro correo de confirmación todavía. Revisa tu bandeja de entrada y correo no deseado antes de volver a intentarlo. El límite de correo puede tardar hasta una hora en restablecerse."
       : "KLEIO cannot send another confirmation email yet. Check your inbox and spam folder before trying again. The email limit may take up to an hour to reset."
@@ -53,6 +64,15 @@ export function getKleioAuthErrorMessage(error: unknown, locale: "en" | "es" = "
     : es
       ? "No se pudo completar la solicitud."
       : "The request could not be completed."
+}
+
+export function getKleioSignupErrorMessage(error: unknown, locale: "en" | "es" = "en") {
+  if (isEmailRateLimitError(error)) {
+    return locale === "es"
+      ? "KLEIO no pudo crear la cuenta ahora porque el envío de correos de confirmación alcanzó temporalmente su límite. Tus datos siguen en este formulario. Inténtalo de nuevo cuando el límite se restablezca; esta solicitud no creó una cuenta."
+      : "KLEIO could not create the account right now because confirmation email sending is temporarily rate-limited. Your details are still in this form. Try again after the limit resets; this attempt did not create an account."
+  }
+  return getKleioAuthErrorMessage(error, locale)
 }
 
 export async function requestKleioPasswordReset(email: string) {
