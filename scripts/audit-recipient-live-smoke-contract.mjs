@@ -39,10 +39,10 @@ requirePattern(browser, /captureScreenshot/, "Live browser smoke must capture sc
 requirePattern(errorNormalizer, /"context" in error/, "Structured Supabase non-2xx errors must inspect FunctionsHttpError.context instead of collapsing to technical copy.")
 requirePattern(errorNormalizer, /response\.clone\(\)\.json\(\)/, "Structured Edge Function JSON must be recovered from the wrapped response.")
 requirePattern(errorNormalizer, /requestError\.name = code/, "Recovered server error codes must become stable Error.name values for recipient UI mapping.")
-requirePattern(reviewClient, /normalizeKleioEdgeFunctionError\(error/, "Secure Review Room calls must preserve structured Edge Function error codes.")
-requirePattern(conversationClient, /normalizeKleioEdgeFunctionError\(error/, "Conversation-return calls must preserve structured Edge Function error codes.")
-forbidPattern(reviewClient, /if \(error\) throw error/, "Secure Review Room must not throw raw FunctionsHttpError before normalizing its safe server code.")
-forbidPattern(conversationClient, /if \(error\) throw error/, "Conversation return must not throw raw FunctionsHttpError before normalizing its safe server code.")
+requirePattern(reviewClient, /functions\.invoke\("recipient-application-review"[\s\S]{0,280}normalizeKleioEdgeFunctionError\(error/, "Secure Review Room Edge Function calls must preserve structured server error codes.")
+requirePattern(conversationClient, /functions\.invoke\("application-conversation"[\s\S]{0,280}normalizeKleioEdgeFunctionError\(error/, "Conversation-return Edge Function calls must preserve structured server error codes.")
+forbidPattern(reviewClient, /functions\.invoke\("recipient-application-review"[\s\S]{0,220}if \(error\) throw error/, "Secure Review Room Edge Function invoke must not throw raw FunctionsHttpError before normalization.")
+forbidPattern(conversationClient, /functions\.invoke\("application-conversation"[\s\S]{0,220}if \(error\) throw error/, "Conversation return Edge Function invoke must not throw raw FunctionsHttpError before normalization.")
 
 if (failures.length) {
   console.error("KLEIO recipient live-smoke contract audit failed:\n")
