@@ -1,0 +1,33 @@
+name: Synthetic Reset Integrity
+
+on:
+  pull_request:
+    paths:
+      - "supabase/migrations/20260808164000_restore_synthetic_reset_after_finalization.sql"
+      - "scripts/audit-synthetic-application-reset.mjs"
+      - ".github/workflows/synthetic-reset-integrity.yml"
+  push:
+    branches: [main]
+    paths:
+      - "supabase/migrations/20260808164000_restore_synthetic_reset_after_finalization.sql"
+      - "scripts/audit-synthetic-application-reset.mjs"
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Audit controlled synthetic cleanup
+        run: node scripts/audit-synthetic-application-reset.mjs
+      - name: Existing recipient workflow audit
+        run: pnpm audit:artist-recipient-loop
+      - name: TypeScript
+        run: pnpm typecheck
