@@ -375,6 +375,8 @@ Deno.serve(async (request: Request) => {
     if (action === "prepare_question") {
       const recipientEmail = normalizeEmail(body.email)
       const messageBody = text(body.body)
+      const displayName = text(body.display_name).slice(0, 160)
+      const organizationName = text(body.organization_name).slice(0, 200)
       if (!validEmail(recipientEmail)) return json({ error: "valid_email_required" }, 400)
       if (!messageBody || messageBody.length > 4000) return json({ error: "question_length_invalid" }, 400)
 
@@ -386,6 +388,35 @@ Deno.serve(async (request: Request) => {
         .gte("created_at", since)
       if (rateError) throw rateError
       if ((count ?? 0) >= 8) return json({ error: "too_many_requests" }, 429)
+
+      const now = new Date().toISOString()
+      const { data: existingIdentity, error: existingIdentityError } = await admin
+        .from("application_recipient_identities")
+        .select("id")
+        .eq("access_id", access.id)
+        .eq("email", recipientEmail)
+        .maybeSingle()
+      if (existingIdentityError) throw existingIdentityError
+      if (existingIdentity) {
+        const { error: identityUpdateError } = await admin
+          .from("application_recipient_identities")
+          .update({ display_name: displayName, organization_name: organizationName, updated_at: now })
+          .eq("id", existingIdentity.id)
+        if (identityUpdateError) throw identityUpdateError
+      } else {
+        const { error: identityInsertError } = await admin
+          .from("application_recipient_identities")
+          .insert({
+            access_id: access.id,
+            package_id: access.package_id,
+            email: recipientEmail,
+            display_name: displayName,
+            organization_name: organizationName,
+            identity_state: organizationName ? "organization_provided" : "email_unverified",
+            updated_at: now,
+          })
+        if (identityInsertError) throw identityInsertError
+      }
 
       const draftToken = randomToken()
       const draftTokenHash = await sha256(draftToken)
