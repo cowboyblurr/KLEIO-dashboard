@@ -16,7 +16,7 @@ async function viewportMatrix(page, route, label) {
   for (const width of widths) {
     await page.setViewportSize({ width, height: width >= 1000 ? 900 : 844 })
     await page.goto(`${BASE_URL}${route}`, { waitUntil: "domcontentloaded" })
-    await page.waitForTimeout(350)
+    await page.waitForTimeout(200)
     await expect(page.locator("main")).toBeVisible()
     await noOverflow(page, `${label}-${width}`)
   }
@@ -28,7 +28,7 @@ async function viewportMatrix(page, route, label) {
   await noOverflow(page, `${label}-keyboard-like-390x420`)
 }
 
-test.describe.configure({ mode: "serial", timeout: 120_000 })
+test.describe.configure({ mode: "serial", timeout: 90_000 })
 
 test("public signup renders across V4 width matrix and exposes current rate-limit failure safely", async ({ page }) => {
   const consoleErrors = []
@@ -45,11 +45,11 @@ test("public signup renders across V4 width matrix and exposes current rate-limi
   await passwords.nth(1).fill(password)
   const checkbox = page.locator('input[type="checkbox"]').first()
   await checkbox.check()
-  await page.getByRole("button", { name: /Create account|Create artist account|Continue/i }).last().click()
+  await page.getByRole("button", { name: "Create with email" }).click()
   await page.waitForTimeout(800)
   const body = await page.locator("body").innerText()
   expect(body).toMatch(/cannot send a confirmation email right now|Too many attempts were made|temporarily rate-limited/i)
-  expect(body).toMatch(/form details remain available|details are still in this form|datos siguen en/i)
+  expect(body).toMatch(/form details remain available|datos siguen en/i)
   expect(body).not.toMatch(/AuthApiError|over_email_send_rate_limit|FunctionsHttpError|stack trace|SQL error/i)
   expect(consoleErrors.filter((item) => !/favicon/i.test(item))).toHaveLength(0)
 })
