@@ -27,6 +27,7 @@ forbidPattern(composer, /const href = `mailto:/, "The Application Composer must 
 
 requirePattern(delivery, /createRecipientReviewAccess\(input\.packageId, input\.submissionVersionId\)/, "Email delivery must request recipient access for the exact preserved version.")
 requirePattern(delivery, /active_access_exists/, "Repeated handoff attempts must surface an intentional revoke/reissue boundary.")
+requirePattern(delivery, /state:\s*"handoff_prepared"/, "Preparing the browser email fallback must record only the conservative handoff-prepared state.")
 requirePattern(delivery, /recipientReviewUrl/, "Email delivery must create the secure Review Room destination.")
 requirePattern(delivery, /buildMailtoHref/, "The fallback must automatically place the Review Room into the email rather than asking the artist to copy a link.")
 requirePattern(delivery, /record_my_application_delivery/, "Every delivery adapter must feed the canonical delivery record.")
@@ -45,6 +46,7 @@ requirePattern(migration, /prevent_recipient_access_snapshot_mutation/, "The sea
 requirePattern(migration, /kleio_recipient_snapshot_from_submission_version/, "Recipient Review Room data must come from the sealed version snapshot rather than mutable package state.")
 requirePattern(migration, /create table if not exists public\.application_deliveries/, "Delivery must have a durable channel-agnostic source of truth.")
 requirePattern(migration, /'gmail','email_client','external_portal','native_kleio','download_package'/, "Gmail and fallback channels must share one delivery model.")
+requirePattern(migration, /handoff_prepared/, "The canonical model must distinguish a prepared email handoff from proof that an external email client opened.")
 requirePattern(migration, /provider_accepted/, "The model must distinguish provider-confirmed acceptance from self-reported sending.")
 requirePattern(migration, /artist_reported_sent/, "The model must preserve a truthful self-reported send state for non-integrated channels.")
 requirePattern(migration, /receipt_confirmed/, "Recipient-confirmed receipt must be representable without pretending it is provider delivery evidence.")
@@ -53,9 +55,9 @@ requirePattern(migration, /recipient_access_id/, "Delivery state must remain lin
 requirePattern(migration, /record_my_application_delivery/, "Artists must have a controlled RPC for updating their own canonical delivery state.")
 
 requirePattern(attemptBridge, /sync_application_delivery_from_submission_attempt/, "Existing truthful submission-attempt events must bridge into the canonical delivery record.")
-requirePattern(attemptBridge, /email_client_opened[\s\S]*handoff_opened/, "Legacy email-client-opened evidence must map to the shared handoff state.")
+requirePattern(attemptBridge, /email_client_opened[\s\S]*handoff_prepared/, "Historical email-client-opened evidence must be conservatively normalized to handoff prepared.")
 requirePattern(attemptBridge, /artist_reported[\s\S]*artist_reported_sent/, "The existing artist self-report must update canonical delivery truth.")
 requirePattern(attemptBridge, /confirmed[\s\S]*provider_accepted/, "Provider-confirmed legacy evidence must retain its stronger evidence class.")
 requirePattern(attemptBridge, /public\.application_deliveries/, "Legacy attempts must converge on application_deliveries rather than create a parallel model.")
 
-console.log("Submission delivery lock audit passed: immutable version binding, race-safe recipient access, tracked Review Room handoff, truthful manual-email fallback, recipient-driven lifecycle progression, legacy-attempt convergence, shared delivery state, and Gmail-ready provider evidence semantics are structurally present.")
+console.log("Submission delivery lock audit passed: immutable version binding, race-safe recipient access, tracked Review Room handoff, conservative handoff evidence, truthful manual-email fallback, recipient-driven lifecycle progression, legacy-attempt convergence, shared delivery state, and Gmail-ready provider evidence semantics are structurally present.")
