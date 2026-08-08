@@ -49,7 +49,7 @@ forbidPattern(recipientPanel, /loadRecipientTrackingSummary\(stored\.id\)\.catch
 // Exact review-page open counting: one event per real browser load, retries/remounts within that load dedupe.
 requirePattern(recipientClient, /performance\?\.timeOrigin/, "Review-page load identity must use browser navigation time rather than an hourly bucket.")
 forbidPattern(recipientClient, /toISOString\(\)\.slice\(0, 13\)/, "Hourly view deduplication would undercount multiple legitimate opens and must not return.")
-requirePattern(recipientClient, /select\("id", \{ count: "exact", head: true \}\)[\s\S]*event_type", "application_page_viewed"/, "Tracking summary must use an exact database count for Review Room opens.")
+requirePattern(recipientClient, /select\("id", \{ count: "exact", head: true \}\)[\s\S]*\.eq\("access_id", access\.id\)[\s\S]*\.eq\("event_type", "application_page_viewed"\)/, "Tracking summary must use an exact database count scoped to the active internal handoff identity.")
 requirePattern(recipientClient, /first_opened_at/, "Tracking summary must preserve first-open timing.")
 requirePattern(recipientClient, /last_opened_at/, "Tracking summary must preserve last-open timing.")
 
@@ -136,4 +136,4 @@ if (failures.length) {
   process.exit(1)
 }
 
-console.log(`KLEIO recipient tracking integrity audit passed: ${iterations.toLocaleString()} unique secure links and SHA-256 hashes, ${pageLoads.toLocaleString()} distinct countable Review Room opens with retry deduplication, ${draftRuns.toLocaleString()} deterministic first-message retry identities, ${accessIds.size.toLocaleString()} internal tracking identities, no raw-link sharing UI, truthful tracking failure behavior, conversation export safety, and opportunity/package/access security boundaries verified.`)
+console.log(`KLEIO recipient tracking integrity audit passed: ${iterations.toLocaleString()} unique secure links and SHA-256 hashes, ${pageLoads.toLocaleString()} distinct countable Review Room opens with retry deduplication, ${draftRuns.toLocaleString()} deterministic first-message retry identities, ${accessIds.size.toLocaleString()} internal tracking identities, active-handoff scoped metrics, no raw-link sharing UI, truthful tracking failure behavior, conversation export safety, and opportunity/package/access security boundaries verified.`)
