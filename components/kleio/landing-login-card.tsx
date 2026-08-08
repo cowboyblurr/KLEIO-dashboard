@@ -1,15 +1,18 @@
 "use client"
 
+import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { RealLoginForm } from "@/components/kleio/auth/real-login-form"
 import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
 import { getDashboardForRole } from "@/lib/kleio-demo-auth"
+import { isGoogleAuthenticationConfigured } from "@/lib/kleio-google-capabilities"
 import { getKleioReturnRoute, readKleioReturnIntent } from "@/lib/kleio-return-intent"
 
 export function LandingLoginCard() {
   const router = useRouter()
   const { locale } = useKleioLocale()
   const es = locale === "es"
+  const googleConfigured = isGoogleAuthenticationConfigured()
 
   return (
     <section
@@ -41,6 +44,16 @@ export function LandingLoginCard() {
             router.push(destination)
           }}
         />
+
+        {googleConfigured && <div className="mt-4 border-t border-[#E7E1F7] pt-4">
+          <p className="text-center text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-[#8A8296]">{es ? "Acceso con Google" : "Google access"}</p>
+          <p className="mx-auto mt-2 max-w-sm text-center text-xs leading-5 text-[#7F7890]">{es ? "Elige el tipo de espacio de tu cuenta. Si tu correo de Google ya pertenece a KLEIO, conservará su rol existente. Gmail se autoriza por separado." : "Choose your account workspace type. If your Google email already belongs to KLEIO, its established role is preserved. Gmail is authorized separately."}</p>
+          <div className="mt-3 grid gap-2 sm:grid-cols-2">
+            <Link href="/signup/artist/?access=google" className="inline-flex min-h-10 items-center justify-center rounded-xl border border-[#D8D0F2] bg-white px-3 text-xs font-semibold text-[#5B4B8A] hover:bg-[#F8F6FC]">{es ? "Continuar como artista" : "Continue as artist"}</Link>
+            <Link href="/signup/institution/?access=google" className="inline-flex min-h-10 items-center justify-center rounded-xl border border-[#D8D0F2] bg-white px-3 text-xs font-semibold text-[#5B4B8A] hover:bg-[#F8F6FC]">{es ? "Continuar como institución" : "Continue as institution"}</Link>
+          </div>
+          <p className="mt-2 text-center text-[0.68rem] leading-5 text-[#8A8296]">{es ? "Los colaboradores continúan usando el acceso por correo actual." : "Collaborators continue using the existing email sign-in."}</p>
+        </div>}
       </div>
     </section>
   )
