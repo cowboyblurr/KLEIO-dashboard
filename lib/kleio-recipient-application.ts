@@ -202,6 +202,12 @@ function pageLoadId() {
   return `${origin}`
 }
 
+function firstMessageNonce(draftToken: string) {
+  const source = draftToken.toLowerCase().replace(/[^a-f0-9]/g, "")
+  const hex = source.padEnd(32, "0").slice(0, 32)
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-4${hex.slice(13, 16)}-a${hex.slice(17, 20)}-${hex.slice(20, 32)}`
+}
+
 export async function loadRecipientReview(token: string) {
   const idempotencyKey = `application-page-viewed:${token.slice(-12)}:${pageLoadId()}`
   return invoke<RecipientReviewResponse>({
@@ -270,7 +276,7 @@ export async function completeRecipientQuestion(reviewToken: string, draftToken:
     action: "verify_and_send",
     token: reviewToken,
     draft_token: draftToken,
-    client_nonce: crypto.randomUUID(),
+    client_nonce: firstMessageNonce(draftToken),
   })
 }
 
