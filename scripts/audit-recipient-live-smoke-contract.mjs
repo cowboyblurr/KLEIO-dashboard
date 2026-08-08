@@ -35,11 +35,13 @@ requirePattern(browser, /setDeviceMetricsOverride[\s\S]*width: 390/, "Live smoke
 requirePattern(browser, /scrollWidth[\s\S]*window\.innerWidth/, "Mobile smoke must fail on page-level horizontal overflow.")
 requirePattern(browser, /Runtime\.exceptionThrown|Log\.entryAdded|Network\.loadingFailed/, "Browser smoke must capture runtime, console, and network failures.")
 requirePattern(browser, /captureScreenshot/, "Live browser smoke must capture screenshot evidence.")
-requirePattern(browser, /Network\.responseReceived/, "Expected HTTP failure handling must be grounded in the browser network response, not generic console text alone.")
+requirePattern(browser, /Network\.responseReceived/, "Expected HTTP failure handling must be grounded in browser network responses.")
+requirePattern(browser, /expectedRecipient404RequestIds/, "Expected recipient 404s must be tracked by network request ID rather than by loose console counts.")
 requirePattern(browser, /status\) === 404[\s\S]*functions\/v1\/recipient-application-review/, "Only a 404 from the recipient review Edge Function may be classified as expected during invalid-token QA.")
-requirePattern(browser, /expectedRecipient404Count\(client\.events\) < 1/, "Invalid-token QA must prove the expected protected-function 404 actually occurred.")
+requirePattern(browser, /entry\.networkRequestId[\s\S]*expected404RequestIds\.has\(requestId\)/, "Console 404 suppression must require the exact Chrome request ID of an expected recipient-function 404.")
+requirePattern(browser, /expectedRecipient404RequestIds\(client\.events\)\.size < 1/, "Invalid-token QA must prove the expected protected-function 404 actually occurred.")
 requirePattern(browser, /allowExpectedRecipient404: true/, "Only the invalid-token assertion may opt into the narrow expected-recipient-404 exception.")
-forbidPattern(browser, /actionableFailures\(events\)[\s\S]*404[^\n]*continue/, "The browser harness must not globally ignore 404 console failures.")
+forbidPattern(browser, /generic404\s*&&\s*!requestId/, "A 404 without a correlated Chrome request ID must never be silently accepted.")
 
 requirePattern(errorNormalizer, /"context" in error/, "Structured Supabase non-2xx errors must inspect FunctionsHttpError.context instead of collapsing to technical copy.")
 requirePattern(errorNormalizer, /response\.clone\(\)\.json\(\)/, "Structured Edge Function JSON must be recovered from the wrapped response.")
@@ -55,4 +57,4 @@ if (failures.length) {
   process.exit(1)
 }
 
-console.log("KLEIO recipient live-smoke contract audit passed: post-Pages route/asset/function checks, structured non-2xx error recovery, narrowly verified recipient-404 handling, hydrated browser failure states, compose-first messaging interaction, workspace conversion, mobile overflow protection, runtime diagnostics, and screenshot evidence are permanently covered.")
+console.log("KLEIO recipient live-smoke contract audit passed: post-Pages route/asset/function checks, structured non-2xx error recovery, request-correlated recipient-404 handling, hydrated browser failure states, compose-first messaging interaction, workspace conversion, mobile overflow protection, runtime diagnostics, and screenshot evidence are permanently covered.")
