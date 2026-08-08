@@ -1,7 +1,7 @@
 "use client"
 
 import { useCallback, useEffect, useState } from "react"
-import { AlertTriangle, CheckCircle2, Loader2, Mail, Send, Unplug, X } from "lucide-react"
+import { AlertTriangle, CheckCircle2, Loader2, Mail, MessageSquareText, Send, Unplug, X } from "lucide-react"
 import {
   disconnectGmail,
   loadGmailConnectionStatus,
@@ -15,7 +15,16 @@ import {
 const primary = "inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#5B4B8A] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#4F407C] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#A997E8]/20 disabled:cursor-not-allowed disabled:opacity-45"
 const secondary = "inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-[#D8D0F2] bg-white px-4 py-2 text-sm font-semibold text-[#5B4B8A] transition hover:bg-[#F8F6FC] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#A997E8]/20 disabled:cursor-not-allowed disabled:opacity-45"
 
-const downstreamStates = new Set(["provider_accepted", "review_room_opened", "receipt_confirmed", "conversation_started"])
+const terminalSentStates = new Set(["provider_accepted", "artist_reported_sent", "review_room_opened", "receipt_confirmed", "conversation_started"])
+const progressSteps = ["Sent", "Review activity", "Receipt", "Conversation"] as const
+
+function progressIndex(state: string) {
+  if (state === "conversation_started") return 4
+  if (state === "receipt_confirmed") return 3
+  if (state === "review_room_opened") return 2
+  if (state === "provider_accepted" || state === "artist_reported_sent") return 1
+  return 0
+}
 
 function cleanOAuthParams() {
   const url = new URL(window.location.href)
@@ -81,11 +90,22 @@ export function GmailDeliveryControl({
     void refresh()
   }, [refresh])
 
+  useEffect(() => {
+    const refreshWhenActive = () => { if (document.visibilityState === "visible") void refresh() }
+    window.addEventListener("focus", refreshWhenActive)
+    document.addEventListener("visibilitychange", refreshWhenActive)
+    return () => {
+      window.removeEventListener("focus", refreshWhenActive)
+      document.removeEventListener("visibilitychange", refreshWhenActive)
+    }
+  }, [refresh])
+
   const state = delivery?.state ?? ""
-  const alreadySent = downstreamStates.has(state)
+  const alreadySent = terminalSentStates.has(state)
   const uncertain = state === "provider_unknown"
   const sending = state === "provider_sending"
   const fallbackLocked = disabled || busy || sending || uncertain || alreadySent
+  const completedProgress = progressIndex(state)
 
   async function connect() {
     setBusy(true); setError(""); setMessage("")
@@ -149,7 +169,19 @@ export function GmailDeliveryControl({
         {connection.connected && <button type="button" className="text-xs font-semibold text-[#746E80] underline-offset-4 hover:underline" onClick={() => setConfirmDisconnect(true)} disabled={busy}>Disconnect</button>}
       </div>
 
-      {alreadySent && <div className="mt-3 flex items-start gap-2 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-xs leading-5 text-emerald-900"><CheckCircle2 className="mt-0.5 size-4 shrink-0" /><span>{state === "provider_accepted" ? "Connected Gmail accepted this preserved version for sending." : state === "review_room_opened" ? "The Review Room has been opened after Gmail delivery." : state === "receipt_confirmed" ? "The recipient confirmed receipt in KLEIO." : "A KLEIO conversation has started for this application."} KLEIO does not treat any of these as proof the email was read.</span></div>}
+      {delivery && completedProgress > 0 && <section className="mt-4 rounded-xl border border-[#E3DCF2] bg-white p-3" aria-label="Application progress">
+        <div className="flex items-center justify-between gap-3"><p className="text-xs font-semibold text-[#41384E]">Application progress</p><p className="text-[0.68rem] text-muted-foreground">Evidence updates when you return to KLEIO</p></div>
+        <ol className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+          {progressSteps.map((label, index) => {
+            const complete = completedProgress >= index + 1
+            return <li key={label} className={`rounded-lg border px-2.5 py-2 text-[0.68rem] font-semibold ${complete ? "border-emerald-200 bg-emerald-50 text-emerald-900" : "border-[#E8E3F0] bg-[#FAF9FC] text-[#8A8296]"}`}><span className="mr-1.5">{complete ? "✓" : "○"}</span>{label}</li>
+          })}
+        </ol>
+        <p className="mt-2 text-[0.68rem] leading-5 text-muted-foreground">Review activity means KLEIO observed the secure Review Room being loaded. It does not mean the email was read or that a reviewer meaningfully evaluated the application.</p>
+        {state === "conversation_started" && <a href="/artist-dashboard/messages/" className={`${primary} mt-3 w-full`}><MessageSquareText className="size-4" />Open KLEIO conversation</a>}
+      </section>}
+
+      {alreadySent && <div className="mt-3 flex items-start gap-2 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-xs leading-5 text-emerald-900"><CheckCircle2 className="mt-0.5 size-4 shrink-0" /><span>{state === "provider_accepted" ? "Connected Gmail accepted this preserved version for sending." : state === "artist_reported_sent" ? "You marked this preserved version as sent outside KLEIO." : state === "review_room_opened" ? "The Review Room has been opened after the submission handoff." : state === "receipt_confirmed" ? "The recipient confirmed receipt in KLEIO." : "A KLEIO conversation has started for this application."} KLEIO does not treat any of these as proof the email was read.</span></div>}
       {uncertain && <div className="mt-3 flex items-start gap-2 rounded-xl border border-amber-300 bg-amber-50 p-3 text-xs leading-5 text-amber-950"><AlertTriangle className="mt-0.5 size-4 shrink-0" /><span>KLEIO lost the provider response after a Gmail send began. <strong>Check Gmail Sent before doing anything else.</strong> KLEIO has blocked another send or fallback from this screen to avoid a duplicate application.</span></div>}
       {sending && <div className="mt-3 flex items-center gap-2 rounded-xl border border-[#E2DCF0] bg-white p-3 text-xs text-[#625C70]"><Loader2 className="size-4 animate-spin" />Sending this preserved version through Gmail…</div>}
       {delivery?.state === "failed" && <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs leading-5 text-amber-900">The previous Gmail attempt was not accepted. Nothing is marked sent. You can retry Gmail or use the normal email fallback.</div>}
