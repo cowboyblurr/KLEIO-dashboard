@@ -17,7 +17,7 @@
     "audit:artist-requirement-file-types": "node scripts/audit-artist-requirement-file-types.mjs",
     "audit:upload-surfaces": "node scripts/audit-upload-surface-consistency.mjs",
     "audit:artist-media-control": "node scripts/audit-artist-media-control.mjs",
-    "audit:artist-recipient-loop": "node scripts/audit-artist-recipient-loop.mjs && node scripts/audit-recipient-conversation-retention.mjs",
+    "audit:artist-recipient-loop": "node scripts/audit-artist-recipient-loop.mjs && node scripts/audit-recipient-conversation-retention.mjs && node scripts/audit-recipient-review-url-integrity.mjs",
     "audit:application-composer": "node scripts/audit-application-composer-lock.mjs",
     "audit:navigation": "node scripts/audit-navigation.mjs",
     "audit:user-copy": "node scripts/audit-user-facing-copy.mjs",

@@ -83,11 +83,23 @@ export type RecipientReviewResponse = {
 
 export type RecipientEvent = {
   id: string
+  access_id?: string
   event_type: string
   actor_kind: string
   evidence_level: "self_reported" | "system_observed" | "recipient_confirmed" | "provider_confirmed"
   metadata: Record<string, unknown>
   created_at: string
+}
+
+export type RecipientTrackingSummary = {
+  active_access_id: string | null
+  access_created_at: string | null
+  access_expires_at: string | null
+  review_room_opens: number
+  first_opened_at: string | null
+  last_opened_at: string | null
+  receipt_confirmed: boolean
+  conversation_started: boolean
 }
 
 export type RecipientConversationMessage = {
@@ -125,8 +137,93 @@ export async function loadRecipientEvents(packageId: string) {
   return response.events
 }
 
+export async function loadRecipientTrackingSummary(packageId: string): Promise<RecipientTrackingSummary> {
+  const supabase = getSupabaseBrowserClient()
+  const { data: access, error: accessError } = await supabase
+    .from("application_recipient_access")
+    .select("id, created_at, expires_at")
+    .eq("package_id", packageId)
+    .is("revoked_at", null)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle()
+  if (accessError) throw accessError
+  if (!access) {
+    return {
+      active_access_id: null,
+      access_created_at: null,
+      access_expires_at: null,
+      review_room_opens: 0,
+      first_opened_at: null,
+      last_opened_at: null,
+      receipt_confirmed: false,
+      conversation_started: false,
+    }
+  }
+
+  const [openCountResult, firstOpenResult, lastOpenResult, receiptResult, conversationResult] = await Promise.all([
+    supabase
+      .from("application_recipient_events")
+      .select("id", { count: "exact", head: true })
+      .eq("access_id", access.id)
+      .eq("event_type", "application_page_viewed"),
+    supabase
+      .from("application_recipient_events")
+      .select("created_at")
+      .eq("access_id", access.id)
+      .eq("event_type", "application_page_viewed")
+      .order("created_at", { ascending: true })
+      .limit(1)
+      .maybeSingle(),
+    supabase
+      .from("application_recipient_events")
+      .select("created_at")
+      .eq("access_id", access.id)
+      .eq("event_type", "application_page_viewed")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    supabase
+      .from("application_recipient_events")
+      .select("id", { count: "exact", head: true })
+      .eq("access_id", access.id)
+      .eq("event_type", "receipt_confirmed"),
+    supabase
+      .from("application_recipient_events")
+      .select("id", { count: "exact", head: true })
+      .eq("access_id", access.id)
+      .eq("event_type", "conversation_started"),
+  ])
+
+  const failures = [openCountResult.error, firstOpenResult.error, lastOpenResult.error, receiptResult.error, conversationResult.error].filter(Boolean)
+  if (failures.length) throw failures[0]
+
+  return {
+    active_access_id: access.id,
+    access_created_at: access.created_at,
+    access_expires_at: access.expires_at,
+    review_room_opens: openCountResult.count ?? 0,
+    first_opened_at: firstOpenResult.data?.created_at ?? null,
+    last_opened_at: lastOpenResult.data?.created_at ?? null,
+    receipt_confirmed: (receiptResult.count ?? 0) > 0,
+    conversation_started: (conversationResult.count ?? 0) > 0,
+  }
+}
+
+function pageLoadId() {
+  if (typeof window === "undefined") return "server"
+  const origin = Number.isFinite(window.performance?.timeOrigin) ? Math.round(window.performance.timeOrigin) : Date.now()
+  return `${origin}`
+}
+
+function firstMessageNonce(draftToken: string) {
+  const source = draftToken.toLowerCase().replace(/[^a-f0-9]/g, "")
+  const hex = source.padEnd(32, "0").slice(0, 32)
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-4${hex.slice(13, 16)}-a${hex.slice(17, 20)}-${hex.slice(20, 32)}`
+}
+
 export async function loadRecipientReview(token: string) {
-  const idempotencyKey = `application-page-viewed:${token.slice(-12)}:${new Date().toISOString().slice(0, 13)}`
+  const idempotencyKey = `application-page-viewed:${token.slice(-12)}:${pageLoadId()}`
   return invoke<RecipientReviewResponse>({
     action: "view",
     token,
@@ -193,7 +290,7 @@ export async function completeRecipientQuestion(reviewToken: string, draftToken:
     action: "verify_and_send",
     token: reviewToken,
     draft_token: draftToken,
-    client_nonce: crypto.randomUUID(),
+    client_nonce: firstMessageNonce(draftToken),
   })
 }
 
