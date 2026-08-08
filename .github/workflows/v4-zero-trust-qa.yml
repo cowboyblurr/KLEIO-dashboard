@@ -1,0 +1,98 @@
+name: KLEIO Zero-Trust V4 QA
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "app/**"
+      - "components/**"
+      - "lib/**"
+      - "scripts/**"
+      - "tests/**"
+      - "supabase/**"
+      - ".github/workflows/v4-zero-trust-qa.yml"
+      - "package.json"
+      - "pnpm-lock.yaml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  NEXT_PUBLIC_SUPABASE_URL: https://trekynurdgxgtaaqqtyq.supabase.co
+  NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_XdYXvd0fQm3IJKxNrFXgUQ_M4RgDj1M
+  KLEIO_SITE_URL: https://www.kleioarthouse.com
+
+jobs:
+  repository-health:
+    name: fresh repository health
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.18.2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Lint
+        run: pnpm lint
+      - name: Typecheck
+        run: pnpm typecheck
+      - name: Build full static export
+        run: pnpm build
+      - name: V4 finalization regression
+        run: node --test tests/v4-finalization-idempotency.test.mjs
+      - name: Deterministic service tests
+        run: |
+          pnpm test:artist-workflow-services
+          pnpm test:gemini-document-intelligence
+          pnpm test:passport-synthesis-orchestration
+      - name: Current architecture and trust audits
+        run: |
+          pnpm audit:artist-beta-readiness
+          pnpm audit:artist-beta-convenience
+          pnpm audit:artist-media-control
+          pnpm audit:application-composer
+          pnpm audit:artist-recipient-loop
+          pnpm audit:visual-convenience
+          pnpm audit:auth-isolation
+          pnpm audit:navigation
+          pnpm audit:user-copy
+          pnpm audit:product-analytics-privacy
+          pnpm audit:upload-surfaces
+          pnpm audit:upload-to-passport
+          pnpm audit:gemini-document-intelligence
+          pnpm audit:passport-synthesis-orchestration
+
+  authenticated-runtime:
+    name: fresh authenticated runtime + chaos
+    needs: repository-health
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.18.2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Correct current analytics actor field in QA runner
+        run: |
+          sed 's/\.eq("user_id", artistId)/.eq("actor_user_id", artistId)/' scripts/v4-zero-trust-runtime.mjs > scripts/v4-zero-trust-runtime-run.mjs
+      - name: Authenticated artist + AI + application + recipient chaos
+        run: node scripts/v4-zero-trust-runtime-run.mjs
+      - name: Upload V4 runtime evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v4-zero-trust-runtime-${{ github.run_id }}
+          path: qa-artifacts/v4
+          if-no-files-found: warn
+          retention-days: 14
