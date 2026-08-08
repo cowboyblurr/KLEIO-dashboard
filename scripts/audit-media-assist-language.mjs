@@ -16,11 +16,11 @@ function collect(dir) {
   return results
 }
 
-const artistUiFiles = [...collect("components/kleio"), ...collect("app/artist-dashboard")]
-for (const file of artistUiFiles) {
+const renderedUiFiles = [...collect("components"), ...collect("app")]
+for (const file of renderedUiFiles) {
   const content = fs.readFileSync(path.join(root, file), "utf8")
   if (/KLEIO\s+Vision|Kleio\s+Vision|Run\s+KLEIO\s+Vision|Run\s+Kleio\s+Vision/i.test(content)) {
-    failures.push(`${file}: legacy KLEIO Vision language remains on an artist-facing surface`)
+    failures.push(`${file}: legacy KLEIO Vision language remains in rendered UI`)
   }
 }
 
@@ -62,4 +62,4 @@ if (failures.length) {
   process.exit(1)
 }
 
-console.log("KLEIO Media Assist language audit passed: Media Library and Creative Passport use Media Assist, legacy Vision language is absent, creative-facing confidence/AI-intelligence framing is not exposed, and one selected source can immediately run Media Assist.")
+console.log("KLEIO Media Assist language audit passed: all rendered UI is free of KLEIO Vision branding, Media Library and Creative Passport use Media Assist, creative-facing confidence/AI-intelligence framing is not exposed, and one selected source can immediately run Media Assist.")
