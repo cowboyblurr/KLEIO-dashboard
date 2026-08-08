@@ -1,0 +1,49 @@
+name: QA-only Gmail Final Gate V2
+
+on:
+  push:
+    branches:
+      - feature/gmail-send-beta-20260808
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Gmail send-only contract
+        run: node scripts/audit-gmail-send-beta.mjs
+      - name: Submission delivery contract
+        run: node scripts/audit-submission-delivery-lock.mjs
+      - name: Application composer lock
+        run: pnpm audit:application-composer
+      - name: Artist beta convenience simulations
+        run: pnpm audit:artist-beta-convenience
+      - name: Recipient workflow lock
+        run: pnpm audit:artist-recipient-loop
+      - name: Auth and role isolation
+        run: pnpm audit:auth-isolation
+      - name: TypeScript
+        run: pnpm typecheck
+      - name: Static production build
+        run: pnpm build
+      - name: Report exact-head result to PR 156
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RESULT: ${{ job.status }}
+          SHA: ${{ github.sha }}
+        run: gh pr comment 156 --body "QA-only Gmail exact-head gate V2: **${RESULT}** on \`${SHA}\`. Covers Gmail send-only contract, immutable submission delivery, composer, 45 artist convenience simulations, recipient workflow, auth isolation, TypeScript, and static production build after provider-unknown recovery hardening."
