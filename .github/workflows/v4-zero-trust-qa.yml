@@ -62,7 +62,9 @@ jobs:
           pnpm audit:auth-isolation
           pnpm audit:navigation
           pnpm audit:user-copy
-          pnpm audit:product-analytics-privacy
+          pnpm audit:product-analytics
+          pnpm audit:analytics-privacy
+          pnpm audit:analytics-coverage
           pnpm audit:upload-surfaces
           pnpm audit:upload-to-passport
           pnpm audit:gemini-document-intelligence
