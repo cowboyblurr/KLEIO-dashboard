@@ -21,6 +21,12 @@ function assert(condition, message) {
   if (!condition) failures.push(message)
 }
 
+function firstMessageNonce(draftToken) {
+  const source = draftToken.toLowerCase().replace(/[^a-f0-9]/g, "")
+  const hex = source.padEnd(32, "0").slice(0, 32)
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-4${hex.slice(13, 16)}-a${hex.slice(17, 20)}-${hex.slice(20, 32)}`
+}
+
 const recipientClient = read("lib/kleio-recipient-application.ts")
 const recipientPanel = read("components/kleio/application-recipient-loop-panel.tsx")
 const recipientEdge = read("supabase/functions/recipient-application-review/index.ts")
@@ -45,6 +51,12 @@ requirePattern(recipientClient, /select\("id", \{ count: "exact", head: true \}\
 requirePattern(recipientClient, /first_opened_at/, "Tracking summary must preserve first-open timing.")
 requirePattern(recipientClient, /last_opened_at/, "Tracking summary must preserve last-open timing.")
 
+// Verified first-message completion is client-idempotent under double submit / repeated auth callback.
+requirePattern(recipientClient, /function firstMessageNonce\(draftToken: string\)/, "Initial verified messages need a deterministic draft-scoped nonce.")
+requirePattern(recipientClient, /client_nonce: firstMessageNonce\(draftToken\)/, "Repeated verification completion must reuse the same first-message nonce.")
+requirePattern(schema, /unique \(conversation_id, client_nonce\)/, "Message storage must enforce conversation-scoped client nonce uniqueness.")
+requirePattern(recipientEdge, /onConflict: "conversation_id,client_nonce"/, "First-message persistence must use the database uniqueness boundary during upsert.")
+
 // Existing security and relationship boundaries remain mandatory.
 requirePattern(recipientEdge, /await sha256\(plainToken\)/, "Recipient access tokens must still be hashed before lookup.")
 requirePattern(recipientEdge, /\.eq\("artist_user_id", user\.id\)/, "Artist-managed recipient access must remain owner scoped.")
@@ -56,6 +68,7 @@ requirePattern(recipientEdge, /eventType: "application_page_viewed"/, "Review Ro
 
 // Stress token uniqueness, URL uniqueness, and hash uniqueness at a scale well beyond beta traffic.
 const tokenPattern = /^[a-f0-9]{64}$/
+const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-a[0-9a-f]{3}-[0-9a-f]{12}$/i
 const iterations = 50000
 const tokens = new Set()
 const urls = new Set()
@@ -93,6 +106,19 @@ for (let index = 0; index < pageLoads; index += 1) {
 }
 assert(loadKeys.size === pageLoads, `Page-load stress run undercounted ${pageLoads - loadKeys.size} distinct Review Room open(s).`)
 
+// Stress initial-message double-submit identity: the same preserved draft always resolves to one nonce.
+const draftNonces = new Set()
+const draftRuns = 25000
+for (let index = 0; index < draftRuns; index += 1) {
+  const draftToken = randomBytes(32).toString("hex")
+  const first = firstMessageNonce(draftToken)
+  const retry = firstMessageNonce(draftToken)
+  assert(first === retry, `Draft ${index} produced divergent first-message nonces across retries.`)
+  assert(uuidPattern.test(first), `Draft ${index} produced an invalid deterministic UUID nonce.`)
+  draftNonces.add(first)
+}
+assert(draftNonces.size === draftRuns, `Draft nonce stress run produced ${draftRuns - draftNonces.size} collision(s).`)
+
 // Internal tracking references stay opaque and non-identifying to the artist UI.
 const accessIds = new Set()
 for (let index = 0; index < 25000; index += 1) accessIds.add(randomUUID())
@@ -104,4 +130,4 @@ if (failures.length) {
   process.exit(1)
 }
 
-console.log(`KLEIO recipient tracking integrity audit passed: ${iterations.toLocaleString()} unique secure links and SHA-256 hashes, ${pageLoads.toLocaleString()} distinct countable Review Room opens with retry deduplication, ${accessIds.size.toLocaleString()} internal tracking identities, no raw-link sharing UI, and opportunity/package/access security boundaries verified.`)
+console.log(`KLEIO recipient tracking integrity audit passed: ${iterations.toLocaleString()} unique secure links and SHA-256 hashes, ${pageLoads.toLocaleString()} distinct countable Review Room opens with retry deduplication, ${draftRuns.toLocaleString()} deterministic first-message retry identities, ${accessIds.size.toLocaleString()} internal tracking identities, no raw-link sharing UI, and opportunity/package/access security boundaries verified.`)
