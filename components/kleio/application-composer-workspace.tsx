@@ -10,7 +10,6 @@ import {
   ArrowLeft,
   Check,
   CheckCircle2,
-  ChevronDown,
   Download,
   ExternalLink,
   FileCheck2,
@@ -19,7 +18,6 @@ import {
   Loader2,
   Mail,
   PackageCheck,
-  RefreshCw,
   ShieldCheck,
   Sparkles,
   WandSparkles,
@@ -209,8 +207,37 @@ export function ApplicationComposerWorkspace() {
   const [error, setError] = useState(opportunityId ? "" : "Choose an opportunity before preparing an application.")
   const [message, setMessage] = useState("")
   const [autosaveStatus, setAutosaveStatus] = useState("")
+  const [deadlineClock, setDeadlineClock] = useState(0)
   const hydratedRef = useRef(false)
   const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    const updateDeadlineClock = () => setDeadlineClock(Date.now())
+    const initialTimer = window.setTimeout(updateDeadlineClock, 0)
+    const intervalTimer = window.setInterval(updateDeadlineClock, 60_000)
+    return () => {
+      window.clearTimeout(initialTimer)
+      window.clearInterval(intervalTimer)
+    }
+  }, [])
+
+  useEffect(() => {
+    const handlePortfolioChanged = (event: Event) => {
+      const customEvent = event as CustomEvent<{ workIds?: string[] }>
+      const workIds = Array.isArray(customEvent.detail?.workIds)
+        ? customEvent.detail.workIds.filter((workId) => typeof workId === "string" && workId.trim())
+        : []
+      void loadOpportunityDirectoryWithSources({ limit: 100 })
+        .then((loadedDirectory) => {
+          setDirectory(loadedDirectory)
+          if (workIds.length) setSelectedWorkIds((current) => Array.from(new Set([...current, ...workIds])))
+          setMessage(workIds.length ? `${workIds.length} newly added work${workIds.length === 1 ? " is" : "s are"} selected for this application. Review the Portfolio selection below before finalizing.` : "Portfolio works refreshed for this application.")
+        })
+        .catch(() => setError("The Portfolio changed, but KLEIO could not refresh the application selection. Your saved application edits remain unchanged."))
+    }
+    window.addEventListener("kleio:application-portfolio-changed", handlePortfolioChanged)
+    return () => window.removeEventListener("kleio:application-portfolio-changed", handlePortfolioChanged)
+  }, [])
 
   useEffect(() => {
     if (!opportunityId) return
@@ -287,7 +314,7 @@ export function ApplicationComposerWorkspace() {
 
   const packageState: ApplicationPackageState = (() => {
     if (!item || !structuralPreflight) return "draft"
-    if (item.deadline_at && new Date(item.deadline_at).getTime() < Date.now()) return "deadline_passed"
+    if (item.deadline_at && deadlineClock > 0 && new Date(item.deadline_at).getTime() < deadlineClock) return "deadline_passed"
     if (structuralPreflight.blockingCount > 0) return "missing_information"
     if (!approvalsComplete) return "artist_review_required"
     if (method === "email") return "email_preview_ready"
@@ -426,7 +453,7 @@ export function ApplicationComposerWorkspace() {
     }
   }
 
-  function useDraftOption(question: ComposerRequirement, result: ApplicationAnswerAssistResult, index: number) {
+  function applyDraftOption(question: ComposerRequirement, result: ApplicationAnswerAssistResult, index: number) {
     const key = requirementAnswerKey(question)
     const option = result.options.options?.[index]
     if (!option) return
@@ -476,7 +503,7 @@ export function ApplicationComposerWorkspace() {
       summary: "KLEIO opened the artist’s email client with prepared application copy. This is not proof the email was sent.",
       metadata: { recipient: emailPreview.to },
     }).catch(() => undefined)
-    window.location.href = href
+    window.location.assign(href)
   }
 
   async function downloadDossier() {
@@ -598,7 +625,7 @@ export function ApplicationComposerWorkspace() {
                   <div className="flex items-start gap-2"><Sparkles className="mt-0.5 size-4 text-[#7F6EB4]" /><div><p className="text-sm font-semibold text-[#292631]">Suggested drafts — choose only if useful</p><p className="mt-1 text-xs leading-5 text-muted-foreground">{result.label}</p></div></div>
                   {result.options.missing_context?.length ? <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-3"><p className="text-xs font-semibold text-amber-900">KLEIO still needs your input</p><ul className="mt-1 list-disc space-y-1 pl-4 text-xs leading-5 text-amber-900">{result.options.missing_context.map((missing) => <li key={missing}>{missing}</li>)}</ul></div> : null}
                   <div className="mt-3 grid gap-3 lg:grid-cols-2">
-                    {(result.options.options ?? []).slice(0, 2).map((option, optionIndex) => <div key={`${key}-${optionIndex}`} className="rounded-xl border border-[#E7E1F7] bg-white p-3"><p className="text-xs font-semibold uppercase tracking-wide text-[#8874C1]">{option.label || `Option ${optionIndex + 1}`}</p><p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-[#403A4A]">{option.text}</p><div className="mt-3 flex items-center justify-between gap-2"><details><summary className="cursor-pointer text-xs font-semibold text-[#665A85]">Why this draft?</summary><p className="mt-1 max-w-sm text-xs leading-5 text-muted-foreground">Built from {option.evidence_refs.length} artist-confirmed evidence reference{option.evidence_refs.length === 1 ? "" : "s"} and this exact opportunity question.</p></details><button type="button" className={secondary} onClick={() => useDraftOption(question, result, optionIndex)}><Check className="size-4" />Use this draft</button></div></div>)}
+                    {(result.options.options ?? []).slice(0, 2).map((option, optionIndex) => <div key={`${key}-${optionIndex}`} className="rounded-xl border border-[#E7E1F7] bg-white p-3"><p className="text-xs font-semibold uppercase tracking-wide text-[#8874C1]">{option.label || `Option ${optionIndex + 1}`}</p><p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-[#403A4A]">{option.text}</p><div className="mt-3 flex items-center justify-between gap-2"><details><summary className="cursor-pointer text-xs font-semibold text-[#665A85]">Why this draft?</summary><p className="mt-1 max-w-sm text-xs leading-5 text-muted-foreground">Built from {option.evidence_refs.length} artist-confirmed evidence reference{option.evidence_refs.length === 1 ? "" : "s"} and this exact opportunity question.</p></details><button type="button" className={secondary} onClick={() => applyDraftOption(question, result, optionIndex)}><Check className="size-4" />Use this draft</button></div></div>)}
                   </div>
                 </div>}
               </article>
