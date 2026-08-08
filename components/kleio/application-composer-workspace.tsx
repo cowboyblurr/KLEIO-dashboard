@@ -59,6 +59,7 @@ import {
   type ComposerRequirement,
 } from "@/lib/kleio-application-composer"
 import { requestApplicationAnswer, type ApplicationAnswerAssistResult } from "@/lib/kleio-application-answer-assist"
+import { prepareTrackedEmailClientHandoff } from "@/lib/kleio-application-delivery"
 
 const surface = "rounded-2xl border border-[#E7E1F7] bg-white p-5 shadow-[0_18px_48px_rgba(82,64,130,0.055)]"
 const primary = "inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#5B4B8A] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#4F407C] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#A997E8]/20 disabled:cursor-not-allowed disabled:opacity-45"
@@ -494,15 +495,35 @@ export function ApplicationComposerWorkspace() {
 
   async function openEmailClient() {
     if (!item || !emailPreview || !packageRecord || !latestVersion || !finalizedIsCurrent) return
-    const params = new URLSearchParams({ subject: emailPreview.subject, body: emailPreview.body })
-    const href = `mailto:${encodeURIComponent(emailPreview.to)}?${params.toString()}`
-    await recordArtistApplicationTimelineEvent({
-      packageId: packageRecord.id,
-      submissionVersionId: latestVersion.id,
-      eventType: "email_client_opened",
-      summary: "KLEIO opened the artist’s email client with prepared application copy. This is not proof the email was sent.",
-    }).catch(() => undefined)
-    window.location.assign(href)
+    setBusy(true)
+    setError("")
+    setMessage("")
+    try {
+      const handoff = await prepareTrackedEmailClientHandoff({
+        packageId: packageRecord.id,
+        submissionVersionId: latestVersion.id,
+        recipient: emailPreview.to,
+        subject: emailPreview.subject,
+        body: emailPreview.body,
+      })
+      await recordArtistApplicationTimelineEvent({
+        packageId: packageRecord.id,
+        submissionVersionId: latestVersion.id,
+        eventType: "tracked_email_handoff_prepared",
+        summary: "KLEIO prepared the artist’s email client with secure Review Room access bound to this preserved submission version. This is not proof the email was sent.",
+        eventMetadata: {
+          delivery_id: handoff.deliveryId,
+          recipient_access_id: handoff.accessId,
+          access_expires_at: handoff.expiresAt,
+        },
+      }).catch(() => undefined)
+      setMessage("Tracked Review Room prepared for this preserved version. Your email app will open with the recipient, approved copy, and secure application access already included.")
+      window.location.assign(handoff.href)
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "KLEIO could not prepare the tracked email handoff.")
+    } finally {
+      setBusy(false)
+    }
   }
 
   async function downloadDossier() {
@@ -654,7 +675,7 @@ export function ApplicationComposerWorkspace() {
 
       <section className={surface} id="submission-review">
         <div className="flex items-start gap-3"><ShieldCheck className="mt-0.5 size-5 text-[#6F5DA7]" /><div><h2 className="text-base font-semibold text-[#292631]">Exactly what will leave KLEIO</h2><p className="mt-1 text-sm leading-6 text-muted-foreground">Nothing here is hidden. Review the destination, copy, works, and tracking behavior before approval.</p></div></div>
-        <dl className="mt-4 grid gap-4 text-sm md:grid-cols-2"><div><dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Submission method</dt><dd className="mt-1 font-semibold text-[#292631]">{displayLabel(method)}</dd></div><div><dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Destination</dt><dd className="mt-1 break-all font-semibold text-[#292631]">{method === "email" ? emailPreview.to || "Recipient not verified" : destinationUrl || "Destination requires confirmation"}</dd></div><div className="md:col-span-2"><dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Email subject</dt><dd className="mt-1 text-[#292631]">{emailPreview.subject}</dd></div><div className="md:col-span-2"><dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Email body</dt><dd className="mt-2 whitespace-pre-wrap rounded-xl bg-[#FAF8FD] p-3 leading-6 text-[#403A4A]">{emailPreview.body}</dd></div><div><dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Works</dt><dd className="mt-1 text-[#292631]">{selectedWorks.length ? selectedWorks.map((work) => work.title).join(", ") : "None selected"}</dd></div><div><dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Tracking truth</dt><dd className="mt-1 leading-6 text-[#403A4A]">KLEIO may record that it opened your email client, that a hosted application page was accessed, or that you marked an application sent. It does not call those events proof that the institution read or received the application.</dd></div></dl>
+        <dl className="mt-4 grid gap-4 text-sm md:grid-cols-2"><div><dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Submission method</dt><dd className="mt-1 font-semibold text-[#292631]">{displayLabel(method)}</dd></div><div><dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Destination</dt><dd className="mt-1 break-all font-semibold text-[#292631]">{method === "email" ? emailPreview.to || "Recipient not verified" : destinationUrl || "Destination requires confirmation"}</dd></div><div className="md:col-span-2"><dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Email subject</dt><dd className="mt-1 text-[#292631]">{emailPreview.subject}</dd></div><div className="md:col-span-2"><dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Email body</dt><dd className="mt-2 whitespace-pre-wrap rounded-xl bg-[#FAF8FD] p-3 leading-6 text-[#403A4A]">{emailPreview.body}</dd></div><div><dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Works</dt><dd className="mt-1 text-[#292631]">{selectedWorks.length ? selectedWorks.map((work) => work.title).join(", ") : "None selected"}</dd></div><div><dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Tracking truth</dt><dd className="mt-1 leading-6 text-[#403A4A]">For email delivery, KLEIO creates secure Review Room access for this exact preserved version and places it into the prepared handoff automatically. KLEIO may record the handoff, Review Room access, or that you marked an application sent; none of those events are called proof that the institution read or received the application.</dd></div></dl>
       </section>
 
       <section className={surface} id="final-review">
@@ -668,7 +689,7 @@ export function ApplicationComposerWorkspace() {
 
       <section className={`${surface} space-y-4`}>
         <div className="flex flex-wrap gap-2"><button type="button" className={secondary} disabled={busy} onClick={() => void saveNow()}>{busy ? <Loader2 className="size-4 animate-spin" /> : <FileCheck2 className="size-4" />}Save application</button><button type="button" className={primary} disabled={busy || !preflight.ready} onClick={() => void finalizeVersion()}>{busy ? <Loader2 className="size-4 animate-spin" /> : <ShieldCheck className="size-4" />}{latestVersion && finalizedIsCurrent ? `Preserve as Version ${latestVersion.versionNumber + 1}` : "Finalize & preserve version"}</button></div>
-        {latestVersion && finalizedIsCurrent && <div className="rounded-2xl border border-[#DED7EF] bg-[#FAF8FD] p-4"><div className="flex flex-wrap items-start justify-between gap-3"><div><p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#8874C1]">Preserved submission version</p><h3 className="mt-1 text-base font-semibold text-[#292631]">KLA · Version {latestVersion.versionNumber}</h3><p className="mt-1 text-xs text-muted-foreground">Finalized {formatDate(latestVersion.finalizedAt)}</p></div><CheckCircle2 className="size-5 text-emerald-700" /></div><div className="mt-4 flex flex-wrap gap-2"><button type="button" className={secondary} onClick={() => void downloadDossier()}><Download className="size-4" />Download application dossier</button>{method === "email" && <><button type="button" className={secondary} onClick={() => void downloadEmailDraft()}><Download className="size-4" />Download email draft</button><button type="button" className={primary} disabled={!emailPreview.to} onClick={() => void openEmailClient()}><Mail className="size-4" />Open email client</button></>}{["external_portal", "download_package", "unknown"].includes(method) && destinationUrl && <a className={primary} href={destinationUrl} target="_blank" rel="noreferrer">Open official destination<ExternalLink className="size-4" /></a>}</div></div>}
+        {latestVersion && finalizedIsCurrent && <div className="rounded-2xl border border-[#DED7EF] bg-[#FAF8FD] p-4"><div className="flex flex-wrap items-start justify-between gap-3"><div><p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#8874C1]">Preserved submission version</p><h3 className="mt-1 text-base font-semibold text-[#292631]">KLA · Version {latestVersion.versionNumber}</h3><p className="mt-1 text-xs text-muted-foreground">Finalized {formatDate(latestVersion.finalizedAt)}</p></div><CheckCircle2 className="size-5 text-emerald-700" /></div><div className="mt-4 flex flex-wrap gap-2"><button type="button" className={secondary} onClick={() => void downloadDossier()}><Download className="size-4" />Download application dossier</button>{method === "email" && <><button type="button" className={secondary} onClick={() => void downloadEmailDraft()}><Download className="size-4" />Download email draft</button><button type="button" className={primary} disabled={busy || !emailPreview.to} onClick={() => void openEmailClient()}><Mail className="size-4" />Open email to send</button></>}{["external_portal", "download_package", "unknown"].includes(method) && destinationUrl && <a className={primary} href={destinationUrl} target="_blank" rel="noreferrer">Open official destination<ExternalLink className="size-4" /></a>}</div></div>}
       </section>
 
       {latestVersion && finalizedIsCurrent && ["email", "external_portal", "download_package", "unknown"].includes(method) && <section className={surface}><div className="flex items-start gap-3"><History className="mt-0.5 size-5 text-[#6F5DA7]" /><div><h2 className="text-base font-semibold text-[#292631]">After you submit outside KLEIO</h2><p className="mt-1 text-sm leading-6 text-muted-foreground">If KLEIO cannot independently confirm the send, keep the evidence label truthful.</p></div></div><div className="mt-4 flex flex-col gap-2 sm:flex-row"><input className={input} value={providerConfirmation} onChange={(event) => setProviderConfirmation(event.target.value)} placeholder="Optional receipt or confirmation number" /><button type="button" className={secondary} disabled={busy} onClick={() => void markSent()}><Check className="size-4" />I sent this application</button></div><p className="mt-2 text-xs leading-5 text-muted-foreground">This records “Artist marked as sent.” It does not claim “Institution received your application.”</p></section>}

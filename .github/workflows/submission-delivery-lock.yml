@@ -1,0 +1,50 @@
+name: Submission Delivery Lock
+
+on:
+  pull_request:
+    paths:
+      - "components/kleio/application-composer-workspace.tsx"
+      - "lib/kleio-application-delivery.ts"
+      - "lib/kleio-recipient-application.ts"
+      - "supabase/functions/recipient-application-review/index.ts"
+      - "supabase/migrations/20260808160000_lock_submission_delivery_to_finalized_version.sql"
+      - "supabase/migrations/20260808161500_sync_submission_attempts_to_delivery.sql"
+      - "supabase/migrations/20260808162500_harden_application_delivery_grants.sql"
+      - "scripts/audit-submission-delivery-lock.mjs"
+      - ".github/workflows/submission-delivery-lock.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "components/kleio/application-composer-workspace.tsx"
+      - "lib/kleio-application-delivery.ts"
+      - "lib/kleio-recipient-application.ts"
+      - "supabase/functions/recipient-application-review/index.ts"
+      - "supabase/migrations/20260808160000_lock_submission_delivery_to_finalized_version.sql"
+      - "supabase/migrations/20260808161500_sync_submission_attempts_to_delivery.sql"
+      - "supabase/migrations/20260808162500_harden_application_delivery_grants.sql"
+      - "scripts/audit-submission-delivery-lock.mjs"
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Audit immutable delivery boundary
+        run: node scripts/audit-submission-delivery-lock.mjs
+      - name: Existing application composer lock
+        run: pnpm audit:application-composer
+      - name: Existing recipient workflow lock
+        run: pnpm audit:artist-recipient-loop
+      - name: TypeScript
+        run: pnpm typecheck
+      - name: Static production build
+        run: pnpm build

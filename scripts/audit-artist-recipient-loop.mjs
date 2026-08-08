@@ -20,6 +20,7 @@ const schema = read("supabase/migrations/20260805161000_artist_recipient_applica
 const consistency = read("supabase/migrations/20260805163000_artist_workflow_consistency.sql")
 const reset = read("supabase/migrations/20260805164500_practice_submission_reset.sql")
 const hardening = read("supabase/migrations/20260805170000_recipient_security_hardening.sql")
+const deliveryLock = read("supabase/migrations/20260808160000_lock_submission_delivery_to_finalized_version.sql")
 const edge = read("supabase/functions/recipient-application-review/index.ts")
 const recipientPage = read("components/kleio/recipient-application-review.tsx")
 const recipientClient = read("lib/kleio-recipient-application.ts")
@@ -52,8 +53,14 @@ requirePattern(edge, /safeMetadataKeys/, "Recipient event metadata must use an a
 requirePattern(edge, /\(count \?\? 0\) >= 8/, "Guest question drafting must be rate limited.")
 forbidPattern(edge, /console\.(?:log|info|debug)\(/, "The recipient function must not log private application content.")
 
-// Approval and visibility gates.
-requirePattern(edge, /artist_approval_required/, "External recipient access must require explicit artist approval.")
+// Approval and visibility gates. The immutable submission version is now the
+// durable artist-approval boundary; later edits to the mutable package must not
+// invalidate or rewrite a version the artist already finalized.
+requirePattern(edge, /application_submission_versions/, "External recipient access must resolve an artist-owned finalized submission version.")
+requirePattern(edge, /finalized_submission_version_required/, "Recipient access must fail closed when no finalized submission version exists.")
+requirePattern(edge, /submission_version_id:\s*finalizedVersion\.id/, "Recipient access must be explicitly tied to the resolved immutable version.")
+requirePattern(deliveryLock, /bind_recipient_access_to_finalized_submission/, "The database must independently bind recipient access to the finalized version.")
+requirePattern(deliveryLock, /kleio_recipient_snapshot_from_submission_version/, "Recipient visibility must be rebuilt from the immutable submission snapshot.")
 requirePattern(edge, /approved_snapshot/, "Recipient pages must render an artist-approved snapshot rather than live private data.")
 requirePattern(recipientPage, /core application remains viewable without an account/i, "The recipient page must not force signup before showing the application.")
 requirePattern(`${recipientPage}\n${artistConversation}`, /Email verification does not label you as a verified institution|Email verified—not institution verified/, "Email verification must remain distinct from institution verification.")
@@ -79,15 +86,15 @@ requirePattern(recipientPage, /This artwork is temporarily unavailable\. The rem
 forbidPattern(recipientPage, /item\.confidence/, "Internal AI confidence values must not appear in the recipient review experience.")
 
 // Exact application content and non-invented project context.
-requirePattern(edge, /approvedApplicationResponses/, "The recipient snapshot must map exact approved application answers back to their opportunity questions.")
-requirePattern(edge, /requirement_snapshot/, "Exact application response labels must come from the preserved requirement snapshot.")
-requirePattern(edge, /application_responses: applicationResponses/, "The artist-approved review snapshot must preserve exact application responses.")
+requirePattern(edge, /approvedApplicationResponses/, "The recipient snapshot compatibility layer must continue mapping application answers while the database supplies the sealed snapshot.")
+requirePattern(edge, /requirement_snapshot/, "Exact application response labels must remain compatible with preserved requirement snapshots.")
+requirePattern(edge, /application_responses: applicationResponses/, "The compatibility snapshot shape must preserve exact application responses before the database replaces it with the immutable version-derived snapshot.")
 requirePattern(recipientPage, /snapshot\?\.application_responses/, "The review room must prefer exact approved application responses over generic legacy labels.")
 requirePattern(recipientPage, /Budget \/ project structure/, "Budget and timeline answers must receive a calm project-structure section when they actually exist.")
 requirePattern(recipientPage, /Opportunity support/, "Opportunity funding context must be labelled as opportunity support rather than invented requested funding.")
 forbidPattern(recipientPage, /Requested support/, "The review room must not fabricate an artist-requested amount from an opportunity award range.")
-requirePattern(edge, /exhibition_history/, "Approved professional context should preserve exhibition history when present in the Passport snapshot.")
-requirePattern(edge, /disciplines: stringList\(passport\.disciplines\)/, "Approved artist disciplines should travel with the review snapshot.")
+requirePattern(edge, /exhibition_history/, "Approved professional context should preserve exhibition history when present in the compatibility snapshot.")
+requirePattern(edge, /disciplines: stringList\(passport\.disciplines\)/, "Approved artist disciplines should remain compatible with the review snapshot shape.")
 
 // Question verification, recipient identity, and conversation continuity.
 requirePattern(edge, /application_recipient_message_drafts/, "Guest questions must be preserved before verification.")
@@ -103,7 +110,7 @@ requirePattern(edge, /conversation_started/, "Verified first questions must crea
 requirePattern(artistConversation, /Reply sent and preserved with this application conversation/, "Artists must be able to reply inside the application-specific conversation.")
 
 // Truthful email handoff and tracking.
-requirePattern(artistPanel, /status:\s*"email_client_opened"/, "The default-client handoff must record Email client opened.")
+requirePattern(artistPanel, /status:\s*"email_client_opened"/, "The legacy recipient panel's default-client handoff must still record Email client opened truthfully.")
 requirePattern(artistPanel, /attachments_automatically_added:\s*false/, "The default-client handoff must explicitly state attachments were not inserted.")
 requirePattern(artistPanel, /not that the email was sent, delivered, opened, or read/i, "The artist interface must distinguish email-client handoff from delivery and reading.")
 requirePattern(recipientClient, /mailto:/, "The non-Gmail fallback must use a prefilled mailto action.")
@@ -135,4 +142,4 @@ if (failures.length) {
   process.exit(1)
 }
 
-console.log("KLEIO artist-recipient workflow audit passed: synthetic isolation, weighted completion, compact next-action hierarchy, requirement normalization, approval gates, secure guest review, exact approved application responses, editorial recipient review room, truthful project context, delayed institution conversion, truthful mailto handoff, recipient identity continuity, verified conversation, artist reply, access revocation, and safe reset boundaries verified.")
+console.log("KLEIO artist-recipient workflow audit passed: synthetic isolation, weighted completion, compact next-action hierarchy, requirement normalization, immutable finalized-version approval, secure guest review, exact approved application responses, editorial recipient review room, truthful project context, delayed institution conversion, truthful mailto handoff, recipient identity continuity, verified conversation, artist reply, access revocation, and safe reset boundaries verified.")
