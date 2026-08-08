@@ -7,6 +7,7 @@ const failures = []
 const requireText = (file, text, message) => { if (!read(file).includes(text)) failures.push(`${message} (${file})`) }
 const requirePattern = (file, pattern, message) => { if (!pattern.test(read(file))) failures.push(`${message} (${file})`) }
 const forbidText = (file, text, message) => { if (read(file).includes(text)) failures.push(`${message} (${file})`) }
+const forbidPattern = (file, pattern, message) => { if (pattern.test(read(file))) failures.push(`${message} (${file})`) }
 
 const page = "components/kleio/artist-import-studio-page.tsx"
 const hub = "components/kleio/import-source-hub.tsx"
@@ -40,13 +41,16 @@ for (const roadmapCopy of ["Deferred", "deferred", "Beta", "beta", "Google Drive
 
 requireText(library, "<MediaIntelligenceSheet", "Media Library must open analysis in place")
 requireText(library, "canAnalyzeMediaItem", "Media Library must show analysis only for supported sources")
-requireText(library, "Analysis ready", "Media Library must make completed intelligence visible at a glance")
+requireText(library, "Media Assist ready", "Media Library must make completed Media Assist state visible at a glance")
+requireText(library, "Open Media Assist", "Media Library must make a completed source directly reopenable")
 requireText(passportPanel, "<MediaIntelligenceSheet", "Creative Passport must open the same private media analysis in place")
 requireText(passportPanel, "loadMediaIntelligenceStatuses", "Creative Passport must surface existing analysis rather than forcing re-analysis")
 requireText(passportPanel, 'context="creative_passport"', "Creative Passport must support direct reusable media selection")
 requireText(intelligenceSheet, "Observation", "analysis UI must explain that observation and interpretation are distinct")
-requireText(intelligenceSheet, "not verification", "AI confidence must not be presented as verification")
-requirePattern(intelligenceSheet, /does not rewrite your Passport|Nothing changes your approved Passport until you confirm it/i, "analysis must remain artist-controlled")
+requireText(intelligenceSheet, "No creative score is created", "Media Assist must explicitly avoid creative scoring")
+forbidPattern(intelligenceSheet, /(?:AI|Media Assist|KLEIO)[^\n]{0,80}(?:verified|verification)\s+(?:fact|claim|truth|evidence)/i, "Media Assist must not imply that AI analysis verifies artist facts")
+forbidPattern(intelligenceSheet, /confidence\s*%|\b\d{1,3}%\s+confidence\b|(?:creative|artistic)\s+(?:ranking|rating)|(?:your|overall|artistic|creative)\s+score\s*[:=]\s*\d/i, "Media Assist must not expose creative-facing confidence percentages, rankings, ratings, or numeric scores")
+requirePattern(intelligenceSheet, /does not rewrite your Passport|Nothing changes your approved Passport until you confirm it|remains a suggestion until you edit or approve it/i, "analysis must remain artist-controlled")
 requirePattern(intelligenceSheet, /Passport language|Passport suggestions|Creative Passport/i, "analysis must keep useful Passport suggestions in the same visual flow")
 
 requireText(intelligenceClient, "requestMediaExtraction", "PDFs must retain structured document intelligence")
@@ -92,4 +96,4 @@ if (failures.length) {
   process.exit(1)
 }
 
-console.log("Artist media intelligence audit passed: upload is media-first, analysis opens in Media Library and Creative Passport, PDF intelligence remains compatible, future connectors stay internal, artist approval is preserved, and secret hygiene is clean.")
+console.log("Artist media intelligence audit passed: upload is media-first, Media Assist status is visible in Media Library and Creative Passport, PDF intelligence remains compatible, future connectors stay internal, artist approval is preserved, creative scoring stays absent, and secret hygiene is clean.")
