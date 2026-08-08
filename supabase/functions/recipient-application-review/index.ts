@@ -253,7 +253,9 @@ Deno.serve(async (request: Request) => {
       const user = await authenticatedUser(request)
       if (!user) return json({ error: "authentication_required" }, 401)
       const packageId = text(body.package_id)
+      const requestedSubmissionVersionId = text(body.submission_version_id)
       if (!validUuid(packageId)) return json({ error: "invalid_package" }, 400)
+      if (requestedSubmissionVersionId && !validUuid(requestedSubmissionVersionId)) return json({ error: "invalid_submission_version" }, 400)
 
       const { data: packageRow, error } = await admin
         .from("application_packages")
@@ -264,17 +266,39 @@ Deno.serve(async (request: Request) => {
       if (error) throw error
       if (!packageRow) return json({ error: "package_not_found" }, 404)
 
-      const confirmations = packageRow.approval_confirmations && typeof packageRow.approval_confirmations === "object"
-        ? Object.values(packageRow.approval_confirmations as Record<string, unknown>)
-        : []
-      if (!packageRow.artist_approved_at || confirmations.length < 4 || !confirmations.every(Boolean)) {
-        return json({ error: "artist_approval_required" }, 409)
+      const versionBase = admin
+        .from("application_submission_versions")
+        .select("id, package_id, artist_user_id, data_scope, finalized_at")
+        .eq("package_id", packageId)
+        .eq("artist_user_id", user.id)
+      const versionResponse = requestedSubmissionVersionId
+        ? await versionBase.eq("id", requestedSubmissionVersionId).maybeSingle()
+        : await versionBase.order("finalized_at", { ascending: false }).limit(1).maybeSingle()
+      if (versionResponse.error) throw versionResponse.error
+      const finalizedVersion = versionResponse.data
+      if (!finalizedVersion) return json({ error: "finalized_submission_version_required", message: "Finalize and preserve the application before preparing recipient access." }, 409)
+
+      const { data: activeAccess, error: activeAccessError } = await admin
+        .from("application_recipient_access")
+        .select("id, submission_version_id, expires_at")
+        .eq("package_id", packageId)
+        .eq("artist_user_id", user.id)
+        .is("revoked_at", null)
+        .maybeSingle()
+      if (activeAccessError) throw activeAccessError
+      if (activeAccess) {
+        return json({
+          error: "active_access_exists",
+          message: "A tracked recipient handoff is already active. Revoke it explicitly before creating a replacement.",
+          active_access_id: activeAccess.id,
+          submission_version_id: activeAccess.submission_version_id,
+          expires_at: activeAccess.expires_at,
+        }, 409)
       }
 
       const opportunity = Array.isArray(packageRow.opportunities) ? packageRow.opportunities[0] : packageRow.opportunities
       const token = randomToken()
       const tokenHash = await sha256(token)
-      const now = new Date().toISOString()
       const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
       const emailPreview = packageRow.email_preview && typeof packageRow.email_preview === "object"
         ? packageRow.email_preview as Record<string, unknown>
@@ -287,6 +311,10 @@ Deno.serve(async (request: Request) => {
         : {}
       const applicationResponses = approvedApplicationResponses(packageRow.requirement_snapshot, written)
 
+      // This object is intentionally overwritten by the database binding trigger with
+      // the canonical snapshot derived from the immutable submission version. Keeping
+      // the shape here preserves backward compatibility while the database remains the
+      // source of truth for what a recipient can actually see.
       const approvedSnapshot = {
         reference: packageRow.id,
         approved_at: packageRow.artist_approved_at,
@@ -332,17 +360,12 @@ Deno.serve(async (request: Request) => {
         },
       }
 
-      await admin
-        .from("application_recipient_access")
-        .update({ revoked_at: now, updated_at: now })
-        .eq("package_id", packageId)
-        .is("revoked_at", null)
-
       const { data: access, error: insertError } = await admin
         .from("application_recipient_access")
         .insert({
           package_id: packageId,
           artist_user_id: user.id,
+          submission_version_id: finalizedVersion.id,
           token_hash: tokenHash,
           token_hint: token.slice(-8),
           approved_snapshot: approvedSnapshot,
@@ -355,13 +378,18 @@ Deno.serve(async (request: Request) => {
             documents: true,
             extended_profile: false,
           },
-          data_scope: packageRow.data_scope,
+          data_scope: finalizedVersion.data_scope,
           expires_at: expiresAt,
         })
-        .select("id, expires_at, data_scope")
+        .select("id, submission_version_id, expires_at, data_scope")
         .single()
-      if (insertError) throw insertError
-      return json({ token, access_id: access.id, expires_at: access.expires_at, data_scope: access.data_scope })
+      if (insertError) {
+        if (insertError.code === "23505") {
+          return json({ error: "active_access_exists", message: "A tracked recipient handoff became active before this request completed. Revoke it explicitly before creating a replacement." }, 409)
+        }
+        throw insertError
+      }
+      return json({ token, access_id: access.id, submission_version_id: access.submission_version_id, expires_at: access.expires_at, data_scope: access.data_scope })
     }
 
     if (action === "revoke_access") {
