@@ -1,0 +1,43 @@
+name: Audit Opportunity Directory Reliability
+
+on:
+  pull_request:
+    paths:
+      - "app/admin/opportunity-review/**"
+      - "components/kleio/admin-opportunity-review-queue.tsx"
+      - "components/kleio/production-artist-opportunity-directory.tsx"
+      - "lib/kleio-opportunity-review.ts"
+      - "lib/kleio-persistent-opportunity-directory.ts"
+      - "scripts/audit-opportunity-directory-reliability.mjs"
+      - "supabase/migrations/*opportunity_directory_reliability*.sql"
+      - ".github/workflows/audit-opportunity-directory-reliability.yml"
+      - "package.json"
+  push:
+    branches:
+      - main
+    paths:
+      - "app/admin/opportunity-review/**"
+      - "components/kleio/admin-opportunity-review-queue.tsx"
+      - "components/kleio/production-artist-opportunity-directory.tsx"
+      - "lib/kleio-opportunity-review.ts"
+      - "lib/kleio-persistent-opportunity-directory.ts"
+      - "scripts/audit-opportunity-directory-reliability.mjs"
+      - "supabase/migrations/*opportunity_directory_reliability*.sql"
+      - ".github/workflows/audit-opportunity-directory-reliability.yml"
+      - "package.json"
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Run opportunity-directory reliability audit
+        run: node scripts/audit-opportunity-directory-reliability.mjs
