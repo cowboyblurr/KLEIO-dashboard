@@ -1,0 +1,32 @@
+name: V4 Final Auth Probe
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "scripts/v4-final-auth-probe.mjs"
+      - ".github/workflows/v4-final-auth-probe.yml"
+
+permissions:
+  contents: read
+
+env:
+  NEXT_PUBLIC_SUPABASE_URL: https://trekynurdgxgtaaqqtyq.supabase.co
+  NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_XdYXvd0fQm3IJKxNrFXgUQ_M4RgDj1M
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.18.2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Probe live public artist signup
+        run: node scripts/v4-final-auth-probe.mjs
