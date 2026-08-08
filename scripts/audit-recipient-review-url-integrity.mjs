@@ -30,6 +30,7 @@ function firstMessageNonce(draftToken) {
 const recipientClient = read("lib/kleio-recipient-application.ts")
 const recipientPanel = read("components/kleio/application-recipient-loop-panel.tsx")
 const recipientEdge = read("supabase/functions/recipient-application-review/index.ts")
+const conversationPage = read("app/application-review/conversation/page.tsx")
 const schema = read("supabase/migrations/20260805161000_artist_recipient_application_loop.sql")
 
 // The secure link is infrastructure, not an artist-facing share feature.
@@ -43,6 +44,7 @@ requirePattern(recipientPanel, /trackingLabel\(trackingReference\)/, "Artist UI 
 requirePattern(recipientPanel, /Review Room opens/, "Artist UI must surface review-page open counts.")
 requirePattern(recipientPanel, /does not claim the submission email was opened, read, or meaningfully reviewed/, "Review-page tracking must remain explicitly distinct from email-open/read claims.")
 requirePattern(recipientPanel, /will not silently replace an issued recipient link/, "A fresh browser session must not silently rotate an already-issued recipient access link.")
+forbidPattern(recipientPanel, /loadRecipientTrackingSummary\(stored\.id\)\.catch/, "Tracking query failures must not be silently converted into a false zero-open state.")
 
 // Exact review-page open counting: one event per real browser load, retries/remounts within that load dedupe.
 requirePattern(recipientClient, /performance\?\.timeOrigin/, "Review-page load identity must use browser navigation time rather than an hourly bucket.")
@@ -56,6 +58,10 @@ requirePattern(recipientClient, /function firstMessageNonce\(draftToken: string\
 requirePattern(recipientClient, /client_nonce: firstMessageNonce\(draftToken\)/, "Repeated verification completion must reuse the same first-message nonce.")
 requirePattern(schema, /unique \(conversation_id, client_nonce\)/, "Message storage must enforce conversation-scoped client nonce uniqueness.")
 requirePattern(recipientEdge, /onConflict: "conversation_id,client_nonce"/, "First-message persistence must use the database uniqueness boundary during upsert.")
+
+// Static-export safety for the verified conversation return page.
+requirePattern(conversationPage, /import \{ Suspense \} from "react"/, "Conversation return must keep a Suspense boundary for useSearchParams during static export.")
+requirePattern(conversationPage, /<Suspense[\s\S]*<RecipientConversationReturn \/>[\s\S]*<\/Suspense>/, "Recipient conversation return must render inside Suspense.")
 
 // Existing security and relationship boundaries remain mandatory.
 requirePattern(recipientEdge, /await sha256\(plainToken\)/, "Recipient access tokens must still be hashed before lookup.")
@@ -130,4 +136,4 @@ if (failures.length) {
   process.exit(1)
 }
 
-console.log(`KLEIO recipient tracking integrity audit passed: ${iterations.toLocaleString()} unique secure links and SHA-256 hashes, ${pageLoads.toLocaleString()} distinct countable Review Room opens with retry deduplication, ${draftRuns.toLocaleString()} deterministic first-message retry identities, ${accessIds.size.toLocaleString()} internal tracking identities, no raw-link sharing UI, and opportunity/package/access security boundaries verified.`)
+console.log(`KLEIO recipient tracking integrity audit passed: ${iterations.toLocaleString()} unique secure links and SHA-256 hashes, ${pageLoads.toLocaleString()} distinct countable Review Room opens with retry deduplication, ${draftRuns.toLocaleString()} deterministic first-message retry identities, ${accessIds.size.toLocaleString()} internal tracking identities, no raw-link sharing UI, truthful tracking failure behavior, conversation export safety, and opportunity/package/access security boundaries verified.`)
