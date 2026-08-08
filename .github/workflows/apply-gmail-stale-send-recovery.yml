@@ -1,0 +1,236 @@
+name: Apply Gmail Stale Send Recovery
+
+on:
+  push:
+    branches:
+      - feature/gmail-send-beta-20260808
+    paths:
+      - ".github/workflows/apply-gmail-stale-send-recovery.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/gmail-send-beta-20260808
+          fetch-depth: 0
+      - name: Add stale-claim reconciliation and safe unknown cooldown
+        shell: python
+        run: |
+          from pathlib import Path
+
+          migration = Path("supabase/migrations/20260808170000_gmail_send_only_beta.sql")
+          s = migration.read_text()
+          marker = '''create or replace function public.resolve_gmail_unknown_service(
+'''
+          function = '''create or replace function public.reconcile_gmail_delivery_status_service(
+  target_artist_user_id uuid,
+  target_submission_version_id uuid
+)
+returns jsonb
+language plpgsql
+security definer
+set search_path to 'public'
+as $$
+declare
+  delivery_row public.application_deliveries%rowtype;
+begin
+  select * into delivery_row
+  from public.application_deliveries
+  where submission_version_id=target_submission_version_id
+    and artist_user_id=target_artist_user_id
+    and channel='gmail'
+  for update;
+
+  if delivery_row.id is null then
+    return null;
+  end if;
+
+  if delivery_row.state='provider_sending' then
+    if delivery_row.provider_request_started_at is not null
+       and delivery_row.provider_request_started_at <= now()-interval '2 minutes' then
+      update public.application_deliveries
+      set state='provider_unknown',
+          provider_unknown_at=coalesce(provider_unknown_at,now()),
+          last_error_code=case when last_error_code='' then 'gmail_provider_response_lost' else last_error_code end,
+          last_error_message=case when last_error_message='' then 'The Gmail provider request started but KLEIO did not persist a final provider result.' else last_error_message end,
+          updated_at=now()
+      where id=delivery_row.id
+      returning * into delivery_row;
+    elsif delivery_row.provider_request_started_at is null
+       and delivery_row.provider_send_claimed_at <= now()-interval '2 minutes' then
+      update public.application_deliveries
+      set state='failed',
+          last_error_code='gmail_send_claim_expired_before_provider',
+          last_error_message='The Gmail send claim expired before the provider request began. No Gmail provider call was recorded.',
+          updated_at=now()
+      where id=delivery_row.id
+      returning * into delivery_row;
+    end if;
+  end if;
+
+  return jsonb_build_object(
+    'id',delivery_row.id,
+    'state',delivery_row.state,
+    'evidence_level',delivery_row.evidence_level,
+    'provider_reference',delivery_row.provider_reference,
+    'last_error_code',delivery_row.last_error_code,
+    'last_error_message',delivery_row.last_error_message,
+    'provider_accepted_at',delivery_row.provider_accepted_at,
+    'provider_unknown_at',delivery_row.provider_unknown_at,
+    'provider_send_claimed_at',delivery_row.provider_send_claimed_at,
+    'provider_request_started_at',delivery_row.provider_request_started_at,
+    'updated_at',delivery_row.updated_at
+  );
+end;
+$$;
+
+'''
+          if marker not in s:
+              raise SystemExit("unknown-resolution marker missing")
+          s = s.replace(marker, function + marker, 1)
+
+          old = '''  if delivery_row.state <> 'provider_unknown' then
+    raise exception 'gmail_delivery_not_unknown';
+  end if;
+
+  access_id := delivery_row.recipient_access_id;
+'''
+          new = '''  if delivery_row.state <> 'provider_unknown' then
+    raise exception 'gmail_delivery_not_unknown';
+  end if;
+  if target_resolution='not_sent'
+     and delivery_row.provider_request_started_at is not null
+     and delivery_row.provider_request_started_at > now()-interval '5 minutes' then
+    raise exception 'gmail_unknown_reconciliation_wait';
+  end if;
+
+  access_id := delivery_row.recipient_access_id;
+'''
+          if old not in s:
+              raise SystemExit("unknown resolution state block missing")
+          s = s.replace(old, new, 1)
+
+          revoke_anchor = '''revoke all on function public.resolve_gmail_unknown_service(uuid,uuid,text) from public,anon,authenticated;
+'''
+          if revoke_anchor not in s:
+              raise SystemExit("unknown revoke anchor missing")
+          s = s.replace(revoke_anchor, 'revoke all on function public.reconcile_gmail_delivery_status_service(uuid,uuid) from public,anon,authenticated;\n' + revoke_anchor, 1)
+          grant_anchor = '''grant execute on function public.resolve_gmail_unknown_service(uuid,uuid,text) to service_role;
+'''
+          if grant_anchor not in s:
+              raise SystemExit("unknown grant anchor missing")
+          s = s.replace(grant_anchor, 'grant execute on function public.reconcile_gmail_delivery_status_service(uuid,uuid) to service_role;\n' + grant_anchor, 1)
+          migration.write_text(s)
+
+          edge = Path("supabase/functions/gmail-delivery/index.ts")
+          e = edge.read_text()
+          marker = '''    if (action === "resolve_unknown") {
+'''
+          block = '''    if (action === "delivery_status") {
+      const submissionVersionId = text(body.submission_version_id)
+      if (!validUuid(submissionVersionId)) return json({ error: "invalid_submission_version" }, 400)
+      const { data, error } = await admin.rpc("reconcile_gmail_delivery_status_service", {
+        target_artist_user_id: user.id,
+        target_submission_version_id: submissionVersionId,
+      })
+      if (error) throw error
+      return json({ delivery: data ?? null })
+    }
+
+'''
+          if marker not in e:
+              raise SystemExit("resolve action marker missing")
+          e = e.replace(marker, block + marker, 1)
+
+          old = '''      if (error) throw error
+      const result = object(data)
+
+      if (resolution === 'not_sent') {
+'''
+          new = '''      if (error) {
+        if (error.message.includes("gmail_unknown_reconciliation_wait")) {
+          return json({ error: "gmail_unknown_reconciliation_wait", message: "The Gmail provider request is still within the safety window. Wait a few minutes, check Gmail Sent again, then confirm that it is not there before reopening another delivery path." }, 409)
+        }
+        throw error
+      }
+      const result = object(data)
+
+      if (resolution === 'not_sent') {
+'''
+          if old not in e:
+              raise SystemExit("resolve RPC error anchor missing")
+          e = e.replace(old, new, 1)
+          edge.write_text(e)
+
+          client = Path("lib/kleio-gmail-delivery.ts")
+          c = client.read_text()
+          old = '''export async function loadGmailDeliveryState(submissionVersionId: string): Promise<GmailDeliveryRecord | null> {
+  const supabase = getSupabaseBrowserClient()
+  const { data, error } = await supabase
+    .from("application_deliveries")
+    .select("id,state,evidence_level,provider_reference,last_error_code,last_error_message,provider_accepted_at,provider_unknown_at,updated_at")
+    .eq("submission_version_id", submissionVersionId)
+    .eq("channel", "gmail")
+    .maybeSingle()
+  if (error) throw error
+  return data as GmailDeliveryRecord | null
+}
+'''
+          new = '''export async function loadGmailDeliveryState(submissionVersionId: string): Promise<GmailDeliveryRecord | null> {
+  const result = await invoke<{ delivery: GmailDeliveryRecord | null }>({
+    action: "delivery_status",
+    submission_version_id: submissionVersionId,
+  })
+  return result.delivery
+}
+'''
+          if old not in c:
+              raise SystemExit("direct delivery-state reader missing")
+          c = c.replace(old, new, 1)
+          client.write_text(c)
+
+          control = Path("components/kleio/gmail-delivery-control.tsx")
+          u = control.read_text()
+          old = '''<span>KLEIO lost the provider response after a Gmail send began. <strong>Check Gmail Sent before doing anything else.</strong> KLEIO has blocked another send or fallback from this screen to avoid a duplicate application.</span>'''
+          new = '''<span>KLEIO lost the provider response after a Gmail send began. <strong>Check Gmail Sent before doing anything else.</strong> KLEIO has blocked another send or fallback from this screen to avoid a duplicate application. If it is not there, wait a few minutes before confirming “not sent” so the original provider request has time to fully settle.</span>'''
+          if old not in u:
+              raise SystemExit("unknown-state help copy missing")
+          u = u.replace(old, new, 1)
+          control.write_text(u)
+
+          audit = Path("scripts/audit-gmail-send-beta.mjs")
+          a = audit.read_text()
+          anchor = '''must(migration, /provider_sending[\\s\\S]*provider_request_started_at is not null[\\s\\S]*provider_unknown/, "A stale in-flight send that crossed the provider boundary must become provider-unknown rather than be retried.")
+'''
+          add = anchor + '''must(migration, /reconcile_gmail_delivery_status_service[\\s\\S]*provider_request_started_at[\\s\\S]*2 minutes[\\s\\S]*provider_unknown/, "Refreshing Gmail delivery status must reconcile a stale post-provider send to provider-unknown.")
+must(migration, /provider_request_started_at is null[\\s\\S]*provider_send_claimed_at[\\s\\S]*2 minutes[\\s\\S]*failed/, "A stale claim that never crossed the provider boundary must recover as safely retryable failure.")
+must(edge, /action === "delivery_status"[\\s\\S]*reconcile_gmail_delivery_status_service/, "Browser refresh must use the server-side stale-send reconciler rather than trusting a frozen provider_sending row forever.")
+must(migration, /gmail_unknown_reconciliation_wait[\\s\\S]*5 minutes/, "A not-sent reconciliation must wait beyond the provider-request safety window before reopening another send path.")
+must(edge, /gmail_unknown_reconciliation_wait[\\s\\S]*Wait a few minutes[\\s\\S]*check Gmail Sent again/, "The artist must receive actionable recovery language during the unknown-send safety window.")
+'''
+          if anchor not in a:
+              raise SystemExit("stale provider audit anchor missing")
+          a = a.replace(anchor, add, 1)
+          old = '''must(client, /application_deliveries[\\s\\S]*channel", "gmail"/, "The client must read the canonical delivery record, not a parallel Gmail status store.")
+'''
+          new = '''must(client, /delivery_status[\\s\\S]*submission_version_id/, "The client must reconcile canonical Gmail delivery state through the server rather than reading a potentially stale in-flight row directly.")
+'''
+          if old not in a:
+              raise SystemExit("client status audit anchor missing")
+          a = a.replace(old, new, 1)
+          audit.write_text(a)
+      - name: Remove temporary workflow and commit stale-send recovery
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm .github/workflows/apply-gmail-stale-send-recovery.yml
+          git config user.name "KLEIO QA Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add supabase/migrations/20260808170000_gmail_send_only_beta.sql supabase/functions/gmail-delivery/index.ts lib/kleio-gmail-delivery.ts components/kleio/gmail-delivery-control.tsx scripts/audit-gmail-send-beta.mjs .github/workflows/apply-gmail-stale-send-recovery.yml
+          git commit -m "Recover stale Gmail sends without duplicate delivery"
+          git push origin HEAD:feature/gmail-send-beta-20260808
