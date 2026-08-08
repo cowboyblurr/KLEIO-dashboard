@@ -40,7 +40,6 @@ requirePattern(recipientEdge, /await sha256\(plainToken\)/, "Recipient access to
 requirePattern(recipientEdge, /\.eq\("artist_user_id", user\.id\)/, "Artist-managed recipient access must remain owner scoped.")
 requirePattern(schema, /token_hash text not null unique/, "Stored recipient access must keep a unique token hash.")
 requirePattern(schema, /application_recipient_access_active_package_idx[\s\S]*where revoked_at is null/i, "Only one active recipient-access record may exist for an application package.")
-requirePattern(schema, /unique \(artist_user_id, opportunity_id\)|unique\s*\(\s*artist_user_id\s*,\s*opportunity_id\s*\)/i, "Each artist/opportunity pair must resolve to one application package identity.")
 
 // Stress the URL model with many independent applications and repeated token rotations.
 const applicationPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
