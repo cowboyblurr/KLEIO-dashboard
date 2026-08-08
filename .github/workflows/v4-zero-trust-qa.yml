@@ -72,6 +72,32 @@ jobs:
           pnpm audit:gemini-document-intelligence
           pnpm audit:passport-synthesis-orchestration
 
+  auth-signup-probe:
+    name: fresh public Auth signup probe
+    needs: repository-health
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.18.2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Probe exact public artist signup contract
+        run: node scripts/v4-auth-signup-probe.mjs
+      - name: Upload signup evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v4-auth-signup-probe-${{ github.run_id }}
+          path: qa-artifacts/v4-auth
+          if-no-files-found: warn
+          retention-days: 14
+
   authenticated-runtime:
     name: fresh authenticated runtime + chaos
     needs: repository-health
