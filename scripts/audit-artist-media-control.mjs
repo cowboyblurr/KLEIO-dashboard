@@ -14,7 +14,7 @@ const uploader = read("components/kleio/media-import/quick-media-import.tsx")
 const lease = read("supabase/migrations/20260807213500_artist_media_analysis_claim.sql")
 
 requirePattern(library, /MediaManagementMenu/, "Media Library must use the shared media-management menu.")
-requirePattern(library, /Try analysis again/, "Failed analysis must remain distinct from upload failure.")
+requirePattern(library, /Retry Media Assist/, "Failed Media Assist processing must remain distinct from upload failure.")
 requirePattern(passport, /MediaManagementMenu/, "Creative Passport must expose shared media controls in place.")
 requirePattern(passport, /currentContext="creative_passport"/, "Creative Passport must detach context without deleting the canonical source.")
 requirePattern(passport, /recordMediaUsage/, "Creative Passport additions must create an explicit reusable-media association.")
@@ -36,16 +36,17 @@ requirePattern(controls, /const restore = async/, "Safe deletion must retain an 
 requirePattern(controls, /artist_requirement_assessments/, "Removing a draft requirement attachment must restore its missing-material state.")
 requirePattern(controls, /createSignedUrl/, "Preview/Open must work for private documents as well as visual previews.")
 
-requirePattern(intelligence, /"failed"/, "Media intelligence status must distinguish failed analysis.")
-requirePattern(intelligence, /claim_my_media_analysis/, "Analysis must claim an owner-scoped job before invoking AI.")
-requirePattern(intelligence, /finally[\s\S]*releaseMediaAnalysis/, "Analysis leases must be released after success or failure.")
-requirePattern(sheet, /Re-analyze|Rebuild source \+ Passport/, "Completed analysis must expose explicit re-analysis.")
-requirePattern(sheet, /previous successful (?:analysis|source intelligence) is still available below/i, "Failed re-analysis must leave the previous successful result visible.")
-requirePattern(sheet, /review aid, not verification|reviewable suggestion, not verification/i, "AI output must be framed as review assistance rather than verification.")
+// Internal processing may retain technical analysis names; artist-facing copy must use Media Assist.
+requirePattern(intelligence, /"failed"/, "Media processing status must distinguish failed Media Assist processing.")
+requirePattern(intelligence, /claim_my_media_analysis/, "Media Assist must claim an owner-scoped processing job before invoking the provider.")
+requirePattern(intelligence, /finally[\s\S]*releaseMediaAnalysis/, "Media processing leases must be released after success or failure.")
+requirePattern(sheet, /Refresh Media Assist|Refresh source \+ Passport/, "Completed Media Assist processing must expose an explicit safe refresh action.")
+requirePattern(sheet, /previous Media Assist result is still available below/i, "Failed Media Assist refresh must leave the previous successful result visible.")
+requirePattern(sheet, /does not score the work, decide its meaning|No creative score is created/i, "Generated media suggestions must be framed as artist-controlled assistance rather than creative judgment or verification.")
 
-requirePattern(lease, /for update/, "Concurrent analysis claims must use a database row lock.")
-requirePattern(lease, /artist_user_id = \(select auth\.uid\(\)\)/, "Analysis claims must verify source ownership.")
-requirePattern(lease, /interval '4 minutes'/, "Stale analysis claims must be recoverable.")
+requirePattern(lease, /for update/, "Concurrent media-processing claims must use a database row lock.")
+requirePattern(lease, /artist_user_id = \(select auth\.uid\(\)\)/, "Media-processing claims must verify source ownership.")
+requirePattern(lease, /interval '4 minutes'/, "Stale media-processing claims must be recoverable.")
 
 requirePattern(uploader, /failedUploads/, "Failed uploads must persist as recoverable UI state.")
 requirePattern(uploader, />Retry</, "Failed uploads must expose Retry without a page reload.")
@@ -54,4 +55,4 @@ requirePattern(uploader, /Uploading \$\{index \+ 1\} of \$\{files\.length\}/, "A
 requirePattern(uploader, /if \(uploading\) event\.preventDefault\(\)/, "A non-abortable upload must not be dismissible as though it were cancelled.")
 forbidPattern(uploader, /Cancel upload/i, "Do not expose a fake Cancel upload action while the storage request is not truly abortable.")
 
-console.log("Artist media-control audit passed: shared compact actions, detach/delete separation, requirement and finalized-submission safeguards, recoverable storage deletion, safe re-analysis, duplicate-job prevention, recoverable upload failures, private preview, and EN/ES destructive-action copy are structurally present.")
+console.log("Artist media-control audit passed: shared compact actions, detach/delete separation, requirement and finalized-submission safeguards, recoverable storage deletion, safe Media Assist refresh behavior, duplicate-job prevention, recoverable upload failures, private preview, and EN/ES destructive-action copy are structurally present.")
