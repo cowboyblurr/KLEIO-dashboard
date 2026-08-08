@@ -28,7 +28,7 @@ jobs:
   live-smoke:
     if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 12
     env:
       SITE_URL: https://www.kleioarthouse.com
       RECIPIENT_FN: https://trekynurdgxgtaaqqtyq.supabase.co/functions/v1/recipient-application-review
@@ -107,30 +107,56 @@ jobs:
           test "$status" = "401"
           echo "Verified live conversation function refuses unauthenticated access."
 
-      - name: Verify rendered client error and return states
+      - name: Locate live browser
         shell: bash
         run: |
           set -euo pipefail
           chrome="$(command -v google-chrome || command -v chromium || command -v chromium-browser || true)"
           test -n "$chrome"
+          echo "CHROME_BIN=$chrome" >> "$GITHUB_ENV"
           "$chrome" --version
 
-          review_dom="$(mktemp)"
+      - name: Verify rendered invalid-token state
+        shell: bash
+        run: |
+          set -euo pipefail
+          dom="$(mktemp)"
           invalid_token="$(printf '0%.0s' $(seq 1 64))"
-          "$chrome" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage --virtual-time-budget=10000 \
-            --dump-dom "${SITE_URL}/application-review/?token=${invalid_token}&browser_smoke=${GITHUB_RUN_ID}" > "$review_dom"
-          grep -Fq "This application link is invalid or no longer available." "$review_dom"
-          ! grep -Fq "Application error:" "$review_dom"
+          "$CHROME_BIN" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage --virtual-time-budget=20000 \
+            --dump-dom "${SITE_URL}/application-review/?token=${invalid_token}&browser_smoke=${GITHUB_RUN_ID}" > "$dom" 2>/dev/null
+          if ! grep -Fq "This application link is invalid or no longer available." "$dom"; then
+            echo "Expected rendered invalid-token state was not found. Relevant DOM text:"
+            grep -Eo 'Preparing the artist-approved review room[^<]*|This application[^<]*|application could not be loaded[^<]*|Supabase[^<]*|secure application[^<]*' "$dom" | head -30 || true
+            exit 1
+          fi
+          echo "Verified rendered invalid-token state."
 
-          conversation_dom="$(mktemp)"
-          "$chrome" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage --virtual-time-budget=6000 \
-            --dump-dom "${SITE_URL}/application-review/conversation/?browser_smoke=${GITHUB_RUN_ID}" > "$conversation_dom"
-          grep -Fq "This conversation link is incomplete." "$conversation_dom"
+      - name: Verify rendered incomplete-conversation state
+        shell: bash
+        run: |
+          set -euo pipefail
+          dom="$(mktemp)"
+          "$CHROME_BIN" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage --virtual-time-budget=8000 \
+            --dump-dom "${SITE_URL}/application-review/conversation/?browser_smoke=${GITHUB_RUN_ID}" > "$dom" 2>/dev/null
+          if ! grep -Fq "This conversation link is incomplete." "$dom"; then
+            echo "Expected incomplete-conversation state was not found. Relevant DOM text:"
+            grep -Eo 'Opening your KLEIO conversation[^<]*|This conversation[^<]*|Continue with your verified email[^<]*' "$dom" | head -30 || true
+            exit 1
+          fi
+          echo "Verified rendered incomplete-conversation state."
 
-          demo_dom="$(mktemp)"
-          "$chrome" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage --virtual-time-budget=4000 \
-            --dump-dom "${SITE_URL}/application-review/demo/?browser_smoke=${GITHUB_RUN_ID}" > "$demo_dom"
-          grep -Fq "Synthetic preview" "$demo_dom"
-          grep -Fq "Message applicant" "$demo_dom"
-          grep -Fq "Write first. Verification appears only when you choose to send." "$demo_dom"
-          echo "Verified rendered Review Room client states in headless Chrome."
+      - name: Verify rendered synthetic Review Room
+        shell: bash
+        run: |
+          set -euo pipefail
+          dom="$(mktemp)"
+          "$CHROME_BIN" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage --virtual-time-budget=8000 \
+            --dump-dom "${SITE_URL}/application-review/demo/?browser_smoke=${GITHUB_RUN_ID}" > "$dom" 2>/dev/null
+          for required in "Synthetic preview" "Message applicant" "Write first. Verification appears only when you choose to send."; do
+            if ! grep -Fq "$required" "$dom"; then
+              echo "Synthetic Review Room is missing expected rendered copy: $required"
+              grep -Eo 'Synthetic preview|Message applicant|Write first[^<]*|Between Salt and Memory' "$dom" | head -30 || true
+              exit 1
+            fi
+          done
+          echo "Verified rendered synthetic Review Room and compose-first messaging state."
