@@ -11,6 +11,7 @@ on:
       - "components/kleio/gmail-delivery-control.tsx"
       - "lib/kleio-google-auth.ts"
       - "supabase/migrations/20260808202000_google_oauth_role_bootstrap.sql"
+      - "supabase/migrations/20260808203500_google_oauth_role_bootstrap_linked_identity_hardening.sql"
       - "scripts/audit-google-auth-tracking-foundation.mjs"
       - ".github/workflows/google-auth-tracking-foundation.yml"
   workflow_dispatch:
