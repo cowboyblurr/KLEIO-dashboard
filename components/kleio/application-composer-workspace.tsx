@@ -222,6 +222,24 @@ export function ApplicationComposerWorkspace() {
   }, [])
 
   useEffect(() => {
+    const handlePortfolioChanged = (event: Event) => {
+      const customEvent = event as CustomEvent<{ workIds?: string[] }>
+      const workIds = Array.isArray(customEvent.detail?.workIds)
+        ? customEvent.detail.workIds.filter((workId) => typeof workId === "string" && workId.trim())
+        : []
+      void loadOpportunityDirectoryWithSources({ limit: 100 })
+        .then((loadedDirectory) => {
+          setDirectory(loadedDirectory)
+          if (workIds.length) setSelectedWorkIds((current) => Array.from(new Set([...current, ...workIds])))
+          setMessage(workIds.length ? `${workIds.length} newly added work${workIds.length === 1 ? " is" : "s are"} selected for this application. Review the Portfolio selection below before finalizing.` : "Portfolio works refreshed for this application.")
+        })
+        .catch(() => setError("The Portfolio changed, but KLEIO could not refresh the application selection. Your saved application edits remain unchanged."))
+    }
+    window.addEventListener("kleio:application-portfolio-changed", handlePortfolioChanged)
+    return () => window.removeEventListener("kleio:application-portfolio-changed", handlePortfolioChanged)
+  }, [])
+
+  useEffect(() => {
     if (!opportunityId) return
     let active = true
     setLoading(true)
