@@ -13,6 +13,7 @@ function forbidPattern(content, pattern, message) {
 }
 
 const composer = read("components/kleio/application-composer-workspace.tsx")
+const gmailControl = read("components/kleio/gmail-delivery-control.tsx")
 const delivery = read("lib/kleio-application-delivery.ts")
 const recipient = read("lib/kleio-recipient-application.ts")
 const recipientFunction = read("supabase/functions/recipient-application-review/index.ts")
@@ -22,7 +23,8 @@ const grantHardening = read("supabase/migrations/20260808162500_harden_applicati
 const createAccessBlock = recipientFunction.split('if (action === "create_access")')[1]?.split('if (action === "revoke_access")')[0] ?? ""
 
 requirePattern(composer, /prepareTrackedEmailClientHandoff/, "The canonical Application Composer email action must use the tracked delivery helper.")
-requirePattern(composer, /Open email to send/, "The manual fallback must describe the truth: KLEIO opens the email for the artist to send.")
+requirePattern(composer, /GmailDeliveryControl/, "The canonical Application Composer must mount the shared Gmail/manual delivery control inside its finalized-version boundary.")
+requirePattern(gmailControl, /Open email to send/, "The manual fallback must describe the truth: KLEIO opens the email for the artist to send.")
 requirePattern(composer, /secure Review Room access for this exact preserved version/, "Artist-facing tracking copy must explain immutable Review Room delivery.")
 forbidPattern(composer, /const href = `mailto:/, "The Application Composer must not build an untracked raw mailto handoff directly.")
 
@@ -66,4 +68,4 @@ requirePattern(grantHardening, /grant select on table public\.application_delive
 requirePattern(grantHardening, /revoke all on function public\.record_my_application_delivery[\s\S]*from public, anon/, "The delivery RPC must not be callable by anonymous or PUBLIC roles.")
 requirePattern(grantHardening, /grant execute on function public\.record_my_application_delivery[\s\S]*to authenticated/, "Authenticated artists need the controlled delivery RPC.")
 
-console.log("Submission delivery lock audit passed: immutable version binding, race-safe recipient access, tracked Review Room handoff, conservative handoff evidence, least-privilege table/RPC grants, truthful manual-email fallback, recipient-driven lifecycle progression, legacy-attempt convergence, shared delivery state, and Gmail-ready provider evidence semantics are structurally present.")
+console.log("Submission delivery lock audit passed: immutable version binding, race-safe recipient access, tracked Review Room handoff, conservative handoff evidence, least-privilege table/RPC grants, truthful manual-email fallback through the shared delivery control, recipient-driven lifecycle progression, legacy-attempt convergence, shared delivery state, and Gmail-ready provider evidence semantics are structurally present.")

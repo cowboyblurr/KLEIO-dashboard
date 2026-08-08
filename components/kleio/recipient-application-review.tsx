@@ -279,7 +279,8 @@ export function RecipientApplicationReview() {
     window.requestAnimationFrame(() => {
       const focusable = Array.from(activeDialog.querySelectorAll<HTMLElement>(focusableSelector))
         .filter((element) => !element.hasAttribute("disabled") && element.getAttribute("aria-hidden") !== "true")
-      focusable[0]?.focus() ?? activeDialog.focus()
+      if (focusable[0]) focusable[0].focus()
+      else activeDialog.focus()
     })
     return () => activeDialog.removeEventListener("keydown", handleArtworkDialogKeyDown)
   }, [focusedWork, closeFocusedWork])

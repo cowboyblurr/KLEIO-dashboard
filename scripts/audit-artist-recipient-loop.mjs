@@ -79,7 +79,7 @@ requirePattern(recipientPage, /No account is required to continue reviewing this
 requirePattern(recipientPage, /Create an Institution Workspace/, "The review room must provide a clear institution-workspace continuation after value is demonstrated.")
 requirePattern(recipientPage, /role="dialog"[\s\S]*aria-modal="true"/, "Artwork focus view must be exposed as an accessible modal dialog.")
 requirePattern(recipientPage, /handleArtworkDialogKeyDown[\s\S]*event\.key !== "Tab"/, "Artwork focus view must trap keyboard focus while open.")
-requirePattern(recipientPage, /requestAnimationFrame[\s\S]*focusable\[0\]\?\.focus\(\)[\s\S]*activeDialog\.focus\(\)/, "Artwork focus view must move focus inside the modal when it opens.")
+requirePattern(recipientPage, /requestAnimationFrame[\s\S]*if \(focusable\[0\]\) focusable\[0\]\.focus\(\)[\s\S]*else activeDialog\.focus\(\)/, "Artwork focus view must move focus inside the modal when it opens using the lint-safe explicit fallback.")
 requirePattern(recipientPage, /artworkTriggerRef\.current\?\.focus\(\)/, "Artwork focus view must restore focus to its trigger when closed.")
 requirePattern(recipientPage, /data-audit-sticky-safe="recipient-review-rail"/, "The intentional recipient desktop review rail must be explicitly marked for rendered-audit classification.")
 requirePattern(recipientPage, /This artwork is temporarily unavailable\. The remaining submission materials are still accessible\./, "Artwork failure states must preserve access to the rest of the submission.")

@@ -39,7 +39,7 @@ function MediaPreview({ item }: { item: ArtistMediaLibraryItem }) {
 }
 
 function analysisLabel(status: MediaIntelligenceStatus | undefined) {
-  if (status === "ready") return "Open Media Assist"
+  if (status === "ready") return "Analysis ready · Open Media Assist"
   if (status === "failed") return "Retry Media Assist"
   if (status === "available") return "Run Media Assist"
   return ""

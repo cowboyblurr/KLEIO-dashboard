@@ -55,7 +55,7 @@ export async function loadPersistentOpportunityDirectory(
   if (!account) throw new Error("Please sign in to view your opportunity directory.")
 
   const supabase = getSupabaseBrowserClient()
-  const { data, error } = await supabase.rpc("search_opportunities_v2", {
+  const { data, error } = await supabase.rpc("search_my_opportunities_v3", {
     search_query: filters.query?.trim() || null,
     opportunity_types: filters.opportunityTypes?.length ? filters.opportunityTypes : null,
     source_slugs: filters.sourceSlugs?.length ? filters.sourceSlugs : null,

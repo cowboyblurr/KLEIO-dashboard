@@ -1,4 +1,5 @@
 import { getSupabaseBrowserClient } from "@/lib/kleio-supabase"
+import { loadGmailDeliveryState } from "@/lib/kleio-gmail-delivery"
 import {
   buildMailtoHref,
   createRecipientReviewAccess,
@@ -38,6 +39,18 @@ export async function recordApplicationDelivery(input: {
   return String(data)
 }
 
+async function assertManualFallbackSafe(submissionVersionId: string) {
+  const gmailDelivery = await loadGmailDeliveryState(submissionVersionId)
+  if (!gmailDelivery) return
+
+  if (["provider_sending", "provider_unknown"].includes(gmailDelivery.state)) {
+    throw new Error("Check Gmail Sent before doing anything else. KLEIO cannot prepare a manual fallback while the Gmail provider state is unknown or still in flight.")
+  }
+  if (["provider_accepted", "artist_reported_sent", "review_room_opened", "receipt_confirmed", "conversation_started"].includes(gmailDelivery.state)) {
+    throw new Error("Gmail already accepted or advanced this finalized application. KLEIO blocked a duplicate email handoff.")
+  }
+}
+
 /**
  * Prepare the beta-safe email handoff from one immutable submission version.
  *
@@ -54,6 +67,7 @@ export async function prepareTrackedEmailClientHandoff(input: {
   body: string
 }) {
   if (!input.recipient.trim()) throw new Error("A verified submission email is required before preparing delivery.")
+  await assertManualFallbackSafe(input.submissionVersionId)
 
   let access: Awaited<ReturnType<typeof createRecipientReviewAccess>>
   try {
