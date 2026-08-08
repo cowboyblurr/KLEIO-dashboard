@@ -8,6 +8,7 @@ const s = {
   opportunities: read("components/kleio/production-artist-opportunity-directory.tsx"),
   applications: read("components/kleio/unified-artist-applications.tsx"),
   composer: read("components/kleio/application-composer-workspace.tsx"),
+  delivery: read("lib/kleio-application-delivery.ts"),
   composerLib: read("lib/kleio-application-composer.ts"),
   readiness: read("lib/kleio-opportunity-presentation.ts"),
   media: read("components/kleio/application-media-import-bar.tsx"),
@@ -49,7 +50,7 @@ const simulations = [
   ["S21", "Preflight issues jump to the fix", () => { must(s.composer, /jumpTo\(issue\.anchor\)/, "Issues must link to in-page fixes."); must(s.composer, /scrollIntoView/, "Correction should not route elsewhere.") }],
   ["S22", "Interrupted sessions are recoverable", () => ["Saving changes…","Application saved. You can close KLEIO and return without losing these edits","Save application"].forEach((copy) => must(s.composer, copy, `Missing interruption recovery state: ${copy}`))],
   ["S23", "Finalization is explicit and immutable", () => { must(s.composer, /Finalize & preserve version/, "Finalization must be deliberate."); must(s.composer, /Future Creative Passport edits will not change this application/, "Explain immutable history.") }],
-  ["S24", "Email handoff is one same-page action", () => { must(s.composer, /Open email client/, "Email handoff should be direct."); must(s.composer, /mailto:/, "Beta email fallback should use artist email client.") }],
+  ["S24", "Email handoff is one same-page tracked action", () => { must(s.composer, /Open email to send/, "Email handoff should remain a direct artist action."); must(s.composer, /prepareTrackedEmailClientHandoff/, "Composer must route email through tracked delivery."); must(s.delivery, /createRecipientReviewAccess/, "Tracked handoff must create secure Review Room access."); must(s.delivery, /buildMailtoHref/, "Beta fallback must still open the artist email client with the Review Room included."); never(s.composer, /const href = `mailto:/, "Composer must not bypass tracked delivery with a raw mailto handoff.") }],
   ["S25", "Opening email is not mislabeled as sending", () => { must(s.composer, /not proof the email was sent/i, "Email open must not equal sent."); must(s.composer, /I sent this application/, "Artist-reported send needs separate action."); must(s.composer, /does not claim “Institution received your application\.”/, "Do not infer institution receipt.") }],
   ["S26", "Portal submission exits only at official destination", () => { must(s.composer, /Open official destination/, "Portal CTA required after KLEIO prep."); must(s.composer, /target="_blank"/, "External destination should preserve KLEIO tab.") }],
   ["S27", "Applications remains the source of truth", () => { must(s.applications, /KLEIO-hosted, email, portal, and downloaded application packages/, "Applications page must combine submission channels."); must(s.applications, /Next relevant action/, "Each application needs next action.") }],
@@ -81,4 +82,4 @@ for (const [id, name, run] of simulations) {
 }
 console.log(`\nArtist beta convenience simulations: ${passed}/${simulations.length} passed.`)
 if (failures.length) { console.error("\nFailures:"); failures.forEach((failure) => console.error(`- ${failure}`)); process.exit(1) }
-console.log("KLEIO artist beta convenience gate passed: application work stays on the canonical route; missing artwork can be added through the shared private-media contract without leaving the application; requirement uploads remain requirement-specific; mobile core actions stay visible; recovery remains in context; and external exits are reserved for the artist's actual submission destination.")
+console.log("KLEIO artist beta convenience gate passed: application work stays on the canonical route; missing artwork can be added through the shared private-media contract without leaving the application; requirement uploads remain requirement-specific; email handoff is one tracked Review Room action with an honest email-client fallback; mobile core actions stay visible; recovery remains in context; and external exits are reserved for the artist's actual submission destination.")
