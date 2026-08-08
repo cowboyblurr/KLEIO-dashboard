@@ -17,6 +17,7 @@ const delivery = read("lib/kleio-application-delivery.ts")
 const recipient = read("lib/kleio-recipient-application.ts")
 const recipientFunction = read("supabase/functions/recipient-application-review/index.ts")
 const migration = read("supabase/migrations/20260808160000_lock_submission_delivery_to_finalized_version.sql")
+const attemptBridge = read("supabase/migrations/20260808161500_sync_submission_attempts_to_delivery.sql")
 const createAccessBlock = recipientFunction.split('if (action === "create_access")')[1]?.split('if (action === "revoke_access")')[0] ?? ""
 
 requirePattern(composer, /prepareTrackedEmailClientHandoff/, "The canonical Application Composer email action must use the tracked delivery helper.")
@@ -51,4 +52,10 @@ requirePattern(migration, /sync_application_delivery_from_recipient_event/, "Rev
 requirePattern(migration, /recipient_access_id/, "Delivery state must remain linked to the Review Room/conversation retention loop.")
 requirePattern(migration, /record_my_application_delivery/, "Artists must have a controlled RPC for updating their own canonical delivery state.")
 
-console.log("Submission delivery lock audit passed: immutable version binding, race-safe recipient access, tracked Review Room handoff, truthful manual-email fallback, recipient-driven lifecycle progression, shared delivery state, and Gmail-ready provider evidence semantics are structurally present.")
+requirePattern(attemptBridge, /sync_application_delivery_from_submission_attempt/, "Existing truthful submission-attempt events must bridge into the canonical delivery record.")
+requirePattern(attemptBridge, /email_client_opened[\s\S]*handoff_opened/, "Legacy email-client-opened evidence must map to the shared handoff state.")
+requirePattern(attemptBridge, /artist_reported[\s\S]*artist_reported_sent/, "The existing artist self-report must update canonical delivery truth.")
+requirePattern(attemptBridge, /confirmed[\s\S]*provider_accepted/, "Provider-confirmed legacy evidence must retain its stronger evidence class.")
+requirePattern(attemptBridge, /public\.application_deliveries/, "Legacy attempts must converge on application_deliveries rather than create a parallel model.")
+
+console.log("Submission delivery lock audit passed: immutable version binding, race-safe recipient access, tracked Review Room handoff, truthful manual-email fallback, recipient-driven lifecycle progression, legacy-attempt convergence, shared delivery state, and Gmail-ready provider evidence semantics are structurally present.")
