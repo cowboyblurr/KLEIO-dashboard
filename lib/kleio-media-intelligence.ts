@@ -104,7 +104,6 @@ function fromMedia(sourceId: string, mimeType: string, raw: Record<string, unkno
 function fromDocument(sourceId: string, mimeType: string, raw: Record<string, unknown>): MediaIntelligence {
   const summary = object(raw.analysis_summary)
   const assessment = object(raw.document_assessment)
-  const grouped = object(raw.grouped_counts)
   const claims = Array.isArray(raw.representative_claims) ? raw.representative_claims.map(object) : []
   const needsReview = strings(summary.what_needs_review)
   const synthesis = parseDocumentProfileSynthesis(raw.profile_synthesis)
@@ -125,7 +124,6 @@ function fromDocument(sourceId: string, mimeType: string, raw: Record<string, un
     ...values(synthesis?.mediums),
     ...values(synthesis?.themes),
     ...values(synthesis?.skills),
-    ...Object.keys(grouped).map((value) => value.replaceAll("_", " ")),
   ])
   const synopsis = text(summary.document_synopsis) || text(raw.coverage_explanation) || strings(summary.what_was_found).join(" ")
   const bioDraft = synthesis?.bio.text || ""
