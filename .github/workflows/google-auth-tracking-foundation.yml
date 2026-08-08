@@ -7,6 +7,7 @@ on:
       - "app/signup/institution/**"
       - "components/kleio/auth/google-role-bootstrap-gate.tsx"
       - "components/kleio/signup/institution-signup-entry.tsx"
+      - "components/kleio/landing-login-card.tsx"
       - "components/kleio/gmail-delivery-control.tsx"
       - "lib/kleio-google-auth.ts"
       - "supabase/migrations/20260808202000_google_oauth_role_bootstrap.sql"
