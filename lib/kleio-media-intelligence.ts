@@ -134,9 +134,9 @@ function fromDocument(sourceId: string, mimeType: string, raw: Record<string, un
   const qa = synthesis?.qa
   const pipelineStatus = synthesis ? (qa?.status === "PARTIALLY_READY" ? "PARTIALLY_READY" : "READY_FOR_REVIEW") : "SOURCE_ONLY"
   const pipelineMessage = pipelineStatus === "PARTIALLY_READY"
-    ? "KLEIO built usable Passport suggestions, but some evidence-supported fields still need a targeted retry or your input."
+    ? "Media Assist prepared usable Passport suggestions, but some supported fields still need another pass or your input."
     : pipelineStatus === "SOURCE_ONLY"
-      ? "The source was understood, but the Passport synthesis did not complete. Your source analysis is preserved."
+      ? "The source notes are ready, but Passport drafting did not complete. Your source notes remain saved."
       : ""
   return {
     sourceId,
@@ -161,7 +161,7 @@ function fromDocument(sourceId: string, mimeType: string, raw: Record<string, un
     factualObservations: career.length ? career : claims.map((claim) => text(claim.display_value)).filter(Boolean),
     interpretiveObservations: unique([artistStatementDraft, ...values(synthesis?.themes), ...values(synthesis?.visual_language)]),
     uncertainties: unique([...(synthesis?.missing_context ?? []), ...(qa?.needs_input_fields ?? []).map((field) => `${field.replaceAll("_", " ")}: needs your input`), ...needsReview]),
-    limitations: unique([...strings(assessment.analysis_limitations), ...(qa?.retry_fields_remaining ?? []).map((field) => `${field.replaceAll("_", " ")}: evidence found but synthesis still incomplete`), ...needsReview]),
+    limitations: unique([...strings(assessment.analysis_limitations), ...(qa?.retry_fields_remaining ?? []).map((field) => `${field.replaceAll("_", " ")}: supported detail found but drafting is still incomplete`), ...needsReview]),
     confidence: Number.isFinite(Number(raw.analysis_score)) ? Number(raw.analysis_score) : null,
     proposalCount: Number(raw.claim_count || 0),
     analysisQuality: text(raw.analysis_quality),
@@ -181,18 +181,18 @@ export function canAnalyzeMediaItem(item: ArtistMediaLibraryItem) {
 }
 
 export function mediaIntelligenceSupportText(item: ArtistMediaLibraryItem) {
-  if (!item.sourceId) return "This older portfolio item needs to be re-added to the private Media Library before KLEIO can analyze it."
+  if (!item.sourceId) return "This older portfolio item needs to be re-added to the private Media Library before Media Assist can use it."
   if (canAnalyzeMediaItem(item)) return item.mimeType === "application/pdf"
-    ? "KLEIO can privately read this PDF, build evidence-grounded Creative Passport drafts, check for missing evidence-supported fields, and send the results into your review queue without changing your approved Passport."
-    : "KLEIO can privately analyze this source and keep the result available in both Media Library and Creative Passport."
-  if (item.mediaKind === "document") return "This file can stay in KLEIO, but analysis is unavailable for this document format."
-  return "This media can stay in KLEIO, but analysis is unavailable for this format."
+    ? "Media Assist can privately read this PDF, organize source-supported Creative Passport drafts, check for useful details that may have been missed, and send editable suggestions into your review queue without changing your approved Passport."
+    : "Media Assist can privately organize visible/source details, possible metadata, and editable language from this media. It does not score the work or decide what it means."
+  if (item.mediaKind === "document") return "This file can stay in KLEIO, but Media Assist is unavailable for this document format."
+  return "This media can stay in KLEIO, but Media Assist is unavailable for this format."
 }
 
 async function requireArtist() {
   const account = await loadKleioAccount()
   if (!account) throw new Error("Please sign in to continue.")
-  if (account.profile.role !== "artist") throw new Error("Media Intelligence is available only in an artist workspace.")
+  if (account.profile.role !== "artist") throw new Error("Media Assist is available only in an artist workspace.")
   return account
 }
 
@@ -207,7 +207,7 @@ async function claimMediaAnalysis(sourceId: string) {
   const supabase = getSupabaseBrowserClient()
   const { data, error } = await supabase.rpc("claim_my_media_analysis", { target_source_id: sourceId })
   if (error) throw error
-  if (data !== true) throw new Error("This media is already being analyzed. Reopen it in a moment instead of starting a duplicate analysis.")
+  if (data !== true) throw new Error("Media Assist is already preparing this source. Reopen it in a moment instead of starting a duplicate pass.")
 }
 
 async function releaseMediaAnalysis(sourceId: string) {
@@ -250,16 +250,16 @@ export async function loadMediaIntelligenceStatuses(items: ArtistMediaLibraryIte
 }
 
 export async function retryDocumentPassportSynthesis(item: ArtistMediaLibraryItem) {
-  if (!item.sourceId || item.mimeType !== "application/pdf") throw new Error("A private PDF source is required for Passport synthesis.")
+  if (!item.sourceId || item.mimeType !== "application/pdf") throw new Error("A private PDF source is required for Passport drafting.")
   await consent(item.sourceId)
   await retryDocumentProfileSynthesis(item.sourceId)
   const refreshed = await loadMediaIntelligence(item.sourceId)
-  if (!refreshed) throw new Error("KLEIO could not reload the repaired Passport synthesis.")
+  if (!refreshed) throw new Error("Media Assist could not reload the repaired Passport suggestions.")
   return refreshed
 }
 
 export async function analyzeMediaWithKleio(item: ArtistMediaLibraryItem, options: { force?: boolean } = {}) {
-  if (!item.sourceId) throw new Error("This older media item needs to be re-added to the private Media Library before analysis.")
+  if (!item.sourceId) throw new Error("This older media item needs to be re-added to the private Media Library before Media Assist can use it.")
   if (!canAnalyzeMediaItem(item)) throw new Error(mediaIntelligenceSupportText(item))
   await consent(item.sourceId)
 
@@ -269,10 +269,10 @@ export async function analyzeMediaWithKleio(item: ArtistMediaLibraryItem, option
     try {
       await synthesizeDocumentProfile(item.sourceId, { force: options.force === true })
     } catch (reason) {
-      synthesisError = reason instanceof Error ? reason.message : "KLEIO could not finish the Passport synthesis."
+      synthesisError = reason instanceof Error ? reason.message : "Media Assist could not finish the Passport drafting pass."
     }
     const refreshed = await loadMediaIntelligence(item.sourceId)
-    if (!refreshed) throw new Error("KLEIO completed the document pass but did not produce a readable analysis yet. Try again before using it.")
+    if (!refreshed) throw new Error("Media Assist completed the document pass but did not produce readable source notes yet. Try again before using the result.")
     if (synthesisError) return { ...refreshed, pipelineStatus: "SOURCE_ONLY" as const, pipelineMessage: synthesisError }
     return refreshed
   }
@@ -281,11 +281,11 @@ export async function analyzeMediaWithKleio(item: ArtistMediaLibraryItem, option
   try {
     const supabase = getSupabaseBrowserClient()
     const { data, error } = await supabase.functions.invoke("analyze-artist-media", { body: { sourceId: item.sourceId, force: options.force === true } })
-    if (error) throw new Error(error.message || "KLEIO could not analyze this private media source.")
+    if (error) throw new Error(error.message || "Media Assist could not prepare suggestions from this private source.")
     if (data?.error === "unsupported_media_format") throw new Error(mediaIntelligenceSupportText(item))
     if (data?.error) throw new Error(String(data.message || data.error))
     const raw = object(data?.analysis)
-    if (!Object.keys(raw).length) throw new Error("KLEIO finished without a readable media analysis. Try again before using the result.")
+    if (!Object.keys(raw).length) throw new Error("Media Assist finished without a readable result. Try again before using it.")
     return fromMedia(item.sourceId, item.mimeType, raw)
   } finally {
     await releaseMediaAnalysis(item.sourceId)
