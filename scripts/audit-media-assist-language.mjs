@@ -44,10 +44,21 @@ for (const file of mediaSurfaceFiles) {
   if (!/Media Assist/.test(content)) failures.push(`${file}: Media Assist is not visibly named`)
 }
 
+const library = fs.readFileSync(path.join(root, "components/kleio/artist-media-library.tsx"), "utf8")
+if (!/selectedItems\.length === 1[\s\S]*setSelectedItem\(selectedItems\[0\]\)/.test(library)) {
+  failures.push("artist-media-library.tsx: selecting one source must open single-source Media Assist instead of leaving the primary action disabled")
+}
+if (!/disabled=\{!selectedItems\.length\}[\s\S]*runSelectedMediaAssist/.test(library)) {
+  failures.push("artist-media-library.tsx: Run Media Assist must enable as soon as one supported source is selected")
+}
+if (/disabled=\{selectedItems\.length < 2\}/.test(library)) {
+  failures.push("artist-media-library.tsx: the old two-source minimum must not disable Media Assist for a single selected source")
+}
+
 if (failures.length) {
   console.error("KLEIO Media Assist language audit failed:\n")
   for (const failure of failures) console.error(`- ${failure}`)
   process.exit(1)
 }
 
-console.log("KLEIO Media Assist language audit passed: artist media surfaces use Media Assist, legacy Vision language is absent, and creative-facing confidence/AI-intelligence framing is not exposed.")
+console.log("KLEIO Media Assist language audit passed: artist media surfaces use Media Assist, legacy Vision language is absent, creative-facing confidence/AI-intelligence framing is not exposed, and one selected source can immediately run Media Assist.")
