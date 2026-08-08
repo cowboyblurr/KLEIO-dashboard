@@ -15,6 +15,7 @@ const loginCard = read("components/kleio/landing-login-card.tsx")
 const callbackPage = read("app/auth/callback/page.tsx")
 const gmail = read("components/kleio/gmail-delivery-control.tsx")
 const migration = read("supabase/migrations/20260808202000_google_oauth_role_bootstrap.sql")
+const linkedIdentityHardening = read("supabase/migrations/20260808203500_google_oauth_role_bootstrap_linked_identity_hardening.sql")
 
 requirePattern(helper, /provider:\s*"google"/, "Google identity helper must use the Google social provider.")
 requirePattern(helper, /redirectTo:\s*getKleioAuthCallbackUrl\(role\)/, "Google identity must return through the role-aware KLEIO callback.")
@@ -32,6 +33,9 @@ requirePattern(migration, /current_role <> 'artist'.*desired_role <> 'institutio
 requirePattern(migration, /artist_profiles[\s\S]*institutions/, "Role bootstrap must refuse accounts that already own artist or institution state.")
 requirePattern(migration, /revoke all on function public\.claim_fresh_google_signup_role\(text\) from public, anon/, "Anonymous/PUBLIC execution must be revoked.")
 requirePattern(migration, /grant execute on function public\.claim_fresh_google_signup_role\(text\) to authenticated/, "Only authenticated users may invoke the role bootstrap.")
+requirePattern(linkedIdentityHardening, /identity_count <> 1 or non_google_identity_exists/, "A linked email/password account must never enter the Google role-mutation path.")
+requirePattern(linkedIdentityHardening, /provider <> 'google'/, "The role bootstrap must detect non-Google linked identities.")
+requirePattern(linkedIdentityHardening, /linked_account_role_mismatch/, "Linked-account role mismatch must fail closed.")
 
 requirePattern(institution, /Continue with Google/, "Institution signup must expose a Google identity path when configured.")
 requirePattern(institution, /does not grant Gmail or Google Drive access/, "Institution signup must clearly separate identity from Google data permissions.")
@@ -55,4 +59,4 @@ if (failures.length) {
   process.exit(1)
 }
 
-console.log("Google auth + submission tracking foundation audit passed: identity scopes stay separate from Gmail/Drive, established roles are immutable, fresh institution OAuth bootstrap is server constrained, role-aware Google member access is gated by real configuration, and artist delivery progress advances only from canonical evidence into KLEIO messaging.")
+console.log("Google auth + submission tracking foundation audit passed: identity scopes stay separate from Gmail/Drive, established and linked-account roles are immutable, fresh institution OAuth bootstrap is Google-only and server constrained, role-aware Google member access is gated by real configuration, and artist delivery progress advances only from canonical evidence into KLEIO messaging.")
