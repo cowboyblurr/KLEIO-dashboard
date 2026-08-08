@@ -1,0 +1,46 @@
+name: QA-only Gmail Runtime Boundary
+
+on:
+  push:
+    branches:
+      - qa/gmail-runtime-boundary-20260808
+    paths:
+      - ".github/workflows/qa-gmail-runtime-boundary.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  live-boundary:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    env:
+      FN: https://trekynurdgxgtaaqqtyq.supabase.co/functions/v1/gmail-delivery
+    steps:
+      - name: Prove POST reaches KLEIO custom auth boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          body="$(mktemp)"
+          status="$(curl --silent --show-error --output "$body" --write-out '%{http_code}' --max-time 20 \
+            -H 'content-type: application/json' \
+            --data '{"action":"status"}' \
+            "$FN")"
+          test "$status" = "401"
+          grep -Fq '"authentication_required"' "$body"
+      - name: Prove Google callback route is active and safely fails closed without state
+        shell: bash
+        run: |
+          set -euo pipefail
+          headers="$(mktemp)"
+          status="$(curl --silent --show-error --output /dev/null --dump-header "$headers" --write-out '%{http_code}' --max-time 20 "$FN")"
+          test "$status" = "302"
+          grep -Eiq '^location: https://www\.kleioarthouse\.com/artist-dashboard/applications/.*gmail=error.*code=oauth_state_missing' "$headers"
+      - name: Prove CORS preflight is handled by the function
+        shell: bash
+        run: |
+          set -euo pipefail
+          headers="$(mktemp)"
+          status="$(curl --silent --show-error --request OPTIONS --output /dev/null --dump-header "$headers" --write-out '%{http_code}' --max-time 20 "$FN")"
+          test "$status" = "200"
+          grep -Eiq '^access-control-allow-methods:.*POST.*OPTIONS' "$headers"
