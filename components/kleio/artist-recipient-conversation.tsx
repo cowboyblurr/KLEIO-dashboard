@@ -60,10 +60,16 @@ export function ArtistRecipientConversation() {
     setError("")
     setStatus("")
     try {
-      await sendArtistRecipientReply(conversation.id, reply)
+      const result = await sendArtistRecipientReply(conversation.id, reply)
       setReply("")
       setMessages(await loadArtistRecipientMessages(conversation.id))
-      setStatus("Reply sent and preserved with this application conversation.")
+      if (result.notification_status === "sent") {
+        setStatus("Reply sent and preserved with this application conversation. The recipient was notified by email with a secure return link.")
+      } else if (result.notification_status === "unconfigured") {
+        setStatus("Reply sent and preserved with this application conversation. Email notification delivery is not configured yet, so KLEIO is not claiming the recipient was notified.")
+      } else {
+        setStatus("Reply sent and preserved with this application conversation. The email notification could not be confirmed, but the message is safely stored in KLEIO.")
+      }
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "Unable to send the reply.")
     } finally {
