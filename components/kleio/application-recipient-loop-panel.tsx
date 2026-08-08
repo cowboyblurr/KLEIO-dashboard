@@ -116,7 +116,7 @@ export function ApplicationRecipientLoopPanel() {
         const [submissionAttempts, recipientEvents, recipientTracking] = await Promise.all([
           loadArtistSubmissionAttempts(stored.id),
           loadRecipientEvents(stored.id).catch(() => []),
-          loadRecipientTrackingSummary(stored.id).catch(() => EMPTY_TRACKING),
+          loadRecipientTrackingSummary(stored.id),
         ])
         setAttempts(submissionAttempts)
         setEvents(recipientEvents)
