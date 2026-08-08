@@ -1,5 +1,6 @@
 import fs from "node:fs"
 
+// QA-only production proof trigger: this comment intentionally changes no product behavior.
 const workflow = fs.readFileSync(".github/workflows/recipient-live-smoke.yml", "utf8")
 const browser = fs.readFileSync("scripts/live-recipient-browser-smoke.mjs", "utf8")
 const errorNormalizer = fs.readFileSync("lib/kleio-edge-function-error.ts", "utf8")
