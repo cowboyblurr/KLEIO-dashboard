@@ -49,6 +49,64 @@ function text(value: unknown) {
   return typeof value === "string" ? value.trim() : ""
 }
 
+function stringList(value: unknown) {
+  return Array.isArray(value) ? value.map(text).filter(Boolean) : []
+}
+
+function numberOrNull(value: unknown) {
+  return typeof value === "number" && Number.isFinite(value) ? value : null
+}
+
+function humanize(value: string) {
+  return value.replaceAll("_", " ").replace(/\b\w/g, (letter) => letter.toUpperCase())
+}
+
+function responseText(value: unknown) {
+  if (typeof value === "string") return value.trim()
+  if (!value || typeof value !== "object" || Array.isArray(value)) return ""
+  return text((value as Record<string, unknown>).text)
+}
+
+function approvedApplicationResponses(requirements: unknown, written: Record<string, unknown>) {
+  const answerMap = written.application_answers && typeof written.application_answers === "object" && !Array.isArray(written.application_answers)
+    ? written.application_answers as Record<string, unknown>
+    : {}
+  const responses: Array<{ id: string; label: string; material_key: string; category: string; answer: string }> = []
+  const represented = new Set<string>()
+
+  if (Array.isArray(requirements)) {
+    for (const raw of requirements) {
+      const requirement = raw && typeof raw === "object" && !Array.isArray(raw) ? raw as Record<string, unknown> : {}
+      const id = text(requirement.id)
+      if (!id) continue
+      const answer = responseText(answerMap[id])
+      if (!answer) continue
+      responses.push({
+        id,
+        label: text(requirement.label) || humanize(text(requirement.material_key) || "Application response"),
+        material_key: text(requirement.material_key),
+        category: text(requirement.category),
+        answer,
+      })
+      represented.add(id)
+    }
+  }
+
+  for (const [key, value] of Object.entries(answerMap)) {
+    if (represented.has(key)) continue
+    const answer = responseText(value)
+    if (!answer) continue
+    responses.push({ id: key, label: humanize(key), material_key: key, category: "", answer })
+  }
+
+  const legacyProposal = text(written.project_proposal)
+  if (legacyProposal && !responses.some((response) => response.answer === legacyProposal)) {
+    responses.push({ id: "project_proposal", label: "Project proposal", material_key: "project_proposal", category: "proposal", answer: legacyProposal })
+  }
+
+  return responses
+}
+
 function normalizeEmail(value: unknown) {
   return text(value).toLowerCase()
 }
@@ -199,7 +257,7 @@ Deno.serve(async (request: Request) => {
 
       const { data: packageRow, error } = await admin
         .from("application_packages")
-        .select("id, artist_user_id, opportunity_id, state, readiness, requirement_snapshot, passport_snapshot, portfolio_snapshot, written_content, email_preview, external_destination, approval_confirmations, artist_approved_at, data_scope, opportunities(title, provider_name, submission_method, submission_email, submission_instructions, data_scope)")
+        .select("id, artist_user_id, opportunity_id, state, readiness, requirement_snapshot, passport_snapshot, portfolio_snapshot, written_content, email_preview, external_destination, approval_confirmations, artist_approved_at, data_scope, opportunities(title, provider_name, summary, disciplines, award_min, award_max, currency, deadline_at, required_materials, locations, submission_method, submission_email, submission_instructions, data_scope)")
         .eq("id", packageId)
         .eq("artist_user_id", user.id)
         .maybeSingle()
@@ -227,6 +285,7 @@ Deno.serve(async (request: Request) => {
       const passport = packageRow.passport_snapshot && typeof packageRow.passport_snapshot === "object"
         ? packageRow.passport_snapshot as Record<string, unknown>
         : {}
+      const applicationResponses = approvedApplicationResponses(packageRow.requirement_snapshot, written)
 
       const approvedSnapshot = {
         reference: packageRow.id,
@@ -239,6 +298,14 @@ Deno.serve(async (request: Request) => {
           id: packageRow.opportunity_id,
           title: opportunity?.title ?? "Application",
           provider_name: opportunity?.provider_name ?? "",
+          summary: opportunity?.summary ?? "",
+          disciplines: stringList(opportunity?.disciplines),
+          award_min: numberOrNull(opportunity?.award_min),
+          award_max: numberOrNull(opportunity?.award_max),
+          currency: text(opportunity?.currency),
+          deadline_at: text(opportunity?.deadline_at),
+          required_materials: stringList(opportunity?.required_materials),
+          locations: stringList(opportunity?.locations),
           submission_method: opportunity?.submission_method ?? "unknown",
         },
         artist: {
@@ -246,10 +313,17 @@ Deno.serve(async (request: Request) => {
           location: text(passport.location),
           bio: text(passport.bio),
           artist_statement: text(passport.artist_statement),
+          practice_description: text(passport.practice_description),
+          disciplines: stringList(passport.disciplines),
+          mediums: stringList(passport.mediums),
+          education: text(passport.education),
+          exhibition_history: text(passport.exhibition_history),
+          awards: text(passport.awards),
           website_url: text(passport.website_url),
         },
         introduction: text(written.email_introduction) || text(emailPreview.body),
         opportunity_response: text(written.project_proposal),
+        application_responses: applicationResponses,
         alignment_map: Array.isArray(written.alignment_map) ? written.alignment_map : [],
         portfolio: Array.isArray(packageRow.portfolio_snapshot) ? packageRow.portfolio_snapshot : [],
         documents: {
@@ -276,6 +350,7 @@ Deno.serve(async (request: Request) => {
             artist: true,
             introduction: true,
             opportunity_response: true,
+            application_responses: true,
             portfolio: true,
             documents: true,
             extended_profile: false,
@@ -450,12 +525,33 @@ Deno.serve(async (request: Request) => {
       if (draft.recipient_email !== userEmail) return json({ error: "verified_email_mismatch" }, 403)
 
       const now = new Date().toISOString()
-      const { data: identity, error: identityError } = await admin
+      const { data: preparedIdentity, error: preparedIdentityError } = await admin
         .from("application_recipient_identities")
-        .upsert({ access_id: access.id, package_id: access.package_id, auth_user_id: user.id, email: userEmail, identity_state: "email_verified", verified_at: now, updated_at: now }, { onConflict: "access_id,email" })
-        .select("id, email, identity_state, verified_at")
-        .single()
-      if (identityError) throw identityError
+        .select("id")
+        .eq("access_id", access.id)
+        .eq("email", userEmail)
+        .maybeSingle()
+      if (preparedIdentityError) throw preparedIdentityError
+
+      let identity: { id: string; email: string; identity_state: string; verified_at: string | null }
+      if (preparedIdentity) {
+        const { data: updatedIdentity, error: identityError } = await admin
+          .from("application_recipient_identities")
+          .update({ auth_user_id: user.id, identity_state: "email_verified", verified_at: now, updated_at: now })
+          .eq("id", preparedIdentity.id)
+          .select("id, email, identity_state, verified_at")
+          .single()
+        if (identityError) throw identityError
+        identity = updatedIdentity
+      } else {
+        const { data: insertedIdentity, error: identityError } = await admin
+          .from("application_recipient_identities")
+          .insert({ access_id: access.id, package_id: access.package_id, auth_user_id: user.id, email: userEmail, identity_state: "email_verified", verified_at: now, updated_at: now })
+          .select("id, email, identity_state, verified_at")
+          .single()
+        if (identityError) throw identityError
+        identity = insertedIdentity
+      }
 
       const { data: conversation, error: conversationError } = await admin
         .from("application_recipient_conversations")
