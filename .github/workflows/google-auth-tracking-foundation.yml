@@ -1,0 +1,49 @@
+name: Google Auth and Submission Tracking Foundation
+
+on:
+  pull_request:
+    paths:
+      - "app/auth/callback/**"
+      - "app/signup/institution/**"
+      - "components/kleio/auth/google-role-bootstrap-gate.tsx"
+      - "components/kleio/signup/institution-signup-entry.tsx"
+      - "components/kleio/gmail-delivery-control.tsx"
+      - "lib/kleio-google-auth.ts"
+      - "supabase/migrations/20260808202000_google_oauth_role_bootstrap.sql"
+      - "scripts/audit-google-auth-tracking-foundation.mjs"
+      - ".github/workflows/google-auth-tracking-foundation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Google identity and tracking boundary
+        run: node scripts/audit-google-auth-tracking-foundation.mjs
+      - name: Existing auth isolation
+        run: pnpm audit:auth-isolation
+      - name: Existing Gmail send-only contract
+        run: node scripts/audit-gmail-send-only.mjs
+      - name: Existing immutable delivery contract
+        run: node scripts/audit-submission-delivery-lock.mjs
+      - name: Existing recipient loop
+        run: pnpm audit:artist-recipient-loop
+      - name: TypeScript
+        run: pnpm typecheck
+      - name: Lint
+        run: pnpm lint
+      - name: Static build
+        run: pnpm build
