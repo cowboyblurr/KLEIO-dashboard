@@ -74,6 +74,17 @@ requirePattern(recipientPage, /role="dialog"[\s\S]*aria-modal="true"/, "Artwork 
 requirePattern(recipientPage, /This artwork is temporarily unavailable\. The remaining submission materials are still accessible\./, "Artwork failure states must preserve access to the rest of the submission.")
 forbidPattern(recipientPage, /item\.confidence/, "Internal AI confidence values must not appear in the recipient review experience.")
 
+// Exact application content and non-invented project context.
+requirePattern(edge, /approvedApplicationResponses/, "The recipient snapshot must map exact approved application answers back to their opportunity questions.")
+requirePattern(edge, /requirement_snapshot/, "Exact application response labels must come from the preserved requirement snapshot.")
+requirePattern(edge, /application_responses: applicationResponses/, "The artist-approved review snapshot must preserve exact application responses.")
+requirePattern(recipientPage, /snapshot\?\.application_responses/, "The review room must prefer exact approved application responses over generic legacy labels.")
+requirePattern(recipientPage, /Budget \/ project structure/, "Budget and timeline answers must receive a calm project-structure section when they actually exist.")
+requirePattern(recipientPage, /Opportunity support/, "Opportunity funding context must be labelled as opportunity support rather than invented requested funding.")
+forbidPattern(recipientPage, /Requested support/, "The review room must not fabricate an artist-requested amount from an opportunity award range.")
+requirePattern(edge, /exhibition_history/, "Approved professional context should preserve exhibition history when present in the Passport snapshot.")
+requirePattern(edge, /disciplines: stringList\(passport\.disciplines\)/, "Approved artist disciplines should travel with the review snapshot.")
+
 // Question verification, recipient identity, and conversation continuity.
 requirePattern(edge, /application_recipient_message_drafts/, "Guest questions must be preserved before verification.")
 requirePattern(recipientClient, /emailRedirectTo: redirect\.toString\(\)/, "Magic-link verification must return to the exact review URL.")
@@ -82,6 +93,7 @@ requirePattern(recipientClient, /display_name: identity\.displayName/, "Recipien
 requirePattern(recipientClient, /organization_name: identity\.organizationName/, "Recipient organization must be passed into the verified messaging handoff.")
 requirePattern(edge, /display_name: displayName/, "Recipient display name must be preserved server-side before verification.")
 requirePattern(edge, /organization_name: organizationName/, "Recipient organization must be preserved server-side before verification.")
+requirePattern(edge, /preparedIdentity/, "Email verification must update the prepared identity rather than overwrite its name and organization context.")
 requirePattern(edge, /verified_email_mismatch/, "Verified recipient email must match the question draft email.")
 requirePattern(edge, /conversation_started/, "Verified first questions must create an application conversation event.")
 requirePattern(artistConversation, /Reply sent and preserved with this application conversation/, "Artists must be able to reply inside the application-specific conversation.")
@@ -119,4 +131,4 @@ if (failures.length) {
   process.exit(1)
 }
 
-console.log("KLEIO artist-recipient workflow audit passed: synthetic isolation, weighted completion, compact next-action hierarchy, requirement normalization, approval gates, secure guest review, editorial recipient review room, delayed institution conversion, truthful mailto handoff, recipient identity continuity, verified conversation, artist reply, access revocation, and safe reset boundaries verified.")
+console.log("KLEIO artist-recipient workflow audit passed: synthetic isolation, weighted completion, compact next-action hierarchy, requirement normalization, approval gates, secure guest review, exact approved application responses, editorial recipient review room, truthful project context, delayed institution conversion, truthful mailto handoff, recipient identity continuity, verified conversation, artist reply, access revocation, and safe reset boundaries verified.")
