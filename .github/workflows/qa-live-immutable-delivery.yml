@@ -15,7 +15,7 @@ jobs:
     timeout-minutes: 10
     env:
       FN: https://trekynurdgxgtaaqqtyq.supabase.co/functions/v1/recipient-application-review
-      ACTIVE_TOKEN: 9999999999999999999999999999999999999999999999999999999999999999
+      ACTIVE_TOKEN: "9999999999999999999999999999999999999999999999999999999999999999"
     steps:
       - name: Prove immutable Review Room snapshot and idempotent views
         shell: bash
