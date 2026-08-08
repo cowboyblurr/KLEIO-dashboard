@@ -362,14 +362,14 @@ create table if not exists public.application_deliveries (
   recipient_access_id uuid references public.application_recipient_access(id) on delete set null,
   channel text not null check (channel in ('gmail','email_client','external_portal','native_kleio','download_package')),
   destination text not null default '',
-  state text not null default 'prepared' check (state in ('prepared','handoff_opened','provider_accepted','artist_reported_sent','review_room_opened','receipt_confirmed','conversation_started','failed','cancelled')),
+  state text not null default 'prepared' check (state in ('prepared','handoff_prepared','provider_accepted','artist_reported_sent','review_room_opened','receipt_confirmed','conversation_started','failed','cancelled')),
   evidence_level text not null default 'system_observed' check (evidence_level in ('self_reported','system_observed','recipient_confirmed','provider_confirmed')),
   provider text not null default '',
   provider_reference text not null default '',
   last_error_code text not null default '',
   last_error_message text not null default '',
   prepared_at timestamptz not null default now(),
-  handoff_opened_at timestamptz,
+  handoff_prepared_at timestamptz,
   provider_accepted_at timestamptz,
   artist_reported_sent_at timestamptz,
   review_room_opened_at timestamptz,
@@ -431,7 +431,7 @@ begin
   if target_channel not in ('gmail','email_client','external_portal','native_kleio','download_package') then
     raise exception 'invalid_delivery_channel';
   end if;
-  if target_state not in ('prepared','handoff_opened','provider_accepted','artist_reported_sent','review_room_opened','receipt_confirmed','conversation_started','failed','cancelled') then
+  if target_state not in ('prepared','handoff_prepared','provider_accepted','artist_reported_sent','review_room_opened','receipt_confirmed','conversation_started','failed','cancelled') then
     raise exception 'invalid_delivery_state';
   end if;
   if target_evidence_level not in ('self_reported','system_observed','recipient_confirmed','provider_confirmed') then
@@ -454,12 +454,12 @@ begin
     submission_version_id, package_id, artist_user_id, opportunity_id,
     recipient_access_id, channel, destination, state, evidence_level,
     provider, provider_reference, last_error_code, last_error_message,
-    handoff_opened_at, provider_accepted_at, artist_reported_sent_at, updated_at
+    handoff_prepared_at, provider_accepted_at, artist_reported_sent_at, updated_at
   ) values (
     version_row.id, version_row.package_id, version_row.artist_user_id, version_row.opportunity_id,
     target_recipient_access_id, target_channel, coalesce(target_destination,''), target_state, target_evidence_level,
     coalesce(target_provider,''), coalesce(target_provider_reference,''), coalesce(target_error_code,''), coalesce(target_error_message,''),
-    case when target_state = 'handoff_opened' then now() else null end,
+    case when target_state = 'handoff_prepared' then now() else null end,
     case when target_state = 'provider_accepted' then now() else null end,
     case when target_state = 'artist_reported_sent' then now() else null end,
     now()
@@ -473,7 +473,7 @@ begin
     provider_reference = excluded.provider_reference,
     last_error_code = excluded.last_error_code,
     last_error_message = excluded.last_error_message,
-    handoff_opened_at = coalesce(excluded.handoff_opened_at, public.application_deliveries.handoff_opened_at),
+    handoff_prepared_at = coalesce(excluded.handoff_prepared_at, public.application_deliveries.handoff_prepared_at),
     provider_accepted_at = coalesce(excluded.provider_accepted_at, public.application_deliveries.provider_accepted_at),
     artist_reported_sent_at = coalesce(excluded.artist_reported_sent_at, public.application_deliveries.artist_reported_sent_at),
     updated_at = now()
@@ -520,7 +520,7 @@ begin
   set state = case
         when (case delivery.state
           when 'prepared' then 0
-          when 'handoff_opened' then 1
+          when 'handoff_prepared' then 1
           when 'provider_accepted' then 2
           when 'artist_reported_sent' then 2
           when 'review_room_opened' then 3
@@ -533,7 +533,7 @@ begin
       evidence_level = case
         when (case delivery.state
           when 'prepared' then 0
-          when 'handoff_opened' then 1
+          when 'handoff_prepared' then 1
           when 'provider_accepted' then 2
           when 'artist_reported_sent' then 2
           when 'review_room_opened' then 3
