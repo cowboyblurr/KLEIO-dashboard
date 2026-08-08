@@ -1,5 +1,6 @@
 import fs from "node:fs"
 
+// V4 QA-only trigger: no product behavior change.
 const workflow = fs.readFileSync(".github/workflows/recipient-live-smoke.yml", "utf8")
 const browser = fs.readFileSync("scripts/live-recipient-browser-smoke.mjs", "utf8")
 const rootLayout = fs.readFileSync("app/layout.tsx", "utf8")
