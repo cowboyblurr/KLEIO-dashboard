@@ -8,6 +8,7 @@ on:
       - "lib/kleio-recipient-application.ts"
       - "supabase/functions/recipient-application-review/index.ts"
       - "supabase/migrations/20260808160000_lock_submission_delivery_to_finalized_version.sql"
+      - "supabase/migrations/20260808161500_sync_submission_attempts_to_delivery.sql"
       - "scripts/audit-submission-delivery-lock.mjs"
       - ".github/workflows/submission-delivery-lock.yml"
   push:
@@ -19,6 +20,7 @@ on:
       - "lib/kleio-recipient-application.ts"
       - "supabase/functions/recipient-application-review/index.ts"
       - "supabase/migrations/20260808160000_lock_submission_delivery_to_finalized_version.sql"
+      - "supabase/migrations/20260808161500_sync_submission_attempts_to_delivery.sql"
       - "scripts/audit-submission-delivery-lock.mjs"
 
 jobs:
