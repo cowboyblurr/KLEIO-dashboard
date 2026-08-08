@@ -55,7 +55,7 @@ function fromRow(row: Record<string, unknown>): MediaCollectionInsight {
   const insight = object(row.generated_insight)
   return {
     id: text(row.id),
-    title: text(row.title) || text(insight.title) || "Body-of-work intelligence",
+    title: text(row.title) || text(insight.title) || "Media Assist comparison",
     sourceIds: strings(row.source_ids),
     status: (["review_ready", "confirmed", "dismissed"].includes(text(row.status)) ? text(row.status) : "review_ready") as MediaCollectionInsight["status"],
     summary: text(insight.summary),
@@ -79,21 +79,21 @@ function fromRow(row: Record<string, unknown>): MediaCollectionInsight {
 async function requireArtist() {
   const account = await loadKleioAccount()
   if (!account) throw new Error("Please sign in to continue.")
-  if (account.profile.role !== "artist") throw new Error("Body-of-work intelligence is available only in an artist workspace.")
+  if (account.profile.role !== "artist") throw new Error("Media Assist is available only in an artist workspace.")
   return account
 }
 
 export async function requestMediaCollectionInsight(items: ArtistMediaLibraryItem[]) {
   await requireArtist()
   const sourceIds = Array.from(new Set(items.flatMap((item) => item.sourceId ? [item.sourceId] : [])))
-  if (sourceIds.length < 2) throw new Error("Select at least two private sources to analyze together.")
-  if (sourceIds.length > 12) throw new Error("Choose no more than 12 sources for one body-of-work analysis.")
+  if (sourceIds.length < 2) throw new Error("Select at least two private sources to use Media Assist together.")
+  if (sourceIds.length > 12) throw new Error("Choose no more than 12 sources for one Media Assist comparison.")
   const supabase = getSupabaseBrowserClient()
   const { data, error } = await supabase.functions.invoke("analyze-artist-media-collection", { body: { source_ids: sourceIds } })
-  if (error) throw new Error(error.message || "KLEIO could not compare these private sources.")
+  if (error) throw new Error(error.message || "Media Assist could not compare these private sources.")
   if (data?.error) throw new Error(String(data.message || data.error))
   const row = object(data?.collection)
-  if (!text(row.id)) throw new Error("KLEIO completed the comparison without a reviewable result. Try again.")
+  if (!text(row.id)) throw new Error("Media Assist finished without a reviewable result. Try again.")
   return fromRow(row)
 }
 
@@ -113,7 +113,7 @@ export async function loadMediaCollectionInsights(limit = 6) {
 export async function confirmMediaCollectionInsight(id: string, artistSummary: string) {
   const account = await requireArtist()
   const summary = artistSummary.trim()
-  if (!summary) throw new Error("Review or edit the collection note before keeping it as artist context.")
+  if (!summary) throw new Error("Review or edit the Media Assist note before keeping it as artist context.")
   const supabase = getSupabaseBrowserClient()
   const { error: rpcError } = await supabase.rpc("confirm_my_media_collection_insight", {
     target_insight_id: id,
