@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { useEffect, useState, type ReactNode } from "react"
 import { Loader2 } from "lucide-react"
 import { claimFreshGoogleSignupRole, hasGoogleIdentity } from "@/lib/kleio-google-auth"
@@ -58,7 +59,7 @@ export function GoogleRoleBootstrapGate({ children }: { children: ReactNode }) {
         <section className="w-full max-w-lg rounded-3xl border border-red-200 bg-white p-8 text-center shadow-sm">
           <h1 className="font-serif text-2xl font-semibold text-foreground">Google account needs a different KLEIO path</h1>
           <p className="mt-3 text-sm leading-6 text-muted-foreground">{error}</p>
-          <a href="/" className="mt-6 inline-flex min-h-11 items-center justify-center rounded-xl bg-primary px-5 text-sm font-semibold text-primary-foreground">Return to KLEIO</a>
+          <Link href="/" className="mt-6 inline-flex min-h-11 items-center justify-center rounded-xl bg-primary px-5 text-sm font-semibold text-primary-foreground">Return to KLEIO</Link>
         </section>
       </main>
     )
