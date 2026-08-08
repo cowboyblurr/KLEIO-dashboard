@@ -6,6 +6,7 @@ on:
       - "components/kleio/application-composer-workspace.tsx"
       - "lib/kleio-application-delivery.ts"
       - "lib/kleio-recipient-application.ts"
+      - "supabase/functions/recipient-application-review/index.ts"
       - "supabase/migrations/20260808160000_lock_submission_delivery_to_finalized_version.sql"
       - "scripts/audit-submission-delivery-lock.mjs"
       - ".github/workflows/submission-delivery-lock.yml"
@@ -16,6 +17,7 @@ on:
       - "components/kleio/application-composer-workspace.tsx"
       - "lib/kleio-application-delivery.ts"
       - "lib/kleio-recipient-application.ts"
+      - "supabase/functions/recipient-application-review/index.ts"
       - "supabase/migrations/20260808160000_lock_submission_delivery_to_finalized_version.sql"
       - "scripts/audit-submission-delivery-lock.mjs"
 
