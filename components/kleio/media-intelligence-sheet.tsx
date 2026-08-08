@@ -45,6 +45,15 @@ function analysisStages(item: ArtistMediaLibraryItem) {
   ]
 }
 
+const PASSPORT_RETRY_STAGES = [
+  "Reviewing your saved source evidence…",
+  "Mapping supported details to your Creative Passport…",
+  "Drafting bio, practice, mediums and disciplines…",
+  "Checking themes, visual language and application terms…",
+  "Verifying every suggestion against its source…",
+  "Saving editable suggestions to your private review queue…",
+] as const
+
 function Preview({ item }: { item: ArtistMediaLibraryItem }) {
   if (item.mediaKind === "image" && item.previewUrl) return <img src={item.previewUrl} alt="" className="size-full object-contain" />
   if (item.mediaKind === "video" && item.previewUrl) return <video src={item.previewUrl} controls preload="metadata" className="size-full object-contain" aria-label={`${item.title} video`} />
@@ -74,12 +83,25 @@ function AnalysisProgress({ item, stage }: { item: ArtistMediaLibraryItem; stage
   return <div className="mt-4 rounded-2xl border border-[#E7E1F7] bg-[#FAF8FE] p-4" aria-live="polite"><p className="text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-[#75639E]">Media Assist is preparing</p><div className="mt-3 space-y-2">{stages.map((label, index) => <div key={label} className={`flex items-center gap-2 text-sm ${index === stage ? "font-semibold text-[#4F407B]" : index < stage ? "text-[#746E80]" : "text-[#A39CAB]"}`}>{index < stage ? <Check className="size-3.5" /> : index === stage ? <Loader2 className="size-3.5 animate-spin" /> : <span className="size-3.5" />}{label}</div>)}</div><p className="mt-3 text-xs leading-5 text-[#8A8296]">No creative score is created. These steps organize source-grounded suggestions for you to edit, keep, or ignore.</p></div>
 }
 
+function PassportRetryProgress({ stage, elapsedMs }: { stage: number; elapsedMs: number }) {
+  const slow = elapsedMs >= 45_000
+  return <div className="mt-3 rounded-xl border border-[#E6D9AE] bg-white/75 p-3" aria-live="polite">
+    <div className="flex items-center justify-between gap-3"><p className="text-xs font-semibold text-amber-950">Preparing your Passport suggestions</p><span className="text-[0.65rem] text-amber-900/65">You can close this panel safely</span></div>
+    <div className="mt-3 flex gap-1" aria-hidden="true">{PASSPORT_RETRY_STAGES.map((_, index) => <span key={index} className={`h-1.5 flex-1 rounded-full transition-colors ${index < stage ? "bg-[#8B79B4]" : index === stage ? "animate-pulse bg-[#B4A2DA]" : "bg-[#E9E3F2]"}`} />)}</div>
+    <div className="mt-3 space-y-1.5">{PASSPORT_RETRY_STAGES.map((label, index) => <div key={label} className={`flex items-start gap-2 text-xs leading-5 ${index === stage ? "font-semibold text-[#4F407B]" : index < stage ? "text-[#746E80]" : "text-[#A39CAB]"}`}>{index < stage ? <Check className="mt-0.5 size-3.5 shrink-0" /> : index === stage ? <Loader2 className="mt-0.5 size-3.5 shrink-0 animate-spin" /> : <span className="mt-0.5 size-3.5 shrink-0" />}{label}</div>)}</div>
+    <p className="mt-3 text-[0.68rem] leading-5 text-[#746E80]">{slow ? "Still working — larger portfolios can take a little longer while KLEIO verifies the suggestions against the source." : "KLEIO is working through the saved evidence and checking each editable suggestion before it reaches your review queue."}</p>
+    <p className="mt-1 text-[0.62rem] leading-4 text-[#9A93A4]">This is a workflow activity indicator, not an exact percentage or countdown.</p>
+  </div>
+}
+
 export function MediaIntelligenceSheet({ item, open, onClose, onAnalyzed }: Props) {
   const [analysis, setAnalysis] = useState<MediaIntelligence | null>(null)
   const [loading, setLoading] = useState(false)
   const [analyzing, setAnalyzing] = useState(false)
   const [repairing, setRepairing] = useState(false)
   const [analysisStage, setAnalysisStage] = useState(0)
+  const [repairStage, setRepairStage] = useState(0)
+  const [repairElapsedMs, setRepairElapsedMs] = useState(0)
   const [error, setError] = useState("")
   const [tab, setTab] = useState<Tab>("overview")
   const [copied, setCopied] = useState("")
@@ -156,6 +178,21 @@ export function MediaIntelligenceSheet({ item, open, onClose, onAnalyzed }: Prop
     return () => window.clearInterval(timer)
   }, [analyzing, item])
 
+  useEffect(() => {
+    if (!repairing) return
+    const startedAt = Date.now()
+    const thresholds = [0, 8_000, 20_000, 35_000, 52_000, 70_000]
+    setRepairStage(0); setRepairElapsedMs(0)
+    const timer = window.setInterval(() => {
+      const elapsed = Date.now() - startedAt
+      setRepairElapsedMs(elapsed)
+      let next = 0
+      for (let index = 1; index < thresholds.length; index += 1) if (elapsed >= thresholds[index]) next = index
+      setRepairStage(next)
+    }, 1000)
+    return () => window.clearInterval(timer)
+  }, [repairing])
+
   if (!open || !item) return null
   const activeItem = item
   const documentIncomplete = analysis?.isDocumentAnalysis && analysis.pipelineStatus !== "READY_FOR_REVIEW"
@@ -177,12 +214,30 @@ export function MediaIntelligenceSheet({ item, open, onClose, onAnalyzed }: Prop
 
   async function retryPassport() {
     if (repairing || analyzing || activeItem.mimeType !== "application/pdf") return
-    setRepairing(true); setError("")
+    const previousGeneratedAt = analysis?.profileSynthesisReady ? analysis.analyzedAt : ""
+    setRepairing(true); setRepairStage(0); setRepairElapsedMs(0); setError("")
     try {
       const next = await retryDocumentPassportSynthesis(activeItem)
       setAnalysis(next); setTab("passport"); onAnalyzed?.(next)
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "Media Assist could not rebuild these Passport suggestions. Your source notes are still available.")
+      let recovered: MediaIntelligence | null = null
+      for (const delayMs of [0, 1_500, 3_000]) {
+        if (delayMs) await new Promise((resolve) => window.setTimeout(resolve, delayMs))
+        try {
+          const candidate = activeItem.sourceId ? await loadMediaIntelligence(activeItem.sourceId) : null
+          if (candidate?.profileSynthesisReady && candidate.pipelineStatus === "READY_FOR_REVIEW" && candidate.analyzedAt && candidate.analyzedAt !== previousGeneratedAt) {
+            recovered = candidate
+            break
+          }
+        } catch {
+          // Preserve the original synthesis error if reconciliation itself cannot load.
+        }
+      }
+      if (recovered) {
+        setAnalysis(recovered); setTab("passport"); onAnalyzed?.(recovered)
+      } else {
+        setError(reason instanceof Error ? reason.message : "Media Assist could not rebuild these Passport suggestions. Your source notes are still available.")
+      }
     } finally {
       setRepairing(false)
     }
@@ -205,7 +260,7 @@ export function MediaIntelligenceSheet({ item, open, onClose, onAnalyzed }: Prop
             <div className="flex flex-wrap items-center justify-between gap-3"><div className="flex flex-wrap gap-2">{analysis.isDocumentAnalysis ? analysis.pipelineStatus === "READY_FOR_REVIEW" ? <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-800"><Check className="size-3.5" />Passport suggestions ready</span> : <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-900">Source notes ready · Passport incomplete</span> : <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-800"><Check className="size-3.5" />Media Assist ready</span>}{analysis.isDocumentAnalysis && analysis.draftedFieldCount > 0 && <span className="rounded-full border border-[#CFC3EE] bg-[#F4F0FC] px-2.5 py-1 text-xs font-semibold text-[#5B4B8A]">{analysis.draftedFieldCount} Passport field{analysis.draftedFieldCount === 1 ? "" : "s"} drafted</span>}{analysis.isDocumentAnalysis && analysis.needsInputCount > 0 && <span className="rounded-full border border-[#E1DAF0] bg-white px-2.5 py-1 text-xs font-semibold text-[#625C70]">{analysis.needsInputCount} need your input</span>}{analysis.proposalCount > 0 && <span className="rounded-full border border-[#E1DAF0] bg-white px-2.5 py-1 text-xs font-semibold text-[#625C70]">{analysis.proposalCount} source fact{analysis.proposalCount === 1 ? "" : "s"}</span>}</div><button type="button" className={secondary} onClick={() => void analyze(true)} disabled={analyzing || repairing}>{analyzing ? <Loader2 className="size-3.5 animate-spin" /> : <RefreshCcw className="size-3.5" />}{analyzing ? "Refreshing…" : analysis.isDocumentAnalysis ? "Refresh source + Passport" : "Refresh Media Assist"}</button></div>
             {analyzing && <AnalysisProgress item={activeItem} stage={analysisStage} />}
             <p className="mt-2 text-[0.68rem] leading-5 text-[#8A8296]">Refreshing keeps the previous successful result until a new one is ready. Every generated phrase remains editable and optional.</p>
-            {analysis.isDocumentAnalysis && documentIncomplete && <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900"><strong>{analysis.profileSynthesisReady ? "Some Passport fields still need attention." : "The PDF source notes are ready, but Passport drafting did not finish."}</strong><p className="mt-1">{analysis.pipelineMessage || "Your source notes remain saved instead of being treated as a completed Passport."}</p><button type="button" className={`${secondary} mt-3 border-amber-300 bg-white text-amber-900`} onClick={() => void retryPassport()} disabled={repairing || analyzing}>{repairing ? <Loader2 className="size-3.5 animate-spin" /> : <RefreshCcw className="size-3.5" />}{repairing ? "Retrying Passport drafting…" : "Retry Passport drafting only"}</button></div>}
+            {analysis.isDocumentAnalysis && documentIncomplete && <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900"><strong>{analysis.profileSynthesisReady ? "Some Passport fields still need attention." : "The PDF source notes are ready, but Passport drafting did not finish."}</strong><p className="mt-1">{analysis.pipelineMessage || "Your source notes remain saved instead of being treated as a completed Passport."}</p>{repairing && <PassportRetryProgress stage={repairStage} elapsedMs={repairElapsedMs} />}<button type="button" className={`${secondary} mt-3 border-amber-300 bg-white text-amber-900`} onClick={() => void retryPassport()} disabled={repairing || analyzing}>{repairing ? <Loader2 className="size-3.5 animate-spin" /> : <RefreshCcw className="size-3.5" />}{repairing ? "Passport drafting in progress…" : "Retry Passport drafting only"}</button></div>}
             {analysis.isDocumentAnalysis && analysis.profileSynthesisReady && <div className="mt-4 flex flex-col gap-2 rounded-xl border border-[#DCD4EE] bg-[#FAF8FE] px-4 py-3 sm:flex-row sm:items-center sm:justify-between"><div><p className="text-sm font-semibold text-[#4F407B]">Suggestions are ready to edit</p><p className="mt-0.5 text-xs leading-5 text-[#746E80]">Media Assist sent source-grounded proposals into your private review queue. Nothing changes your approved Passport until you confirm it.</p></div><Link href="/artist-dashboard/passport/review/" className={`${primary} shrink-0`}><FileSearch className="size-4" />Review & apply</Link></div>}
             <div className="mt-4 flex gap-1 rounded-xl bg-[#F1EEF6] p-1">{(["overview","passport","evidence"] as Tab[]).map((value) => <button key={value} type="button" onClick={() => setTab(value)} className={`min-h-9 flex-1 rounded-lg px-3 text-xs font-semibold capitalize ${tab === value ? "bg-white text-[#4F407B] shadow-sm" : "text-[#746E80]"}`}>{value === "passport" ? "Passport suggestions" : value === "evidence" ? "Source notes" : value}</button>)}</div>
             {tab === "overview" && <div className="mt-4 space-y-4"><section className="rounded-2xl border border-[#E7E1F7] bg-white p-4"><div className="flex items-center justify-between gap-2"><h3 className="text-xs font-semibold uppercase tracking-[0.12em] text-[#75639E]">{analysis.bioDraft ? "Bio draft" : "At a glance"}</h3>{analysis.bioDraft && <button type="button" className={secondary} onClick={() => void copy(analysis.bioDraft, "bio-overview")}><Clipboard className="size-3.5" />{copied === "bio-overview" ? "Copied" : "Copy"}</button>}</div><p className="mt-3 whitespace-pre-wrap text-sm leading-7 text-[#4E4954]">{analysis.summary || analysis.suggestedDescription || "No concise summary was supported."}</p></section><section className="rounded-2xl border border-[#E7E1F7] bg-white p-4"><h3 className="text-xs font-semibold uppercase tracking-[0.12em] text-[#75639E]">Possible themes and concepts</h3><div className="mt-3"><Chips values={analysis.themesConcepts} incomplete={Boolean(documentIncomplete)} /></div></section>{analysis.formalQualities.length > 0 && <section className="rounded-2xl border border-[#E7E1F7] bg-white p-4"><h3 className="text-xs font-semibold uppercase tracking-[0.12em] text-[#75639E]">Visible / formal language</h3><div className="mt-3"><Chips values={analysis.formalQualities} /></div></section>}</div>}
