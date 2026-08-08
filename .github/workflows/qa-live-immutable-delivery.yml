@@ -1,0 +1,65 @@
+name: QA-only Live Immutable Delivery Probe
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/qa-live-immutable-delivery.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  live-probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      FN: https://trekynurdgxgtaaqqtyq.supabase.co/functions/v1/recipient-application-review
+      ACTIVE_TOKEN: 9999999999999999999999999999999999999999999999999999999999999999
+    steps:
+      - name: Prove immutable Review Room snapshot and idempotent views
+        shell: bash
+        run: |
+          set -euo pipefail
+          post_view() {
+            key="$1"
+            body="$(mktemp)"
+            status="$(curl --silent --show-error --output "$body" --write-out '%{http_code}' --max-time 30 \
+              -H 'content-type: application/json' \
+              --data "{\"action\":\"view\",\"token\":\"${ACTIVE_TOKEN}\",\"idempotency_key\":\"${key}\",\"metadata\":{\"surface\":\"qa_live_immutable_delivery\"}}" \
+              "$FN")"
+            test "$status" = "200"
+            grep -Fq 'Frozen Live QA Artist' "$body"
+            grep -Fq 'Frozen live QA answer' "$body"
+            grep -Fq 'Live QA Synthetic Opportunity' "$body"
+            if grep -Fq 'MUTATED AFTER FINALIZATION' "$body"; then
+              echo 'Mutable package content leaked into immutable Review Room' >&2
+              cat "$body" >&2
+              exit 1
+            fi
+          }
+          post_view 'qa-live-view-same'
+          post_view 'qa-live-view-same'
+          post_view 'qa-live-view-second'
+      - name: Prove malformed token fails closed
+        shell: bash
+        run: |
+          set -euo pipefail
+          body="$(mktemp)"
+          status="$(curl --silent --show-error --output "$body" --write-out '%{http_code}' --max-time 30 \
+            -H 'content-type: application/json' \
+            --data '{"action":"view","token":"abc","idempotency_key":"qa-live-malformed"}' \
+            "$FN")"
+          test "$status" = "404"
+          grep -Fq '"invalid_token"' "$body"
+      - name: Prove recipient-confirmed receipt advances live delivery
+        shell: bash
+        run: |
+          set -euo pipefail
+          body="$(mktemp)"
+          status="$(curl --silent --show-error --output "$body" --write-out '%{http_code}' --max-time 30 \
+            -H 'content-type: application/json' \
+            --data "{\"action\":\"record_event\",\"token\":\"${ACTIVE_TOKEN}\",\"event_type\":\"receipt_confirmed\",\"idempotency_key\":\"qa-live-receipt\",\"metadata\":{\"surface\":\"qa_live_immutable_delivery\"}}" \
+            "$FN")"
+          test "$status" = "200"
+          grep -Fq '"recorded":true' "$body"
