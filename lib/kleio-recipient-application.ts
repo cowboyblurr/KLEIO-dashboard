@@ -91,6 +91,17 @@ export type RecipientEvent = {
   created_at: string
 }
 
+export type RecipientTrackingSummary = {
+  active_access_id: string | null
+  access_created_at: string | null
+  access_expires_at: string | null
+  review_room_opens: number
+  first_opened_at: string | null
+  last_opened_at: string | null
+  receipt_confirmed: boolean
+  conversation_started: boolean
+}
+
 export type RecipientConversationMessage = {
   id: string
   sender_kind: "artist" | "recipient"
@@ -124,6 +135,65 @@ export async function revokeRecipientReviewAccess(packageId: string) {
 export async function loadRecipientEvents(packageId: string) {
   const response = await invoke<{ events: RecipientEvent[] }>({ action: "list_events", package_id: packageId })
   return response.events
+}
+
+export async function loadRecipientTrackingSummary(packageId: string): Promise<RecipientTrackingSummary> {
+  const supabase = getSupabaseBrowserClient()
+  const [accessResult, openCountResult, firstOpenResult, lastOpenResult, receiptResult, conversationResult] = await Promise.all([
+    supabase
+      .from("application_recipient_access")
+      .select("id, created_at, expires_at")
+      .eq("package_id", packageId)
+      .is("revoked_at", null)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    supabase
+      .from("application_recipient_events")
+      .select("id", { count: "exact", head: true })
+      .eq("package_id", packageId)
+      .eq("event_type", "application_page_viewed"),
+    supabase
+      .from("application_recipient_events")
+      .select("created_at")
+      .eq("package_id", packageId)
+      .eq("event_type", "application_page_viewed")
+      .order("created_at", { ascending: true })
+      .limit(1)
+      .maybeSingle(),
+    supabase
+      .from("application_recipient_events")
+      .select("created_at")
+      .eq("package_id", packageId)
+      .eq("event_type", "application_page_viewed")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    supabase
+      .from("application_recipient_events")
+      .select("id", { count: "exact", head: true })
+      .eq("package_id", packageId)
+      .eq("event_type", "receipt_confirmed"),
+    supabase
+      .from("application_recipient_events")
+      .select("id", { count: "exact", head: true })
+      .eq("package_id", packageId)
+      .eq("event_type", "conversation_started"),
+  ])
+
+  const failures = [accessResult.error, openCountResult.error, firstOpenResult.error, lastOpenResult.error, receiptResult.error, conversationResult.error].filter(Boolean)
+  if (failures.length) throw failures[0]
+
+  return {
+    active_access_id: accessResult.data?.id ?? null,
+    access_created_at: accessResult.data?.created_at ?? null,
+    access_expires_at: accessResult.data?.expires_at ?? null,
+    review_room_opens: openCountResult.count ?? 0,
+    first_opened_at: firstOpenResult.data?.created_at ?? null,
+    last_opened_at: lastOpenResult.data?.created_at ?? null,
+    receipt_confirmed: (receiptResult.count ?? 0) > 0,
+    conversation_started: (conversationResult.count ?? 0) > 0,
+  }
 }
 
 function pageLoadId() {
