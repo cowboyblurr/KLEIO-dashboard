@@ -22,6 +22,11 @@ export type ArtistRecipientMessage = {
   created_at: string
 }
 
+export type ArtistReplyResult = {
+  message: ArtistRecipientMessage
+  notification_status: "sent" | "unconfigured" | "failed"
+}
+
 export async function loadArtistRecipientConversation(packageId: string): Promise<ArtistRecipientConversation | null> {
   const account = await loadKleioAccount()
   if (!account) throw new Error("Please sign in to continue.")
@@ -67,26 +72,22 @@ export async function loadArtistRecipientMessages(conversationId: string): Promi
   return (data ?? []) as ArtistRecipientMessage[]
 }
 
-export async function sendArtistRecipientReply(conversationId: string, body: string) {
+export async function sendArtistRecipientReply(conversationId: string, body: string): Promise<ArtistReplyResult> {
   const account = await loadKleioAccount()
   if (!account) throw new Error("Please sign in to continue.")
   const message = body.trim()
   if (!message || message.length > 4000) throw new Error("Write a reply between 1 and 4,000 characters.")
   const supabase = getSupabaseBrowserClient()
-  const { data, error } = await supabase
-    .from("application_recipient_messages")
-    .insert({
+  const { data, error } = await supabase.functions.invoke("application-conversation", {
+    body: {
+      action: "send_artist_reply",
       conversation_id: conversationId,
-      sender_kind: "artist",
-      sender_user_id: account.user.id,
-      sender_recipient_identity_id: null,
       body: message,
-      client_nonce: crypto.randomUUID(),
-    })
-    .select("id, conversation_id, sender_kind, body, created_at")
-    .single()
+    },
+  })
   if (error) throw error
-  return data as ArtistRecipientMessage
+  if (data?.error) throw new Error(data.message || data.error)
+  return data as ArtistReplyResult
 }
 
 export async function decideExtendedProfileRequest(requestId: string, approved: boolean, note = "") {
