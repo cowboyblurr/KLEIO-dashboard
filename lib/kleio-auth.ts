@@ -49,8 +49,8 @@ export function getKleioAuthErrorMessage(error: unknown, locale: "en" | "es" = "
   }
   if (isEmailRateLimitError(error)) {
     return es
-      ? "KLEIO no puede enviar otro correo de confirmación todavía. Revisa tu bandeja de entrada y correo no deseado antes de volver a intentarlo. El límite de correo puede tardar hasta una hora en restablecerse."
-      : "KLEIO cannot send another confirmation email yet. Check your inbox and spam folder before trying again. The email limit may take up to an hour to reset."
+      ? "KLEIO no puede enviar un correo de confirmación ahora porque el servicio de correo alcanzó temporalmente su límite. Si estabas creando una cuenta, este intento puede no haberla creado; tus datos siguen en el formulario. Inténtalo de nuevo cuando el límite se restablezca. Si ya esperabas una confirmación, revisa si tienes un enlace anterior en tu bandeja de entrada o correo no deseado."
+      : "KLEIO cannot send a confirmation email right now because the email service is temporarily rate-limited. If you were creating an account, this attempt may not have created it; your form details remain available. Try again after the limit resets. If you were already waiting for confirmation, check your inbox or spam folder for an earlier link."
   }
   if (status === 429 || message.includes("rate limit") || message.includes("too many")) {
     return es ? "Se hicieron demasiados intentos. Espera un momento y vuelve a intentarlo." : "Too many attempts were made. Please wait a moment and try again."
@@ -64,15 +64,6 @@ export function getKleioAuthErrorMessage(error: unknown, locale: "en" | "es" = "
     : es
       ? "No se pudo completar la solicitud."
       : "The request could not be completed."
-}
-
-export function getKleioSignupErrorMessage(error: unknown, locale: "en" | "es" = "en") {
-  if (isEmailRateLimitError(error)) {
-    return locale === "es"
-      ? "KLEIO no pudo crear la cuenta ahora porque el envío de correos de confirmación alcanzó temporalmente su límite. Tus datos siguen en este formulario. Inténtalo de nuevo cuando el límite se restablezca; esta solicitud no creó una cuenta."
-      : "KLEIO could not create the account right now because confirmation email sending is temporarily rate-limited. Your details are still in this form. Try again after the limit resets; this attempt did not create an account."
-  }
-  return getKleioAuthErrorMessage(error, locale)
 }
 
 export async function requestKleioPasswordReset(email: string) {
