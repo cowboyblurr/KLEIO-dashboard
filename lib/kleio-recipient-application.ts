@@ -122,10 +122,11 @@ async function invoke<T>(body: Record<string, unknown>): Promise<T> {
   return data as T
 }
 
-export async function createRecipientReviewAccess(packageId: string) {
-  return invoke<{ token: string; access_id: string; expires_at: string; data_scope: string }>({
+export async function createRecipientReviewAccess(packageId: string, submissionVersionId?: string) {
+  return invoke<{ token: string; access_id: string; expires_at: string; data_scope: string; submission_version_id?: string }>({
     action: "create_access",
     package_id: packageId,
+    ...(submissionVersionId ? { submission_version_id: submissionVersionId } : {}),
   })
 }
 
