@@ -11,6 +11,7 @@ const helper = read("lib/kleio-google-auth.ts")
 const gate = read("components/kleio/auth/google-role-bootstrap-gate.tsx")
 const institution = read("components/kleio/signup/institution-signup-entry.tsx")
 const artistSignup = read("lib/kleio-lightweight-artist-signup.ts")
+const loginCard = read("components/kleio/landing-login-card.tsx")
 const callbackPage = read("app/auth/callback/page.tsx")
 const gmail = read("components/kleio/gmail-delivery-control.tsx")
 const migration = read("supabase/migrations/20260808202000_google_oauth_role_bootstrap.sql")
@@ -36,6 +37,10 @@ requirePattern(institution, /Continue with Google/, "Institution signup must exp
 requirePattern(institution, /does not grant Gmail or Google Drive access/, "Institution signup must clearly separate identity from Google data permissions.")
 requirePattern(artistSignup, /signInWithOAuth[\s\S]*provider:\s*"google"/, "Artist signup must retain its Google identity path.")
 forbidPattern(artistSignup, /gmail\.send|gmail\.modify|gmail\.readonly/i, "Artist Google signup must not request Gmail permissions.")
+requirePattern(loginCard, /isGoogleAuthenticationConfigured/, "Member login must hide Google access until real provider configuration is enabled.")
+requirePattern(loginCard, /Continue as artist[\s\S]*Continue as institution/, "Member login must route Google access through an explicit KLEIO workspace type.")
+requirePattern(loginCard, /established role is preserved/, "Member login must explain that Google cannot rewrite an established KLEIO role.")
+requirePattern(loginCard, /Gmail is authorized separately/, "Member login must keep Gmail permission separate from Google identity.")
 
 requirePattern(gmail, /terminalSentStates[\s\S]*artist_reported_sent/, "Artist-reported sent evidence must suppress a later Gmail send in the UI.")
 requirePattern(gmail, /Application progress/, "Finalized applications must expose a calm progress surface.")
@@ -50,4 +55,4 @@ if (failures.length) {
   process.exit(1)
 }
 
-console.log("Google auth + submission tracking foundation audit passed: identity scopes stay separate from Gmail/Drive, established roles are immutable, fresh institution OAuth bootstrap is server constrained, and artist delivery progress advances only from canonical evidence into KLEIO messaging.")
+console.log("Google auth + submission tracking foundation audit passed: identity scopes stay separate from Gmail/Drive, established roles are immutable, fresh institution OAuth bootstrap is server constrained, role-aware Google member access is gated by real configuration, and artist delivery progress advances only from canonical evidence into KLEIO messaging.")
