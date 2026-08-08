@@ -87,9 +87,12 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - name: Correct current analytics actor field in QA runner
+      - name: Prepare current V4 runtime identity and analytics contract
         run: |
-          sed 's/\.eq("user_id", artistId)/.eq("actor_user_id", artistId)/' scripts/v4-zero-trust-runtime.mjs > scripts/v4-zero-trust-runtime-run.mjs
+          sed \
+            -e 's/\.eq("user_id", artistId)/.eq("actor_user_id", artistId)/' \
+            -e 's/@example\.com/@kleioarthouse.com/g' \
+            scripts/v4-zero-trust-runtime.mjs > scripts/v4-zero-trust-runtime-run.mjs
       - name: Authenticated artist + AI + application + recipient chaos
         run: node scripts/v4-zero-trust-runtime-run.mjs
       - name: Upload V4 runtime evidence
@@ -132,10 +135,12 @@ jobs:
           done
           cat /tmp/kleio-v4-browser-server.log
           exit 1
+      - name: Prepare KLEIO-domain disposable browser identities
+        run: sed 's/@example\.com/@kleioarthouse.com/g' tests/v4-hydrated-browser.spec.mjs > tests/v4-hydrated-browser-run.spec.mjs
       - name: Authenticated rendered artist/recipient stress
         env:
           V4_BROWSER_BASE_URL: http://127.0.0.1:4173
-        run: pnpm exec playwright test tests/v4-hydrated-browser.spec.mjs --workers=1 --reporter=line
+        run: pnpm exec playwright test tests/v4-hydrated-browser-run.spec.mjs --workers=1 --reporter=line
       - name: Upload V4 browser evidence
         if: always()
         uses: actions/upload-artifact@v4
