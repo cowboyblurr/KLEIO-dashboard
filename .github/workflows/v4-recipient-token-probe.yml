@@ -1,0 +1,48 @@
+name: V4 Recipient Token Probe
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/v4-recipient-token-probe.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  token-probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      FN: https://trekynurdgxgtaaqqtyq.supabase.co/functions/v1/recipient-application-review
+      ACTIVE_TOKEN: dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
+      REVOKED_TOKEN: eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
+      EXPIRED_TOKEN: ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+    steps:
+      - name: Exercise live recipient token lifecycle
+        shell: bash
+        run: |
+          set -euo pipefail
+          post() {
+            token="$1"; key="$2"; expected="$3"; expected_text="$4"
+            body="$(mktemp)"
+            status="$(curl --silent --show-error --output "$body" --write-out '%{http_code}' --max-time 30 -H 'content-type: application/json' --data "{\"action\":\"view\",\"token\":\"${token}\",\"idempotency_key\":\"${key}\",\"metadata\":{\"surface\":\"v4_token_probe\"}}" "$FN")"
+            test "$status" = "$expected"
+            grep -Fq "$expected_text" "$body"
+            cat "$body"
+          }
+          post "$ACTIVE_TOKEN" "v4-view-same" 200 'synthetic_test'
+          post "$ACTIVE_TOKEN" "v4-view-same" 200 'A synthetic answer preserved for V4 token testing.'
+          post "$ACTIVE_TOKEN" "v4-view-second" 200 'V4 Synthetic Opportunity'
+          post "$REVOKED_TOKEN" "v4-revoked" 410 '"revoked"'
+          post "$EXPIRED_TOKEN" "v4-expired" 410 '"expired"'
+          post "abc" "v4-malformed" 404 '"invalid_token"'
+      - name: Exercise metadata minimization
+        shell: bash
+        run: |
+          set -euo pipefail
+          body="$(mktemp)"
+          status="$(curl --silent --show-error --output "$body" --write-out '%{http_code}' --max-time 30 -H 'content-type: application/json' --data "{\"action\":\"record_event\",\"token\":\"${ACTIVE_TOKEN}\",\"event_type\":\"artwork_detail_opened\",\"idempotency_key\":\"v4-metadata-sanitize\",\"metadata\":{\"artwork_id\":\"safe-art\",\"recipient_token\":\"SHOULD_NOT_STORE\",\"private_media\":\"SHOULD_NOT_STORE\",\"foo\":\"SHOULD_NOT_STORE\"}}" "$FN")"
+          test "$status" = "200"
+          grep -Fq '"recorded":true' "$body"
