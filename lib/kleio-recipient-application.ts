@@ -1,8 +1,5 @@
 import { getSupabaseBrowserClient } from "@/lib/kleio-supabase"
 
-const issuedApplicationReferences = new Map<string, string>()
-const applicationReferencePattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
-
 export type RecipientReviewArtwork = {
   id: string
   title: string
@@ -86,6 +83,7 @@ export type RecipientReviewResponse = {
 
 export type RecipientEvent = {
   id: string
+  access_id?: string
   event_type: string
   actor_kind: string
   evidence_level: "self_reported" | "system_observed" | "recipient_confirmed" | "provider_confirmed"
@@ -98,30 +96,6 @@ export type RecipientConversationMessage = {
   sender_kind: "artist" | "recipient"
   body: string
   created_at: string
-}
-
-function namedError(name: string, message: string) {
-  const error = new Error(message)
-  error.name = name
-  return error
-}
-
-function currentApplicationReference() {
-  if (typeof window === "undefined") return ""
-  return new URLSearchParams(window.location.search).get("application")?.trim() ?? ""
-}
-
-export function isValidRecipientApplicationReference(value: string) {
-  return applicationReferencePattern.test(value.trim())
-}
-
-export function assertRecipientApplicationReference(snapshotReference: string, requestedReference: string) {
-  if (!isValidRecipientApplicationReference(requestedReference)) {
-    throw namedError("application_reference_required", "This application link is incomplete. Ask the artist to send a fresh KLEIO review link.")
-  }
-  if (snapshotReference.trim().toLowerCase() !== requestedReference.trim().toLowerCase()) {
-    throw namedError("application_reference_mismatch", "This application reference does not match the secure access token. Ask the artist to send a fresh KLEIO review link.")
-  }
 }
 
 async function invoke<T>(body: Record<string, unknown>): Promise<T> {
@@ -137,12 +111,10 @@ async function invoke<T>(body: Record<string, unknown>): Promise<T> {
 }
 
 export async function createRecipientReviewAccess(packageId: string) {
-  const access = await invoke<{ token: string; access_id: string; expires_at: string; data_scope: string }>({
+  return invoke<{ token: string; access_id: string; expires_at: string; data_scope: string }>({
     action: "create_access",
     package_id: packageId,
   })
-  issuedApplicationReferences.set(access.token, packageId)
-  return { ...access, application_reference: packageId }
 }
 
 export async function revokeRecipientReviewAccess(packageId: string) {
@@ -154,21 +126,20 @@ export async function loadRecipientEvents(packageId: string) {
   return response.events
 }
 
+function pageLoadId() {
+  if (typeof window === "undefined") return "server"
+  const origin = Number.isFinite(window.performance?.timeOrigin) ? Math.round(window.performance.timeOrigin) : Date.now()
+  return `${origin}`
+}
+
 export async function loadRecipientReview(token: string) {
-  const applicationReference = currentApplicationReference()
-  if (!isValidRecipientApplicationReference(applicationReference)) {
-    throw namedError("application_reference_required", "This application link is incomplete. Ask the artist to send a fresh KLEIO review link.")
-  }
-  const idempotencyKey = `application-page-viewed:${token.slice(-12)}:${new Date().toISOString().slice(0, 13)}`
-  const review = await invoke<RecipientReviewResponse>({
+  const idempotencyKey = `application-page-viewed:${token.slice(-12)}:${pageLoadId()}`
+  return invoke<RecipientReviewResponse>({
     action: "view",
     token,
-    application_reference: applicationReference,
     idempotency_key: idempotencyKey,
     metadata: { surface: "recipient_application_review", viewport: typeof window === "undefined" ? "unknown" : `${window.innerWidth}x${window.innerHeight}` },
   })
-  assertRecipientApplicationReference(review.snapshot.reference, applicationReference)
-  return review
 }
 
 export async function recordRecipientEvent(
@@ -208,14 +179,9 @@ export async function requestRecipientEmailVerification(input: {
   draftToken: string
 }) {
   const supabase = getSupabaseBrowserClient()
-  const applicationReference = currentApplicationReference()
-  if (!isValidRecipientApplicationReference(applicationReference)) {
-    throw namedError("application_reference_required", "This application link is incomplete. Ask the artist to send a fresh KLEIO review link.")
-  }
   const basePath = process.env.NEXT_PUBLIC_BASE_PATH?.trim().replace(/^\/+|\/+$/g, "")
   const path = `${basePath ? `/${basePath}` : ""}/application-review/`
   const redirect = new URL(path, window.location.origin)
-  redirect.searchParams.set("application", applicationReference)
   redirect.searchParams.set("token", input.reviewToken)
   redirect.searchParams.set("draft", input.draftToken)
   const { error } = await supabase.auth.signInWithOtp({
@@ -262,17 +228,10 @@ export async function requestExtendedProfile(token: string, sections: string[]) 
   })
 }
 
-export function recipientReviewUrl(token: string, applicationReference = issuedApplicationReferences.get(token) ?? "") {
-  if (!isValidRecipientApplicationReference(applicationReference)) {
-    throw namedError("application_reference_required", "A stable application reference is required before KLEIO can create a recipient review URL.")
-  }
-  if (typeof window === "undefined") {
-    const params = new URLSearchParams({ application: applicationReference, token })
-    return `/application-review/?${params.toString()}`
-  }
+export function recipientReviewUrl(token: string) {
+  if (typeof window === "undefined") return `/application-review/?token=${encodeURIComponent(token)}`
   const basePath = process.env.NEXT_PUBLIC_BASE_PATH?.trim().replace(/^\/+|\/+$/g, "")
   const url = new URL(`${basePath ? `/${basePath}` : ""}/application-review/`, window.location.origin)
-  url.searchParams.set("application", applicationReference)
   url.searchParams.set("token", token)
   return url.toString()
 }
