@@ -36,17 +36,17 @@ requireText(qa, /disciplines/, "Discipline coverage must be part of deterministi
 
 requireText(client, /synthesize-artist-source-profile-v2/, "The browser client must call the orchestrated v2 synthesis engine.")
 requireText(client, /retryDocumentProfileSynthesis/, "The browser client needs a targeted Passport synthesis retry action.")
-requireText(media, /pipelineStatus/, "Media intelligence must distinguish source understanding from Passport synthesis readiness.")
+requireText(media, /pipelineStatus/, "Media Assist internals must distinguish source understanding from Passport synthesis readiness.")
 requireText(media, /retryDocumentPassportSynthesis/, "PDF Passport synthesis must be retryable without reprocessing the source extraction.")
 
-requireText(sheet, /Source understood · Passport incomplete/, "The UI must not call source-only PDF understanding a complete Passport analysis.")
-requireText(sheet, /Retry Passport synthesis only/, "The UI needs a targeted recovery path for synthesis failures.")
+requireText(sheet, /Source notes ready · Passport incomplete/, "The UI must not present source-only PDF understanding as completed Passport drafting.")
+requireText(sheet, /Retry Passport drafting only/, "The UI needs a targeted recovery path for Passport drafting failures.")
 requireText(sheet, /Review & apply/, "Generated Passport proposals must lead into artist edit\/approval rather than copy-only workflow.")
-requireText(sheet, /Generated language is a reviewable suggestion, not verification/, "The UI must distinguish generated synthesis from verification.")
-forbidText(sheet, /AI confidence \{confidence\}%/, "Document intelligence should not present a model-style percentage as verification-like confidence.")
+requireText(sheet, /remains a suggestion until you edit or approve it/, "The UI must distinguish generated Passport language from artist-approved information.")
+forbidText(sheet, /AI confidence \{confidence\}%|Overall review confidence|review confidence/i, "Media Assist must not present model-style creative confidence percentages to the artist.")
 
 requireText(regression, /Photography/, "Regression suite must cover the observed photography evidence failure pattern.")
 requireText(regression, /mediums.*disciplines|disciplines.*mediums/s, "Regression suite must fail when supported mediums\/disciplines disappear.")
 requireText(regression, /sparse evidence/, "Regression suite must verify that genuinely unsupported fields remain artist-input states.")
 
-console.log("KLEIO Passport synthesis orchestration audit passed: grounded synthesis, deterministic coverage QA, bounded repair, prompt-injection resistance, idempotent rebuilds, editable proposals, and truthful UI states verified.")
+console.log("KLEIO Passport synthesis orchestration audit passed: grounded synthesis, deterministic coverage QA, bounded repair, prompt-injection resistance, idempotent rebuilds, editable proposals, and truthful Media Assist source-notes versus Passport-drafting states verified.")
