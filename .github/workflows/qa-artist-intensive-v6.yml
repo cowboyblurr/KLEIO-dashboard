@@ -1,0 +1,302 @@
+name: QA-only Artist Intensive V6
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/qa-artist-intensive-v6.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  artist-zero-trust:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      GITHUB_ACTIONS: true
+      NEXT_PUBLIC_BASE_PATH: /KLEIO-dashboard
+      NEXT_PUBLIC_SUPABASE_URL: https://trekynurdgxgtaaqqtyq.supabase.co
+      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_XdYXvd0fQm3IJKxNrFXgUQ_M4RgDj1M
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
+      - id: artist_services
+        name: Artist workflow service simulations
+        continue-on-error: true
+        run: pnpm test:artist-workflow-services
+      - id: passport_tests
+        name: Passport synthesis orchestration tests
+        continue-on-error: true
+        run: pnpm test:passport-synthesis-orchestration
+      - id: gemini_doc_tests
+        name: Gemini document intelligence tests
+        continue-on-error: true
+        run: pnpm test:gemini-document-intelligence
+
+      - id: artist_readiness
+        name: Artist beta readiness
+        continue-on-error: true
+        run: pnpm audit:artist-beta-readiness
+      - id: artist_convenience
+        name: Artist beta convenience simulations
+        continue-on-error: true
+        run: pnpm audit:artist-beta-convenience
+      - id: requirement_channels
+        name: Requirement channel separation
+        continue-on-error: true
+        run: pnpm audit:artist-requirement-channels
+      - id: requirement_files
+        name: Requirement file compatibility
+        continue-on-error: true
+        run: pnpm audit:artist-requirement-file-types
+      - id: upload_surfaces
+        name: Upload surface consistency
+        continue-on-error: true
+        run: pnpm audit:upload-surfaces
+      - id: media_control
+        name: Shared media controls and Media Assist
+        continue-on-error: true
+        run: pnpm audit:artist-media-control
+      - id: universal_media
+        name: Universal media import
+        continue-on-error: true
+        run: pnpm audit:universal-media
+      - id: artist_import
+        name: Artist Import Studio
+        continue-on-error: true
+        run: pnpm audit:artist-import
+      - id: upload_passport
+        name: Upload to Passport intelligence
+        continue-on-error: true
+        run: pnpm audit:upload-to-passport
+      - id: document_intelligence
+        name: Document intelligence beta
+        continue-on-error: true
+        run: pnpm audit:document-intelligence
+      - id: gemini_doc_contract
+        name: Gemini document intelligence contract
+        continue-on-error: true
+        run: pnpm audit:gemini-document-intelligence
+      - id: passport_contract
+        name: Passport synthesis contract
+        continue-on-error: true
+        run: pnpm audit:passport-synthesis-orchestration
+      - id: website_import
+        name: Website import assist
+        continue-on-error: true
+        run: pnpm audit:website-import
+      - id: instagram_import
+        name: Instagram import contract
+        continue-on-error: true
+        run: pnpm audit:instagram-import
+      - id: gemini_website
+        name: Gemini website intelligence contract
+        continue-on-error: true
+        run: pnpm audit:gemini-website
+
+      - id: opportunity_search
+        name: Opportunity search
+        continue-on-error: true
+        run: pnpm audit:opportunity-search
+      - id: opportunity_first
+        name: Opportunity-first acquisition
+        continue-on-error: true
+        run: pnpm audit:opportunity-first
+      - id: composer
+        name: Application composer lock
+        continue-on-error: true
+        run: pnpm audit:application-composer
+      - id: recipient_loop
+        name: Recipient review and conversation loop
+        continue-on-error: true
+        run: pnpm audit:artist-recipient-loop
+      - id: gmail_contract
+        name: Gmail send-only contract
+        continue-on-error: true
+        run: node scripts/audit-gmail-send-beta.mjs
+      - id: delivery_lock
+        name: Immutable delivery lock
+        continue-on-error: true
+        run: node scripts/audit-submission-delivery-lock.mjs
+      - id: synthetic_reset
+        name: Synthetic reset integrity
+        continue-on-error: true
+        run: node scripts/audit-synthetic-application-reset.mjs
+
+      - id: auth_redirect
+        name: Auth redirect integrity
+        continue-on-error: true
+        run: pnpm audit:auth-redirect
+      - id: auth_isolation
+        name: Auth and role isolation
+        continue-on-error: true
+        run: pnpm audit:auth-isolation
+      - id: navigation
+        name: Internal navigation
+        continue-on-error: true
+        run: pnpm audit:navigation
+      - id: guidance
+        name: Guidance hierarchy
+        continue-on-error: true
+        run: pnpm audit:guidance
+      - id: user_copy
+        name: User-facing copy
+        continue-on-error: true
+        run: pnpm audit:user-copy
+      - id: visual_convenience
+        name: Visual convenience
+        continue-on-error: true
+        run: pnpm audit:visual-convenience
+
+      - id: analytics_arch
+        name: Product analytics architecture
+        continue-on-error: true
+        run: pnpm audit:product-analytics
+      - id: analytics_privacy
+        name: Analytics privacy
+        continue-on-error: true
+        run: pnpm audit:analytics-privacy
+      - id: analytics_coverage
+        name: Analytics coverage
+        continue-on-error: true
+        run: pnpm audit:analytics-coverage
+      - id: analytics_admin
+        name: Analytics admin boundary
+        continue-on-error: true
+        run: pnpm audit:analytics-admin
+      - id: analytics_attribution
+        name: Analytics attribution
+        continue-on-error: true
+        run: pnpm audit:analytics-attribution
+
+      - id: critical_lint
+        name: Critical artist-flow lint with zero warnings
+        continue-on-error: true
+        run: >-
+          pnpm exec eslint
+          components/kleio/gmail-delivery-control.tsx
+          components/kleio/application-composer-workspace.tsx
+          components/kleio/recipient-application-review.tsx
+          components/kleio/artist-recipient-conversation.tsx
+          components/kleio/creative-passport-workspace.tsx
+          components/kleio/artist-document-intelligence.tsx
+          components/kleio/artist-import-studio.tsx
+          components/kleio/artist-media-library.tsx
+          --max-warnings=0
+      - id: typecheck
+        name: TypeScript
+        continue-on-error: true
+        run: pnpm typecheck
+      - id: lint
+        name: Full lint
+        continue-on-error: true
+        run: pnpm lint
+      - id: build
+        name: Static production build
+        continue-on-error: true
+        run: pnpm build
+
+      - name: V6 result summary
+        if: always()
+        run: |
+          cat <<'EOF'
+          artist_services=${{ steps.artist_services.outcome }}
+          passport_tests=${{ steps.passport_tests.outcome }}
+          gemini_doc_tests=${{ steps.gemini_doc_tests.outcome }}
+          artist_readiness=${{ steps.artist_readiness.outcome }}
+          artist_convenience=${{ steps.artist_convenience.outcome }}
+          requirement_channels=${{ steps.requirement_channels.outcome }}
+          requirement_files=${{ steps.requirement_files.outcome }}
+          upload_surfaces=${{ steps.upload_surfaces.outcome }}
+          media_control=${{ steps.media_control.outcome }}
+          universal_media=${{ steps.universal_media.outcome }}
+          artist_import=${{ steps.artist_import.outcome }}
+          upload_passport=${{ steps.upload_passport.outcome }}
+          document_intelligence=${{ steps.document_intelligence.outcome }}
+          gemini_doc_contract=${{ steps.gemini_doc_contract.outcome }}
+          passport_contract=${{ steps.passport_contract.outcome }}
+          website_import=${{ steps.website_import.outcome }}
+          instagram_import=${{ steps.instagram_import.outcome }}
+          gemini_website=${{ steps.gemini_website.outcome }}
+          opportunity_search=${{ steps.opportunity_search.outcome }}
+          opportunity_first=${{ steps.opportunity_first.outcome }}
+          composer=${{ steps.composer.outcome }}
+          recipient_loop=${{ steps.recipient_loop.outcome }}
+          gmail_contract=${{ steps.gmail_contract.outcome }}
+          delivery_lock=${{ steps.delivery_lock.outcome }}
+          synthetic_reset=${{ steps.synthetic_reset.outcome }}
+          auth_redirect=${{ steps.auth_redirect.outcome }}
+          auth_isolation=${{ steps.auth_isolation.outcome }}
+          navigation=${{ steps.navigation.outcome }}
+          guidance=${{ steps.guidance.outcome }}
+          user_copy=${{ steps.user_copy.outcome }}
+          visual_convenience=${{ steps.visual_convenience.outcome }}
+          analytics_arch=${{ steps.analytics_arch.outcome }}
+          analytics_privacy=${{ steps.analytics_privacy.outcome }}
+          analytics_coverage=${{ steps.analytics_coverage.outcome }}
+          analytics_admin=${{ steps.analytics_admin.outcome }}
+          analytics_attribution=${{ steps.analytics_attribution.outcome }}
+          critical_lint=${{ steps.critical_lint.outcome }}
+          typecheck=${{ steps.typecheck.outcome }}
+          lint=${{ steps.lint.outcome }}
+          build=${{ steps.build.outcome }}
+          EOF
+
+      - name: Enforce V6 gate
+        if: always()
+        run: |
+          fail=0
+          for result in \
+            "${{ steps.artist_services.outcome }}" \
+            "${{ steps.passport_tests.outcome }}" \
+            "${{ steps.gemini_doc_tests.outcome }}" \
+            "${{ steps.artist_readiness.outcome }}" \
+            "${{ steps.artist_convenience.outcome }}" \
+            "${{ steps.requirement_channels.outcome }}" \
+            "${{ steps.requirement_files.outcome }}" \
+            "${{ steps.upload_surfaces.outcome }}" \
+            "${{ steps.media_control.outcome }}" \
+            "${{ steps.universal_media.outcome }}" \
+            "${{ steps.artist_import.outcome }}" \
+            "${{ steps.upload_passport.outcome }}" \
+            "${{ steps.document_intelligence.outcome }}" \
+            "${{ steps.gemini_doc_contract.outcome }}" \
+            "${{ steps.passport_contract.outcome }}" \
+            "${{ steps.website_import.outcome }}" \
+            "${{ steps.instagram_import.outcome }}" \
+            "${{ steps.gemini_website.outcome }}" \
+            "${{ steps.opportunity_search.outcome }}" \
+            "${{ steps.opportunity_first.outcome }}" \
+            "${{ steps.composer.outcome }}" \
+            "${{ steps.recipient_loop.outcome }}" \
+            "${{ steps.gmail_contract.outcome }}" \
+            "${{ steps.delivery_lock.outcome }}" \
+            "${{ steps.synthetic_reset.outcome }}" \
+            "${{ steps.auth_redirect.outcome }}" \
+            "${{ steps.auth_isolation.outcome }}" \
+            "${{ steps.navigation.outcome }}" \
+            "${{ steps.guidance.outcome }}" \
+            "${{ steps.user_copy.outcome }}" \
+            "${{ steps.visual_convenience.outcome }}" \
+            "${{ steps.analytics_arch.outcome }}" \
+            "${{ steps.analytics_privacy.outcome }}" \
+            "${{ steps.analytics_coverage.outcome }}" \
+            "${{ steps.analytics_admin.outcome }}" \
+            "${{ steps.analytics_attribution.outcome }}" \
+            "${{ steps.critical_lint.outcome }}" \
+            "${{ steps.typecheck.outcome }}" \
+            "${{ steps.lint.outcome }}" \
+            "${{ steps.build.outcome }}"
+          do
+            if [ "$result" != "success" ]; then fail=1; fi
+          done
+          exit "$fail"
