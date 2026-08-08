@@ -5,10 +5,8 @@ import { useSearchParams } from "next/navigation"
 import {
   CheckCircle2,
   ChevronDown,
-  Clipboard,
   ExternalLink,
   FileCheck2,
-  Link2,
   Loader2,
   Mail,
   MessageSquareText,
@@ -31,15 +29,28 @@ import {
   buildMailtoHref,
   createRecipientReviewAccess,
   loadRecipientEvents,
+  loadRecipientTrackingSummary,
   recipientReviewUrl,
   revokeRecipientReviewAccess,
   type RecipientEvent,
+  type RecipientTrackingSummary,
 } from "@/lib/kleio-recipient-application"
 import { loadOpportunityDirectoryWithSources } from "@/lib/kleio-opportunity-presentation"
 import type { OpportunityDirectoryItem } from "@/lib/kleio-opportunity-data"
 
 const primary = "inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#5B4B8A] px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
 const secondary = "inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-[#D8D0F2] bg-white px-4 py-2 text-sm font-semibold text-[#5B4B8A] disabled:cursor-not-allowed disabled:opacity-50"
+
+const EMPTY_TRACKING: RecipientTrackingSummary = {
+  active_access_id: null,
+  access_created_at: null,
+  access_expires_at: null,
+  review_room_opens: 0,
+  first_opened_at: null,
+  last_opened_at: null,
+  receipt_confirmed: false,
+  conversation_started: false,
+}
 
 type OpportunityWithSubmission = OpportunityDirectoryItem & {
   submission_email?: string
@@ -68,6 +79,10 @@ function timelineEvidence(event: RecipientEvent | ArtistSubmissionAttempt) {
   return "System Observed"
 }
 
+function trackingLabel(reference: string) {
+  return reference ? `KLEIO-${reference.slice(0, 8).toUpperCase()}` : "Created with handoff"
+}
+
 export function ApplicationRecipientLoopPanel() {
   const searchParams = useSearchParams()
   const opportunityId = searchParams.get("opportunity")?.trim() ?? ""
@@ -81,7 +96,9 @@ export function ApplicationRecipientLoopPanel() {
   const [packageRecord, setPackageRecord] = useState<ArtistApplicationPackage | null>(null)
   const [attempts, setAttempts] = useState<ArtistSubmissionAttempt[]>([])
   const [events, setEvents] = useState<RecipientEvent[]>([])
-  const [reviewLink, setReviewLink] = useState("")
+  const [tracking, setTracking] = useState<RecipientTrackingSummary>(EMPTY_TRACKING)
+  const [handoffUrl, setHandoffUrl] = useState("")
+  const [handoffAccessId, setHandoffAccessId] = useState("")
   const [alignmentOpen, setAlignmentOpen] = useState(false)
 
   async function refresh() {
@@ -96,15 +113,18 @@ export function ApplicationRecipientLoopPanel() {
       setItem(opportunity)
       setPackageRecord(stored)
       if (stored) {
-        const [submissionAttempts, recipientEvents] = await Promise.all([
+        const [submissionAttempts, recipientEvents, recipientTracking] = await Promise.all([
           loadArtistSubmissionAttempts(stored.id),
           loadRecipientEvents(stored.id).catch(() => []),
+          loadRecipientTrackingSummary(stored.id).catch(() => EMPTY_TRACKING),
         ])
         setAttempts(submissionAttempts)
         setEvents(recipientEvents)
+        setTracking(recipientTracking)
       } else {
         setAttempts([])
         setEvents([])
+        setTracking(EMPTY_TRACKING)
       }
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "Unable to load the recipient workflow.")
@@ -143,43 +163,38 @@ export function ApplicationRecipientLoopPanel() {
   const isSynthetic = item?.data_scope === "synthetic_test" || packageRecord?.data_scope === "synthetic_test"
   const recipient = item?.submission_email || packageRecord?.external_destination || packageRecord?.email_preview?.to || ""
   const attachmentLabels = packageRecord?.email_preview?.attachments ?? []
+  const latestTrackingAttempt = attempts.find((attempt) => attempt.method === "secure_review" && Boolean(attempt.provider_reference))
+  const trackingReference = handoffAccessId || tracking.active_access_id || latestTrackingAttempt?.provider_reference || ""
   const combinedTimeline = useMemo(() => {
     return [...events, ...attempts]
       .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
       .slice(0, 12)
   }, [attempts, events])
 
-  async function createLink() {
-    if (!packageRecord) throw new Error("Save the application package before creating recipient access.")
-    if (!approved) throw new Error("Review and approve the application again before creating an external review link.")
+  async function createTrackedHandoff() {
+    if (!packageRecord) throw new Error("Save the application package before preparing the recipient handoff.")
+    if (!approved) throw new Error("Review and approve the application again before preparing recipient access.")
+    if (tracking.active_access_id && !handoffUrl) {
+      throw new Error("A tracked recipient handoff is already active. KLEIO will not silently replace an issued recipient link. Revoke access first only if you intentionally need a fresh handoff.")
+    }
     const access = await createRecipientReviewAccess(packageRecord.id)
     const url = recipientReviewUrl(access.token)
-    setReviewLink(url)
+    setHandoffUrl(url)
+    setHandoffAccessId(access.access_id)
     await recordArtistSubmissionSignal({
       packageId: packageRecord.id,
       method: "secure_review",
       status: "package_exported",
       destination: recipient,
       providerReference: access.access_id,
-      responseSnapshot: { review_link_created: true, expires_at: access.expires_at, data_scope: access.data_scope },
+      responseSnapshot: {
+        internal_tracking_reference: access.access_id,
+        tracked_review_access_created: true,
+        expires_at: access.expires_at,
+        data_scope: access.data_scope,
+      },
     })
-    return url
-  }
-
-  async function copyReviewLink() {
-    setBusy(true)
-    setError("")
-    setStatus("")
-    try {
-      const url = reviewLink || await createLink()
-      await navigator.clipboard.writeText(url)
-      setStatus("Secure application link copied. It expires automatically and can be revoked by the artist.")
-      await refresh()
-    } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "Unable to create the secure review link.")
-    } finally {
-      setBusy(false)
-    }
+    return { url, accessId: access.access_id }
   }
 
   async function openEmailClient() {
@@ -190,29 +205,33 @@ export function ApplicationRecipientLoopPanel() {
     try {
       if (!recipient) throw new Error("No submission email is available. Confirm or correct the detected address before continuing.")
       if (!approved) throw new Error("Artist approval is required before opening the external email draft.")
-      const url = reviewLink || await createLink()
+      const handoff = handoffUrl
+        ? { url: handoffUrl, accessId: handoffAccessId || tracking.active_access_id || latestTrackingAttempt?.provider_reference || "" }
+        : await createTrackedHandoff()
       const subject = packageRecord.email_preview?.subject || `Application — ${item.title}`
       const body = packageRecord.email_preview?.body || String(packageRecord.written_content.email_introduction ?? "")
-      const href = buildMailtoHref({ recipient, subject, body, reviewUrl: url })
+      const href = buildMailtoHref({ recipient, subject, body, reviewUrl: handoff.url })
       await recordArtistSubmissionSignal({
         packageId: packageRecord.id,
         method: "mailto",
         status: "email_client_opened",
         destination: recipient,
+        providerReference: handoff.accessId,
         requestSnapshot: {
           recipient_prefilled: true,
           subject_prefilled: true,
           body_prefilled: true,
-          secure_review_link_included: true,
+          tracked_review_access_included: true,
+          internal_tracking_reference: handoff.accessId,
           attachment_count: attachmentLabels.length,
           attachments_automatically_added: false,
         },
       })
-      setStatus("Email app opened. This confirms only the handoff—not that the email was sent, delivered, opened, or read.")
-      window.location.href = href
+      setStatus("Tracked email handoff prepared. KLEIO manages the secure review access internally; this confirms only the email-app handoff, not that the email was sent, delivered, opened, or read.")
       await refresh()
+      window.location.href = href
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "Unable to open the email client.")
+      setError(reason instanceof Error ? reason.message : "Unable to prepare the tracked email handoff.")
     } finally {
       setBusy(false)
     }
@@ -224,8 +243,9 @@ export function ApplicationRecipientLoopPanel() {
     setError("")
     try {
       await revokeRecipientReviewAccess(packageRecord.id)
-      setReviewLink("")
-      setStatus("Recipient access revoked. Previously issued secure links will no longer open the application.")
+      setHandoffUrl("")
+      setHandoffAccessId("")
+      setStatus("Recipient access revoked. Previously issued secure review access will no longer open the application.")
       await refresh()
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "Unable to revoke recipient access.")
@@ -297,20 +317,28 @@ export function ApplicationRecipientLoopPanel() {
                   </section>
 
                   <section className="rounded-2xl border border-[#E7E1F7] bg-white p-5">
-                    <h3 className="text-sm font-semibold">Secure recipient experience</h3>
-                    <p className="mt-2 text-sm leading-6 text-[#746E80]">The core application opens without signup. The recipient can confirm receipt, write a question, verify their email, and return to the same application with the draft preserved.</p>
-                    {reviewLink && <div className="mt-4 break-all rounded-xl border border-[#E7E1F7] bg-[#FAF9FD] p-3 font-mono text-xs">{reviewLink}</div>}
-                    <div className="mt-4 flex flex-wrap gap-2"><button type="button" className={primary} disabled={busy || !packageRecord || !approved} onClick={() => void copyReviewLink()}>{busy ? <Loader2 className="size-4 animate-spin" /> : <Link2 className="size-4" />}{reviewLink ? "Copy secure link" : "Create secure link"}</button><button type="button" className={secondary} disabled={busy || !packageRecord} onClick={() => void revokeLink()}><X className="size-4" />Revoke access</button></div>
+                    <h3 className="text-sm font-semibold">Internal submission tracking</h3>
+                    <p className="mt-2 text-sm leading-6 text-[#746E80]">KLEIO creates and manages the secure recipient access behind the handoff. The artist sees the tracking identity and activity—not a raw URL to copy around.</p>
+                    <dl className="mt-4 grid gap-3 sm:grid-cols-2">
+                      <div className="rounded-xl bg-[#FAF9FD] p-3"><dt className="text-[0.68rem] font-semibold uppercase tracking-wide text-[#8A8296]">Tracking reference</dt><dd className="mt-1 font-mono text-sm font-semibold text-[#4F416F]">{trackingLabel(trackingReference)}</dd></div>
+                      <div className="rounded-xl bg-[#FAF9FD] p-3"><dt className="text-[0.68rem] font-semibold uppercase tracking-wide text-[#8A8296]">Opportunity</dt><dd className="mt-1 text-sm font-semibold">{item.title}</dd></div>
+                      <div className="rounded-xl bg-[#FAF9FD] p-3"><dt className="text-[0.68rem] font-semibold uppercase tracking-wide text-[#8A8296]">Review Room opens</dt><dd className="mt-1 text-2xl font-semibold text-[#403653]">{tracking.review_room_opens}</dd></div>
+                      <div className="rounded-xl bg-[#FAF9FD] p-3"><dt className="text-[0.68rem] font-semibold uppercase tracking-wide text-[#8A8296]">Conversation</dt><dd className="mt-1 text-sm font-semibold">{tracking.conversation_started ? "Started" : tracking.receipt_confirmed ? "Receipt confirmed" : "Not started"}</dd></div>
+                      <div className="rounded-xl bg-[#FAF9FD] p-3"><dt className="text-[0.68rem] font-semibold uppercase tracking-wide text-[#8A8296]">First opened</dt><dd className="mt-1 text-sm">{tracking.first_opened_at ? formatDate(tracking.first_opened_at) : "Not opened yet"}</dd></div>
+                      <div className="rounded-xl bg-[#FAF9FD] p-3"><dt className="text-[0.68rem] font-semibold uppercase tracking-wide text-[#8A8296]">Last opened</dt><dd className="mt-1 text-sm">{tracking.last_opened_at ? formatDate(tracking.last_opened_at) : "Not opened yet"}</dd></div>
+                    </dl>
+                    <p className="mt-3 text-xs leading-5 text-[#8A8296]">“Review Room opens” counts KLEIO review-page loads. It does not claim the submission email was opened, read, or meaningfully reviewed.</p>
+                    <button type="button" className={`${secondary} mt-4`} disabled={busy || !packageRecord || !tracking.active_access_id} onClick={() => void revokeLink()}><X className="size-4" />Revoke recipient access</button>
                   </section>
 
                   <section className="rounded-2xl border border-[#E7E1F7] bg-white p-5">
                     <h3 className="flex items-center gap-2 text-sm font-semibold"><Mail className="size-4 text-[#6A5896]" />Open in the artist’s email app</h3>
-                    <p className="mt-2 text-sm leading-6 text-[#746E80]">KLEIO can prefill the recipient, subject, approved message, and secure review link. Browser email handoff cannot reliably attach files, so the artist must add the downloaded files and press Send.</p>
+                    <p className="mt-2 text-sm leading-6 text-[#746E80]">KLEIO prefills the recipient, subject, approved message, and the tracked Review Room access automatically. The artist does not need to copy or manage the secure URL. Browser email handoff cannot reliably attach files, so the artist must add the downloaded files and press Send.</p>
                     <div className="mt-4 rounded-xl border border-[#E7E1F7] bg-[#FAF9FD] p-3">
                       <p className="text-xs font-semibold uppercase tracking-wide text-[#8A8296]">Manual attachment checklist</p>
                       <ul className="mt-2 space-y-2 text-sm">{attachmentLabels.length ? attachmentLabels.map((label) => <li key={label} className="flex gap-2"><FileCheck2 className="mt-0.5 size-4 shrink-0 text-[#6A5896]" />{label}</li>) : <li className="text-[#746E80]">No attachment list has been generated yet.</li>}</ul>
                     </div>
-                    <button type="button" className={`${primary} mt-4 w-full`} disabled={busy || !approved || !recipient} onClick={() => void openEmailClient()}><ExternalLink className="size-4" />Prepare in my email app</button>
+                    <button type="button" className={`${primary} mt-4 w-full`} disabled={busy || !approved || !recipient} onClick={() => void openEmailClient()}><ExternalLink className="size-4" />Prepare tracked email handoff</button>
                     <p className="mt-2 text-xs leading-5 text-[#8A8296]">KLEIO records “Email client opened.” It does not call this sent, delivered, opened, or read.</p>
                   </section>
 
