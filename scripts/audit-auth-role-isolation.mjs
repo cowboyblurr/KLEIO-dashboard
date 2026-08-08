@@ -28,6 +28,10 @@ requireText("app/signup/artist/page.tsx", "AccountRoleSignupBoundary role=\"arti
 requireText("components/kleio/signup/account-role-signup-boundary.tsx", "Owner accounts remain separate during beta", "role conflicts must be explained instead of silently redirected")
 requireText("components/kleio/signup/account-role-signup-boundary.tsx", "signOutAndContinue", "role conflicts must offer a safe account-switch path")
 requireText("components/kleio/auth/auth-callback-client.tsx", "account.profile.role !== expectedRole", "auth callbacks must reject a requested-role mismatch")
+requireText("lib/kleio-auth.ts", "over_email_send_rate_limit", "Supabase email-send rate limits must be recognized explicitly")
+requireText("lib/kleio-auth.ts", "this attempt may not have created it", "signup rate-limit recovery must not imply that an account definitely exists")
+requireText("lib/kleio-auth.ts", "your form details remain available", "signup rate-limit recovery must tell the artist that their entered details remain available")
+requireText("lib/kleio-auth.ts", "este intento puede no haberla creado", "Spanish signup rate-limit recovery must preserve the same account-creation truth")
 
 requireText("lib/kleio-client-session.ts", "clearKleioSensitiveBrowserState", "browser account state must have a central cleanup function")
 requireText("lib/kleio-client-session.ts", "PRESERVED_LOCAL_KEYS", "logout cleanup must intentionally preserve only approved preferences")
