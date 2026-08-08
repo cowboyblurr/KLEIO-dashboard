@@ -18,6 +18,7 @@ const recipient = read("lib/kleio-recipient-application.ts")
 const recipientFunction = read("supabase/functions/recipient-application-review/index.ts")
 const migration = read("supabase/migrations/20260808160000_lock_submission_delivery_to_finalized_version.sql")
 const attemptBridge = read("supabase/migrations/20260808161500_sync_submission_attempts_to_delivery.sql")
+const grantHardening = read("supabase/migrations/20260808162500_harden_application_delivery_grants.sql")
 const createAccessBlock = recipientFunction.split('if (action === "create_access")')[1]?.split('if (action === "revoke_access")')[0] ?? ""
 
 requirePattern(composer, /prepareTrackedEmailClientHandoff/, "The canonical Application Composer email action must use the tracked delivery helper.")
@@ -60,4 +61,9 @@ requirePattern(attemptBridge, /artist_reported[\s\S]*artist_reported_sent/, "The
 requirePattern(attemptBridge, /confirmed[\s\S]*provider_accepted/, "Provider-confirmed legacy evidence must retain its stronger evidence class.")
 requirePattern(attemptBridge, /public\.application_deliveries/, "Legacy attempts must converge on application_deliveries rather than create a parallel model.")
 
-console.log("Submission delivery lock audit passed: immutable version binding, race-safe recipient access, tracked Review Room handoff, conservative handoff evidence, truthful manual-email fallback, recipient-driven lifecycle progression, legacy-attempt convergence, shared delivery state, and Gmail-ready provider evidence semantics are structurally present.")
+requirePattern(grantHardening, /revoke all privileges on table public\.application_deliveries from anon, authenticated/, "Delivery rows must not inherit Supabase default write/TRUNCATE/trigger privileges.")
+requirePattern(grantHardening, /grant select on table public\.application_deliveries to authenticated/, "Only authenticated owner-scoped reads should be granted directly on deliveries.")
+requirePattern(grantHardening, /revoke all on function public\.record_my_application_delivery[\s\S]*from public, anon/, "The delivery RPC must not be callable by anonymous or PUBLIC roles.")
+requirePattern(grantHardening, /grant execute on function public\.record_my_application_delivery[\s\S]*to authenticated/, "Authenticated artists need the controlled delivery RPC.")
+
+console.log("Submission delivery lock audit passed: immutable version binding, race-safe recipient access, tracked Review Room handoff, conservative handoff evidence, least-privilege table/RPC grants, truthful manual-email fallback, recipient-driven lifecycle progression, legacy-attempt convergence, shared delivery state, and Gmail-ready provider evidence semantics are structurally present.")
