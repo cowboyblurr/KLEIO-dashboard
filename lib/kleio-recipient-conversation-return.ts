@@ -1,3 +1,4 @@
+import { normalizeKleioEdgeFunctionError } from "@/lib/kleio-edge-function-error"
 import { getSupabaseBrowserClient } from "@/lib/kleio-supabase"
 
 export type RecipientReturnMessage = {
@@ -30,7 +31,7 @@ export type RecipientConversationReturn = {
 async function invoke<T>(body: Record<string, unknown>): Promise<T> {
   const supabase = getSupabaseBrowserClient()
   const { data, error } = await supabase.functions.invoke("application-conversation", { body })
-  if (error) throw error
+  if (error) throw await normalizeKleioEdgeFunctionError(error, "The application conversation request could not be completed.")
   if (data?.error) {
     const requestError = new Error(data.message || data.error)
     requestError.name = data.error
