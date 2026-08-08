@@ -2,6 +2,7 @@ import fs from "node:fs"
 
 const workflow = fs.readFileSync(".github/workflows/recipient-live-smoke.yml", "utf8")
 const browser = fs.readFileSync("scripts/live-recipient-browser-smoke.mjs", "utf8")
+const rootLayout = fs.readFileSync("app/layout.tsx", "utf8")
 const errorNormalizer = fs.readFileSync("lib/kleio-edge-function-error.ts", "utf8")
 const reviewClient = fs.readFileSync("lib/kleio-recipient-application.ts", "utf8")
 const conversationClient = fs.readFileSync("lib/kleio-recipient-conversation-return.ts", "utf8")
@@ -23,6 +24,7 @@ requirePattern(workflow, /test "\$status" = "401"/, "Conversation Edge Function 
 requirePattern(workflow, /live-recipient-browser-smoke\.mjs/, "Live smoke must execute a browser interaction test rather than HTML-only assertions.")
 requirePattern(workflow, /actions\/upload-artifact@v4/, "Live browser smoke must preserve screenshot evidence.")
 forbidPattern(workflow, /vercel/i, "Recipient production validation must not depend on Vercel.")
+forbidPattern(rootLayout, /@vercel\/analytics|<Analytics\b/, "The GitHub Pages root layout must not inject Vercel Analytics or request /_vercel/ runtime assets.")
 
 requirePattern(browser, /This application link is invalid or no longer available\./, "Browser smoke must prove invalid secure tokens fail closed after hydration.")
 requirePattern(browser, /This conversation link is incomplete\./, "Browser smoke must prove incomplete conversation links fail closed after hydration.")
@@ -57,4 +59,4 @@ if (failures.length) {
   process.exit(1)
 }
 
-console.log("KLEIO recipient live-smoke contract audit passed: post-Pages route/asset/function checks, structured non-2xx error recovery, request-correlated recipient-404 handling, hydrated browser failure states, compose-first messaging interaction, workspace conversion, mobile overflow protection, runtime diagnostics, and screenshot evidence are permanently covered.")
+console.log("KLEIO recipient live-smoke contract audit passed: GitHub Pages is free of Vercel runtime injection; post-deploy route/asset/function checks, structured non-2xx error recovery, request-correlated recipient-404 handling, hydrated browser failure states, compose-first messaging interaction, workspace conversion, mobile overflow protection, runtime diagnostics, and screenshot evidence are permanently covered.")
