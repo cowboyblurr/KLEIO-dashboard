@@ -1,0 +1,26 @@
+name: V4 Harness Validity
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "scripts/v4-harness-validity.mjs"
+      - "components/kleio/recipient-application-review.tsx"
+      - "components/kleio/media-intelligence-sheet.tsx"
+      - "scripts/audit-product-analytics-privacy.mjs"
+      - "supabase/functions/analyze-artist-media-collection/index.ts"
+      - ".github/workflows/v4-harness-validity.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  mutation-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Run known-bad in-memory mutations
+        run: node scripts/v4-harness-validity.mjs
