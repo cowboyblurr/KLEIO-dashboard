@@ -443,7 +443,7 @@ export function ApplicationComposerWorkspace() {
           packageId: packageRecord.id,
           eventType: "draft_generated",
           summary: `KLEIO prepared reviewable draft options for “${question.label}”.`,
-          metadata: { requirement_id: question.id, ai_draft_id: result.draft.id },
+          eventMetadata: { requirement_id: question.id, ai_draft_id: result.draft.id },
         }).catch(() => undefined)
       }
     } catch (reason) {
@@ -501,7 +501,6 @@ export function ApplicationComposerWorkspace() {
       submissionVersionId: latestVersion.id,
       eventType: "email_client_opened",
       summary: "KLEIO opened the artist’s email client with prepared application copy. This is not proof the email was sent.",
-      metadata: { recipient: emailPreview.to },
     }).catch(() => undefined)
     window.location.assign(href)
   }
@@ -516,7 +515,7 @@ export function ApplicationComposerWorkspace() {
       submissionVersionId: latestVersion.id,
       eventType: "package_downloaded",
       summary: "Artist downloaded the preserved application dossier.",
-      metadata: { format: "html", version_number: latestVersion.versionNumber },
+      eventMetadata: { format: "html", version_number: latestVersion.versionNumber },
     }).catch(() => undefined)
   }
 
@@ -528,7 +527,7 @@ export function ApplicationComposerWorkspace() {
       submissionVersionId: latestVersion.id,
       eventType: "package_downloaded",
       summary: "Artist downloaded the prepared email draft. No email was sent by KLEIO.",
-      metadata: { format: "eml", version_number: latestVersion.versionNumber },
+      eventMetadata: { format: "eml", version_number: latestVersion.versionNumber },
     }).catch(() => undefined)
   }
 
@@ -544,7 +543,6 @@ export function ApplicationComposerWorkspace() {
         submissionVersionId: latestVersion.id,
         eventType: "artist_marked_sent",
         summary: "Artist marked this application as sent. KLEIO has not independently confirmed institutional receipt.",
-        metadata: { provider_confirmation: providerConfirmation.trim() },
       })
       setMessage("Marked as sent by you. KLEIO is not claiming the institution received it unless separate evidence arrives.")
     } catch (reason) {

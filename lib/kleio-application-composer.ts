@@ -455,7 +455,7 @@ export async function recordArtistApplicationTimelineEvent(input: {
   submissionVersionId?: string | null
   eventType: string
   summary?: string
-  metadata?: Record<string, unknown>
+  eventMetadata?: Record<string, unknown>
 }) {
   const account = await loadKleioAccount()
   if (!account) throw new Error("Please sign in to update this application.")
@@ -465,7 +465,7 @@ export async function recordArtistApplicationTimelineEvent(input: {
     target_submission_version_id: input.submissionVersionId || null,
     target_event_type: input.eventType,
     target_summary: input.summary || "",
-    target_metadata: input.metadata ?? {},
+    target_metadata: input.eventMetadata ?? {},
   })
   if (error) throw error
   return String(data)

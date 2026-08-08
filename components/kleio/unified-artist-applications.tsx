@@ -197,7 +197,7 @@ export function UnifiedArtistApplications() {
         packageId: packageRecord.id,
         eventType,
         summary: `Artist updated the application outcome to ${label}.`,
-        metadata: { source: "applications_dashboard" },
+        eventMetadata: { source: "applications_dashboard" },
       })
       setOutcomes((current) => [{ package_id: packageRecord.id, event_type: eventType, created_at: new Date().toISOString() }, ...current])
       setMessage(`${label} recorded as an artist update. KLEIO is not treating it as institution-confirmed evidence.`)
