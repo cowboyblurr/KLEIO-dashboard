@@ -1,0 +1,49 @@
+name: Gmail Send Beta
+
+on:
+  pull_request:
+    paths:
+      - "components/kleio/application-composer-workspace.tsx"
+      - "components/kleio/gmail-delivery-control.tsx"
+      - "lib/kleio-gmail-delivery.ts"
+      - "lib/kleio-application-delivery.ts"
+      - "supabase/functions/gmail-delivery/**"
+      - "supabase/migrations/20260808170000_gmail_send_only_beta.sql"
+      - "scripts/audit-gmail-send-beta.mjs"
+      - ".github/workflows/gmail-send-beta.yml"
+  push:
+    branches: [main]
+    paths:
+      - "components/kleio/application-composer-workspace.tsx"
+      - "components/kleio/gmail-delivery-control.tsx"
+      - "lib/kleio-gmail-delivery.ts"
+      - "lib/kleio-application-delivery.ts"
+      - "supabase/functions/gmail-delivery/**"
+      - "supabase/migrations/20260808170000_gmail_send_only_beta.sql"
+      - "scripts/audit-gmail-send-beta.mjs"
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Audit Gmail send-only contract
+        run: node scripts/audit-gmail-send-beta.mjs
+      - name: Application composer lock
+        run: pnpm audit:application-composer
+      - name: Artist convenience simulations
+        run: pnpm audit:artist-beta-convenience
+      - name: Recipient workflow lock
+        run: pnpm audit:artist-recipient-loop
+      - name: TypeScript
+        run: pnpm typecheck
+      - name: Static production build
+        run: pnpm build

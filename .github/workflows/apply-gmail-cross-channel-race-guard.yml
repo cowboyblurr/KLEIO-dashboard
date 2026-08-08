@@ -1,0 +1,178 @@
+name: Apply Gmail Cross-Channel Race Guard
+
+on:
+  push:
+    branches:
+      - feature/gmail-send-beta-20260808
+    paths:
+      - ".github/workflows/apply-gmail-cross-channel-race-guard.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/gmail-send-beta-20260808
+          fetch-depth: 0
+      - name: Enforce one active outbound email channel per immutable version
+        shell: python
+        run: |
+          from pathlib import Path
+
+          migration = Path("supabase/migrations/20260808170000_gmail_send_only_beta.sql")
+          s = migration.read_text()
+          marker = '''create or replace function public.store_gmail_connection_secret_service(
+'''
+          functions = '''create or replace function private.prevent_conflicting_email_delivery_channels()
+returns trigger
+language plpgsql
+security definer
+set search_path to 'public'
+as $$
+begin
+  if new.channel not in ('gmail','email_client')
+     or new.state in ('prepared','failed','cancelled') then
+    return new;
+  end if;
+
+  if exists (
+    select 1
+    from public.application_deliveries other
+    where other.submission_version_id=new.submission_version_id
+      and other.channel in ('gmail','email_client')
+      and other.channel<>new.channel
+      and other.id<>coalesce(new.id,'00000000-0000-0000-0000-000000000000'::uuid)
+      and other.state not in ('prepared','failed','cancelled')
+  ) then
+    raise exception 'conflicting_email_delivery_active';
+  end if;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists prevent_conflicting_email_delivery_channels on public.application_deliveries;
+create trigger prevent_conflicting_email_delivery_channels
+before insert or update of submission_version_id,channel,state
+on public.application_deliveries
+for each row execute function private.prevent_conflicting_email_delivery_channels();
+
+create or replace function private.cancel_unsent_email_client_delivery_on_access_revoke()
+returns trigger
+language plpgsql
+security definer
+set search_path to 'public'
+as $$
+begin
+  if old.revoked_at is null and new.revoked_at is not null then
+    update public.application_deliveries
+    set state='cancelled',updated_at=now()
+    where recipient_access_id=new.id
+      and channel='email_client'
+      and state='handoff_prepared';
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists cancel_unsent_email_client_delivery_on_access_revoke on public.application_recipient_access;
+create trigger cancel_unsent_email_client_delivery_on_access_revoke
+after update of revoked_at on public.application_recipient_access
+for each row execute function private.cancel_unsent_email_client_delivery_on_access_revoke();
+
+'''
+          if marker not in s:
+              raise SystemExit("service function marker missing")
+          s = s.replace(marker, functions + marker, 1)
+          migration.write_text(s)
+
+          edge = Path("supabase/functions/gmail-delivery/index.ts")
+          e = edge.read_text()
+          old = '''      if (claimError) throw claimError
+      const claim = object(claimData) as SendClaim
+'''
+          new = '''      if (claimError) {
+        if (claimError.message.includes("conflicting_email_delivery_active")) {
+          return json({ error: "alternate_delivery_active", message: "Another email handoff is already active for this preserved version. Revoke that unsent handoff explicitly before switching delivery channels." }, 409)
+        }
+        throw claimError
+      }
+      const claim = object(claimData) as SendClaim
+'''
+          if old not in e:
+              raise SystemExit("claim error anchor missing")
+          e = e.replace(old, new, 1)
+          edge.write_text(e)
+
+          fallback = Path("lib/kleio-application-delivery.ts")
+          f = fallback.read_text()
+          f = f.replace(
+              '  createRecipientReviewAccess,\n  recipientReviewUrl,',
+              '  createRecipientReviewAccess,\n  recipientReviewUrl,\n  revokeRecipientReviewAccess,',
+              1,
+          )
+          old = '''  const reviewUrl = recipientReviewUrl(access.token)
+  const deliveryId = await recordApplicationDelivery({
+    submissionVersionId: input.submissionVersionId,
+    channel: "email_client",
+    destination: input.recipient.trim(),
+    recipientAccessId: access.access_id,
+    state: "handoff_prepared",
+    evidenceLevel: "system_observed",
+    provider: "default_email_client",
+    providerReference: access.access_id,
+  })
+'''
+          new = '''  const reviewUrl = recipientReviewUrl(access.token)
+  let deliveryId: string
+  try {
+    deliveryId = await recordApplicationDelivery({
+      submissionVersionId: input.submissionVersionId,
+      channel: "email_client",
+      destination: input.recipient.trim(),
+      recipientAccessId: access.access_id,
+      state: "handoff_prepared",
+      evidenceLevel: "system_observed",
+      provider: "default_email_client",
+      providerReference: access.access_id,
+    })
+  } catch (reason) {
+    await revokeRecipientReviewAccess(input.packageId).catch(() => undefined)
+    if (reason instanceof Error && reason.message.includes("conflicting_email_delivery_active")) {
+      throw new Error("Connected Gmail became active for this preserved version before the manual handoff completed. KLEIO cancelled the unused Review Room rather than risk duplicate delivery.")
+    }
+    throw reason
+  }
+'''
+          if old not in f:
+              raise SystemExit("manual delivery record anchor missing")
+          f = f.replace(old, new, 1)
+          fallback.write_text(f)
+
+          audit = Path("scripts/audit-gmail-send-beta.mjs")
+          a = audit.read_text()
+          anchor = '''must(fallback, /assertManualFallbackSafe/, "Manual fallback must check Gmail state before creating another recipient handoff.")
+'''
+          add = anchor + '''must(migration, /prevent_conflicting_email_delivery_channels[\\s\\S]*gmail[\\s\\S]*email_client[\\s\\S]*conflicting_email_delivery_active/, "The database must reject simultaneous active Gmail and manual email channels for one immutable version.")
+must(migration, /cancel_unsent_email_client_delivery_on_access_revoke[\\s\\S]*handoff_prepared[\\s\\S]*cancelled/, "Explicitly revoking an unsent manual Review Room must cancel that manual delivery so another channel can be chosen intentionally.")
+must(edge, /alternate_delivery_active[\\s\\S]*Revoke that unsent handoff explicitly/, "Gmail must translate a cross-channel conflict into an intentional revoke/switch instruction.")
+must(fallback, /revokeRecipientReviewAccess[\\s\\S]*conflicting_email_delivery_active/, "A manual handoff that loses a cross-channel race must revoke the Review Room it just created instead of leaving an orphan access link.")
+'''
+          if anchor not in a:
+              raise SystemExit("fallback audit anchor missing")
+          a = a.replace(anchor, add, 1)
+          audit.write_text(a)
+      - name: Remove temporary workflow and commit race guard
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm .github/workflows/apply-gmail-cross-channel-race-guard.yml
+          git config user.name "KLEIO QA Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add supabase/migrations/20260808170000_gmail_send_only_beta.sql supabase/functions/gmail-delivery/index.ts lib/kleio-application-delivery.ts scripts/audit-gmail-send-beta.mjs .github/workflows/apply-gmail-cross-channel-race-guard.yml
+          git commit -m "Prevent simultaneous Gmail and manual delivery races"
+          git push origin HEAD:feature/gmail-send-beta-20260808

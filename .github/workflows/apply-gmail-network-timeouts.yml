@@ -1,0 +1,65 @@
+name: Apply Gmail Network Timeouts
+
+on:
+  push:
+    branches:
+      - feature/gmail-send-beta-20260808
+    paths:
+      - ".github/workflows/apply-gmail-network-timeouts.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/gmail-send-beta-20260808
+          fetch-depth: 0
+      - name: Bound Google and recipient network waits
+        shell: python
+        run: |
+          from pathlib import Path
+
+          edge = Path("supabase/functions/gmail-delivery/index.ts")
+          e = edge.read_text()
+
+          replacements = [
+            ('      grant_type: "authorization_code",\n    }),\n  })', '      grant_type: "authorization_code",\n    }),\n    signal: AbortSignal.timeout(20_000),\n  })'),
+            ('  const response = await fetch("https://openidconnect.googleapis.com/v1/userinfo", {\n    headers: { Authorization: `Bearer ${accessToken}` },\n  })', '  const response = await fetch("https://openidconnect.googleapis.com/v1/userinfo", {\n    headers: { Authorization: `Bearer ${accessToken}` },\n    signal: AbortSignal.timeout(15_000),\n  })'),
+            ('      grant_type: "refresh_token",\n    }),\n  })', '      grant_type: "refresh_token",\n    }),\n    signal: AbortSignal.timeout(15_000),\n  })'),
+            ('    body: JSON.stringify({ action: "create_access", package_id: packageId, submission_version_id: submissionVersionId }),\n  })', '    body: JSON.stringify({ action: "create_access", package_id: packageId, submission_version_id: submissionVersionId }),\n    signal: AbortSignal.timeout(20_000),\n  })'),
+            ('    body: JSON.stringify({ action: "revoke_access", package_id: packageId }),\n  }).catch(() => undefined)', '    body: JSON.stringify({ action: "revoke_access", package_id: packageId }),\n    signal: AbortSignal.timeout(20_000),\n  }).catch(() => undefined)'),
+            ('          body: new URLSearchParams({ token: refreshToken }),\n        }).catch(() => undefined)', '          body: new URLSearchParams({ token: refreshToken }),\n          signal: AbortSignal.timeout(10_000),\n        }).catch(() => undefined)'),
+            ('            body: JSON.stringify({ raw: rawMessage.raw }),\n          })', '            body: JSON.stringify({ raw: rawMessage.raw }),\n            signal: AbortSignal.timeout(45_000),\n          })'),
+          ]
+          for old, new in replacements:
+              if old not in e:
+                  raise SystemExit(f"network timeout anchor missing: {old[:80]}")
+              e = e.replace(old, new, 1)
+          edge.write_text(e)
+
+          audit = Path("scripts/audit-gmail-send-beta.mjs")
+          a = audit.read_text()
+          anchor = '''must(edge, /users\/me\/messages\/send/, "Gmail send must use the official messages.send endpoint.")
+'''
+          add = anchor + '''must(edge, /users\\/me\\/messages\\/send[\\s\\S]*AbortSignal\.timeout\(45_000\)/, "The Gmail provider send request must have a bounded network lifetime before entering provider-unknown recovery.")
+must(edge, /oauth2\.googleapis\.com\\/token[\\s\\S]*AbortSignal\.timeout\(20_000\)/, "OAuth authorization-code exchange must be network-bounded.")
+must(edge, /refresh_token[\\s\\S]*AbortSignal\.timeout\(15_000\)/, "OAuth access-token refresh must be network-bounded before the provider send starts.")
+'''
+          if anchor not in a:
+              raise SystemExit("provider endpoint audit anchor missing")
+          a = a.replace(anchor, add, 1)
+          audit.write_text(a)
+      - name: Remove temporary workflow and commit timeout hardening
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm .github/workflows/apply-gmail-network-timeouts.yml
+          git config user.name "KLEIO QA Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add supabase/functions/gmail-delivery/index.ts scripts/audit-gmail-send-beta.mjs .github/workflows/apply-gmail-network-timeouts.yml
+          git commit -m "Bound Gmail provider and OAuth network waits"
+          git push origin HEAD:feature/gmail-send-beta-20260808

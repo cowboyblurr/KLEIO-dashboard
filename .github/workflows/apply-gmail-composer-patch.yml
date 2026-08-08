@@ -1,0 +1,48 @@
+name: Apply Gmail Composer Patch
+
+on:
+  push:
+    branches:
+      - feature/gmail-send-beta-20260808
+    paths:
+      - ".github/workflows/apply-gmail-composer-patch.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/gmail-send-beta-20260808
+          fetch-depth: 0
+      - name: Patch canonical composer
+        shell: python
+        run: |
+          from pathlib import Path
+          p = Path("components/kleio/application-composer-workspace.tsx")
+          s = p.read_text()
+          old_import = 'import { WorkspacePageHeader } from "@/components/kleio/workspace-page-header"\n'
+          new_import = old_import + 'import { GmailDeliveryControl } from "@/components/kleio/gmail-delivery-control"\n'
+          if old_import not in s:
+              raise SystemExit("WorkspacePageHeader import anchor missing")
+          s = s.replace(old_import, new_import, 1)
+
+          old = '''<div className="mt-4 flex flex-wrap gap-2"><button type="button" className={secondary} onClick={() => void downloadDossier()}><Download className="size-4" />Download application dossier</button>{method === "email" && <><button type="button" className={secondary} onClick={() => void downloadEmailDraft()}><Download className="size-4" />Download email draft</button><button type="button" className={primary} disabled={!emailPreview.to} onClick={() => void openEmailClient()}><Mail className="size-4" />Open email to send</button></>}{["external_portal", "download_package", "unknown"].includes(method) && destinationUrl && <a className={primary} href={destinationUrl} target="_blank" rel="noreferrer">Open official destination<ExternalLink className="size-4" /></a>}</div></div>}'''
+          new = '''<div className="mt-4 flex flex-wrap gap-2"><button type="button" className={secondary} onClick={() => void downloadDossier()}><Download className="size-4" />Download application dossier</button>{method === "email" && <button type="button" className={secondary} onClick={() => void downloadEmailDraft()}><Download className="size-4" />Download email draft</button>}{["external_portal", "download_package", "unknown"].includes(method) && destinationUrl && <a className={primary} href={destinationUrl} target="_blank" rel="noreferrer">Open official destination<ExternalLink className="size-4" /></a>}</div>{method === "email" && <div className="mt-4"><GmailDeliveryControl submissionVersionId={latestVersion.id} opportunityTitle={item.title} recipient={emailPreview.to} disabled={busy || !emailPreview.to} onFallback={() => void openEmailClient()} /></div>}</div>}'''
+          if old not in s:
+              raise SystemExit("Preserved-version delivery anchor missing")
+          s = s.replace(old, new, 1)
+          p.write_text(s)
+      - name: Remove temporary workflow and commit patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm .github/workflows/apply-gmail-composer-patch.yml
+          git config user.name "KLEIO QA Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add components/kleio/application-composer-workspace.tsx .github/workflows/apply-gmail-composer-patch.yml
+          git commit -m "Wire optional Gmail delivery into finalized composer"
+          git push origin HEAD:feature/gmail-send-beta-20260808

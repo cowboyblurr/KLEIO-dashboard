@@ -1,0 +1,259 @@
+name: Apply Gmail Unknown Recovery Patch
+
+on:
+  push:
+    branches:
+      - feature/gmail-send-beta-20260808
+    paths:
+      - ".github/workflows/apply-gmail-unknown-recovery-patch.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/gmail-send-beta-20260808
+          fetch-depth: 0
+      - name: Add evidence-labelled provider-unknown reconciliation
+        shell: python
+        run: |
+          from pathlib import Path
+
+          migration = Path("supabase/migrations/20260808170000_gmail_send_only_beta.sql")
+          s = migration.read_text()
+          marker = '''-- These helpers carry OAuth secrets or provider-send authority. They are never
+'''
+          function = '''create or replace function public.resolve_gmail_unknown_service(
+  target_artist_user_id uuid,
+  target_submission_version_id uuid,
+  target_resolution text
+)
+returns jsonb
+language plpgsql
+security definer
+set search_path to 'public'
+as $$
+declare
+  delivery_row public.application_deliveries%rowtype;
+  next_state text;
+  access_id uuid;
+begin
+  if target_resolution not in ('found_sent','not_sent') then
+    raise exception 'invalid_gmail_unknown_resolution';
+  end if;
+
+  select * into delivery_row
+  from public.application_deliveries
+  where submission_version_id=target_submission_version_id
+    and artist_user_id=target_artist_user_id
+    and channel='gmail'
+  for update;
+
+  if delivery_row.id is null then
+    raise exception 'gmail_delivery_not_found';
+  end if;
+  if delivery_row.state <> 'provider_unknown' then
+    raise exception 'gmail_delivery_not_unknown';
+  end if;
+
+  access_id := delivery_row.recipient_access_id;
+  next_state := case target_resolution when 'found_sent' then 'artist_reported_sent' else 'failed' end;
+
+  update public.application_deliveries
+  set state=next_state,
+      evidence_level='self_reported',
+      artist_reported_sent_at=case when target_resolution='found_sent' then coalesce(artist_reported_sent_at,now()) else artist_reported_sent_at end,
+      last_error_code=case when target_resolution='not_sent' then 'artist_confirmed_not_in_gmail_sent' else last_error_code end,
+      last_error_message=case when target_resolution='not_sent' then 'Artist checked Gmail Sent and reported that the application message was not present.' else last_error_message end,
+      updated_at=now()
+  where id=delivery_row.id
+  returning * into delivery_row;
+
+  if target_resolution='found_sent' then
+    update public.application_packages
+    set state='artist_reported_submitted',
+        submitted_at=coalesce(submitted_at,now()),
+        updated_at=now()
+    where id=delivery_row.package_id and artist_user_id=target_artist_user_id;
+
+    insert into public.application_timeline_events(
+      package_id,submission_version_id,artist_user_id,event_type,evidence_level,
+      actor_kind,summary,metadata,idempotency_key
+    ) values (
+      delivery_row.package_id,delivery_row.submission_version_id,target_artist_user_id,
+      'gmail_artist_confirmed_sent','self_reported','artist',
+      'Artist checked Gmail Sent and reported that this preserved application message is present. KLEIO does not treat this as provider-confirmed institution receipt or reading.',
+      jsonb_build_object('delivery_id',delivery_row.id,'provider','google_gmail'),
+      'gmail-artist-confirmed-sent:'||delivery_row.id::text
+    ) on conflict (idempotency_key) do nothing;
+  else
+    insert into public.application_timeline_events(
+      package_id,submission_version_id,artist_user_id,event_type,evidence_level,
+      actor_kind,summary,metadata,idempotency_key
+    ) values (
+      delivery_row.package_id,delivery_row.submission_version_id,target_artist_user_id,
+      'gmail_artist_confirmed_not_sent','self_reported','artist',
+      'Artist checked Gmail Sent and reported that the application message is not present. KLEIO reopened delivery options without claiming a send occurred.',
+      jsonb_build_object('delivery_id',delivery_row.id,'provider','google_gmail'),
+      'gmail-artist-confirmed-not-sent:'||delivery_row.id::text
+    ) on conflict (idempotency_key) do nothing;
+  end if;
+
+  return jsonb_build_object(
+    'delivery_id',delivery_row.id,
+    'state',delivery_row.state,
+    'evidence_level',delivery_row.evidence_level,
+    'recipient_access_id',access_id,
+    'package_id',delivery_row.package_id
+  );
+end;
+$$;
+
+'''
+          if marker not in s:
+              raise SystemExit("service helper marker missing")
+          s = s.replace(marker, function + marker, 1)
+          revoke = '''revoke all on function public.mark_gmail_delivery_result_service(uuid,uuid,uuid,text,text,text,text) from public,anon,authenticated;
+'''
+          if revoke not in s:
+              raise SystemExit("revoke anchor missing")
+          s = s.replace(revoke, revoke + 'revoke all on function public.resolve_gmail_unknown_service(uuid,uuid,text) from public,anon,authenticated;\n', 1)
+          grant = '''grant execute on function public.mark_gmail_delivery_result_service(uuid,uuid,uuid,text,text,text,text) to service_role;
+'''
+          if grant not in s:
+              raise SystemExit("grant anchor missing")
+          s = s.replace(grant, grant + 'grant execute on function public.resolve_gmail_unknown_service(uuid,uuid,text) to service_role;\n', 1)
+          migration.write_text(s)
+
+          edge = Path("supabase/functions/gmail-delivery/index.ts")
+          e = edge.read_text()
+          marker = '''    if (action === "send") {
+'''
+          block = '''    if (action === "resolve_unknown") {
+      const submissionVersionId = text(body.submission_version_id)
+      const resolution = text(body.resolution)
+      if (!validUuid(submissionVersionId)) return json({ error: "invalid_submission_version" }, 400)
+      if (!['found_sent','not_sent'].includes(resolution)) return json({ error: "invalid_resolution" }, 400)
+
+      const { data, error } = await admin.rpc("resolve_gmail_unknown_service", {
+        target_artist_user_id: user.id,
+        target_submission_version_id: submissionVersionId,
+        target_resolution: resolution,
+      })
+      if (error) throw error
+      const result = object(data)
+
+      if (resolution === 'not_sent') {
+        const packageId = text(result.package_id)
+        if (packageId) await revokeRecipientAccessThroughBoundary(request, packageId)
+        return json({
+          state: 'failed',
+          evidence_level: 'self_reported',
+          message: 'Marked not sent based on your Gmail Sent check. KLEIO reopened delivery options and revoked the unused Review Room handoff.',
+        })
+      }
+
+      return json({
+        state: 'artist_reported_sent',
+        evidence_level: 'self_reported',
+        message: 'Recorded as sent based on your Gmail Sent check. The existing Review Room and application tracking remain active.',
+      })
+    }
+
+'''
+          if marker not in e:
+              raise SystemExit("send action marker missing")
+          e = e.replace(marker, block + marker, 1)
+          edge.write_text(e)
+
+          client = Path("lib/kleio-gmail-delivery.ts")
+          c = client.read_text()
+          append = '''
+export function resolveUnknownGmailDelivery(submissionVersionId: string, resolution: "found_sent" | "not_sent") {
+  return invoke<{ state: "artist_reported_sent" | "failed"; evidence_level: "self_reported"; message: string }>({
+    action: "resolve_unknown",
+    submission_version_id: submissionVersionId,
+    resolution,
+  })
+}
+'''
+          if 'resolveUnknownGmailDelivery' not in c:
+              c = c.rstrip() + "\n" + append
+          client.write_text(c)
+
+          fallback = Path("lib/kleio-application-delivery.ts")
+          f = fallback.read_text()
+          f = f.replace(
+              '["provider_accepted", "review_room_opened", "receipt_confirmed", "conversation_started"].includes(state)',
+              '["provider_accepted", "artist_reported_sent", "review_room_opened", "receipt_confirmed", "conversation_started"].includes(state)',
+              1,
+          )
+          fallback.write_text(f)
+
+          control = Path("components/kleio/gmail-delivery-control.tsx")
+          u = control.read_text()
+          u = u.replace(
+              '  sendFinalizedApplicationWithGmail,\n  startGmailConnection,',
+              '  sendFinalizedApplicationWithGmail,\n  startGmailConnection,\n  resolveUnknownGmailDelivery,',
+              1,
+          )
+          u = u.replace(
+              'const downstreamStates = new Set(["provider_accepted", "review_room_opened", "receipt_confirmed", "conversation_started"])',
+              'const downstreamStates = new Set(["provider_accepted", "artist_reported_sent", "review_room_opened", "receipt_confirmed", "conversation_started"])',
+              1,
+          )
+          marker = '''  async function disconnect() {
+'''
+          function = '''  async function resolveUnknown(resolution: "found_sent" | "not_sent") {
+    setBusy(true); setError(""); setMessage("")
+    try {
+      const result = await resolveUnknownGmailDelivery(submissionVersionId, resolution)
+      setMessage(result.message)
+      await refresh()
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "KLEIO could not reconcile the Gmail send status.")
+    } finally {
+      setBusy(false)
+    }
+  }
+
+'''
+          if marker not in u:
+              raise SystemExit("disconnect marker missing")
+          u = u.replace(marker, function + marker, 1)
+          old = '''      {uncertain && <div className="mt-3 flex items-start gap-2 rounded-xl border border-amber-300 bg-amber-50 p-3 text-xs leading-5 text-amber-950"><AlertTriangle className="mt-0.5 size-4 shrink-0" /><span>KLEIO lost the provider response after a Gmail send began. <strong>Check Gmail Sent before doing anything else.</strong> KLEIO has blocked another send or fallback from this screen to avoid a duplicate application.</span></div>}
+'''
+          new = '''      {uncertain && <div className="mt-3 rounded-xl border border-amber-300 bg-amber-50 p-3 text-xs leading-5 text-amber-950"><div className="flex items-start gap-2"><AlertTriangle className="mt-0.5 size-4 shrink-0" /><span>KLEIO lost the provider response after a Gmail send began. <strong>Check Gmail Sent before doing anything else.</strong> KLEIO has blocked another send or fallback from this screen to avoid a duplicate application.</span></div><div className="mt-3 flex flex-wrap gap-2"><button type="button" className={secondary} disabled={busy} onClick={() => void resolveUnknown("found_sent")}>I found it in Gmail Sent</button><button type="button" className={secondary} disabled={busy} onClick={() => void resolveUnknown("not_sent")}>It isn’t in Gmail Sent</button></div></div>}
+'''
+          if old not in u:
+              raise SystemExit("uncertain UI block missing")
+          u = u.replace(old, new, 1)
+          control.write_text(u)
+
+          audit = Path("scripts/audit-gmail-send-beta.mjs")
+          a = audit.read_text()
+          anchor = '''must(control, /Check Gmail Sent before doing anything else/, "Ambiguous provider state must visibly block accidental duplicate delivery.")
+'''
+          add = anchor + '''must(migration, /resolve_gmail_unknown_service[\\s\\S]*found_sent[\\s\\S]*not_sent/, "Provider-unknown Gmail delivery must have an explicit evidence-labelled reconciliation path.")
+must(edge, /action === "resolve_unknown"[\\s\\S]*resolve_gmail_unknown_service/, "Unknown-provider reconciliation must remain server-authoritative.")
+must(control, /I found it in Gmail Sent[\\s\\S]*It isn’t in Gmail Sent/, "Artists must be able to reconcile both outcomes after checking Gmail Sent.")
+must(fallback, /artist_reported_sent[\\s\\S]*duplicate email handoff/, "Artist-confirmed Gmail Sent evidence must block a second manual handoff.")
+'''
+          if anchor not in a:
+              raise SystemExit("unknown UI audit anchor missing")
+          a = a.replace(anchor, add, 1)
+          audit.write_text(a)
+      - name: Remove temporary workflow and commit recovery path
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm .github/workflows/apply-gmail-unknown-recovery-patch.yml
+          git config user.name "KLEIO QA Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add supabase/migrations/20260808170000_gmail_send_only_beta.sql supabase/functions/gmail-delivery/index.ts lib/kleio-gmail-delivery.ts lib/kleio-application-delivery.ts components/kleio/gmail-delivery-control.tsx scripts/audit-gmail-send-beta.mjs .github/workflows/apply-gmail-unknown-recovery-patch.yml
+          git commit -m "Add safe Gmail provider-unknown recovery"
+          git push origin HEAD:feature/gmail-send-beta-20260808
