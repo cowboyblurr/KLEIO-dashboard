@@ -1,0 +1,75 @@
+name: Artist Intensive V7 Final Zero-Trust QA
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  exhaustive-audit-matrix:
+    if: github.head_ref == 'qa/artist-intensive-v7-final-20260808'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        command:
+          - "pnpm typecheck"
+          - "pnpm lint"
+          - "pnpm build"
+          - "pnpm test:artist-workflow-services"
+          - "pnpm test:gemini-document-intelligence"
+          - "pnpm test:passport-synthesis-orchestration"
+          - "pnpm audit:artist-beta-readiness"
+          - "pnpm audit:artist-beta-convenience"
+          - "pnpm audit:artist-requirement-channels"
+          - "pnpm audit:artist-requirement-file-types"
+          - "pnpm audit:upload-surfaces"
+          - "pnpm audit:artist-media-control"
+          - "pnpm audit:artist-recipient-loop"
+          - "pnpm audit:application-composer"
+          - "pnpm build && pnpm audit:navigation"
+          - "pnpm audit:user-copy"
+          - "pnpm audit:auth-redirect"
+          - "pnpm audit:auth-isolation"
+          - "pnpm audit:guidance"
+          - "pnpm audit:opportunity-search"
+          - "pnpm audit:opportunity-first"
+          - "pnpm audit:artist-import"
+          - "pnpm audit:universal-media"
+          - "pnpm audit:upload-to-passport"
+          - "pnpm audit:document-intelligence"
+          - "pnpm audit:gemini-document-intelligence"
+          - "pnpm audit:passport-synthesis-orchestration"
+          - "pnpm audit:visual-convenience"
+          - "pnpm audit:website-import"
+          - "pnpm audit:instagram-import"
+          - "pnpm audit:gemini-website"
+          - "pnpm audit:product-analytics"
+          - "pnpm audit:analytics-privacy"
+          - "pnpm audit:analytics-coverage"
+          - "pnpm audit:analytics-admin"
+          - "pnpm audit:analytics-attribution"
+          - "node scripts/audit-gmail-send-beta.mjs"
+          - "node scripts/audit-submission-delivery-lock.mjs"
+          - "node scripts/audit-recipient-live-smoke-contract.mjs"
+    env:
+      GITHUB_ACTIONS: true
+      NEXT_PUBLIC_BASE_PATH: /KLEIO-dashboard
+      NEXT_PUBLIC_SITE_URL: https://cowboyblurr.github.io/KLEIO-dashboard
+      NEXT_PUBLIC_SUPABASE_URL: https://trekynurdgxgtaaqqtyq.supabase.co
+      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_XdYXvd0fQm3IJKxNrFXgUQ_M4RgDj1M
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Run independent QA gate
+        run: ${{ matrix.command }}
