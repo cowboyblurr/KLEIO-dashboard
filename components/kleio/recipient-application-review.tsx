@@ -2,7 +2,7 @@
 
 /* eslint-disable @next/next/no-img-element -- recipient artwork URLs are short-lived signed storage URLs */
 
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useSearchParams } from "next/navigation"
 import {
   ArrowRight,
@@ -173,6 +173,13 @@ export function RecipientApplicationReview() {
   const [focusedWork, setFocusedWork] = useState<RecipientReviewArtwork | null>(null)
   const [workView, setWorkView] = useState<WorkView>("grid")
   const [meaningfulInteraction, setMeaningfulInteraction] = useState(false)
+  const artworkDialogRef = useRef<HTMLDivElement | null>(null)
+  const artworkTriggerRef = useRef<HTMLElement | null>(null)
+
+  const closeFocusedWork = useCallback(() => {
+    setFocusedWork(null)
+    window.requestAnimationFrame(() => artworkTriggerRef.current?.focus())
+  }, [])
 
   const refresh = useCallback(async () => {
     if (!token) return
@@ -232,12 +239,50 @@ export function RecipientApplicationReview() {
 
   useEffect(() => {
     if (!focusedWork) return
-    function closeOnEscape(event: KeyboardEvent) {
-      if (event.key === "Escape") setFocusedWork(null)
+    if (!artworkDialogRef.current) return
+    const activeDialog = artworkDialogRef.current!
+    const focusableSelector = [
+      'a[href]',
+      'button:not([disabled])',
+      'input:not([disabled])',
+      'select:not([disabled])',
+      'textarea:not([disabled])',
+      '[tabindex]:not([tabindex="-1"])',
+    ].join(",")
+
+    function handleArtworkDialogKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        event.preventDefault()
+        closeFocusedWork()
+        return
+      }
+      if (event.key !== "Tab") return
+      const focusable = Array.from(activeDialog.querySelectorAll<HTMLElement>(focusableSelector))
+        .filter((element) => !element.hasAttribute("disabled") && element.getAttribute("aria-hidden") !== "true")
+      if (!focusable.length) {
+        event.preventDefault()
+        activeDialog.focus()
+        return
+      }
+      const first = focusable[0]
+      const last = focusable[focusable.length - 1]
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault()
+        last.focus()
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault()
+        first.focus()
+      }
     }
-    window.addEventListener("keydown", closeOnEscape)
-    return () => window.removeEventListener("keydown", closeOnEscape)
-  }, [focusedWork])
+
+    activeDialog.addEventListener("keydown", handleArtworkDialogKeyDown)
+    window.requestAnimationFrame(() => {
+      const focusable = Array.from(activeDialog.querySelectorAll<HTMLElement>(focusableSelector))
+        .filter((element) => !element.hasAttribute("disabled") && element.getAttribute("aria-hidden") !== "true")
+      focusable[0]?.focus() ?? activeDialog.focus()
+    })
+    return () => activeDialog.removeEventListener("keydown", handleArtworkDialogKeyDown)
+  }, [focusedWork, closeFocusedWork])
 
   const snapshot = review?.snapshot
   const approvedDate = snapshot?.approved_at ? formatDateOnly(snapshot.approved_at) : ""
@@ -352,6 +397,7 @@ export function RecipientApplicationReview() {
   }
 
   async function openArtwork(work: RecipientReviewArtwork) {
+    artworkTriggerRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null
     setFocusedWork(work)
     setMeaningfulInteraction(true)
     await recordRecipientEvent(token, "artwork_detail_opened", { artwork_id: work.id, surface: "recipient_application_review" }).catch(() => undefined)
@@ -596,7 +642,7 @@ export function RecipientApplicationReview() {
           </div>
 
           <aside className="hidden lg:block print:hidden">
-            <div className="sticky top-[108px] space-y-5 py-8">
+            <div data-audit-sticky-safe="recipient-review-rail" className="sticky top-[108px] space-y-5 py-8">
               <div className="border-t border-[#CFC7CF] pt-4">
                 <p className="text-[0.66rem] font-semibold uppercase tracking-[0.16em] text-[#88808D]">Submission snapshot</p>
                 <dl className="mt-3 space-y-3 text-sm">
@@ -624,9 +670,9 @@ export function RecipientApplicationReview() {
       </div>
 
       {focusedWork ? (
-        <div className="fixed inset-0 z-[70] grid place-items-center bg-[#201C24]/80 p-3 backdrop-blur-sm print:hidden" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setFocusedWork(null) }}>
-          <div role="dialog" aria-modal="true" aria-label={`${focusedWork.title || "Artwork"} focus view`} className="flex max-h-[94dvh] w-full max-w-[1180px] flex-col overflow-hidden bg-[#F8F5EF] shadow-2xl">
-            <header className="flex items-center justify-between gap-4 border-b border-[#D7D0C9] px-4 py-3 sm:px-5"><div className="min-w-0"><h2 className="truncate font-serif text-lg font-semibold">{focusedWork.title || "Untitled"}</h2><p className="truncate text-xs text-[#807884]">{[focusedWork.year, focusedWork.medium, focusedWork.dimensions].filter(Boolean).join(" · ")}</p></div><button type="button" aria-label="Close artwork focus view" autoFocus className="grid size-10 shrink-0 place-items-center rounded-full hover:bg-[#ECE7E2] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#8B79B6]/20" onClick={() => setFocusedWork(null)}><X className="size-4" /></button></header>
+        <div className="fixed inset-0 z-[70] grid place-items-center bg-[#201C24]/80 p-3 backdrop-blur-sm print:hidden" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) closeFocusedWork() }}>
+          <div ref={artworkDialogRef} role="dialog" aria-modal="true" aria-label={`${focusedWork.title || "Artwork"} focus view`} tabIndex={-1} className="flex max-h-[94dvh] w-full max-w-[1180px] flex-col overflow-hidden bg-[#F8F5EF] shadow-2xl">
+            <header className="flex items-center justify-between gap-4 border-b border-[#D7D0C9] px-4 py-3 sm:px-5"><div className="min-w-0"><h2 className="truncate font-serif text-lg font-semibold">{focusedWork.title || "Untitled"}</h2><p className="truncate text-xs text-[#807884]">{[focusedWork.year, focusedWork.medium, focusedWork.dimensions].filter(Boolean).join(" · ")}</p></div><button type="button" aria-label="Close artwork focus view" autoFocus className="grid size-10 shrink-0 place-items-center rounded-full hover:bg-[#ECE7E2] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#8B79B6]/20" onClick={closeFocusedWork}><X className="size-4" /></button></header>
             <div className="min-h-0 flex-1 overflow-auto bg-[#ECE8E2] p-4 sm:p-7">{focusedWork.image_url ? <img src={focusedWork.image_url} alt={focusedWork.title ? `${focusedWork.title} by ${snapshot.artist.professional_name}` : `Selected artwork by ${snapshot.artist.professional_name}`} decoding="async" className="mx-auto max-h-[76dvh] max-w-full object-contain" /> : <div className="grid min-h-[55dvh] place-items-center text-center text-sm leading-6 text-[#766F7A]">This artwork is temporarily unavailable. The remaining submission materials are still accessible.</div>}</div>
             {focusedWork.description ? <div className="border-t border-[#D7D0C9] bg-[#FCFAF6] px-5 py-4 text-sm leading-6 text-[#5E5762]">{focusedWork.description}</div> : null}
           </div>

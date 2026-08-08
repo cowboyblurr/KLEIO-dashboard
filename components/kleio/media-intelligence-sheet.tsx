@@ -3,7 +3,7 @@
 /* eslint-disable @next/next/no-img-element -- private media uses short-lived signed URLs */
 
 import Link from "next/link"
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { AudioLines, Check, Clipboard, FileSearch, FileText, Loader2, RefreshCcw, ShieldCheck, Video, X } from "lucide-react"
 import type { ArtistMediaLibraryItem } from "@/lib/kleio-universal-media"
 import { analyzeMediaWithKleio, canAnalyzeMediaItem, loadMediaIntelligence, mediaIntelligenceSupportText, retryDocumentPassportSynthesis, type MediaIntelligence } from "@/lib/kleio-media-intelligence"
@@ -83,6 +83,11 @@ export function MediaIntelligenceSheet({ item, open, onClose, onAnalyzed }: Prop
   const [error, setError] = useState("")
   const [tab, setTab] = useState<Tab>("overview")
   const [copied, setCopied] = useState("")
+  const dialogRef = useRef<HTMLElement | null>(null)
+  const previousFocusRef = useRef<HTMLElement | null>(null)
+  const onCloseRef = useRef(onClose)
+
+  useEffect(() => { onCloseRef.current = onClose }, [onClose])
 
   useEffect(() => {
     if (!open || !item?.sourceId) { setAnalysis(null); setError(""); return }
@@ -94,10 +99,54 @@ export function MediaIntelligenceSheet({ item, open, onClose, onAnalyzed }: Prop
 
   useEffect(() => {
     if (!open) return
-    const closeOnEscape = (event: KeyboardEvent) => { if (event.key === "Escape") onClose() }
-    window.addEventListener("keydown", closeOnEscape)
-    return () => window.removeEventListener("keydown", closeOnEscape)
-  }, [onClose, open])
+    if (!dialogRef.current) return
+    const activeDialog = dialogRef.current!
+    previousFocusRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null
+    const focusableSelector = [
+      'a[href]',
+      'button:not([disabled])',
+      'input:not([disabled])',
+      'select:not([disabled])',
+      'textarea:not([disabled])',
+      '[tabindex]:not([tabindex="-1"])',
+    ].join(",")
+
+    function focusableElements() {
+      return Array.from(activeDialog.querySelectorAll<HTMLElement>(focusableSelector))
+        .filter((element) => !element.hasAttribute("disabled") && element.getAttribute("aria-hidden") !== "true")
+    }
+
+    function handleMediaAssistDialogKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        event.preventDefault()
+        onCloseRef.current()
+        return
+      }
+      if (event.key !== "Tab") return
+      const focusable = focusableElements()
+      if (!focusable.length) {
+        event.preventDefault()
+        activeDialog.focus()
+        return
+      }
+      const first = focusable[0]
+      const last = focusable[focusable.length - 1]
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault()
+        last.focus()
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault()
+        first.focus()
+      }
+    }
+
+    activeDialog.addEventListener("keydown", handleMediaAssistDialogKeyDown)
+    window.requestAnimationFrame(() => focusableElements()[0]?.focus() ?? activeDialog.focus())
+    return () => {
+      activeDialog.removeEventListener("keydown", handleMediaAssistDialogKeyDown)
+      window.requestAnimationFrame(() => previousFocusRef.current?.focus())
+    }
+  }, [open])
 
   useEffect(() => {
     if (!analyzing || !item) return
@@ -146,7 +195,7 @@ export function MediaIntelligenceSheet({ item, open, onClose, onAnalyzed }: Prop
 
   return <div className="fixed inset-0 z-[120] flex justify-end bg-[#21192D]/35 backdrop-blur-[2px]">
     <button type="button" className="absolute inset-0" aria-label="Close Media Assist" onClick={onClose} />
-    <aside role="dialog" aria-modal="true" aria-labelledby="media-assist-title" aria-busy={analyzing || repairing} className="relative z-10 flex h-dvh w-full max-w-[620px] flex-col overflow-hidden border-l border-[#DDD5EE] bg-[#FCFBFE] text-[#292631] shadow-[-24px_0_70px_rgba(54,42,82,0.16)]">
+    <aside ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="media-assist-title" aria-busy={analyzing || repairing} tabIndex={-1} className="relative z-10 flex h-dvh w-full max-w-[620px] flex-col overflow-hidden border-l border-[#DDD5EE] bg-[#FCFBFE] text-[#292631] shadow-[-24px_0_70px_rgba(54,42,82,0.16)]">
       <header className="flex shrink-0 items-start justify-between gap-4 border-b border-[#E7E1F7] bg-white px-5 py-4"><div className="min-w-0"><p className="text-[0.66rem] font-semibold uppercase tracking-[0.16em] text-[#75639E]">Private artist tool</p><h2 id="media-assist-title" className="mt-1 font-serif text-2xl font-semibold">Media Assist</h2><p className="mt-1 truncate text-xs text-[#746E80]">{activeItem.title} · <span className="capitalize">{activeItem.mediaKind}</span></p></div><button type="button" onClick={onClose} className="grid size-10 place-items-center rounded-xl border border-[#E2DCF1] bg-white" aria-label="Close"><X className="size-4" /></button></header>
       <div className="min-h-0 flex-1 overflow-y-auto">
         <div className="grid min-h-[220px] place-items-center border-b border-[#E7E1F7] bg-[#F3F0F8]"><Preview item={activeItem} /></div>

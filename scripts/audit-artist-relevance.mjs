@@ -14,8 +14,8 @@ const editor = read("components/kleio/live-artist-passport-editor.tsx")
 const inbox = read("components/kleio/passport-updates-inbox.tsx")
 const header = read("components/kleio/workspace-page-header.tsx")
 
-requirePattern(mediaPanel, /Media intelligence/, "Creative Passport must explain the media-intelligence utility in context.")
-requirePattern(mediaPanel, /analyze supported sources here/, "Media guidance must keep analysis inside the Passport workflow rather than sending artists elsewhere.")
+requirePattern(mediaPanel, /Media Assist/, "Creative Passport must explain Media Assist in context.")
+requirePattern(mediaPanel, /Add private media or files and use Media Assist/, "Media guidance must keep Media Assist inside the Passport workflow rather than sending artists elsewhere.")
 requirePattern(mediaPanel, /MediaIntelligenceSheet/, "Creative Passport must open analysis in place.")
 requirePattern(mediaPanel, /loadMediaIntelligenceStatuses/, "Creative Passport must reuse persisted source intelligence rather than force repeat analysis.")
 requirePattern(mediaPanel, /loadPassportReviewCount/, "The compact utility row must still show relevant pending structured-review work.")
@@ -79,4 +79,4 @@ if (failures.length) {
   process.exit(1)
 }
 
-console.log(`KLEIO artist relevance audit passed. In-place media intelligence, field-level structured review, compact Passport hierarchy, collapsed secondary controls, and shared workspace density are protected. ${oversizedSignals.length} high-density source files remain below the review threshold.`)
+console.log(`KLEIO artist relevance audit passed. In-place Media Assist, field-level structured review, compact Passport hierarchy, collapsed secondary controls, and shared workspace density are protected. ${oversizedSignals.length} high-density source files remain below the review threshold.`)

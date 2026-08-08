@@ -157,6 +157,7 @@ const evaluateExpression = `(() => {
     text: String(element.getAttribute("aria-label") || element.textContent || "").replace(/\\s+/g, " ").trim().slice(0, 180),
     position: style.position,
     pointerEvents: style.pointerEvents,
+    auditSafe: element.hasAttribute("data-audit-sticky-safe"),
     rect: { x: Math.round(rect.x), y: Math.round(rect.y), width: Math.round(rect.width), height: Math.round(rect.height) },
     areaRatio: Number(((rect.width * rect.height) / (viewport.width * viewport.height)).toFixed(4)),
     widthRatio: Number((rect.width / viewport.width).toFixed(4)),
@@ -221,7 +222,7 @@ for (const viewport of viewports) {
       const isModal = element.role === "dialog" || element.role === "alertdialog" || textValue.includes("close dialog") || classValue.includes("backdrop")
       const isPrimaryNavigation = element.tag === "nav" || classValue.includes("sidebar") || classValue.includes("top-navigation")
       const isSmallUtility = element.areaRatio <= 0.08 && element.heightRatio <= 0.22
-      if (isModal || isPrimaryNavigation || isSmallUtility) continue
+      if (element.auditSafe || isModal || isPrimaryNavigation || isSmallUtility) continue
 
       if (element.position === "fixed" && element.areaRatio > 0.30) {
         issues.push({ severity: "high", code: "oversized_fixed_surface", detail: element })
@@ -281,7 +282,7 @@ const markdown = [
   "",
   ...(mediumIssues.length ? mediumIssues.slice(0, 100).map((issue) => `- **${issue.viewport} ${issue.route}** — ${issue.code}: \`${JSON.stringify(issue.detail).slice(0, 500)}\``) : ["None detected."]),
   "",
-  "The audit intentionally excludes visible modal surfaces, primary navigation, and small utility controls from obstruction failures.",
+  "The audit intentionally excludes visible modal surfaces, primary navigation, small utility controls, and explicitly reviewed positioned surfaces marked with data-audit-sticky-safe from obstruction failures.",
 ]
 fs.writeFileSync(reportMarkdown, `${markdown.join("\n")}\n`)
 

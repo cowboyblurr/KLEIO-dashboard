@@ -43,6 +43,8 @@ requirePattern(intelligence, /finally[\s\S]*releaseMediaAnalysis/, "Media proces
 requirePattern(sheet, /Refresh Media Assist|Refresh source \+ Passport/, "Completed Media Assist processing must expose an explicit safe refresh action.")
 requirePattern(sheet, /previous Media Assist result is still available below/i, "Failed Media Assist refresh must leave the previous successful result visible.")
 requirePattern(sheet, /does not score the work, decide its meaning|No creative score is created/i, "Generated media suggestions must be framed as artist-controlled assistance rather than creative judgment or verification.")
+requirePattern(sheet, /handleMediaAssistDialogKeyDown[\s\S]*event\.key !== "Tab"/, "Media Assist must trap keyboard focus while its modal sheet is open.")
+requirePattern(sheet, /previousFocusRef\.current\?\.focus\(\)/, "Media Assist must restore focus to the invoking control when its modal sheet closes.")
 
 requirePattern(lease, /for update/, "Concurrent media-processing claims must use a database row lock.")
 requirePattern(lease, /artist_user_id = \(select auth\.uid\(\)\)/, "Media-processing claims must verify source ownership.")
