@@ -6,7 +6,7 @@ import {
 } from "@/lib/kleio-recipient-application"
 
 export type ApplicationDeliveryChannel = "gmail" | "email_client" | "external_portal" | "native_kleio" | "download_package"
-export type ApplicationDeliveryState = "prepared" | "email_client_opened" | "provider_accepted" | "artist_reported_sent" | "review_room_opened" | "conversation_started" | "failed" | "cancelled"
+export type ApplicationDeliveryState = "prepared" | "handoff_opened" | "provider_accepted" | "artist_reported_sent" | "review_room_opened" | "receipt_confirmed" | "conversation_started" | "failed" | "cancelled"
 export type ApplicationDeliveryEvidence = "self_reported" | "system_observed" | "recipient_confirmed" | "provider_confirmed"
 
 export async function recordApplicationDelivery(input: {
@@ -41,10 +41,10 @@ export async function recordApplicationDelivery(input: {
 /**
  * Prepare the beta-safe email handoff from one immutable submission version.
  *
- * KLEIO creates the secure Review Room first. The database boundary binds that
- * access to the latest artist-finalized immutable submission version for the
- * package and rebuilds the recipient snapshot from that sealed version.
- * The artist never needs to copy or manage the raw URL.
+ * KLEIO creates secure Review Room access for the exact artist-finalized version,
+ * then inserts that one-time recipient URL into the artist's normal email client.
+ * An already-active recipient handoff is never silently rotated; replacement
+ * requires the artist to revoke access intentionally first.
  */
 export async function prepareTrackedEmailClientHandoff(input: {
   packageId: string
@@ -54,14 +54,28 @@ export async function prepareTrackedEmailClientHandoff(input: {
   body: string
 }) {
   if (!input.recipient.trim()) throw new Error("A verified submission email is required before preparing delivery.")
-  const access = await createRecipientReviewAccess(input.packageId)
+
+  let access: Awaited<ReturnType<typeof createRecipientReviewAccess>>
+  try {
+    access = await createRecipientReviewAccess(input.packageId, input.submissionVersionId)
+  } catch (reason) {
+    if (reason instanceof Error && reason.name === "active_access_exists") {
+      throw new Error("A tracked recipient handoff is already active for this application. Use Recipient access and replies to revoke it only if you intentionally need to prepare a new handoff.")
+    }
+    throw reason
+  }
+
+  if (access.submission_version_id && access.submission_version_id !== input.submissionVersionId) {
+    throw new Error("KLEIO refused to prepare delivery because the recipient handoff did not match the preserved application version.")
+  }
+
   const reviewUrl = recipientReviewUrl(access.token)
   const deliveryId = await recordApplicationDelivery({
     submissionVersionId: input.submissionVersionId,
     channel: "email_client",
     destination: input.recipient.trim(),
     recipientAccessId: access.access_id,
-    state: "email_client_opened",
+    state: "handoff_opened",
     evidenceLevel: "system_observed",
     provider: "default_email_client",
     providerReference: access.access_id,
