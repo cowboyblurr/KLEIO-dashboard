@@ -8,8 +8,8 @@ alter table public.application_recipient_access
 create index if not exists application_recipient_access_submission_version_idx
   on public.application_recipient_access(submission_version_id, created_at desc);
 
--- Future submission versions need to freeze the opportunity context used by the Review Room,
--- not reread mutable opportunity copy after the artist has finalized.
+-- Future submission versions freeze the opportunity context needed by the Review Room
+-- so recipient delivery never rereads mutable opportunity copy after finalization.
 create or replace function private.finalize_my_application_submission_version_impl(
   target_package_id uuid,
   supplied_preflight jsonb default '{}'::jsonb
@@ -320,11 +320,35 @@ $$;
 
 drop trigger if exists bind_recipient_access_to_finalized_submission on public.application_recipient_access;
 create trigger bind_recipient_access_to_finalized_submission
-before insert or update of package_id, artist_user_id, submission_version_id
+before insert
 on public.application_recipient_access
 for each row execute function private.bind_recipient_access_to_finalized_submission();
 
--- No production recipient-access rows exist at this migration boundary, so the new
+create or replace function private.prevent_recipient_access_snapshot_mutation()
+returns trigger
+language plpgsql
+security definer
+set search_path to 'public'
+as $$
+begin
+  if new.package_id is distinct from old.package_id
+     or new.artist_user_id is distinct from old.artist_user_id
+     or new.submission_version_id is distinct from old.submission_version_id
+     or new.approved_snapshot is distinct from old.approved_snapshot
+     or new.data_scope is distinct from old.data_scope then
+    raise exception 'recipient_access_snapshot_immutable';
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists prevent_recipient_access_snapshot_mutation on public.application_recipient_access;
+create trigger prevent_recipient_access_snapshot_mutation
+before update of package_id, artist_user_id, submission_version_id, approved_snapshot, data_scope
+on public.application_recipient_access
+for each row execute function private.prevent_recipient_access_snapshot_mutation();
+
+-- Production had no recipient-access rows at this migration boundary, so the new
 -- immutable-version association can be made mandatory immediately.
 alter table public.application_recipient_access
   alter column submission_version_id set not null;
@@ -338,15 +362,19 @@ create table if not exists public.application_deliveries (
   recipient_access_id uuid references public.application_recipient_access(id) on delete set null,
   channel text not null check (channel in ('gmail','email_client','external_portal','native_kleio','download_package')),
   destination text not null default '',
-  state text not null default 'prepared' check (state in ('prepared','email_client_opened','provider_accepted','artist_reported_sent','review_room_opened','conversation_started','failed','cancelled')),
+  state text not null default 'prepared' check (state in ('prepared','handoff_opened','provider_accepted','artist_reported_sent','review_room_opened','receipt_confirmed','conversation_started','failed','cancelled')),
   evidence_level text not null default 'system_observed' check (evidence_level in ('self_reported','system_observed','recipient_confirmed','provider_confirmed')),
   provider text not null default '',
   provider_reference text not null default '',
   last_error_code text not null default '',
   last_error_message text not null default '',
   prepared_at timestamptz not null default now(),
+  handoff_opened_at timestamptz,
   provider_accepted_at timestamptz,
   artist_reported_sent_at timestamptz,
+  review_room_opened_at timestamptz,
+  receipt_confirmed_at timestamptz,
+  conversation_started_at timestamptz,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   unique(submission_version_id, channel)
@@ -403,7 +431,7 @@ begin
   if target_channel not in ('gmail','email_client','external_portal','native_kleio','download_package') then
     raise exception 'invalid_delivery_channel';
   end if;
-  if target_state not in ('prepared','email_client_opened','provider_accepted','artist_reported_sent','review_room_opened','conversation_started','failed','cancelled') then
+  if target_state not in ('prepared','handoff_opened','provider_accepted','artist_reported_sent','review_room_opened','receipt_confirmed','conversation_started','failed','cancelled') then
     raise exception 'invalid_delivery_state';
   end if;
   if target_evidence_level not in ('self_reported','system_observed','recipient_confirmed','provider_confirmed') then
@@ -426,11 +454,12 @@ begin
     submission_version_id, package_id, artist_user_id, opportunity_id,
     recipient_access_id, channel, destination, state, evidence_level,
     provider, provider_reference, last_error_code, last_error_message,
-    provider_accepted_at, artist_reported_sent_at, updated_at
+    handoff_opened_at, provider_accepted_at, artist_reported_sent_at, updated_at
   ) values (
     version_row.id, version_row.package_id, version_row.artist_user_id, version_row.opportunity_id,
     target_recipient_access_id, target_channel, coalesce(target_destination,''), target_state, target_evidence_level,
     coalesce(target_provider,''), coalesce(target_provider_reference,''), coalesce(target_error_code,''), coalesce(target_error_message,''),
+    case when target_state = 'handoff_opened' then now() else null end,
     case when target_state = 'provider_accepted' then now() else null end,
     case when target_state = 'artist_reported_sent' then now() else null end,
     now()
@@ -444,6 +473,7 @@ begin
     provider_reference = excluded.provider_reference,
     last_error_code = excluded.last_error_code,
     last_error_message = excluded.last_error_message,
+    handoff_opened_at = coalesce(excluded.handoff_opened_at, public.application_deliveries.handoff_opened_at),
     provider_accepted_at = coalesce(excluded.provider_accepted_at, public.application_deliveries.provider_accepted_at),
     artist_reported_sent_at = coalesce(excluded.artist_reported_sent_at, public.application_deliveries.artist_reported_sent_at),
     updated_at = now()
@@ -456,5 +486,78 @@ $$;
 revoke all on function public.record_my_application_delivery(uuid,text,text,uuid,text,text,text,text,text,text) from public, anon;
 grant execute on function public.record_my_application_delivery(uuid,text,text,uuid,text,text,text,text,text,text) to authenticated;
 
+-- Recipient-side events advance the same canonical delivery lifecycle used by
+-- Gmail and the manual email fallback. The state only moves forward.
+create or replace function private.sync_application_delivery_from_recipient_event()
+returns trigger
+language plpgsql
+security definer
+set search_path to 'public'
+as $$
+declare
+  desired_state text;
+  desired_rank integer;
+begin
+  desired_state := case new.event_type
+    when 'application_page_viewed' then 'review_room_opened'
+    when 'receipt_confirmed' then 'receipt_confirmed'
+    when 'conversation_started' then 'conversation_started'
+    else null
+  end;
+
+  if desired_state is null then
+    return new;
+  end if;
+
+  desired_rank := case desired_state
+    when 'review_room_opened' then 3
+    when 'receipt_confirmed' then 4
+    when 'conversation_started' then 5
+    else 0
+  end;
+
+  update public.application_deliveries delivery
+  set state = case
+        when (case delivery.state
+          when 'prepared' then 0
+          when 'handoff_opened' then 1
+          when 'provider_accepted' then 2
+          when 'artist_reported_sent' then 2
+          when 'review_room_opened' then 3
+          when 'receipt_confirmed' then 4
+          when 'conversation_started' then 5
+          when 'failed' then -1
+          when 'cancelled' then 6
+          else 0 end) < desired_rank
+        then desired_state else delivery.state end,
+      evidence_level = case
+        when (case delivery.state
+          when 'prepared' then 0
+          when 'handoff_opened' then 1
+          when 'provider_accepted' then 2
+          when 'artist_reported_sent' then 2
+          when 'review_room_opened' then 3
+          when 'receipt_confirmed' then 4
+          when 'conversation_started' then 5
+          when 'failed' then -1
+          when 'cancelled' then 6
+          else 0 end) < desired_rank
+        then new.evidence_level else delivery.evidence_level end,
+      review_room_opened_at = case when new.event_type = 'application_page_viewed' then coalesce(delivery.review_room_opened_at, new.created_at) else delivery.review_room_opened_at end,
+      receipt_confirmed_at = case when new.event_type = 'receipt_confirmed' then coalesce(delivery.receipt_confirmed_at, new.created_at) else delivery.receipt_confirmed_at end,
+      conversation_started_at = case when new.event_type = 'conversation_started' then coalesce(delivery.conversation_started_at, new.created_at) else delivery.conversation_started_at end,
+      updated_at = now()
+  where delivery.recipient_access_id = new.access_id
+    and delivery.state <> 'cancelled';
+
+  return new;
+end;
+$$;
+
+drop trigger if exists sync_application_delivery_from_recipient_event on public.application_recipient_events;
+create trigger sync_application_delivery_from_recipient_event
+after insert on public.application_recipient_events
+for each row execute function private.sync_application_delivery_from_recipient_event();
+
 comment on table public.application_deliveries is
-  'Canonical outbound delivery state for one immutable artist-finalized submission version. Email providers and manual fallbacks share this record; evidence level states what KLEIO actually knows.';
+  'Canonical outbound delivery state for one immutable artist-finalized submission version. Gmail, manual email, portals, native KLEIO, recipient Review Room activity, and conversation progression share this evidence-labelled record.';
