@@ -37,12 +37,12 @@ const defaultArguments = {
 }
 
 async function search(query) {
-  const { data, error } = await supabase.rpc("search_opportunities_v2", {
+  const { data, error } = await supabase.rpc("search_public_opportunity_directory_v1", {
     search_query: query,
     ...defaultArguments,
   })
   if (error) throw new Error(`${query}: ${error.message}`)
-  return data ?? []
+  return Array.isArray(data?.items) ? data.items : []
 }
 
 async function interpret(query) {

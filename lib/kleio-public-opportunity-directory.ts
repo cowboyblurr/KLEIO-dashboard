@@ -13,6 +13,14 @@ import {
 } from "@/lib/kleio-opportunity-localization"
 import type { OpportunityDirectoryDataWithSources } from "@/lib/kleio-opportunity-presentation"
 
+type PublicOpportunityPayload = {
+  items?: OpportunityRecord[]
+  sources?: OpportunitySourceRecord[]
+  rules?: OpportunityEligibilityRule[]
+  requirements?: OpportunityRequirement[]
+  translations?: OpportunityTranslationRecord[]
+}
+
 function relationMap<T extends { id: string }>(rows: T[] | null | undefined) {
   return new Map((rows ?? []).map((row) => [row.id, row]))
 }
@@ -26,7 +34,7 @@ export async function loadPublicOpportunityDirectory(
   filters: PersistentOpportunityFilters = {},
 ): Promise<OpportunityDirectoryDataWithSources> {
   const supabase = getSupabaseBrowserClient()
-  const { data, error } = await supabase.rpc("search_opportunities_v2", {
+  const { data, error } = await supabase.rpc("search_public_opportunity_directory_v1", {
     search_query: filters.query?.trim() || null,
     opportunity_types: filters.opportunityTypes?.length ? filters.opportunityTypes : null,
     source_slugs: filters.sourceSlugs?.length ? filters.sourceSlugs : null,
@@ -47,43 +55,22 @@ export async function loadPublicOpportunityDirectory(
   })
   if (error) throw error
 
-  const opportunities = (data ?? []) as OpportunityRecord[]
-  const opportunityIds = opportunities.map((item) => item.id)
-
-  const [sourceResponse, rulesResponse, requirementsResponse, translationResponse] = await Promise.all([
-    supabase
-      .from("opportunity_sources")
-      .select("id, slug, name, base_domain, source_type, ingestion_method, attribution_required, active, last_successful_sync")
-      .eq("active", true)
-      .order("name"),
-    opportunityIds.length
-      ? supabase.from("opportunity_eligibility_rules").select("*").in("opportunity_id", opportunityIds).order("sort_order")
-      : Promise.resolve({ data: [], error: null }),
-    opportunityIds.length
-      ? supabase.from("opportunity_requirements").select("*").in("opportunity_id", opportunityIds).order("sort_order")
-      : Promise.resolve({ data: [], error: null }),
-    opportunityIds.length
-      ? supabase.from("opportunity_translations").select("*").in("opportunity_id", opportunityIds)
-      : Promise.resolve({ data: [], error: null }),
-  ])
-
-  if (sourceResponse.error) throw sourceResponse.error
-  if (rulesResponse.error) throw rulesResponse.error
-  if (requirementsResponse.error) throw requirementsResponse.error
-  if (translationResponse.error) throw translationResponse.error
-
-  const sources = (sourceResponse.data ?? []) as OpportunitySourceRecord[]
+  const payload = (data ?? {}) as PublicOpportunityPayload
+  const opportunities = payload.items ?? []
+  const sources = payload.sources ?? []
+  const rules = payload.rules ?? []
+  const requirements = payload.requirements ?? []
+  const translations = payload.translations ?? []
   const sourceById = relationMap(sources)
   const rulesByOpportunity = new Map<string, OpportunityEligibilityRule[]>()
   const requirementsByOpportunity = new Map<string, OpportunityRequirement[]>()
 
-  for (const rule of (rulesResponse.data ?? []) as OpportunityEligibilityRule[]) {
+  for (const rule of rules) {
     const current = rulesByOpportunity.get(rule.opportunity_id) ?? []
     current.push(rule)
     rulesByOpportunity.set(rule.opportunity_id, current)
   }
-
-  for (const requirement of (requirementsResponse.data ?? []) as OpportunityRequirement[]) {
+  for (const requirement of requirements) {
     const current = requirementsByOpportunity.get(requirement.opportunity_id) ?? []
     current.push(requirement)
     requirementsByOpportunity.set(requirement.opportunity_id, current)
@@ -97,10 +84,7 @@ export async function loadPublicOpportunityDirectory(
     internal_call: null,
     saved: false,
   }))
-
   const locale = selectedInterfaceLocale()
-  const translations = (translationResponse.data ?? []) as OpportunityTranslationRecord[]
-
   return {
     passport: null,
     portfolioWorks: [],
