@@ -1,3 +1,4 @@
+import { normalizeKleioEdgeFunctionError } from "@/lib/kleio-edge-function-error"
 import { getSupabaseBrowserClient } from "@/lib/kleio-supabase"
 
 export type RecipientReviewArtwork = {
@@ -112,7 +113,7 @@ export type RecipientConversationMessage = {
 async function invoke<T>(body: Record<string, unknown>): Promise<T> {
   const supabase = getSupabaseBrowserClient()
   const { data, error } = await supabase.functions.invoke("recipient-application-review", { body })
-  if (error) throw error
+  if (error) throw await normalizeKleioEdgeFunctionError(error, "The secure application request could not be completed.")
   if (data?.error) {
     const requestError = new Error(data.message || data.error)
     requestError.name = data.error
