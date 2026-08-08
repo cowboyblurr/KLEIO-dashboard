@@ -26,6 +26,7 @@ for (const file of artistUiFiles) {
 
 const mediaSurfaceFiles = [
   "components/kleio/artist-media-library.tsx",
+  "components/kleio/creative-passport-media-panel.tsx",
   "components/kleio/media-intelligence-sheet.tsx",
   "components/kleio/media-collection-intelligence-sheet.tsx",
 ]
@@ -61,4 +62,4 @@ if (failures.length) {
   process.exit(1)
 }
 
-console.log("KLEIO Media Assist language audit passed: artist media surfaces use Media Assist, legacy Vision language is absent, creative-facing confidence/AI-intelligence framing is not exposed, and one selected source can immediately run Media Assist.")
+console.log("KLEIO Media Assist language audit passed: Media Library and Creative Passport use Media Assist, legacy Vision language is absent, creative-facing confidence/AI-intelligence framing is not exposed, and one selected source can immediately run Media Assist.")
