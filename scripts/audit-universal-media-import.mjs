@@ -18,6 +18,7 @@ const portfolio = "components/kleio/visual-artist-portfolio-studio.tsx"
 const profile = "components/kleio/profile-media-quick-import.tsx"
 const passport = "components/kleio/creative-passport-media-panel.tsx"
 const application = "components/kleio/application-media-import-bar.tsx"
+const composer = "components/kleio/application-composer-workspace.tsx"
 const library = "components/kleio/artist-media-library.tsx"
 const intelligence = "components/kleio/media-intelligence-sheet.tsx"
 const intelligenceClient = "lib/kleio-media-intelligence.ts"
@@ -69,10 +70,15 @@ requireText(profile, 'context=\"profile_image\"', "profile imagery must stay on 
 requireText(passport, 'label="Add media"', "Creative Passport must expose media-neutral material entry")
 requireText(passport, "<MediaIntelligenceSheet", "Creative Passport must surface analysis in place")
 requireText(passport, "loadMediaIntelligenceStatuses", "Creative Passport must reuse prior source analysis")
-requireText(application, 'href="/artist-dashboard/portfolio/"', "application preparation must give an artist a clear path to add missing artwork through Portfolio")
-requireText(application, 'target="_blank"', "application preparation must keep the current composer available while artwork is added")
-requireText(application, "Keep this application open while you add a work in Portfolio in a new tab", "application preparation must explain the temporary Portfolio handoff without claiming unsaved state is persisted")
-forbidText(application, "Your application is saved while", "application preparation must not claim persistence simply because the artist opens Portfolio")
+requireText(application, "QuickMediaImport", "application preparation must use the shared private-media picker for missing artwork")
+requireText(application, 'context="application_portfolio_selection"', "application artwork quick-add must use the dedicated portfolio-selection media contract")
+requireText(application, "createPortfolioWorkFromMedia", "application artwork quick-add must create a canonical Portfolio work rather than attaching a loose file")
+requireText(application, "without leaving this application", "application artwork quick-add must preserve route continuity")
+requireText(application, "kleio:application-portfolio-changed", "application artwork quick-add must notify the live composer after Portfolio creation")
+requireText(composer, "kleio:application-portfolio-changed", "application composer must refresh new Portfolio work without a page reload")
+requireText(composer, "setSelectedWorkIds", "application composer must retain explicit work selection after an in-place Portfolio refresh")
+forbidText(application, 'href="/artist-dashboard/portfolio/"', "application preparation must not require a Portfolio-page detour for missing artwork")
+forbidText(application, "Your application is saved while", "application preparation must not claim persistence simply because another action is opened")
 forbidText(application, "ArtistImportStudio", "application preparation must not mount the dormant connected-provider importer")
 forbidText(application, "Google Drive", "application artwork actions must not expose unreleased provider copy")
 requireText(library, 'title="Media Library"', "artists must retain a private reusable media surface")
@@ -100,7 +106,7 @@ forbidText(migration, "disable row level security", "universal media migration m
 forbidText(availabilityMigration, "disable row level security", "availability migration must not weaken RLS")
 forbidText(broadMediaMigration, "disable row level security", "broad media migration must not weaken RLS")
 
-for (const file of [architecture, fileTypes, deviceUpload, googleCapabilities, availability, quick, signup, portfolio, profile, passport, application, library, intelligence, intelligenceClient, sidebar, migration, availabilityMigration, broadMediaMigration]) {
+for (const file of [architecture, fileTypes, deviceUpload, googleCapabilities, availability, quick, signup, portfolio, profile, passport, application, composer, library, intelligence, intelligenceClient, sidebar, migration, availabilityMigration, broadMediaMigration]) {
   forbidText(file, "AIzaSy", "Google API keys must not be committed")
   forbidText(file, "GOCSPX-", "Google client secrets must not be committed")
 }
@@ -111,4 +117,4 @@ if (failures.length) {
   process.exit(1)
 }
 
-console.log("Universal Media Import audit passed: private image/document/video/audio upload is active, live artist surfaces stay device/private-library first, Media Library and Creative Passport share in-place intelligence, unreleased connector internals remain gated, and owner-scoped RLS and secret hygiene are intact.")
+console.log("Universal Media Import audit passed: private image/document/video/audio upload is active, live artist surfaces stay device/private-library first, missing application artwork can become a canonical Portfolio work without a route detour, Media Library and Creative Passport share in-place intelligence, unreleased connector internals remain gated, and owner-scoped RLS and secret hygiene are intact.")
