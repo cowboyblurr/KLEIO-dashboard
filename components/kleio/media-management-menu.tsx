@@ -1,6 +1,7 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
+import { createPortal } from "react-dom"
 import { ExternalLink, MoreHorizontal, Trash2, Unlink, X } from "lucide-react"
 import { useKleioLocale } from "@/components/kleio/kleio-locale-provider"
 import type { ArtistMediaLibraryItem, MediaImportContext } from "@/lib/kleio-universal-media"
@@ -17,6 +18,8 @@ type Props = {
   currentContext?: MediaImportContext
   onChanged?: () => void | Promise<void>
 }
+
+type MenuPosition = { top: number; left: number }
 
 const menuItem = "flex min-h-10 w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-semibold text-[#4F485A] transition hover:bg-[#F6F3FA] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#A997E8]/20 disabled:opacity-50"
 
@@ -49,28 +52,95 @@ function referenceSummary(assessment: MediaDeletionAssessment | null) {
 }
 
 export function MediaManagementMenu({ item, currentContext, onChanged }: Props) {
-  const rootRef = useRef<HTMLDivElement>(null)
+  const triggerRef = useRef<HTMLButtonElement>(null)
+  const menuRef = useRef<HTMLDivElement>(null)
   const { locale } = useKleioLocale()
   const [open, setOpen] = useState(false)
+  const [menuPosition, setMenuPosition] = useState<MenuPosition | null>(null)
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [assessment, setAssessment] = useState<MediaDeletionAssessment | null>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState("")
   const [message, setMessage] = useState("")
+  const menuId = `media-actions-${item.id}`
+
+  const closeMenu = useCallback((restoreFocus = false) => {
+    setOpen(false)
+    setMenuPosition(null)
+    if (restoreFocus) window.requestAnimationFrame(() => triggerRef.current?.focus())
+  }, [])
 
   useEffect(() => {
     if (!open) return
-    const onPointer = (event: PointerEvent) => { if (!rootRef.current?.contains(event.target as Node)) setOpen(false) }
-    const onKey = (event: KeyboardEvent) => { if (event.key === "Escape") setOpen(false) }
+
+    function positionMenu() {
+      const trigger = triggerRef.current
+      const menu = menuRef.current
+      if (!trigger || !menu) return
+      const triggerRect = trigger.getBoundingClientRect()
+      const menuWidth = menu.offsetWidth || 224
+      const menuHeight = menu.offsetHeight || 132
+      const viewportPadding = 12
+      const gap = 8
+      const below = triggerRect.bottom + gap
+      const above = triggerRect.top - menuHeight - gap
+      const top = below + menuHeight <= window.innerHeight - viewportPadding
+        ? below
+        : Math.max(viewportPadding, above)
+      const left = Math.min(
+        Math.max(viewportPadding, triggerRect.right - menuWidth),
+        Math.max(viewportPadding, window.innerWidth - menuWidth - viewportPadding),
+      )
+      setMenuPosition({ top, left })
+    }
+
+    const frame = window.requestAnimationFrame(() => {
+      positionMenu()
+      window.requestAnimationFrame(() => menuRef.current?.querySelector<HTMLButtonElement>('[role="menuitem"]:not(:disabled)')?.focus())
+    })
+    const onPointer = (event: PointerEvent) => {
+      const target = event.target as Node
+      if (triggerRef.current?.contains(target) || menuRef.current?.contains(target)) return
+      closeMenu(false)
+    }
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return
+      event.preventDefault()
+      closeMenu(true)
+    }
+    const onResize = () => positionMenu()
+    const onScroll = () => closeMenu(false)
+
     window.addEventListener("pointerdown", onPointer)
     window.addEventListener("keydown", onKey)
-    return () => { window.removeEventListener("pointerdown", onPointer); window.removeEventListener("keydown", onKey) }
-  }, [open])
+    window.addEventListener("resize", onResize)
+    window.addEventListener("scroll", onScroll, true)
+    return () => {
+      window.cancelAnimationFrame(frame)
+      window.removeEventListener("pointerdown", onPointer)
+      window.removeEventListener("keydown", onKey)
+      window.removeEventListener("resize", onResize)
+      window.removeEventListener("scroll", onScroll, true)
+    }
+  }, [closeMenu, open])
 
   const t = copy[locale]
   const references = referenceSummary(assessment)
   const blocked = Boolean(assessment?.blockingReferences.length || assessment?.finalizedReferences.length)
   const hasEditable = Boolean(assessment?.editableReferences.length)
+
+  function handleMenuKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
+    if (!["ArrowDown", "ArrowUp", "Home", "End"].includes(event.key)) return
+    const items = Array.from(menuRef.current?.querySelectorAll<HTMLButtonElement>('[role="menuitem"]:not(:disabled)') ?? [])
+    if (!items.length) return
+    event.preventDefault()
+    const current = items.indexOf(document.activeElement as HTMLButtonElement)
+    const next = event.key === "Home" ? 0
+      : event.key === "End" ? items.length - 1
+      : event.key === "ArrowDown" ? (current + 1 + items.length) % items.length
+      : (current - 1 + items.length) % items.length
+    items[next]?.focus()
+  }
 
   async function preview() {
     if (busy) return
@@ -81,7 +151,7 @@ export function MediaManagementMenu({ item, currentContext, onChanged }: Props) 
       const url = await createMediaOpenUrl(item)
       if (!popup) throw new Error("Your browser blocked the private media preview window.")
       popup.location.replace(url)
-      setOpen(false)
+      closeMenu(false)
     } catch (reason) {
       popup?.close()
       setError(reason instanceof Error ? reason.message : "KLEIO could not open this private media source.")
@@ -91,14 +161,14 @@ export function MediaManagementMenu({ item, currentContext, onChanged }: Props) 
   async function detach() {
     if (!currentContext || busy) return
     setBusy(true); setError(""); setMessage("")
-    try { await detachMediaFromContext(item, currentContext); setMessage(t.detachSuccess); setOpen(false); await onChanged?.() }
+    try { await detachMediaFromContext(item, currentContext); setMessage(t.detachSuccess); closeMenu(false); await onChanged?.() }
     catch (reason) { setError(reason instanceof Error ? reason.message : "KLEIO could not remove this media from the current section.") }
     finally { setBusy(false) }
   }
 
   async function prepareDelete() {
     setBusy(true); setError(""); setMessage("")
-    try { setAssessment(await loadMediaDeletionAssessment(item)); setConfirmOpen(true); setOpen(false) }
+    try { setAssessment(await loadMediaDeletionAssessment(item)); setConfirmOpen(true); closeMenu(false) }
     catch (reason) { setError(reason instanceof Error ? reason.message : "KLEIO could not check where this media is being used.") }
     finally { setBusy(false) }
   }
@@ -114,14 +184,38 @@ export function MediaManagementMenu({ item, currentContext, onChanged }: Props) 
     finally { setBusy(false) }
   }
 
+  const popover = open && typeof document !== "undefined" ? createPortal(
+    <div
+      ref={menuRef}
+      id={menuId}
+      role="menu"
+      aria-label={`${t.more}: ${item.title}`}
+      onKeyDown={handleMenuKeyDown}
+      className="fixed z-[140] w-56 rounded-xl border border-[#E1DAF0] bg-white p-1.5 shadow-[0_18px_48px_rgba(54,42,82,0.16)]"
+      style={{ top: menuPosition?.top ?? -9999, left: menuPosition?.left ?? -9999, visibility: menuPosition ? "visible" : "hidden" }}
+    >
+      <button type="button" role="menuitem" className={menuItem} onClick={() => void preview()} disabled={busy}><ExternalLink className="size-4" />{t.preview}</button>
+      {currentContext && <button type="button" role="menuitem" className={menuItem} onClick={() => void detach()} disabled={busy}><Unlink className="size-4" />{t.remove}</button>}
+      <button type="button" role="menuitem" className={`${menuItem} text-red-700 hover:bg-red-50`} onClick={() => void prepareDelete()} disabled={busy}><Trash2 className="size-4" />{t.delete}</button>
+    </div>,
+    document.body,
+  ) : null
+
   return <>
-    <div ref={rootRef} className="relative">
-      <button type="button" aria-haspopup="menu" aria-expanded={open} aria-label={`${t.more}: ${item.title}`} title={t.more} onClick={() => setOpen((value) => !value)} className="grid size-9 place-items-center rounded-lg border border-[#E7E1F7] bg-white text-[#746E80] shadow-[0_3px_10px_rgba(82,64,130,0.04)] transition hover:border-[#CFC4E8] hover:bg-[#F6F3FA] hover:text-[#4F407B] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#A997E8]/20"><MoreHorizontal className="size-4" /></button>
-      {open && <div role="menu" className="absolute right-0 top-10 z-40 w-56 rounded-xl border border-[#E1DAF0] bg-white p-1.5 shadow-[0_18px_48px_rgba(54,42,82,0.16)]">
-        <button type="button" role="menuitem" className={menuItem} onClick={() => void preview()} disabled={busy}><ExternalLink className="size-4" />{t.preview}</button>
-        {currentContext && <button type="button" role="menuitem" className={menuItem} onClick={() => void detach()} disabled={busy}><Unlink className="size-4" />{t.remove}</button>}
-        <button type="button" role="menuitem" className={`${menuItem} text-red-700 hover:bg-red-50`} onClick={() => void prepareDelete()} disabled={busy}><Trash2 className="size-4" />{t.delete}</button>
-      </div>}
+    <div>
+      <button
+        ref={triggerRef}
+        type="button"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-controls={open ? menuId : undefined}
+        aria-label={`${t.more}: ${item.title}`}
+        title={t.more}
+        onClick={() => open ? closeMenu(false) : setOpen(true)}
+        onKeyDown={(event) => { if (event.key === "ArrowDown") { event.preventDefault(); setOpen(true) } }}
+        className="grid size-9 place-items-center rounded-lg border border-[#E7E1F7] bg-white text-[#746E80] shadow-[0_3px_10px_rgba(82,64,130,0.04)] transition hover:border-[#CFC4E8] hover:bg-[#F6F3FA] hover:text-[#4F407B] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#A997E8]/20"
+      ><MoreHorizontal className="size-4" /></button>
+      {popover}
     </div>
 
     {(error || message) && <div className={`fixed bottom-4 left-1/2 z-[150] w-[min(92vw,520px)] -translate-x-1/2 rounded-xl border px-4 py-3 text-sm shadow-lg ${error ? "border-red-200 bg-red-50 text-red-800" : "border-emerald-200 bg-emerald-50 text-emerald-800"}`} role={error ? "alert" : "status"} aria-live="polite">{error || message}</div>}
