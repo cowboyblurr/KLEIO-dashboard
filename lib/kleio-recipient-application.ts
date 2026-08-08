@@ -139,24 +139,38 @@ export async function loadRecipientEvents(packageId: string) {
 
 export async function loadRecipientTrackingSummary(packageId: string): Promise<RecipientTrackingSummary> {
   const supabase = getSupabaseBrowserClient()
-  const [accessResult, openCountResult, firstOpenResult, lastOpenResult, receiptResult, conversationResult] = await Promise.all([
-    supabase
-      .from("application_recipient_access")
-      .select("id, created_at, expires_at")
-      .eq("package_id", packageId)
-      .is("revoked_at", null)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle(),
+  const { data: access, error: accessError } = await supabase
+    .from("application_recipient_access")
+    .select("id, created_at, expires_at")
+    .eq("package_id", packageId)
+    .is("revoked_at", null)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle()
+  if (accessError) throw accessError
+  if (!access) {
+    return {
+      active_access_id: null,
+      access_created_at: null,
+      access_expires_at: null,
+      review_room_opens: 0,
+      first_opened_at: null,
+      last_opened_at: null,
+      receipt_confirmed: false,
+      conversation_started: false,
+    }
+  }
+
+  const [openCountResult, firstOpenResult, lastOpenResult, receiptResult, conversationResult] = await Promise.all([
     supabase
       .from("application_recipient_events")
       .select("id", { count: "exact", head: true })
-      .eq("package_id", packageId)
+      .eq("access_id", access.id)
       .eq("event_type", "application_page_viewed"),
     supabase
       .from("application_recipient_events")
       .select("created_at")
-      .eq("package_id", packageId)
+      .eq("access_id", access.id)
       .eq("event_type", "application_page_viewed")
       .order("created_at", { ascending: true })
       .limit(1)
@@ -164,7 +178,7 @@ export async function loadRecipientTrackingSummary(packageId: string): Promise<R
     supabase
       .from("application_recipient_events")
       .select("created_at")
-      .eq("package_id", packageId)
+      .eq("access_id", access.id)
       .eq("event_type", "application_page_viewed")
       .order("created_at", { ascending: false })
       .limit(1)
@@ -172,22 +186,22 @@ export async function loadRecipientTrackingSummary(packageId: string): Promise<R
     supabase
       .from("application_recipient_events")
       .select("id", { count: "exact", head: true })
-      .eq("package_id", packageId)
+      .eq("access_id", access.id)
       .eq("event_type", "receipt_confirmed"),
     supabase
       .from("application_recipient_events")
       .select("id", { count: "exact", head: true })
-      .eq("package_id", packageId)
+      .eq("access_id", access.id)
       .eq("event_type", "conversation_started"),
   ])
 
-  const failures = [accessResult.error, openCountResult.error, firstOpenResult.error, lastOpenResult.error, receiptResult.error, conversationResult.error].filter(Boolean)
+  const failures = [openCountResult.error, firstOpenResult.error, lastOpenResult.error, receiptResult.error, conversationResult.error].filter(Boolean)
   if (failures.length) throw failures[0]
 
   return {
-    active_access_id: accessResult.data?.id ?? null,
-    access_created_at: accessResult.data?.created_at ?? null,
-    access_expires_at: accessResult.data?.expires_at ?? null,
+    active_access_id: access.id,
+    access_created_at: access.created_at,
+    access_expires_at: access.expires_at,
     review_room_opens: openCountResult.count ?? 0,
     first_opened_at: firstOpenResult.data?.created_at ?? null,
     last_opened_at: lastOpenResult.data?.created_at ?? null,
