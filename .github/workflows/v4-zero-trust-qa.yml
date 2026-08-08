@@ -67,6 +67,8 @@ jobs:
           pnpm audit:analytics-coverage
           pnpm audit:upload-surfaces
           pnpm audit:upload-to-passport
+          pnpm audit:artist-import
+          pnpm audit:universal-media
           pnpm audit:gemini-document-intelligence
           pnpm audit:passport-synthesis-orchestration
 
@@ -96,5 +98,52 @@ jobs:
         with:
           name: v4-zero-trust-runtime-${{ github.run_id }}
           path: qa-artifacts/v4
+          if-no-files-found: warn
+          retention-days: 14
+
+  hydrated-browser:
+    name: fresh hydrated browser + mobile + keyboard
+    needs: authenticated-runtime
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.18.2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Build exact V4 static export
+        run: pnpm build
+      - name: Install isolated browser test runtime
+        run: |
+          pnpm add -D @playwright/test@1.55.0 --lockfile=false
+          pnpm exec playwright install chromium
+      - name: Start exact static build
+        run: |
+          python3 -m http.server 4173 --directory out > /tmp/kleio-v4-browser-server.log 2>&1 &
+          echo $! > /tmp/kleio-v4-browser-server.pid
+          for attempt in $(seq 1 60); do
+            curl --fail --silent http://127.0.0.1:4173/ >/dev/null && exit 0
+            sleep 0.25
+          done
+          cat /tmp/kleio-v4-browser-server.log
+          exit 1
+      - name: Authenticated rendered artist/recipient stress
+        env:
+          V4_BROWSER_BASE_URL: http://127.0.0.1:4173
+        run: pnpm exec playwright test tests/v4-hydrated-browser.spec.mjs --workers=1 --reporter=line
+      - name: Upload V4 browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v4-hydrated-browser-${{ github.run_id }}
+          path: |
+            qa-artifacts/v4-browser
+            /tmp/kleio-v4-browser-server.log
+            test-results
           if-no-files-found: warn
           retention-days: 14
