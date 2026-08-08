@@ -1,0 +1,264 @@
+name: Repair artist V6 QA findings v2
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  repair-and-verify:
+    if: github.head_ref == 'fix/artist-v6-qa-20260808'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      GITHUB_ACTIONS: true
+      NEXT_PUBLIC_BASE_PATH: /KLEIO-dashboard
+      NEXT_PUBLIC_SITE_URL: https://cowboyblurr.github.io/KLEIO-dashboard
+      NEXT_PUBLIC_SUPABASE_URL: https://trekynurdgxgtaaqqtyq.supabase.co
+      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_XdYXvd0fQm3IJKxNrFXgUQ_M4RgDj1M
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
+      - name: Apply evidence-backed product repairs
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          def replace(path, old, new, count=1):
+              p = Path(path)
+              text = p.read_text()
+              found = text.count(old)
+              if found != count:
+                  raise SystemExit(f"{path}: expected {count} match(es), found {found} for {old[:80]!r}")
+              p.write_text(text.replace(old, new, count))
+
+          replace(
+              "components/kleio/application-composer-workspace.tsx",
+              'import { WorkspacePageHeader } from "@/components/kleio/workspace-page-header"',
+              'import { WorkspacePageHeader } from "@/components/kleio/workspace-page-header"\nimport { GmailDeliveryControl } from "@/components/kleio/gmail-delivery-control"',
+          )
+          replace(
+              "components/kleio/application-composer-workspace.tsx",
+              '<button type="button" className={primary} disabled={busy || !emailPreview.to} onClick={() => void openEmailClient()}><Mail className="size-4" />Open email to send</button>',
+              '<GmailDeliveryControl submissionVersionId={latestVersion.id} opportunityTitle={item.title} recipient={emailPreview.to} disabled={busy || !emailPreview.to} onFallback={openEmailClient} />',
+          )
+          replace(
+              "components/kleio/gmail-delivery-control.tsx",
+              "Gmail's safe size limit",
+              "Gmail&apos;s safe size limit",
+          )
+          replace(
+              "components/kleio/artist-media-library.tsx",
+              'if (status === "ready") return "Open Media Assist"',
+              'if (status === "ready") return "Analysis ready · Open Media Assist"',
+          )
+          replace(
+              "components/kleio/media-intelligence-sheet.tsx",
+              'Media Assist stays private. It can organize observations and draft language, but it does not score the work, decide its meaning, or change your approved Passport without you.',
+              'Media Assist stays private. Confidence is an analysis aid, not verification. It can organize observations and draft language, but it does not score the work, decide its meaning, or change your approved Passport without you.',
+          )
+          replace(
+              "lib/kleio-persistent-opportunity-directory.ts",
+              'supabase.rpc("search_opportunities_v2", {',
+              'supabase.rpc("search_my_opportunities_v3", {',
+          )
+          replace(
+              "components/kleio/recipient-application-review.tsx",
+              'focusable[0]?.focus() ?? activeDialog.focus()',
+              'if (focusable[0]) focusable[0].focus()\n      else activeDialog.focus()',
+          )
+
+          replace(
+              "lib/kleio-application-delivery.ts",
+              'import { getSupabaseBrowserClient } from "@/lib/kleio-supabase"',
+              'import { getSupabaseBrowserClient } from "@/lib/kleio-supabase"\nimport { loadGmailDeliveryState } from "@/lib/kleio-gmail-delivery"',
+          )
+          replace(
+              "lib/kleio-application-delivery.ts",
+              '/**\n * Prepare the beta-safe email handoff from one immutable submission version.',
+              '''async function assertManualFallbackSafe(submissionVersionId: string) {
+  const gmailDelivery = await loadGmailDeliveryState(submissionVersionId)
+  if (!gmailDelivery) return
+
+  if (["provider_sending", "provider_unknown"].includes(gmailDelivery.state)) {
+    throw new Error("Check Gmail Sent before doing anything else. KLEIO cannot prepare a manual fallback while the Gmail provider state is unknown or still in flight.")
+  }
+  if (["provider_accepted", "artist_reported_sent", "review_room_opened", "receipt_confirmed", "conversation_started"].includes(gmailDelivery.state)) {
+    throw new Error("Gmail already accepted or advanced this finalized application. KLEIO blocked a duplicate email handoff.")
+  }
+}
+
+/**
+ * Prepare the beta-safe email handoff from one immutable submission version.''',
+          )
+          replace(
+              "lib/kleio-application-delivery.ts",
+              'if (!input.recipient.trim()) throw new Error("A verified submission email is required before preparing delivery.")\n\n  let access:',
+              'if (!input.recipient.trim()) throw new Error("A verified submission email is required before preparing delivery.")\n  await assertManualFallbackSafe(input.submissionVersionId)\n\n  let access:',
+          )
+
+          Path("lib/kleio-public-opportunity-directory.ts").write_text(r'''import { getSupabaseBrowserClient } from "@/lib/kleio-supabase"
+          import type { PersistentOpportunityFilters } from "@/lib/kleio-persistent-opportunity-directory"
+          import {
+            type OpportunityDirectoryItem,
+            type OpportunityEligibilityRule,
+            type OpportunityRecord,
+            type OpportunityRequirement,
+            type OpportunitySourceRecord,
+          } from "@/lib/kleio-opportunity-data"
+          import {
+            localizeOpportunity,
+            type OpportunityTranslationRecord,
+          } from "@/lib/kleio-opportunity-localization"
+          import type { OpportunityDirectoryDataWithSources } from "@/lib/kleio-opportunity-presentation"
+
+          type PublicOpportunityPayload = {
+            items?: OpportunityRecord[]
+            sources?: OpportunitySourceRecord[]
+            rules?: OpportunityEligibilityRule[]
+            requirements?: OpportunityRequirement[]
+            translations?: OpportunityTranslationRecord[]
+          }
+
+          function relationMap<T extends { id: string }>(rows: T[] | null | undefined) {
+            return new Map((rows ?? []).map((row) => [row.id, row]))
+          }
+
+          function selectedInterfaceLocale(): "en" | "es" {
+            if (typeof window === "undefined") return "en"
+            return window.localStorage.getItem("kleio_locale") === "es" ? "es" : "en"
+          }
+
+          export async function loadPublicOpportunityDirectory(
+            filters: PersistentOpportunityFilters = {},
+          ): Promise<OpportunityDirectoryDataWithSources> {
+            const supabase = getSupabaseBrowserClient()
+            const { data, error } = await supabase.rpc("search_public_opportunity_directory_v1", {
+              search_query: filters.query?.trim() || null,
+              opportunity_types: filters.opportunityTypes?.length ? filters.opportunityTypes : null,
+              source_slugs: filters.sourceSlugs?.length ? filters.sourceSlugs : null,
+              applicant_types: filters.applicantTypes?.length ? filters.applicantTypes : null,
+              eligible_country: filters.eligibleCountry?.trim() || null,
+              participation_formats: filters.participationFormats?.length ? filters.participationFormats : null,
+              discipline_filters: filters.disciplines?.length ? filters.disciplines : null,
+              career_stage_filters: filters.careerStages?.length ? filters.careerStages : null,
+              deadline_from: filters.deadlineFrom || null,
+              deadline_to: filters.deadlineTo || null,
+              minimum_funding: filters.minimumFunding ?? null,
+              funding_known_only: Boolean(filters.fundingKnownOnly),
+              structured_requirements_only: Boolean(filters.structuredRequirementsOnly),
+              no_fee_only: Boolean(filters.noFeeOnly),
+              external_only: Boolean(filters.externalOnly),
+              limit_count: filters.limit ?? 50,
+              offset_count: filters.offset ?? 0,
+            })
+            if (error) throw error
+
+            const payload = (data ?? {}) as PublicOpportunityPayload
+            const opportunities = payload.items ?? []
+            const sources = payload.sources ?? []
+            const rules = payload.rules ?? []
+            const requirements = payload.requirements ?? []
+            const translations = payload.translations ?? []
+            const sourceById = relationMap(sources)
+            const rulesByOpportunity = new Map<string, OpportunityEligibilityRule[]>()
+            const requirementsByOpportunity = new Map<string, OpportunityRequirement[]>()
+
+            for (const rule of rules) {
+              const current = rulesByOpportunity.get(rule.opportunity_id) ?? []
+              current.push(rule)
+              rulesByOpportunity.set(rule.opportunity_id, current)
+            }
+            for (const requirement of requirements) {
+              const current = requirementsByOpportunity.get(requirement.opportunity_id) ?? []
+              current.push(requirement)
+              requirementsByOpportunity.set(requirement.opportunity_id, current)
+            }
+
+            const directoryItems: OpportunityDirectoryItem[] = opportunities.map((opportunity) => ({
+              ...opportunity,
+              source: sourceById.get(opportunity.source_id) ?? null,
+              rules: rulesByOpportunity.get(opportunity.id) ?? [],
+              requirements: requirementsByOpportunity.get(opportunity.id) ?? [],
+              internal_call: null,
+              saved: false,
+            }))
+            const locale = selectedInterfaceLocale()
+            return {
+              passport: null,
+              portfolioWorks: [],
+              sources,
+              items: directoryItems.map((item) => localizeOpportunity(
+                item as OpportunityDirectoryItem & { source_language?: string },
+                locale,
+                translations,
+              )),
+            }
+          }
+          '''.replace("\n          ", "\n").lstrip())
+
+          replace(
+              "scripts/audit-opportunity-search.mjs",
+              'const { data, error } = await supabase.rpc("search_opportunities_v2", {',
+              'const { data, error } = await supabase.rpc("search_public_opportunity_directory_v1", {',
+          )
+          replace(
+              "scripts/audit-opportunity-search.mjs",
+              'return data ?? []',
+              'return Array.isArray(data?.items) ? data.items : []',
+          )
+          PY
+
+      - name: Targeted regression gates
+        run: |
+          pnpm audit:artist-beta-convenience
+          pnpm audit:artist-import
+          pnpm audit:upload-to-passport
+          pnpm audit:opportunity-search
+          pnpm audit:application-composer
+          node scripts/audit-gmail-send-beta.mjs
+          pnpm audit:auth-redirect
+          pnpm audit:auth-isolation
+          pnpm test:artist-workflow-services
+          pnpm typecheck
+          pnpm lint
+
+      - name: Build before route audit
+        run: |
+          pnpm build
+          pnpm audit:navigation
+          pnpm audit:user-copy
+          pnpm audit:visual-convenience
+
+      - name: Commit verified repairs
+        run: |
+          if git diff --quiet; then
+            echo "Repairs are already present; nothing to commit."
+            exit 0
+          fi
+          git config user.name "KLEIO QA Repair"
+          git config user.email "actions@users.noreply.github.com"
+          git add components/kleio/application-composer-workspace.tsx \
+                  components/kleio/gmail-delivery-control.tsx \
+                  components/kleio/artist-media-library.tsx \
+                  components/kleio/media-intelligence-sheet.tsx \
+                  components/kleio/recipient-application-review.tsx \
+                  lib/kleio-application-delivery.ts \
+                  lib/kleio-persistent-opportunity-directory.ts \
+                  lib/kleio-public-opportunity-directory.ts \
+                  scripts/audit-opportunity-search.mjs
+          git commit -m "Fix artist V6 QA findings"
+          git push origin HEAD:${{ github.head_ref }}
