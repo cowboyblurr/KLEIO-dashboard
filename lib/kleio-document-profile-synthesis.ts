@@ -1,3 +1,4 @@
+import { normalizeKleioEdgeFunctionError } from "@/lib/kleio-edge-function-error"
 import { getSupabaseBrowserClient, loadKleioAccount } from "@/lib/kleio-supabase"
 
 export type SynthesisClassification = "EXTRACTED_FACT" | "SUPPORTED_SYNTHESIS" | "INTERPRETIVE_DRAFT"
@@ -204,10 +205,14 @@ export async function synthesizeDocumentProfile(sourceId: string, options: { for
   await requireArtist()
   const supabase = getSupabaseBrowserClient()
   const { data, error } = await supabase.functions.invoke("synthesize-artist-source-profile-v2", { body: { sourceId, force: options.force === true } })
-  if (error) throw new Error(error.message || "KLEIO could not build Passport suggestions from this PDF.")
-  if (data?.error) throw new Error(String(data.message || data.error))
+  if (error) throw await normalizeKleioEdgeFunctionError(error, "Media Assist could not build Passport suggestions from this PDF. Your source notes are still available.")
+  if (data?.error) {
+    const requestError = new Error(String(data.message || "Media Assist could not build Passport suggestions from this PDF. Your source notes are still available."))
+    requestError.name = String(data.error)
+    throw requestError
+  }
   const parsed = parseDocumentProfileSynthesis(data?.synthesis)
-  if (!parsed) throw new Error("KLEIO completed the profile pass but did not return usable Passport suggestions.")
+  if (!parsed) throw new Error("Media Assist completed the profile pass but did not return usable Passport suggestions. Your source notes are still available.")
   return parsed
 }
 
