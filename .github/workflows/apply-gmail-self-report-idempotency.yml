@@ -1,0 +1,55 @@
+name: Apply Gmail Self-Report Idempotency Patch
+
+on:
+  push:
+    branches:
+      - fix/gmail-self-report-idempotency-20260808
+    paths:
+      - ".github/workflows/apply-gmail-self-report-idempotency.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/gmail-self-report-idempotency-20260808
+          fetch-depth: 0
+      - name: Make artist-reported Gmail Sent terminal for resend claims
+        shell: python
+        run: |
+          from pathlib import Path
+          migration = Path("supabase/migrations/20260808170000_gmail_send_only_beta.sql")
+          s = migration.read_text()
+          old = "if delivery_row.state in ('provider_accepted','review_room_opened','receipt_confirmed','conversation_started') then"
+          new = "if delivery_row.state in ('provider_accepted','artist_reported_sent','review_room_opened','receipt_confirmed','conversation_started') then"
+          if old not in s:
+              raise SystemExit("terminal Gmail claim state anchor missing")
+          s = s.replace(old, new, 1)
+          migration.write_text(s)
+
+          audit = Path("scripts/audit-gmail-send-beta.mjs")
+          a = audit.read_text()
+          anchor = '''must(migration, /provider_status_unknown/, "Ambiguous provider result must block blind provider retry.")
+'''
+          add = anchor + '''must(migration, /provider_accepted','artist_reported_sent','review_room_opened','receipt_confirmed','conversation_started'[\\s\\S]*already_sent/, "Artist-confirmed Gmail Sent evidence must be terminal at the service-level claim boundary, not only in the UI.")
+'''
+          if anchor not in a:
+              raise SystemExit("Gmail claim audit anchor missing")
+          a = a.replace(anchor, add, 1)
+          audit.write_text(a)
+      - name: Validate focused Gmail contract
+        run: node scripts/audit-gmail-send-beta.mjs
+      - name: Remove temporary workflow and commit hotfix
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm .github/workflows/apply-gmail-self-report-idempotency.yml
+          git config user.name "KLEIO QA Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add supabase/migrations/20260808170000_gmail_send_only_beta.sql scripts/audit-gmail-send-beta.mjs .github/workflows/apply-gmail-self-report-idempotency.yml
+          git commit -m "Block Gmail resend after artist confirms Sent"
+          git push origin HEAD:fix/gmail-self-report-idempotency-20260808
