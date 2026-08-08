@@ -17,6 +17,7 @@ const media = read("lib/kleio-media-intelligence.ts")
 const sheet = read("components/kleio/media-intelligence-sheet.tsx")
 const regression = read("tests/passport-synthesis-orchestration.test.mjs")
 const usageMigration = read("supabase/migrations/20260808132600_add_document_profile_synthesis_usage_action.sql")
+const geminiAdapter = read("supabase/functions/_shared/gemini-document-intelligence.ts")
 
 requireText(engine, /UNTRUSTED SOURCE DATA/, "Uploaded PDFs must be treated as untrusted data, never model instructions.")
 requireText(engine, /evaluatePassportCoverage/, "Passport synthesis must run deterministic coverage QA.")
@@ -50,6 +51,9 @@ requireText(sheet, /remains a suggestion until you edit or approve it/, "The UI 
 forbidText(sheet, /AI confidence \{confidence\}%|Overall review confidence|review confidence/i, "Media Assist must not present model-style creative confidence percentages to the artist.")
 
 requireText(usageMigration, /synthesize_document_profile/, "The production usage constraint must permit document-profile synthesis diagnostics.")
+requireText(geminiAdapter, /key === "properties"[\s\S]*Object\.entries\(item\)[\s\S]*supportedJsonSchema\(schema\)/, "Gemini schema sanitization must preserve named object properties while filtering each nested schema.")
+requireText(geminiAdapter, /mimeType:\s*"APPLICATION_JSON"/, "Gemini 3 structured output must use the current TextResponseFormat MIME enum.")
+forbidText(geminiAdapter, /responseFormat:[\s\S]{0,120}mimeType:\s*"application\/json"/, "Gemini 3 responseFormat must not send the legacy MIME string rejected by the current API.")
 requireText(regression, /Photography/, "Regression suite must cover the observed photography evidence failure pattern.")
 requireText(regression, /mediums.*disciplines|disciplines.*mediums/s, "Regression suite must fail when supported mediums\/disciplines disappear.")
 requireText(regression, /sparse evidence/, "Regression suite must verify that genuinely unsupported fields remain artist-input states.")

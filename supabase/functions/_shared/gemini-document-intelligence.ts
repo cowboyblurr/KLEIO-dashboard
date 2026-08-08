@@ -110,7 +110,7 @@ function base64(bytes: Uint8Array) {
   return btoa(binary)
 }
 
-function supportedJsonSchema(value: unknown): unknown {
+export function supportedJsonSchema(value: unknown): unknown {
   if (Array.isArray(value)) return value.map(supportedJsonSchema)
   if (!object(value)) return value
   const supported = new Set(["type", "format", "title", "description", "enum", "items", "properties", "required", "propertyOrdering"])
@@ -119,6 +119,12 @@ function supportedJsonSchema(value: unknown): unknown {
     if (!supported.has(key)) continue
     if (key === "type" && Array.isArray(item)) {
       next.type = item.find((candidate) => candidate !== "null") || "string"
+      continue
+    }
+    if (key === "properties" && object(item)) {
+      next.properties = Object.fromEntries(
+        Object.entries(item).map(([name, schema]) => [name, supportedJsonSchema(schema)]),
+      )
       continue
     }
     next[key] = supportedJsonSchema(item)
@@ -156,7 +162,7 @@ export async function runGeminiStructured<T>(input: RunGeminiInput): Promise<Pro
     parts.push({ text: input.prompt })
     const schema = supportedJsonSchema(input.responseSchema)
     const generationConfig = input.model.startsWith("gemini-3")
-      ? { responseFormat: { text: { mimeType: "application/json", schema } }, maxOutputTokens: input.maxOutputTokens ?? 32_768 }
+      ? { responseFormat: { text: { mimeType: "APPLICATION_JSON", schema } }, maxOutputTokens: input.maxOutputTokens ?? 32_768 }
       : { responseMimeType: "application/json", responseJsonSchema: schema, maxOutputTokens: input.maxOutputTokens ?? 32_768 }
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(input.model)}:generateContent`, {
       method: "POST",
