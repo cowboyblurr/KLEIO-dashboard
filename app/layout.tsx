@@ -1,5 +1,4 @@
 import "@/lib/kleio-content-integrity"
-import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
 import { Geist, Geist_Mono, Playfair_Display } from 'next/font/google'
 import { DemoReturnControl } from '@/components/kleio/demo-return-control'
@@ -66,7 +65,6 @@ export default function RootLayout({
           {children}
           <DemoReturnControl />
         </KleioLocaleProvider>
-        {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
     </html>
   )
