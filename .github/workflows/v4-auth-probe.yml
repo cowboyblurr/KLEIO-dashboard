@@ -1,0 +1,61 @@
+name: V4 Auth Probe
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/v4-auth-probe.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  NEXT_PUBLIC_SUPABASE_URL: https://trekynurdgxgtaaqqtyq.supabase.co
+  NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_XdYXvd0fQm3IJKxNrFXgUQ_M4RgDj1M
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.18.2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Probe normal Supabase signup contract
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE'
+          import crypto from 'node:crypto'
+          import { createClient } from '@supabase/supabase-js'
+          const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+          const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
+          const run = process.env.GITHUB_RUN_ID
+          const client = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } })
+          const email = `kleio-v4-authprobe-${run}@kleioarthouse.com`
+          const password = `V4!Aa1-${crypto.createHash('sha256').update(run + ':auth-probe').digest('hex').slice(0, 26)}`
+          const created = await client.auth.signUp({
+            email,
+            password,
+            options: { data: { role: 'artist', display_name: 'KLEIO V4 Auth Probe', qa_v4: true, qa_run_id: run, qa_probe: true } },
+          })
+          const out = {
+            email,
+            has_user: Boolean(created.data.user?.id),
+            user_id: created.data.user?.id || null,
+            has_session: Boolean(created.data.session),
+            identities: Array.isArray(created.data.user?.identities) ? created.data.user.identities.length : null,
+            error_name: created.error?.name || null,
+            error_code: created.error?.code || null,
+            error_status: created.error?.status || null,
+            error_message: created.error?.message || null,
+          }
+          console.log(JSON.stringify(out, null, 2))
+          if (created.error || !created.data.user?.id) process.exitCode = 1
+          NODE
