@@ -6,7 +6,7 @@ import {
 } from "@/lib/kleio-recipient-application"
 
 export type ApplicationDeliveryChannel = "gmail" | "email_client" | "external_portal" | "native_kleio" | "download_package"
-export type ApplicationDeliveryState = "prepared" | "handoff_opened" | "provider_accepted" | "artist_reported_sent" | "review_room_opened" | "receipt_confirmed" | "conversation_started" | "failed" | "cancelled"
+export type ApplicationDeliveryState = "prepared" | "handoff_prepared" | "provider_accepted" | "artist_reported_sent" | "review_room_opened" | "receipt_confirmed" | "conversation_started" | "failed" | "cancelled"
 export type ApplicationDeliveryEvidence = "self_reported" | "system_observed" | "recipient_confirmed" | "provider_confirmed"
 
 export async function recordApplicationDelivery(input: {
@@ -75,7 +75,7 @@ export async function prepareTrackedEmailClientHandoff(input: {
     channel: "email_client",
     destination: input.recipient.trim(),
     recipientAccessId: access.access_id,
-    state: "handoff_opened",
+    state: "handoff_prepared",
     evidenceLevel: "system_observed",
     provider: "default_email_client",
     providerReference: access.access_id,
