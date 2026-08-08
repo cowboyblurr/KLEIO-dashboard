@@ -1,0 +1,123 @@
+name: Recipient Review Live Smoke
+
+on:
+  workflow_run:
+    workflows: ["Deploy KLEIO Dashboard to GitHub Pages"]
+    types: [completed]
+  pull_request:
+    paths:
+      - ".github/workflows/recipient-live-smoke.yml"
+      - "scripts/live-recipient-browser-smoke.mjs"
+      - "scripts/audit-recipient-live-smoke-contract.mjs"
+      - "app/application-review/**"
+      - "components/kleio/recipient-application-review.tsx"
+      - "components/kleio/recipient-conversation-return.tsx"
+      - "components/kleio/application-recipient-loop-panel.tsx"
+      - "lib/kleio-recipient-application.ts"
+      - "lib/kleio-recipient-conversation-return.ts"
+      - "supabase/functions/recipient-application-review/**"
+      - "supabase/functions/application-conversation/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: recipient-live-smoke-${{ github.event.workflow_run.head_sha || github.sha }}
+  cancel-in-progress: true
+
+jobs:
+  live-smoke:
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      SITE_URL: https://www.kleioarthouse.com
+      RECIPIENT_FN: https://trekynurdgxgtaaqqtyq.supabase.co/functions/v1/recipient-application-review
+      CONVERSATION_FN: https://trekynurdgxgtaaqqtyq.supabase.co/functions/v1/application-conversation
+    steps:
+      - name: Checkout QA scripts
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Verify live Review Room routes
+        shell: bash
+        run: |
+          set -euo pipefail
+          check_route() {
+            route="$1"
+            required="$2"
+            body="$(mktemp)"
+            status="$(curl --silent --show-error --location --output "$body" --write-out '%{http_code}' --max-time 30 "${SITE_URL}${route}?live_smoke=${GITHUB_RUN_ID}")"
+            test "$status" = "200"
+            grep -Fq "$required" "$body"
+            ! grep -Fq "localhost:3000" "$body"
+            echo "Verified ${route} (HTTP ${status})."
+          }
+          check_route "/application-review/demo/" "KLEIO — Recipient Review Room Demo"
+          check_route "/application-review/" "KLEIO — Secure Submission Review"
+          check_route "/application-review/conversation/" "KLEIO — Application Conversation"
+
+      - name: Verify live Review Room assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          html="$(mktemp)"
+          curl --silent --show-error --location --fail --max-time 30 "${SITE_URL}/application-review/demo/?asset_smoke=${GITHUB_RUN_ID}" > "$html"
+          css_count=0
+          while IFS= read -r href; do
+            [ -n "$href" ] || continue
+            css_count=$((css_count + 1))
+            test "$(curl --silent --show-error --location --output /dev/null --write-out '%{http_code}' --max-time 30 "${SITE_URL}${href}?asset_smoke=${GITHUB_RUN_ID}")" = "200"
+          done < <(grep -oE 'href="/_next/static/[^"]+\.css"' "$html" | cut -d'"' -f2 | sort -u)
+          js_count=0
+          while IFS= read -r src; do
+            [ -n "$src" ] || continue
+            js_count=$((js_count + 1))
+            test "$(curl --silent --show-error --location --output /dev/null --write-out '%{http_code}' --max-time 30 "${SITE_URL}${src}?asset_smoke=${GITHUB_RUN_ID}")" = "200"
+          done < <(grep -oE 'src="/_next/static/[^"]+\.js"' "$html" | cut -d'"' -f2 | sort -u)
+          test "$css_count" -gt 0
+          test "$js_count" -gt 0
+          echo "Verified ${css_count} Review Room stylesheet(s) and ${js_count} JavaScript asset(s)."
+
+      - name: Verify recipient Edge Function live boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          body="$(mktemp)"
+          invalid_token="$(printf '0%.0s' $(seq 1 64))"
+          status="$(curl --silent --show-error --output "$body" --write-out '%{http_code}' --max-time 30 -H 'content-type: application/json' --data "{\"action\":\"view\",\"token\":\"${invalid_token}\"}" "$RECIPIENT_FN")"
+          test "$status" = "404"
+          grep -Fq '"invalid_token"' "$body"
+          echo "Verified live recipient function rejects unknown bearer tokens with the expected boundary."
+
+      - name: Verify conversation Edge Function requires auth
+        shell: bash
+        run: |
+          set -euo pipefail
+          body="$(mktemp)"
+          status="$(curl --silent --show-error --output "$body" --write-out '%{http_code}' --max-time 30 -H 'content-type: application/json' --data '{"action":"list_conversations"}' "$CONVERSATION_FN")"
+          test "$status" = "401"
+          echo "Verified live conversation function refuses unauthenticated access."
+
+      - name: Run live browser interaction smoke
+        shell: bash
+        run: |
+          set -euo pipefail
+          chrome="$(command -v google-chrome || command -v chromium || command -v chromium-browser || true)"
+          test -n "$chrome"
+          "$chrome" --version
+          CHROME_BIN="$chrome" node scripts/live-recipient-browser-smoke.mjs
+
+      - name: Upload live QA screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: recipient-live-smoke-${{ github.run_id }}
+          path: qa-artifacts/recipient-live/
+          if-no-files-found: ignore
+          retention-days: 7
