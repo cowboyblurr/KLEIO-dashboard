@@ -123,17 +123,18 @@ async function screenshot(client, name) {
   writeFileSync(path.join(artifactDir, name), Buffer.from(data, "base64"))
 }
 
-function expectedRecipient404Count(events) {
-  return events.filter((event) => {
-    if (event.method !== "Network.responseReceived") return false
+function expectedRecipient404RequestIds(events) {
+  return new Set(events.flatMap((event) => {
+    if (event.method !== "Network.responseReceived") return []
     const response = event.params?.response
-    return Number(response?.status) === 404 && String(response?.url || "").includes("/functions/v1/recipient-application-review")
-  }).length
+    const isExpected = Number(response?.status) === 404 && String(response?.url || "").includes("/functions/v1/recipient-application-review")
+    return isExpected && event.params?.requestId ? [String(event.params.requestId)] : []
+  }))
 }
 
 function actionableFailures(events, { allowExpectedRecipient404 = false } = {}) {
   const failures = []
-  let expected404LogsRemaining = allowExpectedRecipient404 ? expectedRecipient404Count(events) : 0
+  const expected404RequestIds = allowExpectedRecipient404 ? expectedRecipient404RequestIds(events) : new Set()
 
   for (const event of events) {
     if (event.method === "Runtime.exceptionThrown") {
@@ -142,13 +143,12 @@ function actionableFailures(events, { allowExpectedRecipient404 = false } = {}) 
     }
 
     if (event.method === "Log.entryAdded" && event.params?.entry?.level === "error") {
-      const text = String(event.params.entry.text || "")
+      const entry = event.params.entry
+      const text = String(entry.text || "")
       const generic404 = /Failed to load resource: the server responded with a status of 404/i.test(text)
-      if (generic404 && expected404LogsRemaining > 0) {
-        expected404LogsRemaining -= 1
-        continue
-      }
-      failures.push(`console error: ${text}`)
+      const requestId = entry.networkRequestId ? String(entry.networkRequestId) : ""
+      if (generic404 && requestId && expected404RequestIds.has(requestId)) continue
+      failures.push(`console error: ${text}${requestId ? ` [request ${requestId}]` : ""}`)
       continue
     }
 
@@ -161,7 +161,14 @@ function actionableFailures(events, { allowExpectedRecipient404 = false } = {}) 
 
 async function assertNoFailures(client, label, options = {}) {
   const failures = actionableFailures(client.events, options)
-  if (failures.length) throw new Error(`${label} produced browser failures:\n${failures.slice(0, 12).join("\n")}`)
+  if (failures.length) {
+    const response404s = client.events.flatMap((event) => {
+      if (event.method !== "Network.responseReceived" || Number(event.params?.response?.status) !== 404) return []
+      return [`${event.params?.requestId || "no-request-id"}: ${event.params?.response?.url || "unknown-url"}`]
+    })
+    const diagnostics = response404s.length ? `\nObserved HTTP 404 responses:\n${response404s.join("\n")}` : ""
+    throw new Error(`${label} produced browser failures:\n${failures.slice(0, 12).join("\n")}${diagnostics}`)
+  }
 }
 
 async function cleanupChrome() {
@@ -193,7 +200,7 @@ async function run() {
   const invalidToken = "0".repeat(64)
   await navigate(client, `${SITE_URL}/application-review/?token=${invalidToken}&cdp_smoke=${Date.now()}`)
   await waitForText(client, "This application link is invalid or no longer available.", 20000)
-  if (expectedRecipient404Count(client.events) < 1) throw new Error("Invalid-token Review Room did not produce the expected recipient Edge Function 404 response.")
+  if (expectedRecipient404RequestIds(client.events).size < 1) throw new Error("Invalid-token Review Room did not produce the expected recipient Edge Function 404 response.")
   await screenshot(client, "invalid-token.png")
   await assertNoFailures(client, "Secure Review Room invalid-token state", { allowExpectedRecipient404: true })
   console.log("PASS secure Review Room hydrates and fails closed for an unknown token.")
