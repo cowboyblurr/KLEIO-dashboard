@@ -98,6 +98,51 @@ jobs:
           if-no-files-found: warn
           retention-days: 14
 
+  public-browser:
+    name: fresh public signup + recipient mobile browser
+    needs: repository-health
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.18.2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Build exact V4 static export
+        run: pnpm build
+      - name: Install isolated Chromium
+        run: |
+          pnpm add -D @playwright/test@1.55.0 --lockfile=false
+          pnpm exec playwright install chromium
+      - name: Start exact static build
+        run: |
+          python3 -m http.server 4173 --directory out > /tmp/kleio-v4-public-browser.log 2>&1 &
+          for attempt in $(seq 1 60); do
+            curl --fail --silent http://127.0.0.1:4173/ >/dev/null && exit 0
+            sleep 0.25
+          done
+          cat /tmp/kleio-v4-public-browser.log
+          exit 1
+      - name: Public signup/recipient responsive and error-quality stress
+        env:
+          V4_BROWSER_BASE_URL: http://127.0.0.1:4173
+        run: pnpm exec playwright test tests/v4-public-browser.spec.mjs --workers=1 --reporter=line
+      - name: Upload public browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v4-public-browser-${{ github.run_id }}
+          path: |
+            test-results
+            /tmp/kleio-v4-public-browser.log
+          if-no-files-found: warn
+          retention-days: 14
+
   authenticated-runtime:
     name: fresh authenticated runtime + chaos
     needs: repository-health
