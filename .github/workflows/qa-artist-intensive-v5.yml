@@ -1,0 +1,95 @@
+name: QA-only Artist Intensive V5
+
+on:
+  push:
+    branches:
+      - qa/artist-intensive-v5-20260808
+    paths:
+      - ".github/workflows/qa-artist-intensive-v5.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  artist-stack:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
+      - name: Artist workflow service simulations
+        run: pnpm test:artist-workflow-services
+      - name: Passport synthesis orchestration tests
+        run: pnpm test:passport-synthesis-orchestration
+      - name: Gemini document intelligence tests
+        run: pnpm test:gemini-document-intelligence
+
+      - name: Artist beta readiness
+        run: pnpm audit:artist-beta-readiness
+      - name: Artist beta convenience simulations
+        run: pnpm audit:artist-beta-convenience
+      - name: Requirement channel separation
+        run: pnpm audit:artist-requirement-channels
+      - name: Requirement file compatibility
+        run: pnpm audit:artist-requirement-file-types
+      - name: Upload surfaces
+        run: pnpm audit:upload-surfaces
+      - name: Shared media controls and Media Assist
+        run: pnpm audit:artist-media-control
+      - name: Universal media import
+        run: pnpm audit:universal-media
+      - name: Artist Import Studio
+        run: pnpm audit:artist-import
+      - name: Upload to Passport intelligence
+        run: pnpm audit:upload-to-passport
+      - name: Document intelligence beta
+        run: pnpm audit:document-intelligence
+      - name: Gemini document intelligence contract
+        run: pnpm audit:gemini-document-intelligence
+      - name: Passport synthesis contract
+        run: pnpm audit:passport-synthesis-orchestration
+
+      - name: Opportunity search
+        run: pnpm audit:opportunity-search
+      - name: Opportunity-first acquisition
+        run: pnpm audit:opportunity-first
+      - name: Application composer lock
+        run: pnpm audit:application-composer
+      - name: Recipient review and conversation loop
+        run: pnpm audit:artist-recipient-loop
+      - name: Gmail send-only contract
+        run: node scripts/audit-gmail-send-beta.mjs
+      - name: Immutable delivery lock
+        run: node scripts/audit-submission-delivery-lock.mjs
+      - name: Synthetic reset integrity
+        run: node scripts/audit-synthetic-application-reset.mjs
+
+      - name: Auth redirects
+        run: pnpm audit:auth-redirect
+      - name: Auth and role isolation
+        run: pnpm audit:auth-isolation
+      - name: Navigation
+        run: pnpm audit:navigation
+      - name: Guidance hierarchy
+        run: pnpm audit:guidance
+      - name: User-facing copy
+        run: pnpm audit:user-copy
+      - name: Visual convenience
+        run: pnpm audit:visual-convenience
+      - name: Analytics privacy
+        run: pnpm audit:analytics-privacy
+
+      - name: TypeScript
+        run: pnpm typecheck
+      - name: Lint
+        run: pnpm lint
+      - name: Static production build
+        run: pnpm build
