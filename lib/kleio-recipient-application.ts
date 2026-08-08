@@ -127,12 +127,19 @@ export async function recordRecipientEvent(
   })
 }
 
-export async function prepareRecipientQuestion(token: string, email: string, body: string) {
+export async function prepareRecipientQuestion(
+  token: string,
+  email: string,
+  body: string,
+  identity: { displayName?: string; organizationName?: string } = {},
+) {
   return invoke<{ draft_token: string; expires_at: string; email: string }>({
     action: "prepare_question",
     token,
     email,
     body,
+    display_name: identity.displayName ?? "",
+    organization_name: identity.organizationName ?? "",
   })
 }
 
