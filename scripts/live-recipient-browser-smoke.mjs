@@ -123,18 +123,44 @@ async function screenshot(client, name) {
   writeFileSync(path.join(artifactDir, name), Buffer.from(data, "base64"))
 }
 
-function actionableFailures(events) {
+function expectedRecipient404Count(events) {
+  return events.filter((event) => {
+    if (event.method !== "Network.responseReceived") return false
+    const response = event.params?.response
+    return Number(response?.status) === 404 && String(response?.url || "").includes("/functions/v1/recipient-application-review")
+  }).length
+}
+
+function actionableFailures(events, { allowExpectedRecipient404 = false } = {}) {
   const failures = []
+  let expected404LogsRemaining = allowExpectedRecipient404 ? expectedRecipient404Count(events) : 0
+
   for (const event of events) {
-    if (event.method === "Runtime.exceptionThrown") failures.push(`runtime exception: ${event.params?.exceptionDetails?.text || "unknown"}`)
-    if (event.method === "Log.entryAdded" && event.params?.entry?.level === "error") failures.push(`console error: ${event.params.entry.text}`)
-    if (event.method === "Network.loadingFailed" && !event.params?.canceled && !/ERR_ABORTED/.test(event.params?.errorText || "")) failures.push(`network error: ${event.params?.errorText || "unknown"}`)
+    if (event.method === "Runtime.exceptionThrown") {
+      failures.push(`runtime exception: ${event.params?.exceptionDetails?.text || "unknown"}`)
+      continue
+    }
+
+    if (event.method === "Log.entryAdded" && event.params?.entry?.level === "error") {
+      const text = String(event.params.entry.text || "")
+      const generic404 = /Failed to load resource: the server responded with a status of 404/i.test(text)
+      if (generic404 && expected404LogsRemaining > 0) {
+        expected404LogsRemaining -= 1
+        continue
+      }
+      failures.push(`console error: ${text}`)
+      continue
+    }
+
+    if (event.method === "Network.loadingFailed" && !event.params?.canceled && !/ERR_ABORTED/.test(event.params?.errorText || "")) {
+      failures.push(`network error: ${event.params?.errorText || "unknown"}`)
+    }
   }
   return failures
 }
 
-async function assertNoFailures(client, label) {
-  const failures = actionableFailures(client.events)
+async function assertNoFailures(client, label, options = {}) {
+  const failures = actionableFailures(client.events, options)
   if (failures.length) throw new Error(`${label} produced browser failures:\n${failures.slice(0, 12).join("\n")}`)
 }
 
@@ -167,8 +193,9 @@ async function run() {
   const invalidToken = "0".repeat(64)
   await navigate(client, `${SITE_URL}/application-review/?token=${invalidToken}&cdp_smoke=${Date.now()}`)
   await waitForText(client, "This application link is invalid or no longer available.", 20000)
+  if (expectedRecipient404Count(client.events) < 1) throw new Error("Invalid-token Review Room did not produce the expected recipient Edge Function 404 response.")
   await screenshot(client, "invalid-token.png")
-  await assertNoFailures(client, "Secure Review Room invalid-token state")
+  await assertNoFailures(client, "Secure Review Room invalid-token state", { allowExpectedRecipient404: true })
   console.log("PASS secure Review Room hydrates and fails closed for an unknown token.")
 
   await navigate(client, `${SITE_URL}/application-review/conversation/?cdp_smoke=${Date.now()}`)
