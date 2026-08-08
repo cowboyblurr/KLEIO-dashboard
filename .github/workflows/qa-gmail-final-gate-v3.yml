@@ -1,0 +1,72 @@
+name: QA-only Gmail Final Gate V3
+
+on:
+  push:
+    branches:
+      - feature/gmail-send-beta-20260808
+    paths:
+      - ".github/workflows/qa-gmail-final-gate-v3.yml"
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/gmail-send-beta-20260808
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Gmail send-only contract
+        run: node scripts/audit-gmail-send-beta.mjs
+      - name: Submission delivery contract
+        run: node scripts/audit-submission-delivery-lock.mjs
+      - name: Application composer lock
+        run: pnpm audit:application-composer
+      - name: Artist beta convenience simulations
+        run: pnpm audit:artist-beta-convenience
+      - name: Recipient workflow lock
+        run: pnpm audit:artist-recipient-loop
+      - name: Auth and role isolation
+        run: pnpm audit:auth-isolation
+      - name: Upload contract
+        run: pnpm audit:upload-surfaces
+      - name: TypeScript
+        run: pnpm typecheck
+      - name: Lint
+        run: pnpm lint
+      - name: Static production build
+        run: pnpm build
+      - name: Remove QA-only final gates after success
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f .github/workflows/qa-gmail-final-gate.yml
+          rm -f .github/workflows/qa-gmail-final-gate-v2.yml
+          rm -f .github/workflows/qa-gmail-final-gate-v3.yml
+          git config user.name "KLEIO QA Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A .github/workflows
+          if git diff --cached --quiet; then
+            echo "No QA-only workflow cleanup needed."
+          else
+            git commit -m "Remove QA-only Gmail final gates after green validation"
+            git push origin HEAD:feature/gmail-send-beta-20260808
+          fi
+      - name: Report pass to PR 156
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SHA: ${{ github.sha }}
+        run: gh pr comment 156 --body "QA-only Gmail Final Gate V3: **success** on validated product head \`${SHA}\`. Gmail send-only contract, immutable delivery, composer, artist convenience simulations, recipient workflow, auth isolation, upload contract, TypeScript, lint, and static production build all passed. QA-only gate files were then removed from the branch before merge."
