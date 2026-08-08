@@ -43,8 +43,11 @@ begin
     return new;
   end if;
 
+  -- The historical event is named email_client_opened, but browsers cannot prove
+  -- the operating system actually opened a mail client. Canonical delivery keeps
+  -- the more conservative system-observed state: handoff_prepared.
   delivery_state := case new.status
-    when 'email_client_opened' then 'handoff_opened'
+    when 'email_client_opened' then 'handoff_prepared'
     when 'artist_reported' then 'artist_reported_sent'
     when 'confirmed' then 'provider_accepted'
     else 'prepared'
@@ -68,14 +71,14 @@ begin
   insert into public.application_deliveries (
     submission_version_id, package_id, artist_user_id, opportunity_id,
     recipient_access_id, channel, destination, state, evidence_level,
-    provider, provider_reference, handoff_opened_at, provider_accepted_at,
+    provider, provider_reference, handoff_prepared_at, provider_accepted_at,
     artist_reported_sent_at, updated_at
   ) values (
     version_row.id, version_row.package_id, version_row.artist_user_id, version_row.opportunity_id,
     active_access_id, delivery_channel, coalesce(new.destination, ''), delivery_state, delivery_evidence,
     case when delivery_channel = 'email_client' then 'default_email_client' else 'external_destination' end,
     coalesce(new.provider_reference, ''),
-    case when delivery_state = 'handoff_opened' then new.created_at else null end,
+    case when delivery_state = 'handoff_prepared' then new.created_at else null end,
     case when delivery_state = 'provider_accepted' then new.created_at else null end,
     case when delivery_state = 'artist_reported_sent' then new.created_at else null end,
     now()
@@ -90,7 +93,7 @@ begin
       when public.application_deliveries.state in ('review_room_opened','receipt_confirmed','conversation_started','cancelled') then public.application_deliveries.evidence_level
       else excluded.evidence_level end,
     provider_reference = case when excluded.provider_reference <> '' then excluded.provider_reference else public.application_deliveries.provider_reference end,
-    handoff_opened_at = coalesce(public.application_deliveries.handoff_opened_at, excluded.handoff_opened_at),
+    handoff_prepared_at = coalesce(public.application_deliveries.handoff_prepared_at, excluded.handoff_prepared_at),
     provider_accepted_at = coalesce(public.application_deliveries.provider_accepted_at, excluded.provider_accepted_at),
     artist_reported_sent_at = coalesce(public.application_deliveries.artist_reported_sent_at, excluded.artist_reported_sent_at),
     updated_at = now();
