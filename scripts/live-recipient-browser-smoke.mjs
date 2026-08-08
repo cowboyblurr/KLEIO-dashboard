@@ -138,6 +138,26 @@ async function assertNoFailures(client, label) {
   if (failures.length) throw new Error(`${label} produced browser failures:\n${failures.slice(0, 12).join("\n")}`)
 }
 
+async function cleanupChrome() {
+  try {
+    if (chrome.exitCode === null) {
+      chrome.kill("SIGTERM")
+      await Promise.race([
+        new Promise((resolve) => chrome.once("exit", resolve)),
+        sleep(1500),
+      ])
+    }
+  } catch {
+    // Cleanup must never overwrite the actual live-browser assertion result.
+  }
+
+  try {
+    rmSync(profileDir, { recursive: true, force: true, maxRetries: 8, retryDelay: 125 })
+  } catch (reason) {
+    console.warn(`Chrome profile cleanup skipped: ${reason instanceof Error ? reason.message : String(reason)}`)
+  }
+}
+
 async function run() {
   const target = await waitForDebugger()
   const client = new CdpClient(target.webSocketDebuggerUrl)
@@ -188,6 +208,5 @@ async function run() {
 try {
   await run()
 } finally {
-  chrome.kill("SIGTERM")
-  rmSync(profileDir, { recursive: true, force: true })
+  await cleanupChrome()
 }
