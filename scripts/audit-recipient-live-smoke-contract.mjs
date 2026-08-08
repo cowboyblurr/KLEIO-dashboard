@@ -1,5 +1,6 @@
 import fs from "node:fs"
 
+// Final QA-only trigger against the already-published production bundle. No product behavior changes.
 const workflow = fs.readFileSync(".github/workflows/recipient-live-smoke.yml", "utf8")
 const browser = fs.readFileSync("scripts/live-recipient-browser-smoke.mjs", "utf8")
 const rootLayout = fs.readFileSync("app/layout.tsx", "utf8")
